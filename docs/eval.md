@@ -174,16 +174,24 @@ requires `X-API-Key: <DEFAULT_API_KEY>` (see
 
 ## Run evaluation
 
-`examples/run_agent.py` reads a task list (default
-`data/task_ids/smallset.txt`) and runs one evaluator per task. Task IDs
-can mix prefixes: `kernel:*`, `v8:*`, `user:*`.
+`examples/run_agent.py` runs one evaluator per task. Pass tasks either as
+positional `TASK_ID` arguments or with `--tasks-file <path>` (one ID per line);
+IDs can mix prefixes `kernel:*`, `v8:*`, `user:*`. The task lists live in
+`data/task_ids/`:
+
+- `v1.txt` — the full **v1** benchmark (869 tasks; see the README's
+  [Benchmark updates](../README.md#benchmark-updates)).
+- `sample.txt` — a small 20-task subset for a quick smoke test.
+
+Use `--task-family {kernel,v8,user}` to filter a mixed file down to one family.
 
 ### Pick one auth mode
 
 ```bash
 # A) Direct provider key — no budget tracking
 export ANTHROPIC_API_KEY=sk-ant-...
-uv run examples/run_agent.py --agent claude_code --use-api-key
+uv run examples/run_agent.py --agent claude_code --use-api-key \
+    --tasks-file data/task_ids/sample.txt
 
 # B) Cost-tracking proxy — requires the llm_proxy section above
 uv run examples/run_agent.py \
@@ -204,8 +212,9 @@ exported.
 ### Common workflows
 
 ```bash
-# All families from the default task list
-uv run examples/run_agent.py --agent claude_code --use-api-key
+# All families from the full v1 benchmark
+uv run examples/run_agent.py --agent claude_code --use-api-key \
+    --tasks-file data/task_ids/v1.txt
 
 # Specific tasks, any mix of prefixes
 uv run examples/run_agent.py --agent codex --use-api-key \
@@ -225,11 +234,11 @@ uv run examples/run_agent.py --agent claude_code --use-api-key \
 
 # Isolated network — containers only reach allowlisted domains
 uv run examples/run_agent.py --agent claude_code --use-api-key \
-    --use-firewall --controller-url http://$DOCKER_BRIDGE_IP:$CONTROLLER_PORT
+    --use-firewall --controller-url http://$DOCKER_BRIDGE_IP:$CONTROLLER_PORT ...
 
 # Parallel workers, per-task timeout, custom model
 uv run examples/run_agent.py --agent claude_code --use-api-key \
-    --max-workers 4 --timeout 3600 --model claude-opus-4-7
+    --max-workers 4 --timeout 3600 --model claude-opus-4-7 ...
 ```
 
 ### Toggle mitigations

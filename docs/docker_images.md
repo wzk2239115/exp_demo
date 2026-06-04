@@ -68,7 +68,7 @@ tasks that don't define the requested variant are skipped with a
 warning. `nodefense` picks `image_no_sandbox` if available else `image`,
 so it skips a task only when both are missing.
 
-The task-id files in `data/task_ids/` use the alias form (e.g.
-`user:cybergym/arvo_18224`, `kernel:kernelctf/CVE-2024-1085_lts`,
-`v8:clusterfuzz/343069827`). Hashed forms (`user:<hex>`, `kernel:<hex>`,
-`v8:<hex>`) also resolve.
+Available task lists in `data/task_ids/`:
+
+- `v1.txt` — the full **v1** benchmark (869 tasks).
+- `sample.txt` — a small 20-task subset for a quick smoke test.
