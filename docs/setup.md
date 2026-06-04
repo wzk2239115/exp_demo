@@ -96,16 +96,15 @@ bash scripts/setup/static_build_node_and_agents.sh --help
 
 ## All-in-one setup
 
-An automated script is provided that runs steps 2-5:
+An automated script is provided that runs steps 2-4:
 
 ```bash
 bash scripts/setup/setup_data.sh
 ```
 
-> Steps 1-3 (Python install, image pull, task validation) are not included
+> Python install and image pull are not included
 > because they depend on your task list and registry access.
 
 We recommend running through the steps one by one for the first time, so
-you can install any missing system dependencies (e.g. `gcc`, `make`,
-`autoconf`) as they come up. Use the all-in-one script for subsequent
-setups on machines you have already prepared.
+you can install any missing system dependencies as they come up. Use the
+all-in-one script for subsequent setups on machines you have already prepared.
