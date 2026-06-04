@@ -1,0 +1,74 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3995418313
+INFO: Loaded 1 modules   (12396 inline 8-bit counters): 12396 [0x55a6b1afde10, 0x55a6b1b00e7c), 
+INFO: Loaded 1 PC tables (12396 PCs): 12396 [0x55a6b1b00e80,0x55a6b1b31540), 
+/out/wasm_mutator_fuzz_loader: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x502000000108 at pc 0x55a6b1a2c73f bp 0x7fff9dfa0630 sp 0x7fff9dfa0628
+READ of size 1 at 0x502000000108 thread T0
+    #0 0x55a6b1a2c73e in get_table_elem_type /src/wamr/core/iwasm/interpreter/wasm_loader.c:10736:33
+    #1 0x55a6b1a2c73e in wasm_loader_prepare_bytecode /src/wamr/core/iwasm/interpreter/wasm_loader.c:12389:22
+    #2 0x55a6b1a0f370 in load_from_sections /src/wamr/core/iwasm/interpreter/wasm_loader.c:6026:14
+    #3 0x55a6b1a124f0 in load /src/wamr/core/iwasm/interpreter/wasm_loader.c:6435:13
+    #4 0x55a6b1a124f0 in wasm_loader_load /src/wamr/core/iwasm/interpreter/wasm_loader.c:6612:10
+    #5 0x55a6b197d97b in wasm_runtime_load_ex /src/wamr/core/iwasm/common/wasm_runtime_common.c:1457:33
+    #6 0x55a6b197dceb in wasm_runtime_load /src/wamr/core/iwasm/common/wasm_runtime_common.c:1510:12
+    #7 0x55a6b197ba6b in LLVMFuzzerTestOneInput /src/wamr/tests/fuzz/wasm-mutator-fuzz/wasm_mutator_fuzz.cc:34:9
+    #8 0x55a6b18304d0 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #9 0x55a6b181b745 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #10 0x55a6b18211df in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #11 0x55a6b184c482 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #12 0x7fa3bf2d3082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+    #13 0x55a6b181392d in _start (/out/wasm_mutator_fuzz_loader+0xa492d)
+
+0x502000000108 is located 12 bytes after 12-byte region [0x5020000000f0,0x5020000000fc)
+allocated by thread T0 here:
+    #0 0x55a6b193c29f in malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:68:3
+    #1 0x55a6b1a0722a in loader_malloc /src/wamr/core/iwasm/interpreter/wasm_loader.c:331:39
+    #2 0x55a6b1a0722a in load_table_section /src/wamr/core/iwasm/interpreter/wasm_loader.c:3778:19
+    #3 0x55a6b1a0722a in load_from_sections /src/wamr/core/iwasm/interpreter/wasm_loader.c:5743:22
+    #4 0x55a6b1a124f0 in load /src/wamr/core/iwasm/interpreter/wasm_loader.c:6435:13
+    #5 0x55a6b1a124f0 in wasm_loader_load /src/wamr/core/iwasm/interpreter/wasm_loader.c:6612:10
+    #6 0x55a6b197d97b in wasm_runtime_load_ex /src/wamr/core/iwasm/common/wasm_runtime_common.c:1457:33
+    #7 0x55a6b197dceb in wasm_runtime_load /src/wamr/core/iwasm/common/wasm_runtime_common.c:1510:12
+    #8 0x55a6b197ba6b in LLVMFuzzerTestOneInput /src/wamr/tests/fuzz/wasm-mutator-fuzz/wasm_mutator_fuzz.cc:34:9
+    #9 0x55a6b18304d0 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #10 0x55a6b181b745 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #11 0x55a6b18211df in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #12 0x55a6b184c482 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #13 0x7fa3bf2d3082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/wamr/core/iwasm/interpreter/wasm_loader.c:10736:33 in get_table_elem_type
+Shadow bytes around the buggy address:
+  0x501ffffffe80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x501fffffff00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x501fffffff80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x502000000000: fa fa 00 00 fa fa 00 fa fa fa 00 fa fa fa 00 fa
+  0x502000000080: fa fa 00 fa fa fa 00 fa fa fa 04 fa fa fa 00 04
+=>0x502000000100: fa[fa]fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x502000000180: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x502000000200: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x502000000280: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x502000000300: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x502000000380: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

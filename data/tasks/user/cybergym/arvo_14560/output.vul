@@ -1,0 +1,72 @@
+INFO: Seed: 2809826851
+INFO: Loaded 1 modules   (7625 inline 8-bit counters): 7625 [0x9e7648, 0x9e9411), 
+INFO: Loaded 1 PC tables (7625 PCs): 7625 [0x74b380,0x769010), 
+/out/dotnet_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x619000000e0b at pc 0x0000004eab8d bp 0x7ffed539d490 sp 0x7ffed539cc40
+READ of size 32 at 0x619000000e0b thread T0
+SCARINESS: 26 (multi-byte-read-heap-buffer-overflow)
+    #0 0x4eab8c in __asan_memcpy /src/llvm/projects/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cc:23
+    #1 0x5430d0 in yr_object_set_string /src/yara/libyara/object.c:1088:5
+    #2 0x579a8f in dotnet_parse_us /src/yara/libyara/modules/dotnet.c:234:7
+    #3 0x581958 in dotnet_parse_com /src/yara/libyara/modules/dotnet.c:1599:5
+    #4 0x5831b5 in dotnet__load /src/yara/libyara/modules/dotnet.c:1716:9
+    #5 0x541048 in yr_modules_load /src/yara/libyara/modules.c:175:16
+    #6 0x5ad1ee in yr_execute_code /src/yara/libyara/exec.c:951:18
+    #7 0x54afae in yr_scanner_scan_mem_blocks /src/yara/libyara/scanner.c:435:3
+    #8 0x547883 in yr_rules_scan_mem_blocks /src/yara/libyara/rules.c:205:12
+    #9 0x547ae2 in yr_rules_scan_mem /src/yara/libyara/rules.c:255:10
+    #10 0x5307b2 in LLVMFuzzerTestOneInput /src/yara/tests/oss-fuzz/dotnet_fuzzer.cc:74:3
+    #11 0x60de15 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:571:15
+    #12 0x5e3d1d in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:280:6
+    #13 0x5ef566 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:713:9
+    #14 0x5e339c in main /src/libfuzzer/FuzzerMain.cpp:20:10
+    #15 0x7f3dad93883f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #16 0x41d228 in _start (/out/dotnet_fuzzer+0x41d228)
+
+DEDUP_TOKEN: __asan_memcpy--yr_object_set_string--dotnet_parse_us
+0x619000000e0b is located 0 bytes to the right of 907-byte region [0x619000000a80,0x619000000e0b)
+allocated by thread T0 here:
+    #0 0x52c268 in operator new[](unsigned long) /src/llvm/projects/compiler-rt/lib/asan/asan_new_delete.cc:109
+    #1 0x60dbc7 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:558:23
+    #2 0x5e3d1d in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:280:6
+    #3 0x5ef566 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:713:9
+    #4 0x5e339c in main /src/libfuzzer/FuzzerMain.cpp:20:10
+    #5 0x7f3dad93883f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: operator new[](unsigned long)--fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)--fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/llvm/projects/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cc:23 in __asan_memcpy
+Shadow bytes around the buggy address:
+  0x0c327fff8170: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c327fff8180: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c327fff8190: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c327fff81a0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c327fff81b0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0c327fff81c0: 00[03]fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c327fff81d0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c327fff81e0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c327fff81f0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c327fff8200: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c327fff8210: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==7==ABORTING

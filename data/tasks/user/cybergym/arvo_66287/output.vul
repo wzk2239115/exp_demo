@@ -1,0 +1,36 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3897844142
+INFO: Loaded 1 modules   (38467 inline 8-bit counters): 38467 [0xd0fb58, 0xd1919b), 
+INFO: Loaded 1 PC tables (38467 PCs): 38467 [0xb98e28,0xc2f258), 
+/out/test_packed_file_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+                       Ultimate Packer for eXecutables
+                          Copyright (C) 1996 - 2024
+UPX git-10807e+ Markus Oberhumer, Laszlo Molnar & John Reiser   Jan 24th 2024
+
+testing /tmp/libfuzzer.7 AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x000000157f8d (pc 0x0000004cfaa5 bp 0x7ffefc8cdbf0 sp 0x7ffefc8cd3a0 T0)
+==7==The signal is caused by a READ memory access.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x4cfaa5 in strcmp /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors.inc:462:25
+    #1 0x6feaa9 in PackLinuxElf32::adjABS(N_Elf32::Sym<N_Elf::ElfITypes<LE16, LE32, LE32, LE32, LE32> >*, unsigned int) /src/upx/src/p_lx_elf.cpp:3828:14
+    #2 0x722072 in PackLinuxElf32::un_asl_dynsym(unsigned int, OutputFile*) /src/upx/src/p_lx_elf.cpp:6380:17
+    #3 0x725b46 in PackLinuxElf32::un_shlib_1(OutputFile*, MemBuffer&, unsigned int&, unsigned int&, unsigned int) /src/upx/src/p_lx_elf.cpp:6736:21
+    #4 0x738b97 in PackLinuxElf32::unpack(OutputFile*) /src/upx/src/p_lx_elf.cpp:8411:9
+    #5 0x8206d1 in Packer::doTest() /src/upx/src/packer.cpp:104:5
+    #6 0x8c6e9a in do_one_file(char const*, char*) /src/upx/src/work.cpp:335:12
+    #7 0x8c87f8 in do_files(int, int, char**) /src/upx/src/work.cpp:421:13
+    #8 0x6ad0ee in upx_main(int, char**) /src/upx/src/main.cpp:1303:9
+    #9 0x577a7c in LLVMFuzzerTestOneInput /src/upx/fuzzers/test_packed_file_fuzzer.cpp:43:5
+    #10 0x449213 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #11 0x434972 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #12 0x43a21c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #13 0x463752 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #14 0x7f13fef3d082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #15 0x42ab3d in _start (/out/test_packed_file_fuzzer+0x42ab3d)
+
+DEDUP_TOKEN: strcmp--PackLinuxElf32::adjABS(N_Elf32::Sym<N_Elf::ElfITypes<LE16, LE32, LE32, LE32, LE32> >*, unsigned int)--PackLinuxElf32::un_asl_dynsym(unsigned int, OutputFile*)
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors.inc:462:25 in strcmp
+==7==ABORTING

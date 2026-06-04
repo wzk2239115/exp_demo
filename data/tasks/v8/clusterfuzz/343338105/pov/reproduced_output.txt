@@ -1,0 +1,26 @@
+
+
+#
+# Fatal error in ../../src/objects/map-updater.cc, line 1260
+# Debug check failed: details.representation().Equals(new_representation) || details.representation().CanBeInPlaceChangedTo(new_representation).
+#
+#
+#
+#FailureMessage Object: 0x7ffd3b8566a0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x55e70287fca3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55e70287f0bd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:204:10) [0x55e702863b2d]
+    out/debug/d8(+0x3a5c575) [0x55e702863575]
+    d8(v8::internal::MapUpdater::UpdateFieldType(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Map>, v8::internal::InternalIndex, v8::internal::Handle<v8::internal::Name>, v8::internal::PropertyConstness, v8::internal::Representation, v8::internal::MaybeObjectHandle const&) ./../../src/objects/map-updater.cc:0:5) [0x55e70027f282]
+    d8(v8::internal::MapUpdater::GeneralizeField(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Map>, v8::internal::InternalIndex, v8::internal::PropertyConstness, v8::internal::Representation, v8::internal::Handle<v8::internal::FieldType>) ./../../src/objects/map-updater.cc:1324:3) [0x55e70027b859]
+    d8(v8::internal::MapUpdater::GeneralizeField(v8::internal::Handle<v8::internal::Map>, v8::internal::InternalIndex, v8::internal::PropertyConstness, v8::internal::Representation, v8::internal::Handle<v8::internal::FieldType>) ./../../src/handles/handles.h:75:12) [0x55e70027b406]
+    d8(v8::internal::MapUpdater::FindTargetMap() ./../../src/objects/map-updater.cc:0:7) [0x55e700278b47]
+    d8(v8::internal::MapUpdater::UpdateImpl() ./../../src/objects/map-updater.cc:289:23) [0x55e70027a5de]
+    d8(v8::internal::MapUpdater::ApplyPrototypeTransition(v8::internal::Handle<v8::internal::HeapObject>) ./../../src/objects/map-updater.cc:280:10) [0x55e70027a449]
+    d8(v8::internal::JSObject::SetPrototype(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSObject>, v8::internal::Handle<v8::internal::Object>, bool, v8::internal::ShouldThrow) ./../../src/objects/js-objects.cc:5248:12) [0x55e70018fbb2]
+    d8(v8::internal::__RT_impl_Runtime_InternalSetPrototype(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/runtime/runtime-object.cc:452:3) [0x55e700523142]
+    d8(v8::internal::Runtime_InternalSetPrototype(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-object.cc:447:1) [0x55e700522d60]
+    d8(Builtins_CEntry_Return1_ArgvInRegister_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x55e70201d7f8]
+timeout: the monitored command dumped core

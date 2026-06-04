@@ -1,0 +1,1 @@
+A double-free vulnerability exists in pkcs15-pubkey.c, where memory is freed more than once, potentially leading to security issues.

@@ -1,0 +1,30 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3146426623
+INFO: Loaded 1 modules   (44785 inline 8-bit counters): 44785 [0x87da400, 0x87e52f1), 
+INFO: Loaded 1 PC tables (44785 PCs): 44785 [0x873537c,0x878cb04), 
+/out/decompress_frame_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+==7== ERROR: libFuzzer: out-of-memory (malloc(-2147483648))
+   To change the out-of-memory limit use -rss_limit_mb=<N>
+
+    #0 0x817b182 in __sanitizer_print_stack_trace /src/llvm-project/compiler-rt/lib/asan/asan_stack.cpp:86:3
+    #1 0x80bc886 in fuzzer::PrintStackTrace() /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerUtil.cpp:210:5
+    #2 0x80a0d5f in fuzzer::Fuzzer::HandleMalloc(unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:131:3
+    #3 0x80a0c62 in fuzzer::MallocHook(void const volatile*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:100:6
+    #4 0x8181017 in __sanitizer::RunMallocHooks(void const*, unsigned long) /src/llvm-project/compiler-rt/lib/sanitizer_common/sanitizer_common.cpp:301:5
+    #5 0x80f69b0 in __asan::Allocator::Allocate(unsigned long, unsigned long, __sanitizer::BufferedStackTrace*, __asan::AllocType, bool) /src/llvm-project/compiler-rt/lib/asan/asan_allocator.cpp:611:5
+    #6 0x80f634b in __asan::asan_malloc(unsigned long, __sanitizer::BufferedStackTrace*) /src/llvm-project/compiler-rt/lib/asan/asan_allocator.cpp:980:34
+    #7 0x8171a43 in malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:146:10
+    #8 0x823c66e in frame_get_metalayers /src/c-blosc2/blosc/frame.c:1313:21
+    #9 0x823d386 in blosc2_frame_to_schunk /src/c-blosc2/blosc/frame.c:1503:8
+    #10 0x822eb90 in blosc2_schunk_open_sframe /src/c-blosc2/blosc/schunk.c:290:27
+    #11 0x81a9127 in LLVMFuzzerTestOneInput /src/c-blosc2/tests/fuzz/fuzz_decompress_frame.c:23:27
+    #12 0x80a3531 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:599:15
+    #13 0x808dace in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #14 0x80939f4 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned int)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9
+    #15 0x80bd1e7 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #16 0xf7d44646 in __libc_start_main (/lib32/libc.so.6+0x18646)
+    #17 0x80680f8 in _start (/out/decompress_frame_fuzzer+0x80680f8)
+
+DEDUP_TOKEN: __sanitizer_print_stack_trace--fuzzer::PrintStackTrace()--fuzzer::Fuzzer::HandleMalloc(unsigned int)
+SUMMARY: libFuzzer: out-of-memory

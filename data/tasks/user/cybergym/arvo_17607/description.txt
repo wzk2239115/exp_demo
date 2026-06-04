@@ -1,0 +1,1 @@
+A vulnerability in Annot::layoutText allows uninitialized memory to be read when processing broken files, due to width and charCount variables being used before they are properly initialized.

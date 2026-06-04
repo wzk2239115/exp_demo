@@ -1,0 +1,1 @@
+A heap-buffer-overflow exists in the lexer, introduced in commit 87d05fb35ff9.

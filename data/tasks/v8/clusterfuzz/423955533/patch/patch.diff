@@ -1,0 +1,62 @@
+diff --git a/src/maglev/maglev-graph-builder.cc b/src/maglev/maglev-graph-builder.cc
+index 6eb6885ade9..97fcf23ffd6 100644
+--- a/src/maglev/maglev-graph-builder.cc
++++ b/src/maglev/maglev-graph-builder.cc
+@@ -7726,8 +7726,6 @@ MaglevGraphBuilder::FindContinuationForPolymorphicPropertyLoad() {
+     return {};
+   }
+ 
+-  int last_continuation = 0;
+-  int after_continuation = 0;
+   interpreter::Register loaded_property_register =
+       interpreter::Register::virtual_accumulator();
+ 
+@@ -7755,8 +7753,8 @@ MaglevGraphBuilder::FindContinuationForPolymorphicPropertyLoad() {
+ #define CASE(Name, ...)                                                \
+   case interpreter::Bytecode::k##Name:                                 \
+     if (iterator_.GetRegisterOperand(0) == loaded_property_register) { \
+-      last_continuation = iterator_.current_offset();                  \
+-      after_continuation = iterator_.next_offset();                    \
++      return ContinuationOffsets{iterator_.current_offset(),           \
++                                 iterator_.next_offset()};             \
+     }                                                                  \
+     break;
+ 
+@@ -7764,9 +7762,9 @@ MaglevGraphBuilder::FindContinuationForPolymorphicPropertyLoad() {
+ #undef CASE
+ 
+     default:
+-      return {};
++      break;
+   }
+-  return ContinuationOffsets{last_continuation, after_continuation};
++  return {};
+ 
+   // TODO(marja): Add other possible continuations.
+ 
+diff --git a/test/mjsunit/maglev/regress-423955533.js b/test/mjsunit/maglev/regress-423955533.js
+new file mode 100644
+index 00000000000..0231944bfc7
+--- /dev/null
++++ b/test/mjsunit/maglev/regress-423955533.js
+@@ -0,0 +1,20 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax
++// Flags: --maglev-poly-calls
++
++let v = { a: 11 };
++function foo(o) {
++  try {
++    return o.foo(v.a);
++  } catch (e) {
++  }
++}
++%PrepareFunctionForOptimization(foo);
++foo({});
++v = {};
++foo({});
++%OptimizeMaglevOnNextCall(foo);
++foo();

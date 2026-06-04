@@ -1,0 +1,100 @@
+diff --git a/src/maglev/maglev-graph-builder.cc b/src/maglev/maglev-graph-builder.cc
+index b7109a75198..88286d4ca6e 100644
+--- a/src/maglev/maglev-graph-builder.cc
++++ b/src/maglev/maglev-graph-builder.cc
+@@ -5911,6 +5911,26 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildStoreField(
+     return EmitUnconditionalDeopt(DeoptimizeReason::kStoreToConstant);
+   }
+ 
++  ValueNode* value = GetAccumulator();
++  if (IsEmptyNodeType(GetType(value))) {
++    return EmitUnconditionalDeopt(DeoptimizeReason::kWrongValue);
++  }
++
++  if (field_representation.IsSmi()) {
++    RETURN_IF_ABORT(GetAccumulatorSmi());
++  } else {
++    if (field_representation.IsHeapObject()) {
++      // Emit a map check for the field type, if needed, otherwise just a
++      // HeapObject check.
++      if (access_info.field_map().has_value()) {
++        RETURN_IF_ABORT(BuildCheckMaps(
++            value, base::VectorOf({access_info.field_map().value()})));
++      } else {
++        RETURN_IF_ABORT(BuildCheckHeapObject(value));
++      }
++    }
++  }
++
+   ValueNode* store_target;
+   if (field_index.is_inobject()) {
+     store_target = receiver;
+@@ -5925,37 +5945,21 @@ MaybeReduceResult MaglevGraphBuilder::TryBuildStoreField(
+   }
+ 
+   if (field_representation.IsDouble()) {
+-    ValueNode* float64_value = GetAccumulator();
+     if (access_info.HasTransitionMap()) {
+       // Allocate the mutable double box owned by the field.
+-      ValueNode* value =
+-          AddNewNode<Float64ToHeapNumberForField>({float64_value});
+-      BuildStoreTaggedField(store_target, value, field_index.offset(),
++      ValueNode* heapnumber_value =
++          AddNewNode<Float64ToHeapNumberForField>({value});
++      BuildStoreTaggedField(store_target, heapnumber_value,
++                            field_index.offset(),
+                             StoreTaggedMode::kTransitioning);
+       BuildStoreMap(receiver, access_info.transition_map().value(),
+                     StoreMap::Kind::kTransitioning);
+     } else {
+-      AddNewNode<StoreDoubleField>({store_target, float64_value},
+-                                   field_index.offset());
++      AddNewNode<StoreDoubleField>({store_target, value}, field_index.offset());
+     }
+     return ReduceResult::Done();
+   }
+ 
+-  ValueNode* value = GetAccumulator();
+-  if (field_representation.IsSmi()) {
+-    RETURN_IF_ABORT(GetAccumulatorSmi());
+-  } else {
+-    if (field_representation.IsHeapObject()) {
+-      // Emit a map check for the field type, if needed, otherwise just a
+-      // HeapObject check.
+-      if (access_info.field_map().has_value()) {
+-        RETURN_IF_ABORT(BuildCheckMaps(
+-            value, base::VectorOf({access_info.field_map().value()})));
+-      } else {
+-        RETURN_IF_ABORT(BuildCheckHeapObject(value));
+-      }
+-    }
+-  }
+ 
+   StoreTaggedMode store_mode = access_info.HasTransitionMap()
+                                    ? StoreTaggedMode::kTransitioning
+diff --git a/test/mjsunit/maglev/regress-414840455.js b/test/mjsunit/maglev/regress-414840455.js
+new file mode 100644
+index 00000000000..ab2c3c97560
+--- /dev/null
++++ b/test/mjsunit/maglev/regress-414840455.js
+@@ -0,0 +1,20 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --allow-natives-syntax --maglev
++
++function f8(a10) {
++  for (let v11 = 0; v11 < 5; v11++) {
++    const t7 = {};
++    t7.f = v11;
++    ({"f":v11, "g":a10} = "c");
++    Math.atanh(a10);
++    function f15() {
++    }
++  }
++}
++%PrepareFunctionForOptimization(f8);
++f8();
++%OptimizeMaglevOnNextCall(f8);
++f8();

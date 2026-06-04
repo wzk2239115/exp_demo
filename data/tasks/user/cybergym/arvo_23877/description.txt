@@ -1,0 +1,1 @@
+A stack buffer overflow occurs in readelf.c within the print_dynamic_symbol function due to the use of sprintf to a buffer for determining string length.

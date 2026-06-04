@@ -1,0 +1,25 @@
+
+
+#
+# Fatal error in ../../src/json/json-stringifier.cc, line 2492
+# Debug check failed: IsFastKey(obj, no_gc).
+#
+#
+#
+#FailureMessage Object: 0x7ffff1cc6990
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:390:32) [0x55a3eccfe533]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55a3eccfd69d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55a3ecce3df4]
+    out/debug/d8(+0x45197e5) [0x55a3ecce37e5]
+    d8(v8::internal::FastJsonStringifierObjectKeyResult v8::internal::FastJsonStringifier<unsigned char>::SerializeObjectKey<v8::internal::SeqOneByteString, true>(v8::internal::Tagged<v8::internal::String>, bool, v8::internal::PerThreadAssertScope<false, (v8::internal::PerThreadAssertType)1, (v8::internal::PerThreadAssertType)2> const&) ./../../src/json/json-stringifier.cc:0:7) [0x55a3e9dace54]
+    d8(v8::internal::FastJsonStringifierResult v8::internal::FastJsonStringifier<unsigned char>::ResumeJSObject<(v8::internal::DescriptorArray::FastIterableState)0>(v8::internal::Tagged<v8::internal::JSObject>, unsigned short, unsigned short, unsigned char, unsigned char, v8::internal::Tagged<v8::internal::DescriptorArray>, bool, v8::internal::PerThreadAssertScope<false, (v8::internal::PerThreadAssertType)1, (v8::internal::PerThreadAssertType)2> const&) ./../../src/base/logging.h:383:1) [0x55a3e9da950b]
+    d8(v8::internal::FastJsonStringifier<unsigned char>::SerializeJSObject(v8::internal::Tagged<v8::internal::JSObject>, v8::internal::PerThreadAssertScope<false, (v8::internal::PerThreadAssertType)1, (v8::internal::PerThreadAssertType)2> const&) ./../../src/json/json-stringifier.cc:0:5) [0x55a3e9da8324]
+    d8(v8::internal::FastJsonStringifier<unsigned char>::SerializeObject(v8::internal::ContinuationRecord, v8::internal::PerThreadAssertScope<false, (v8::internal::PerThreadAssertType)1, (v8::internal::PerThreadAssertType)2> const&) ./../../src/json/json-stringifier.cc:0:18) [0x55a3e9da52e8]
+    d8(v8::internal::FastJsonStringifier<unsigned char>::SerializeObject(v8::internal::Tagged<v8::internal::Union<v8::internal::Smi, v8::internal::HeapNumber, v8::internal::BigInt, v8::internal::String, v8::internal::Symbol, v8::internal::Boolean, v8::internal::Null, v8::internal::Undefined, v8::internal::JSReceiver>>, v8::internal::PerThreadAssertScope<false, (v8::internal::PerThreadAssertType)1, (v8::internal::PerThreadAssertType)2> const&) ./../../src/json/json-stringifier.cc:3178:10) [0x55a3e9da405e]
+    d8(v8::internal::JsonStringify(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Union<v8::internal::Smi, v8::internal::HeapNumber, v8::internal::BigInt, v8::internal::String, v8::internal::Symbol, v8::internal::Boolean, v8::internal::Null, v8::internal::Undefined, v8::internal::JSReceiver>>, v8::internal::Handle<v8::internal::Union<v8::internal::Smi, v8::internal::HeapNumber, v8::internal::BigInt, v8::internal::String, v8::internal::Symbol, v8::internal::Boolean, v8::internal::Null, v8::internal::Undefined, v8::internal::JSReceiver>>, v8::internal::Handle<v8::internal::Object>) ./../../src/json/json-stringifier.cc:3505:28) [0x55a3e9d9a730]
+    d8(v8::internal::Builtin_Impl_JsonStringify(v8::internal::BuiltinArguments, v8::internal::Isolate*) ./../../src/builtins/builtins-json.cc:37:3) [0x55a3e9634ca3]
+    d8(v8::internal::Builtin_JsonStringify(int, unsigned long*, v8::internal::Isolate*) ./../../src/builtins/builtins-json.cc:32:1) [0x55a3e96348ed]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc:0:0) [0x55a3ec38e77d]
+timeout: the monitored command dumped core

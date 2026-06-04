@@ -1,0 +1,1 @@
+A vulnerability exists in which upgrading the minor version in [STAT] causes an attempt to serialize elidedFallbackNameID without initialization, potentially leading to the addition of unintended data that the font does not have.

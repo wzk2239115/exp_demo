@@ -1,0 +1,69 @@
+Accepting input from '/tmp/poc'
+Usage for fuzzing: honggfuzz -P [flags] -- /out/fuzz-read-print-write
+=================================================================
+==7==ERROR: AddressSanitizer: container-overflow on address 0x7f5a47845802 at pc 0x00000047f891 bp 0x7ffda1432320 sp 0x7ffda1431ae8
+WRITE of size 65534 at 0x7f5a47845802 thread T0
+SCARINESS: 45 (multi-byte-write-container-overflow)
+    #0 0x47f890 in __interceptor_memcpy /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors.inc:827:5
+    #1 0x7f5a483ae9fc  (/lib/x86_64-linux-gnu/libbrotlidec.so.1+0x19fc) (BuildId: 54cf2a9004b3f665e2fcbc4fbbca8efc49281cf4)
+    #2 0x7f5a483b324f in BrotliDecoderDecompressStream (/lib/x86_64-linux-gnu/libbrotlidec.so.1+0x624f) (BuildId: 54cf2a9004b3f665e2fcbc4fbbca8efc49281cf4)
+    #3 0x532b0e in Exiv2::BmffImage::brotliUncompress(unsigned char const*, unsigned long, Exiv2::DataBuf&) /src/exiv2/src/bmffimage.cpp:208:9
+    #4 0x536507 in Exiv2::BmffImage::boxHandler(std::__1::basic_ostream<char, std::__1::char_traits<char> >&, Exiv2::PrintStructureOption, unsigned long, unsigned long) /src/exiv2/src/bmffimage.cpp:541:7
+    #5 0x5406b3 in Exiv2::BmffImage::readMetadata() /src/exiv2/src/bmffimage.cpp:727:15
+    #6 0x52df75 in LLVMFuzzerTestOneInput /src/exiv2/fuzz/fuzz-read-print-write.cpp:22:12
+    #7 0x5243eb in main (/out/fuzz-read-print-write+0x5243eb)
+    #8 0x7f5a48040082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #9 0x4655fd in _start (/out/fuzz-read-print-write+0x4655fd)
+
+DEDUP_TOKEN: __interceptor_memcpy----BrotliDecoderDecompressStream
+0x7f5a47845802 is located 0 bytes to the right of 131074-byte region [0x7f5a47825800,0x7f5a47845802)
+allocated by thread T0 here:
+    #0 0x52187d in operator new(unsigned long) /src/llvm-project/compiler-rt/lib/asan/asan_new_delete.cpp:95:3
+    #1 0x59b3e8 in __libcpp_operator_new<unsigned long> /usr/local/bin/../include/c++/v1/new:245:10
+    #2 0x59b3e8 in __libcpp_allocate /usr/local/bin/../include/c++/v1/new:271:10
+    #3 0x59b3e8 in allocate /usr/local/bin/../include/c++/v1/__memory/allocator.h:105:38
+    #4 0x59b3e8 in allocate /usr/local/bin/../include/c++/v1/__memory/allocator_traits.h:262:20
+    #5 0x59b3e8 in __split_buffer /usr/local/bin/../include/c++/v1/__split_buffer:306:29
+    #6 0x59b3e8 in std::__1::vector<unsigned char, std::__1::allocator<unsigned char> >::__append(unsigned long) /usr/local/bin/../include/c++/v1/vector:1031:53
+    #7 0x53298b in Exiv2::BmffImage::brotliUncompress(unsigned char const*, unsigned long, Exiv2::DataBuf&) /src/exiv2/src/bmffimage.cpp:204:9
+    #8 0x536507 in Exiv2::BmffImage::boxHandler(std::__1::basic_ostream<char, std::__1::char_traits<char> >&, Exiv2::PrintStructureOption, unsigned long, unsigned long) /src/exiv2/src/bmffimage.cpp:541:7
+    #9 0x5406b3 in Exiv2::BmffImage::readMetadata() /src/exiv2/src/bmffimage.cpp:727:15
+    #10 0x52df75 in LLVMFuzzerTestOneInput /src/exiv2/fuzz/fuzz-read-print-write.cpp:22:12
+    #11 0x5243eb in main (/out/fuzz-read-print-write+0x5243eb)
+
+DEDUP_TOKEN: operator new(unsigned long)--__libcpp_operator_new<unsigned long>--__libcpp_allocate
+HINT: if you don't care about these errors you may set ASAN_OPTIONS=detect_container_overflow=0.
+If you suspect a false positive see also: https://github.com/google/sanitizers/wiki/AddressSanitizerContainerOverflow.
+SUMMARY: AddressSanitizer: container-overflow /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors.inc:827:5 in __interceptor_memcpy
+Shadow bytes around the buggy address:
+  0x0febc8f00ab0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0febc8f00ac0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0febc8f00ad0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0febc8f00ae0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0febc8f00af0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0febc8f00b00:[fc]fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0febc8f00b10: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0febc8f00b20: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0febc8f00b30: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0febc8f00b40: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0febc8f00b50: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

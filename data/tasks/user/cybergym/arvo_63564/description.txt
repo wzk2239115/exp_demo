@@ -1,0 +1,1 @@
+An index-out-of-bounds runtime error occurs in the function ixheaacd_smooth_m1m2 when the value of arbitrary downmix residual bands is greater than or equal to the number of parameter bands.

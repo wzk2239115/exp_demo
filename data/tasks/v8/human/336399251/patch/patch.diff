@@ -1,0 +1,34 @@
+diff --git a/src/wasm/wasm-js.cc b/src/wasm/wasm-js.cc
+index f578419b51d..575c9a255c6 100644
+--- a/src/wasm/wasm-js.cc
++++ b/src/wasm/wasm-js.cc
+@@ -2372,6 +2372,7 @@ void WebAssemblyPromising(const v8::FunctionCallbackInfo<v8::Value>& info) {
+ 
+   if (!i::WasmExportedFunction::IsWasmExportedFunction(*callable)) {
+     thrower.TypeError("Argument 0 must be a WebAssembly exported function");
++    return;
+   }
+   auto wasm_exported_function = i::WasmExportedFunction::cast(*callable);
+   i::Handle<i::WasmExportedFunctionData> data(
+diff --git a/test/mjsunit/wasm/stack-switching-new-api.js b/test/mjsunit/wasm/stack-switching-new-api.js
+index ad3c6922e8b..e94ab371371 100644
+--- a/test/mjsunit/wasm/stack-switching-new-api.js
++++ b/test/mjsunit/wasm/stack-switching-new-api.js
+@@ -12,6 +12,17 @@
+ 
+ d8.file.execute("test/mjsunit/wasm/wasm-module-builder.js");
+ 
++(function TestInvalidWrappers() {
++  assertThrows(() => WebAssembly.promising({}), TypeError,
++      /Argument 0 must be a function/);
++  assertThrows(() => WebAssembly.promising(() => {}), TypeError,
++      /Argument 0 must be a WebAssembly exported function/);
++  assertThrows(() => WebAssembly.Suspending(() => {}), TypeError,
++      /WebAssembly.Suspending must be invoked with 'new'/);
++  assertThrows(() => new WebAssembly.Suspending({}), TypeError,
++      /Argument 0 must be a function/);
++})();
++
+ (function TestStackSwitchNoSuspend() {
+   print(arguments.callee.name);
+   let builder = new WasmModuleBuilder();

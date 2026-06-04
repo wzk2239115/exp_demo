@@ -1,0 +1,371 @@
+diff --git a/src/compiler/allocation-builder.h b/src/compiler/allocation-builder.h
+index d14ca496aa2..2689a4829b0 100644
+--- a/src/compiler/allocation-builder.h
++++ b/src/compiler/allocation-builder.h
+@@ -63,7 +63,12 @@ class AllocationBuilder final {
+ 
+   // Compound store of a constant into a field.
+   void Store(const FieldAccess& access, ObjectRef value) {
+-    Store(access, jsgraph()->ConstantNoHole(value, broker_));
++    if (access.machine_type == MachineType::IndirectPointer()) {
++      Store(access,
++            jsgraph()->TrustedHeapConstant(value.AsHeapObject().object()));
++    } else {
++      Store(access, jsgraph()->ConstantNoHole(value, broker_));
++    }
+   }
+ 
+   void FinishAndChange(Node* node) {
+diff --git a/src/compiler/backend/instruction-selector-impl.h b/src/compiler/backend/instruction-selector-impl.h
+index 02e84efde20..9ce7e490054 100644
+--- a/src/compiler/backend/instruction-selector-impl.h
++++ b/src/compiler/backend/instruction-selector-impl.h
+@@ -387,6 +387,7 @@ class OperandGeneratorT : public Adapter {
+             }
+           case Kind::kHeapObject:
+           case Kind::kCompressedHeapObject:
++          case Kind::kTrustedHeapObject:
+             return Constant(constant->handle(),
+                             constant->kind == Kind::kCompressedHeapObject);
+           case Kind::kExternal:
+diff --git a/src/compiler/backend/instruction-selector.cc b/src/compiler/backend/instruction-selector.cc
+index 9c94e3a3a80..c406e74a99f 100644
+--- a/src/compiler/backend/instruction-selector.cc
++++ b/src/compiler/backend/instruction-selector.cc
+@@ -652,7 +652,8 @@ InstructionOperand OperandForDeopt(Isolate* isolate,
+         }
+         return g->UseImmediate(input);
+       case turboshaft::ConstantOp::Kind::kHeapObject:
+-      case turboshaft::ConstantOp::Kind::kCompressedHeapObject: {
++      case turboshaft::ConstantOp::Kind::kCompressedHeapObject:
++      case turboshaft::ConstantOp::Kind::kTrustedHeapObject: {
+         if (!CanBeTaggedOrCompressedPointer(rep)) {
+           // If we have inconsistent static and dynamic types, e.g. if we
+           // smi-check a string, we can get here with a heap object that
+@@ -728,8 +729,9 @@ InstructionOperand OperandForDeopt(Isolate* isolate,
+       } else {
+         return g->UseImmediate(input);
+       }
++    case IrOpcode::kHeapConstant:
+     case IrOpcode::kCompressedHeapConstant:
+-    case IrOpcode::kHeapConstant: {
++    case IrOpcode::kTrustedHeapConstant: {
+       if (!CanBeTaggedOrCompressedPointer(rep)) {
+         // If we have inconsistent static and dynamic types, e.g. if we
+         // smi-check a string, we can get here with a heap object that
+@@ -3265,6 +3267,8 @@ void InstructionSelectorT<TurbofanAdapter>::VisitNode(Node* node) {
+       return MarkAsTagged(node), VisitConstant(node);
+     case IrOpcode::kCompressedHeapConstant:
+       return MarkAsCompressed(node), VisitConstant(node);
++    case IrOpcode::kTrustedHeapConstant:
++      return MarkAsTagged(node), VisitConstant(node);
+     case IrOpcode::kNumberConstant: {
+       double value = OpParameter<double>(node->op());
+       if (!IsSmiDouble(value)) MarkAsTagged(node);
+@@ -4759,6 +4763,7 @@ void InstructionSelectorT<TurboshaftAdapter>::VisitNode(
+           MarkAsFloat64(node);
+           break;
+         case ConstantOp::Kind::kHeapObject:
++        case ConstantOp::Kind::kTrustedHeapObject:
+           MarkAsTagged(node);
+           break;
+         case ConstantOp::Kind::kCompressedHeapObject:
+diff --git a/src/compiler/common-operator.cc b/src/compiler/common-operator.cc
+index 85780655718..36d11d633e3 100644
+--- a/src/compiler/common-operator.cc
++++ b/src/compiler/common-operator.cc
+@@ -1356,9 +1356,19 @@ const Operator* CommonOperatorBuilder::CompressedHeapConstant(
+       value);                                              // parameter
+ }
+ 
++const Operator* CommonOperatorBuilder::TrustedHeapConstant(
++    const Handle<HeapObject>& value) {
++  return zone()->New<Operator1<Handle<HeapObject>>>(    // --
++      IrOpcode::kTrustedHeapConstant, Operator::kPure,  // opcode
++      "TrustedHeapConstant",                            // name
++      0, 0, 0, 1, 0, 0,                                 // counts
++      value);                                           // parameter
++}
++
+ Handle<HeapObject> HeapConstantOf(const Operator* op) {
+   DCHECK(IrOpcode::kHeapConstant == op->opcode() ||
+-         IrOpcode::kCompressedHeapConstant == op->opcode());
++         IrOpcode::kCompressedHeapConstant == op->opcode() ||
++         IrOpcode::kTrustedHeapConstant == op->opcode());
+   return OpParameter<Handle<HeapObject>>(op);
+ }
+ 
+diff --git a/src/compiler/common-operator.h b/src/compiler/common-operator.h
+index cde46097569..5fc69798251 100644
+--- a/src/compiler/common-operator.h
++++ b/src/compiler/common-operator.h
+@@ -612,6 +612,7 @@ class V8_EXPORT_PRIVATE CommonOperatorBuilder final
+   const Operator* PointerConstant(intptr_t);
+   const Operator* HeapConstant(const Handle<HeapObject>&);
+   const Operator* CompressedHeapConstant(const Handle<HeapObject>&);
++  const Operator* TrustedHeapConstant(const Handle<HeapObject>&);
+   const Operator* ObjectId(uint32_t);
+ 
+   const Operator* RelocatableInt32Constant(int32_t value,
+diff --git a/src/compiler/js-graph.cc b/src/compiler/js-graph.cc
+index 327de9188f9..53d26e125b5 100644
+--- a/src/compiler/js-graph.cc
++++ b/src/compiler/js-graph.cc
+@@ -158,6 +158,14 @@ Node* JSGraph::HeapConstantHole(Handle<HeapObject> value) {
+   return *loc;
+ }
+ 
++Node* JSGraph::TrustedHeapConstant(Handle<HeapObject> value) {
++  DCHECK(IsTrustedObject(*value));
++  // TODO(pthier): Consider also caching trusted constants. Right now they are
++  // only used for RegExp data as part of RegExp literals and it should be
++  // uncommon for the same literal to appear multiple times.
++  return graph()->NewNode(common()->TrustedHeapConstant(value));
++}
++
+ void JSGraph::GetCachedNodes(NodeVector* nodes) {
+   cache_.GetCachedNodes(nodes);
+ #define DO_CACHED_FIELD(name, ...) \
+diff --git a/src/compiler/js-graph.h b/src/compiler/js-graph.h
+index da5f539537d..5580b858bd1 100644
+--- a/src/compiler/js-graph.h
++++ b/src/compiler/js-graph.h
+@@ -62,6 +62,11 @@ class V8_EXPORT_PRIVATE JSGraph : public MachineGraph {
+   // only emit a Hole value.
+   Node* HeapConstantHole(Handle<HeapObject> value);
+ 
++  // Createas a TrustedHeapConstant node.
++  // This is similar to HeapConstant, but for constants that live in trusted
++  // space (having a different cage base) and therefore shouldn't be compressed.
++  Node* TrustedHeapConstant(Handle<HeapObject> value);
++
+   // Creates a Constant node of the appropriate type for
+   // the given object.  Inspect the (serialized) object and determine whether
+   // one of the canonicalized globals or a number constant should be returned.
+diff --git a/src/compiler/opcodes.h b/src/compiler/opcodes.h
+index c5b0f9a2977..f4540cc9226 100644
+--- a/src/compiler/opcodes.h
++++ b/src/compiler/opcodes.h
+@@ -48,7 +48,8 @@
+   V(ExternalConstant)                \
+   V(NumberConstant)                  \
+   V(PointerConstant)                 \
+-  V(HeapConstant)
++  V(HeapConstant)                    \
++  V(TrustedHeapConstant)
+ 
+ // Opcodes for constant operators.
+ #define CONSTANT_OP_LIST(V)    \
+diff --git a/src/compiler/simplified-lowering-verifier.cc b/src/compiler/simplified-lowering-verifier.cc
+index 8689f9a5628..f5c57240d43 100644
+--- a/src/compiler/simplified-lowering-verifier.cc
++++ b/src/compiler/simplified-lowering-verifier.cc
+@@ -477,6 +477,7 @@ void SimplifiedLoweringVerifier::VisitNode(Node* node,
+       CASE(NumberConstant)
+       CASE(PointerConstant)
+       CASE(CompressedHeapConstant)
++      CASE(TrustedHeapConstant)
+       CASE(RelocatableInt32Constant)
+       CASE(RelocatableInt64Constant)
+       // Inner operators
+diff --git a/src/compiler/simplified-lowering.cc b/src/compiler/simplified-lowering.cc
+index e4253925ec2..26b58d06f67 100644
+--- a/src/compiler/simplified-lowering.cc
++++ b/src/compiler/simplified-lowering.cc
+@@ -2358,6 +2358,8 @@ class RepresentationSelector {
+       }
+       case IrOpcode::kHeapConstant:
+         return VisitLeaf<T>(node, MachineRepresentation::kTaggedPointer);
++      case IrOpcode::kTrustedHeapConstant:
++        return VisitLeaf<T>(node, MachineRepresentation::kTaggedPointer);
+       case IrOpcode::kPointerConstant: {
+         VisitLeaf<T>(node, MachineType::PointerRepresentation());
+         if (lower<T>()) {
+diff --git a/src/compiler/turboshaft/assembler.h b/src/compiler/turboshaft/assembler.h
+index 5c916fb3edb..46b331209d1 100644
+--- a/src/compiler/turboshaft/assembler.h
++++ b/src/compiler/turboshaft/assembler.h
+@@ -2003,6 +2003,11 @@ class TurboshaftAssemblerOpInterface
+   OpIndex CompressedHeapConstant(Handle<HeapObject> value) {
+     return ReduceIfReachableConstant(ConstantOp::Kind::kHeapObject, value);
+   }
++  OpIndex TrustedHeapConstant(Handle<HeapObject> value) {
++    DCHECK(IsTrustedObject(*value));
++    return ReduceIfReachableConstant(ConstantOp::Kind::kTrustedHeapObject,
++                                     value);
++  }
+   OpIndex ExternalConstant(ExternalReference value) {
+     return ReduceIfReachableConstant(ConstantOp::Kind::kExternal, value);
+   }
+diff --git a/src/compiler/turboshaft/graph-builder.cc b/src/compiler/turboshaft/graph-builder.cc
+index fcfe242ac26..33a1c6d3a32 100644
+--- a/src/compiler/turboshaft/graph-builder.cc
++++ b/src/compiler/turboshaft/graph-builder.cc
+@@ -431,6 +431,8 @@ OpIndex GraphBuilder::Process(
+       return __ HeapConstant(HeapConstantOf(op));
+     case IrOpcode::kCompressedHeapConstant:
+       return __ CompressedHeapConstant(HeapConstantOf(op));
++    case IrOpcode::kTrustedHeapConstant:
++      return __ TrustedHeapConstant(HeapConstantOf(op));
+     case IrOpcode::kExternalConstant:
+       return __ ExternalConstant(OpParameter<ExternalReference>(op));
+     case IrOpcode::kRelocatableInt64Constant:
+diff --git a/src/compiler/turboshaft/maglev-graph-building-phase.cc b/src/compiler/turboshaft/maglev-graph-building-phase.cc
+index 7316d113c3f..e52a7b7f1e0 100644
+--- a/src/compiler/turboshaft/maglev-graph-building-phase.cc
++++ b/src/compiler/turboshaft/maglev-graph-building-phase.cc
+@@ -574,7 +574,7 @@ class GraphBuilder {
+   }
+   maglev::ProcessResult Process(maglev::TrustedConstant* node,
+                                 const maglev::ProcessingState& state) {
+-    SetMap(node, __ HeapConstant(node->object().object()));
++    SetMap(node, __ TrustedHeapConstant(node->object().object()));
+     return maglev::ProcessResult::kContinue;
+   }
+   maglev::ProcessResult Process(maglev::InitialValue* node,
+@@ -4159,7 +4159,7 @@ class GraphBuilder {
+         case maglev::Opcode::kTrustedConstant:
+           builder.AddInput(
+               MachineType::AnyTagged(),
+-              __ HeapConstant(
++              __ TrustedHeapConstant(
+                   value->Cast<maglev::TrustedConstant>()->object().object()));
+           break;
+ 
+diff --git a/src/compiler/turboshaft/operations.cc b/src/compiler/turboshaft/operations.cc
+index b2021e38586..dfe8e1f0abf 100644
+--- a/src/compiler/turboshaft/operations.cc
++++ b/src/compiler/turboshaft/operations.cc
+@@ -551,6 +551,9 @@ void ConstantOp::PrintOptions(std::ostream& os) const {
+     case Kind::kCompressedHeapObject:
+       os << "compressed heap object: " << JSONEscaped(handle());
+       break;
++    case Kind::kTrustedHeapObject:
++      os << "trusted heap object: " << JSONEscaped(handle());
++      break;
+     case Kind::kRelocatableWasmCall:
+       os << "relocatable wasm call: 0x"
+          << reinterpret_cast<void*>(storage.integral);
+diff --git a/src/compiler/turboshaft/operations.h b/src/compiler/turboshaft/operations.h
+index c5e0bfd12b9..111840f9725 100644
+--- a/src/compiler/turboshaft/operations.h
++++ b/src/compiler/turboshaft/operations.h
+@@ -2484,6 +2484,7 @@ struct ConstantOp : FixedArityOperationT<0, ConstantOp> {
+     kExternal,
+     kHeapObject,
+     kCompressedHeapObject,
++    kTrustedHeapObject,
+     kRelocatableWasmCall,
+     kRelocatableWasmStubCall,
+     kRelocatableWasmCanonicalSignatureId
+@@ -2535,6 +2536,7 @@ struct ConstantOp : FixedArityOperationT<0, ConstantOp> {
+         return RegisterRepresentation::Float64();
+       case Kind::kExternal:
+       case Kind::kTaggedIndex:
++      case Kind::kTrustedHeapObject:
+       case Kind::kRelocatableWasmCall:
+       case Kind::kRelocatableWasmStubCall:
+         return RegisterRepresentation::WordPtr();
+@@ -2618,7 +2620,8 @@ struct ConstantOp : FixedArityOperationT<0, ConstantOp> {
+   }
+ 
+   Handle<i::HeapObject> handle() const {
+-    DCHECK(kind == Kind::kHeapObject || kind == Kind::kCompressedHeapObject);
++    DCHECK(kind == Kind::kHeapObject || kind == Kind::kCompressedHeapObject ||
++           kind == Kind::kTrustedHeapObject);
+     return storage.handle;
+   }
+ 
+@@ -2665,6 +2668,7 @@ struct ConstantOp : FixedArityOperationT<0, ConstantOp> {
+                                    : storage.external.raw());
+       case Kind::kHeapObject:
+       case Kind::kCompressedHeapObject:
++      case Kind::kTrustedHeapObject:
+         if (strategy == HashingStrategy::kMakeSnapshotStable) {
+           return HashWithOptions();
+         }
+@@ -2705,6 +2709,7 @@ struct ConstantOp : FixedArityOperationT<0, ConstantOp> {
+         return storage.external.raw() == other.storage.external.raw();
+       case Kind::kHeapObject:
+       case Kind::kCompressedHeapObject:
++      case Kind::kTrustedHeapObject:
+         return storage.handle.address() == other.storage.handle.address();
+     }
+   }
+diff --git a/src/compiler/turboshaft/recreate-schedule.cc b/src/compiler/turboshaft/recreate-schedule.cc
+index 57efad395fe..6808a72006c 100644
+--- a/src/compiler/turboshaft/recreate-schedule.cc
++++ b/src/compiler/turboshaft/recreate-schedule.cc
+@@ -1059,6 +1059,8 @@ Node* ScheduleBuilder::ProcessOperation(const ConstantOp& op) {
+       return AddNode(common.HeapConstant(op.handle()), {});
+     case ConstantOp::Kind::kCompressedHeapObject:
+       return AddNode(common.CompressedHeapConstant(op.handle()), {});
++    case ConstantOp::Kind::kTrustedHeapObject:
++      return AddNode(common.TrustedHeapConstant(op.handle()), {});
+     case ConstantOp::Kind::kNumber:
+       return AddNode(common.NumberConstant(op.number().get_scalar()), {});
+     case ConstantOp::Kind::kTaggedIndex:
+diff --git a/src/compiler/typer.cc b/src/compiler/typer.cc
+index 5b896d3800d..0e8c45aecc5 100644
+--- a/src/compiler/typer.cc
++++ b/src/compiler/typer.cc
+@@ -912,6 +912,10 @@ Type Typer::Visitor::TypeHeapConstant(Node* node) {
+ 
+ Type Typer::Visitor::TypeCompressedHeapConstant(Node* node) { UNREACHABLE(); }
+ 
++Type Typer::Visitor::TypeTrustedHeapConstant(Node* node) {
++  return TypeConstant(HeapConstantOf(node->op()));
++}
++
+ Type Typer::Visitor::TypeExternalConstant(Node* node) {
+   return Type::ExternalPointer();
+ }
+diff --git a/src/compiler/verifier.cc b/src/compiler/verifier.cc
+index df45225301f..aa7430cd3d7 100644
+--- a/src/compiler/verifier.cc
++++ b/src/compiler/verifier.cc
+@@ -458,6 +458,7 @@ void Verifier::Visitor::Check(Node* node, const AllNodes& all) {
+       break;
+     case IrOpcode::kHeapConstant:
+     case IrOpcode::kCompressedHeapConstant:
++    case IrOpcode::kTrustedHeapConstant:
+       // Constants have no inputs.
+       CHECK_EQ(0, input_count);
+       CheckTypeIs(node, Type::Any());
+diff --git a/test/mjsunit/regress/regress-355683663.js b/test/mjsunit/regress/regress-355683663.js
+new file mode 100644
+index 00000000000..397ca4ba7fe
+--- /dev/null
++++ b/test/mjsunit/regress/regress-355683663.js
+@@ -0,0 +1,31 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax
++
++function foo() {
++    const v5 = false;
++    const o6 = {
++    };
++    const o7 = {
++    };
++    o7.b = v5;
++    const v8 = /7sQa[bc]d\p{Nd}/msu;
++    Symbol.a = Symbol;
++    const o10 = {
++    };
++    for (const v11 in Symbol) {
++        o10[v11] = 2062;
++        v8.b = /f/yvms;
++        function f13() {
++            return v8;
++        }
++    }
++}
++
++%PrepareFunctionForOptimization(foo);
++foo();
++foo();
++%OptimizeFunctionOnNextCall(foo);
++foo();

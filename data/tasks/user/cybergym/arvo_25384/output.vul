@@ -1,0 +1,27 @@
+Accepting input from '/tmp/poc'
+Usage for fuzzing: honggfuzz -P [flags] -- /out/php-fuzz-execute
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x7f4878cc0800 (pc 0x000000b3b15b bp 0x7ffe9b628690 sp 0x7ffe9b628670 T0)
+==7==The signal is caused by a READ memory access.
+SCARINESS: 20 (wild-addr-read)
+    #0 0xb3b15b in zend_gc_delref /src/php-src/Zend/zend_types.h:1164:2
+    #1 0xb3b0c5 in i_zval_ptr_dtor /src/php-src/Zend/zend_variables.h:43:8
+    #2 0xb2f3e6 in zend_unclean_zval_ptr_dtor /src/php-src/Zend/zend_execute_API.c:213:2
+    #3 0xba055a in _zend_hash_del_el_ex /src/php-src/Zend/zend_hash.c:1330:3
+    #4 0xb9fa62 in _zend_hash_del_el /src/php-src/Zend/zend_hash.c:1353:2
+    #5 0xba4282 in zend_hash_graceful_reverse_destroy /src/php-src/Zend/zend_hash.c:1807:3
+    #6 0xb2f7f7 in shutdown_executor /src/php-src/Zend/zend_execute_API.c:278:3
+    #7 0xb691bb in zend_deactivate /src/php-src/Zend/zend.c:1229:2
+    #8 0xa12c2b in php_request_shutdown /src/php-src/main/main.c:1813:2
+    #9 0xd92c78 in fuzzer_request_shutdown /src/php-src/sapi/fuzzer/fuzzer-sapi.c:192:2
+    #10 0xd93295 in fuzzer_do_request_from_buffer /src/php-src/sapi/fuzzer/fuzzer-sapi.c:263:2
+    #11 0xd92869 in LLVMFuzzerTestOneInput /src/php-src/sapi/fuzzer/fuzzer-execute.c:57:2
+    #12 0xe2a21b in main (/out/php-fuzz-execute+0xe2a21b)
+    #13 0x7f4883ba583f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #14 0x444bd8 in _start (/out/php-fuzz-execute+0x444bd8)
+
+DEDUP_TOKEN: zend_gc_delref--i_zval_ptr_dtor--zend_unclean_zval_ptr_dtor
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/php-src/Zend/zend_types.h:1164:2 in zend_gc_delref
+==7==ABORTING

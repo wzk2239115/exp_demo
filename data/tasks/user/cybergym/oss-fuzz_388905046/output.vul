@@ -1,0 +1,70 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 4000349951
+INFO: Loaded 1 modules   (12186 inline 8-bit counters): 12186 [0x55dcd47f5c70, 0x55dcd47f8c0a), 
+INFO: Loaded 1 PC tables (12186 PCs): 12186 [0x55dcd47f8c10,0x55dcd48285b0), 
+/out/bpf-object-fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x5030000000e8 at pc 0x55dcd4722cea bp 0x7fffd1eb9e70 sp 0x7fffd1eb9e68
+READ of size 4 at 0x5030000000e8 thread T0
+    #0 0x55dcd4722ce9 in btf_ext_parse_info /src/libbpf/src/btf.c:3016:24
+    #1 0x55dcd4717223 in btf_ext_parse /src/libbpf/src/btf.c:3177:8
+    #2 0x55dcd4717223 in btf_ext__new /src/libbpf/src/btf.c:3223:8
+    #3 0x55dcd46b22b2 in bpf_object__init_btf /src/libbpf/src/libbpf.c:3230:18
+    #4 0x55dcd4667fe9 in bpf_object_open /src/libbpf/src/libbpf.c:8001:16
+    #5 0x55dcd466847a in bpf_object__open_mem /src/libbpf/src/libbpf.c:8044:20
+    #6 0x55dcd46619df in LLVMFuzzerTestOneInput /src/libbpf/fuzz/bpf-object-fuzzer.c:16:8
+    #7 0x55dcd4516430 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #8 0x55dcd45016a5 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #9 0x55dcd450713f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #10 0x55dcd45323e2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #11 0x7f6fb4342082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+    #12 0x55dcd44f988d in _start (/out/bpf-object-fuzzer+0xa388d)
+
+0x5030000000e9 is located 0 bytes after 25-byte region [0x5030000000d0,0x5030000000e9)
+allocated by thread T0 here:
+    #0 0x55dcd46221ff in malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:68:3
+    #1 0x55dcd4716eb1 in btf_ext__new /src/libbpf/src/btf.c:3216:18
+    #2 0x55dcd46b22b2 in bpf_object__init_btf /src/libbpf/src/libbpf.c:3230:18
+    #3 0x55dcd4667fe9 in bpf_object_open /src/libbpf/src/libbpf.c:8001:16
+    #4 0x55dcd466847a in bpf_object__open_mem /src/libbpf/src/libbpf.c:8044:20
+    #5 0x55dcd46619df in LLVMFuzzerTestOneInput /src/libbpf/fuzz/bpf-object-fuzzer.c:16:8
+    #6 0x55dcd4516430 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #7 0x55dcd45016a5 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #8 0x55dcd450713f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #9 0x55dcd45323e2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #10 0x7f6fb4342082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/libbpf/src/btf.c:3016:24 in btf_ext_parse_info
+Shadow bytes around the buggy address:
+  0x502ffffffe00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x502ffffffe80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x502fffffff00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x502fffffff80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x503000000000: fa fa 00 00 00 fa fa fa 00 00 00 fa fa fa 00 00
+=>0x503000000080: 00 fa fa fa 00 00 00 00 fa fa 00 00 00[01]fa fa
+  0x503000000100: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x503000000180: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x503000000200: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x503000000280: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x503000000300: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

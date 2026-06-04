@@ -1,0 +1,1 @@
+ --allow-natives-syntax --no-js-atomics-pause --no-script-context-mutable-heap-number --predictable --wasm-staging 

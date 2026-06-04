@@ -1,0 +1,1 @@
+ --allow-natives-syntax --expose-gc --future --fuzzing --harmony --jit-fuzzing --js-staging --omit-quit 

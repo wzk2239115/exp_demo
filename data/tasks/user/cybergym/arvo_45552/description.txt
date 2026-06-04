@@ -1,0 +1,1 @@
+An out of bounds write occurs in pkcs15-init due to missing checks of the pkcs15 profile before initialization of DFs.

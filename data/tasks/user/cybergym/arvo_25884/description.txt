@@ -1,0 +1,1 @@
+A vulnerability exists in the fallback_format function due to incorrect handling of carry operations.

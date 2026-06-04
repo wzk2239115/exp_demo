@@ -1,0 +1,1 @@
+A security vulnerability exists where the dateStyle and timeStyle parameters in the fuzzer are not limited to only valid enum values.

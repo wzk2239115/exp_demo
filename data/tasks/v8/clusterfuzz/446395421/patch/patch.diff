@@ -1,0 +1,38 @@
+diff --git a/src/compiler/node-properties.cc b/src/compiler/node-properties.cc
+index 388df00b4e7..23bdbc29e21 100644
+--- a/src/compiler/node-properties.cc
++++ b/src/compiler/node-properties.cc
+@@ -409,6 +409,11 @@ NodeProperties::InferMapsResult NodeProperties::InferMapsUnsafe(
+   HeapObjectMatcher m(receiver);
+   if (m.HasResolvedValue()) {
+     HeapObjectRef ref = m.Ref(broker);
++    if (ref.IsTheHole()) {
++      // Holes should never make it past hole checks, so they will never
++      // provide helpful map inference.
++      return kNoMaps;
++    }
+     // We don't use ICs for the Array.prototype and the Object.prototype
+     // because the runtime has to be able to intercept them properly, so
+     // we better make sure that TurboFan doesn't outsmart the system here
+diff --git a/test/mjsunit/regress/regress-446395421.js b/test/mjsunit/regress/regress-446395421.js
+new file mode 100644
+index 00000000000..18ec45adf36
+--- /dev/null
++++ b/test/mjsunit/regress/regress-446395421.js
+@@ -0,0 +1,16 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --allow-natives-syntax
++
++function foo() {
++  for (let x in x) {
++  }
++}
++
++%PrepareFunctionForOptimization(foo);
++assertThrows(()=>{ foo(); });
++assertThrows(()=>{ foo(); });
++%OptimizeFunctionOnNextCall(foo);
++assertThrows(()=>{ foo(); });

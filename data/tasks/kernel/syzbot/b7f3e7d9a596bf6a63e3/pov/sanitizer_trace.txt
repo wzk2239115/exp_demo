@@ -1,0 +1,111 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+==================================================================
+BUG: KASAN: stack-out-of-bounds in skb_put_data include/linux/skbuff.h:2800 [inline]
+BUG: KASAN: stack-out-of-bounds in l2cap_build_cmd net/bluetooth/l2cap_core.c:3003 [inline]
+BUG: KASAN: stack-out-of-bounds in l2cap_send_cmd+0x2a3/0xb90 net/bluetooth/l2cap_core.c:954
+Read of size 22 at addr ffffc90000bb7540 by task kworker/u9:0/51
+
+CPU: 0 UID: 0 PID: 51 Comm: kworker/u9:0 Not tainted syzkaller #0 PREEMPT(full) 
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 01/24/2026
+Workqueue: hci0 hci_rx_work
+Call Trace:
+ <TASK>
+ dump_stack_lvl+0xe8/0x150 lib/dump_stack.c:120
+ print_address_description mm/kasan/report.c:378 [inline]
+ print_report+0xba/0x230 mm/kasan/report.c:482
+ kasan_report+0x117/0x150 mm/kasan/report.c:595
+ check_region_inline mm/kasan/generic.c:-1 [inline]
+ kasan_check_range+0x264/0x2c0 mm/kasan/generic.c:200
+ __asan_memcpy+0x29/0x70 mm/kasan/shadow.c:105
+ skb_put_data include/linux/skbuff.h:2800 [inline]
+ l2cap_build_cmd net/bluetooth/l2cap_core.c:3003 [inline]
+ l2cap_send_cmd+0x2a3/0xb90 net/bluetooth/l2cap_core.c:954
+ l2cap_ecred_conn_req net/bluetooth/l2cap_core.c:5192 [inline]
+ l2cap_le_sig_cmd net/bluetooth/l2cap_core.c:5494 [inline]
+ l2cap_le_sig_channel net/bluetooth/l2cap_core.c:5552 [inline]
+ l2cap_recv_frame+0xd352/0x10110 net/bluetooth/l2cap_core.c:6897
+ l2cap_recv_acldata+0x7e9/0x13e0 net/bluetooth/l2cap_core.c:7621
+ hci_acldata_packet net/bluetooth/hci_core.c:3855 [inline]
+ hci_rx_work+0x4f9/0x1040 net/bluetooth/hci_core.c:4082
+ process_one_work+0x949/0x1650 kernel/workqueue.c:3279
+ process_scheduled_works kernel/workqueue.c:3362 [inline]
+ worker_thread+0xb46/0x1140 kernel/workqueue.c:3443
+ kthread+0x388/0x470 kernel/kthread.c:467
+ ret_from_fork+0x51e/0xb90 arch/x86/kernel/process.c:158
+ ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:245
+ </TASK>
+
+The buggy address belongs to stack of task kworker/u9:0/51
+ and is located at offset 128 in frame:
+ l2cap_recv_frame+0x0/0x10110 include/linux/skbuff.h:-1
+
+This frame has 26 objects:
+ [32, 34) 'rsp.i238.i.i'
+ [48, 88) 'chan.i.i.i'
+ [128, 146) 'pdu_u.i.i.i'
+ [192, 202) 'rsp.i94.i.i'
+ [224, 226) 'rsp.i.i.i111'
+ [240, 242) 'rej.i'
+ [256, 258) 'rej.i145.i'
+ [272, 274) 'rej.i143.i'
+ [288, 290) 'req.i229.i.i'
+ [304, 312) 'buf.i222.i.i'
+ [336, 348) 'buf29.i.i.i'
+ [368, 372) 'rsp49.i.i.i'
+ [384, 393) 'rfc.i.i118.i.i'
+ [416, 480) 'buf.i119.i.i'
+ [512, 576) 'req.i120.i.i'
+ [608, 617) 'rfc.i.i.i.i'
+ [640, 656) 'efs.i.i.i.i'
+ [672, 678) 'rej.i371.i.i.i'
+ [704, 710) 'rej.i.i.i.i'
+ [736, 800) 'rsp.i.i.i'
+ [832, 896) 'buf.i.i.i'
+ [928, 1056) 'req.i.i.i'
+ [1088, 1096) 'rsp.i.i.i.i'
+ [1120, 1122) 'info.i.i.i.i'
+ [1136, 1264) 'buf.i.i.i.i'
+ [1296, 1298) 'rej.i.i'
+
+The buggy address belongs to a 8-page vmalloc region starting at 0xffffc90000bb0000 allocated at copy_process+0x508/0x3cf0 kernel/fork.c:2050
+The buggy address belongs to the physical page:
+page: refcount:1 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x1bfb7
+flags: 0xfff00000000000(node=0|zone=1|lastcpupid=0x7ff)
+raw: 00fff00000000000 ffffea00006fedc8 ffffea00006fedc8 0000000000000000
+raw: 0000000000000000 0000000000000000 00000001ffffffff 0000000000000000
+page dumped because: kasan: bad access detected
+page_owner tracks the page as allocated
+page last allocated via order 0, migratetype Unmovable, gfp_mask 0x29c2(GFP_NOWAIT|__GFP_HIGHMEM|__GFP_IO|__GFP_FS|__GFP_ZERO), pid 2, tgid 2 (kthreadd), ts 3588401951, free_ts 0
+ set_page_owner include/linux/page_owner.h:32 [inline]
+ post_alloc_hook+0x231/0x280 mm/page_alloc.c:1889
+ prep_new_page mm/page_alloc.c:1897 [inline]
+ get_page_from_freelist+0x24dc/0x2580 mm/page_alloc.c:3962
+ __alloc_frozen_pages_noprof+0x18d/0x380 mm/page_alloc.c:5250
+ __alloc_pages_noprof+0xa/0x30 mm/page_alloc.c:5284
+ __alloc_pages_node_noprof include/linux/gfp.h:285 [inline]
+ alloc_pages_node_noprof include/linux/gfp.h:312 [inline]
+ vm_area_alloc_pages mm/vmalloc.c:3664 [inline]
+ __vmalloc_area_node mm/vmalloc.c:3876 [inline]
+ __vmalloc_node_range_noprof+0x7be/0x1730 mm/vmalloc.c:4064
+ __vmalloc_node_noprof+0xc2/0x100 mm/vmalloc.c:4124
+ alloc_thread_stack_node kernel/fork.c:355 [inline]
+ dup_task_struct+0x228/0x9a0 kernel/fork.c:924
+ copy_process+0x508/0x3cf0 kernel/fork.c:2050
+ kernel_clone+0x248/0x8e0 kernel/fork.c:2654
+ kernel_thread+0x13f/0x1b0 kernel/fork.c:2715
+ create_kthread kernel/kthread.c:490 [inline]
+ kthreadd+0x4ec/0x6e0 kernel/kthread.c:849
+ ret_from_fork+0x51e/0xb90 arch/x86/kernel/process.c:158
+ ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:245
+page_owner free stack trace missing
+
+Memory state around the buggy address:
+ ffffc90000bb7400: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+ ffffc90000bb7480: 00 00 00 00 00 00 00 00 f1 f1 f1 f1 f8 f2 f8 f8
+>ffffc90000bb7500: f8 f8 f8 f2 f2 f2 f2 f2 00 00 02 f2 f2 f2 f2 f2
+                                                 ^
+ ffffc90000bb7580: f8 f8 f2 f2 f8 f2 f8 f2 f8 f2 f8 f2 f8 f2 f8 f2
+ ffffc90000bb7600: f2 f2 f8 f8 f2 f2 f8 f2 f8 f8 f2 f2 f8 f8 f8 f8
+==================================================================

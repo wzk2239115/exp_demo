@@ -1,0 +1,71 @@
+INFO: Seed: 3184892863
+INFO: Loaded 1 modules   (12555 guards): 12555 [0xad3b50, 0xadff7c), 
+/out/TiffDecoderFuzzer-SrwDecoder: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: use-after-poison on address 0x613000000088 at pc 0x0000006990ba bp 0x7ffd24d124f0 sp 0x7ffd24d124e8
+READ of size 2 at 0x613000000088 thread T0
+SCARINESS: 24 (2-byte-read-use-after-poison)
+    #0 0x6990b9 in rawspeed::SamsungV0Decompressor::decompressStrip(unsigned int, rawspeed::ByteStream const&) const /src/librawspeed/src/librawspeed/decompressors/SamsungV0Decompressor.cpp:184:24
+    #1 0x69475f in rawspeed::SamsungV0Decompressor::decompress() const /src/librawspeed/src/librawspeed/decompressors/SamsungV0Decompressor.cpp:101:5
+    #2 0x6176c1 in rawspeed::SrwDecoder::decodeRawInternal() /src/librawspeed/src/librawspeed/decoders/SrwDecoder.cpp:86:8
+    #3 0x60495c in rawspeed::RawDecoder::decodeRaw() /src/librawspeed/src/librawspeed/decoders/RawDecoder.cpp:301:20
+    #4 0x563cca in LLVMFuzzerTestOneInput /src/librawspeed/fuzz/librawspeed/decoders/TiffDecoders/main.cpp:81:14
+    #5 0x70d1ce in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:463:13
+    #6 0x6ece75 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:273:6
+    #7 0x6f810f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:689:9
+    #8 0x6ec518 in main /src/libfuzzer/FuzzerMain.cpp:20:10
+    #9 0x7f63e069583f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #10 0x467988 in _start (/out/TiffDecoderFuzzer-SrwDecoder+0x467988)
+
+DEDUP_TOKEN: rawspeed::SamsungV0Decompressor::decompressStrip(unsigned int, rawspeed::ByteStream const&) const--rawspeed::SamsungV0Decompressor::decompress() const--rawspeed::SrwDecoder::decodeRawInternal()
+0x613000000088 is located 72 bytes inside of 336-byte region [0x613000000040,0x613000000190)
+allocated by thread T0 here:
+    #0 0x529650 in __interceptor_posix_memalign /src/llvm/projects/compiler-rt/lib/asan/asan_malloc_linux.cc:157
+    #1 0x62c0f6 in rawspeed::alignedMalloc(unsigned long, unsigned long) /src/librawspeed/src/librawspeed/common/Memory.cpp:62:12
+    #2 0x566619 in unsigned char* rawspeed::alignedMalloc<unsigned char, 16ul>(unsigned long) /src/librawspeed/src/librawspeed/common/Memory.h:60:31
+    #3 0x566619 in unsigned char* rawspeed::alignedMallocArray<unsigned char, 16ul, false>(unsigned long, unsigned long) /src/librawspeed/src/librawspeed/common/Memory.h:78
+    #4 0x566619 in rawspeed::RawImageData::createData() /src/librawspeed/src/librawspeed/common/RawImage.cpp:94
+    #5 0x6176a8 in rawspeed::SrwDecoder::decodeRawInternal() /src/librawspeed/src/librawspeed/decoders/SrwDecoder.cpp:84:11
+    #6 0x60495c in rawspeed::RawDecoder::decodeRaw() /src/librawspeed/src/librawspeed/decoders/RawDecoder.cpp:301:20
+    #7 0x563cca in LLVMFuzzerTestOneInput /src/librawspeed/fuzz/librawspeed/decoders/TiffDecoders/main.cpp:81:14
+    #8 0x70d1ce in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:463:13
+    #9 0x6ece75 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:273:6
+    #10 0x6f810f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:689:9
+    #11 0x6ec518 in main /src/libfuzzer/FuzzerMain.cpp:20:10
+    #12 0x7f63e069583f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: __interceptor_posix_memalign--rawspeed::alignedMalloc(unsigned long, unsigned long)--unsigned char* rawspeed::alignedMalloc<unsigned char, 16ul>(unsigned long)
+SUMMARY: AddressSanitizer: use-after-poison /src/librawspeed/src/librawspeed/decompressors/SamsungV0Decompressor.cpp:184:24 in rawspeed::SamsungV0Decompressor::decompressStrip(unsigned int, rawspeed::ByteStream const&) const
+Shadow bytes around the buggy address:
+  0x0c267fff7fc0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c267fff7fd0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c267fff7fe0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c267fff7ff0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c267fff8000: fa fa fa fa fa fa fa fa 00 00 00 00 00 00 00 00
+=>0x0c267fff8010: 06[f7]f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+  0x0c267fff8020: f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+  0x0c267fff8030: f7 f7 fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c267fff8040: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c267fff8050: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c267fff8060: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

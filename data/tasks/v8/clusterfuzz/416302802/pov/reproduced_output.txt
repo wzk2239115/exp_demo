@@ -1,0 +1,12 @@
+Received signal 11 SEGV_ACCERR 105fffffffff
+
+==== C stack trace ===============================
+
+d8(v8::base::debug::(anonymous namespace)::StackDumpSignalHandler(int, siginfo_t*, void*) ./../../src/base/debug/stack_trace_posix.cc:390:32)[0x563115ba7487]
+/lib/x86_64-linux-gnu/libc.so.6(+0x45330)[0x7f054185a330]
+d8(bool v8::internal::ArrayBufferFromHex<unsigned char const>(v8::base::Vector<unsigned char const> const&, bool, unsigned char*, unsigned long) ./../../third_party/libc++/src/include/__atomic/atomic_ref.h:131:5)[0x5631131292cb]
+d8(v8::internal::Builtin_Impl_Uint8ArrayPrototypeSetFromHex(v8::internal::BuiltinArguments, v8::internal::Isolate*) ./../../src/builtins/builtins-typed-array.cc:0:16)[0x56311261d1d8]
+d8(v8::internal::Builtin_Uint8ArrayPrototypeSetFromHex(int, unsigned long*, v8::internal::Isolate*) ./../../src/builtins/builtins-typed-array.cc:927:1)[0x56311261c8fd]
+d8(Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc:0:0)[0x56311528c13d]
+[end of stack trace]
+timeout: the monitored command dumped core

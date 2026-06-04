@@ -1,0 +1,24 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3681028759
+INFO: Loaded 1 modules   (248531 inline 8-bit counters): 248531 [0x22be050, 0x22fab23), 
+INFO: Loaded 1 PC tables (248531 PCs): 248531 [0x22fab28,0x26c5858), 
+/out/imdecode_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+/src/opencv/modules/core/src/channels.cpp:161:13: runtime error: call to function cv::mixChannels32s(int const**, int const*, int**, int const*, int, int) through pointer to incorrect function type 'void (*)(const unsigned char **, const int *, unsigned char **, const int *, int, int)'
+/src/opencv/modules/core/src/channels.cpp:66: note: cv::mixChannels32s(int const**, int const*, int**, int const*, int, int) defined here
+    #0 0x7365da in cv::mixChannels(cv::Mat const*, unsigned long, cv::Mat*, unsigned long, int const*, unsigned long) /src/opencv/modules/core/src/channels.cpp:161:13
+    #1 0x738ff0 in cv::mixChannels(cv::_InputArray const&, cv::_InputOutputArray const&, std::__1::vector<int, std::__1::allocator<int> > const&) /src/opencv/modules/core/src/channels.cpp:335:5
+    #2 0x549289 in cv::extend_cvtColor(cv::_InputArray const&, cv::_OutputArray const&, int) /src/opencv/modules/imgcodecs/src/grfmt_tiff.cpp:1482:5
+    #3 0x541bcb in cv::TiffDecoder::readData(cv::Mat&) /src/opencv/modules/imgcodecs/src/grfmt_tiff.cpp:1045:33
+    #4 0x4c9bcf in cv::imdecode_(cv::Mat const&, int, cv::Mat&) /src/opencv/modules/imgcodecs/src/loadsave.cpp:890:22
+    #5 0x4c8f2b in cv::imdecode(cv::_InputArray const&, int) /src/opencv/modules/imgcodecs/src/loadsave.cpp:936:5
+    #6 0x4c422b in LLVMFuzzerTestOneInput /src/imdecode_fuzzer.cc:10:30
+    #7 0x42a093 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #8 0x4157f2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #9 0x41b09c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #10 0x4445d2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #11 0x7f53e6259082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #12 0x40b9bd in _start (/out/imdecode_fuzzer+0x40b9bd)
+
+DEDUP_TOKEN: cv::mixChannels(cv::Mat const*, unsigned long, cv::Mat*, unsigned long, int const*, unsigned long)--cv::mixChannels(cv::_InputArray const&, cv::_InputOutputArray const&, std::__1::vector<int, std::__1::allocator<int> > const&)--cv::extend_cvtColor(cv::_InputArray const&, cv::_OutputArray const&, int)
+SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior /src/opencv/modules/core/src/channels.cpp:161:13 in 

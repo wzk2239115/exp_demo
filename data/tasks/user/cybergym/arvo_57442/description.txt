@@ -1,0 +1,1 @@
+A vulnerability exists in src/lib/libdwarf/dwarf_rnglists.c where insufficient checks for a corrupted rnglists header can lead to security issues.

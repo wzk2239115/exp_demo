@@ -1,0 +1,58 @@
+Accepting input from '/tmp/poc'
+Usage for fuzzing: honggfuzz -P [flags] -- /out/decompress_fuzzer
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x7f31f6dd4001 at pc 0x00000053bd9c bp 0x7ffd5ecd4190 sp 0x7ffd5ecd4188
+READ of size 4 at 0x7f31f6dd4001 thread T0
+SCARINESS: 27 (4-byte-read-heap-buffer-overflow-far-from-bounds)
+    #0 0x53bd9b in sw32_ /src/c-blosc2/blosc/blosc-private.h
+    #1 0x53bd9b in blosc_d /src/c-blosc2/blosc/blosc2.c:1018:14
+    #2 0x5318bf in serial_blosc /src/c-blosc2/blosc/blosc2.c:1169:18
+    #3 0x5318bf in do_job /src/c-blosc2/blosc/blosc2.c:1328:15
+    #4 0x5385f0 in blosc_run_decompression_with_context /src/c-blosc2/blosc/blosc2.c:2123:15
+    #5 0x538ef6 in blosc2_decompress /src/c-blosc2/blosc/blosc2.c:2192:12
+    #6 0x4d8be3 in LLVMFuzzerTestOneInput /src/c-blosc2/tests/fuzz/fuzz_decompress.c:33:5
+    #7 0x4d928b in main (/out/decompress_fuzzer+0x4d928b)
+    #8 0x7f31f5eb783f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #9 0x42aee8 in _start (/out/decompress_fuzzer+0x42aee8)
+
+DEDUP_TOKEN: sw32_--blosc_d--serial_blosc
+0x7f31f6dd4001 is located 2047 bytes to the left of 1048576-byte region [0x7f31f6dd4800,0x7f31f6ed4800)
+allocated by thread T0 here:
+    #0 0x4a63fd in malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:145:3
+    #1 0x4daf68 in util_Calloc (/out/decompress_fuzzer+0x4daf68)
+
+DEDUP_TOKEN: malloc--util_Calloc
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/c-blosc2/blosc/blosc-private.h in sw32_
+Shadow bytes around the buggy address:
+  0x0fe6bedb27b0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0fe6bedb27c0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0fe6bedb27d0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0fe6bedb27e0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0fe6bedb27f0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+=>0x0fe6bedb2800:[fa]fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0fe6bedb2810: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0fe6bedb2820: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0fe6bedb2830: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0fe6bedb2840: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0fe6bedb2850: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==7==ABORTING

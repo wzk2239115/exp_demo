@@ -1,0 +1,1 @@
+ --allow-natives-syntax --bindTo=172.17.201.47:1337 --expose-externalize-string --expose-gc --future --fuzzing --harmony --instanceType=root --jit-fuzzing --jobs=56 --js-staging --omit-quit --profile=v8 --resume --storagePath=/home/alan/fuzzilli_corpus --wasm-staging 

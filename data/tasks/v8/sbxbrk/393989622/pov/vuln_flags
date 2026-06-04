@@ -1,0 +1,1 @@
+--single-threaded --sandbox-fuzzing --allow-natives-syntax --expose-gc

@@ -1,0 +1,1 @@
+An index out-of-bounds vulnerability exists in the handling of HEVC reference pictures when processing broken streams.

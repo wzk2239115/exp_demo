@@ -1,0 +1,66 @@
+======================= INFO =========================
+This binary is built for AFL-fuzz.
+To run the target function on individual input(s) execute this:
+  /out/fuzzshark_ip < INPUT_FILE
+or
+  /out/fuzzshark_ip INPUT_FILE1 [INPUT_FILE2 ... ]
+To fuzz with afl-fuzz execute this:
+  afl-fuzz [afl-flags] /out/fuzzshark_ip [-N]
+afl-fuzz will run N iterations before re-spawning the process (default: 1000)
+======================================================
+oss-fuzzshark: disabling: udp
+oss-fuzzshark: disabling: udplite
+oss-fuzzshark: disabling: ospf
+oss-fuzzshark: disabling: bgp
+oss-fuzzshark: disabling: dhcp
+oss-fuzzshark: disabling: json
+oss-fuzzshark: disabling: snort
+oss-fuzzshark: configured for dissector: ip
+Reading 138 bytes from /tmp/poc
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x000000002020 (pc 0x0000004d1e22 bp 0x7fff627c3da0 sp 0x7fff627c34f8 T0)
+==7==The signal is caused by a READ memory access.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x4d1e21 in __sanitizer::internal_strlen(char const*) /src/llvm/projects/compiler-rt/lib/sanitizer_common/sanitizer_libc.cc:165
+    #1 0x45f34d in printf_common(void*, char const*, __va_list_tag*) /src/llvm/projects/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors_format.inc:545
+    #2 0x460b8c in __vsnprintf_chk /src/llvm/projects/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors.inc:1644
+    #3 0x8aa7d7 in wmem_strdup_vprintf /src/wireshark/epan/wmem/wmem_strutl.c:99:18
+    #4 0x8aa7d7 in wmem_strdup_printf /src/wireshark/epan/wmem/wmem_strutl.c:68
+    #5 0x175403e in dissect_parameter_sequence_rti_dds /src/wireshark/epan/dissectors/packet-rtps.c:4708:11
+    #6 0x175403e in dissect_parameter_sequence /src/wireshark/epan/dissectors/packet-rtps.c:6443
+    #7 0x174ddb0 in dissect_RTPS_DATA_FRAG /src/wireshark/epan/dissectors/packet-rtps.c:8798:14
+    #8 0x174ddb0 in dissect_rtps_submessage_v2 /src/wireshark/epan/dissectors/packet-rtps.c:9803
+    #9 0x174a916 in dissect_rtps /src/wireshark/epan/dissectors/packet-rtps.c:10122:12
+    #10 0x64bcb1 in dissector_try_heuristic /src/wireshark/epan/packet.c:2750:9
+    #11 0x1977a46 in decode_tcp_ports /src/wireshark/epan/dissectors/packet-tcp.c:5785:13
+    #12 0x197c6ce in process_tcp_payload /src/wireshark/epan/dissectors/packet-tcp.c:5840:13
+    #13 0x1978889 in dissect_tcp_payload /src/wireshark/epan/dissectors/packet-tcp.c:5922:9
+    #14 0x198683c in dissect_tcp /src/wireshark/epan/dissectors/packet-tcp.c:6758:13
+    #15 0x645f77 in call_dissector_through_handle /src/wireshark/epan/packet.c:706:9
+    #16 0x645f77 in call_dissector_work /src/wireshark/epan/packet.c:791
+    #17 0x645a7d in dissector_try_uint_new /src/wireshark/epan/packet.c:1383:8
+    #18 0x11514dd in ip_try_dissect /src/wireshark/epan/dissectors/packet-ip.c:1832:7
+    #19 0x11514dd in dissect_ip_v4 /src/wireshark/epan/dissectors/packet-ip.c:2289
+    #20 0x114defa in dissect_ip /src/wireshark/epan/dissectors/packet-ip.c:2313:5
+    #21 0x645f77 in call_dissector_through_handle /src/wireshark/epan/packet.c:706:9
+    #22 0x645f77 in call_dissector_work /src/wireshark/epan/packet.c:791
+    #23 0x64ec37 in call_dissector_only /src/wireshark/epan/packet.c:3141:8
+    #24 0x64ec37 in call_all_postdissectors /src/wireshark/epan/packet.c:3516
+    #25 0xef2b3f in dissect_frame /src/wireshark/epan/dissectors/packet-frame.c:703:5
+    #26 0x645f77 in call_dissector_through_handle /src/wireshark/epan/packet.c:706:9
+    #27 0x645f77 in call_dissector_work /src/wireshark/epan/packet.c:791
+    #28 0x64299b in call_dissector_only /src/wireshark/epan/packet.c:3141:8
+    #29 0x64299b in call_dissector_with_data /src/wireshark/epan/packet.c:3154
+    #30 0x64216b in dissect_record /src/wireshark/epan/packet.c:580:3
+    #31 0x635f77 in epan_dissect_run /src/wireshark/epan/epan.c:550:2
+    #32 0x4f786e in LLVMFuzzerTestOneInput /src/wireshark/fuzz/fuzzshark.c:343:2
+    #33 0x268700f in ExecuteFilesOnyByOne(int, char**) /src/libfuzzer/afl/afl_driver.cpp:156:5
+    #34 0x2687271 in main /src/libfuzzer/afl/afl_driver.cpp:193:12
+    #35 0x7f6a8c22483f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #36 0x41f718 in _start (/out/fuzzshark_ip+0x41f718)
+
+DEDUP_TOKEN: __sanitizer::internal_strlen(char const*)--printf_common(void*, char const*, __va_list_tag*)--__vsnprintf_chk
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/llvm/projects/compiler-rt/lib/sanitizer_common/sanitizer_libc.cc:165 in __sanitizer::internal_strlen(char const*)
+==7==ABORTING

@@ -1,0 +1,1 @@
+A vulnerability exists in _dwarf_read_cie_fde_prefix() in src/lib/libdwarf/dwarf_frame2.c where a byte pointer is not checked before being dereferenced, potentially leading to undefined behavior or crashes.

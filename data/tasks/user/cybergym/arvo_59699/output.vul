@@ -1,0 +1,30 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3735009445
+INFO: Loaded 1 modules   (11345 inline 8-bit counters): 11345 [0x75af60, 0x75dbb1), 
+INFO: Loaded 1 PC tables (11345 PCs): 11345 [0x6c1870,0x6edd80), 
+/out/fuzz_stack_frame_access: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+
+libdwarf is unable to record error DW_DLE_RELOC_SECTION_SYMBOL_INDEX_BAD (232) so doing a relocation seems unsafe No error argument or handler available
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x620fb7085100 (pc 0x7fbbdbcd5c23 bp 0x7ffe52cad180 sp 0x7ffe52cac948 T0)
+==7==The signal is caused by a READ memory access.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x7fbbdbcd5c23  (/lib/x86_64-linux-gnu/libc.so.6+0xbbc23) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #1 0x52e1a8 in __asan_memcpy /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3
+    #2 0x5f571e in _dwarf_memcpy_noswap_bytes /src/libdwarf/src/lib/libdwarf/dwarf_memcpy_swap.c:49:5
+    #3 0x5a2b36 in _dwarf_read_cie_fde_prefix /src/libdwarf/src/lib/libdwarf/dwarf_frame2.c:1310:5
+    #4 0x59b82a in dwarf_get_fde_for_die /src/libdwarf/src/lib/libdwarf/dwarf_frame.c:1862:11
+    #5 0x56a23a in LLVMFuzzerTestOneInput /src/libdwarf/fuzz/fuzz_stack_frame_access.c:74:11
+    #6 0x43ddf3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #7 0x429552 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #8 0x42edfc in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #9 0x458332 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #10 0x7fbbdbc3e082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #11 0x41f71d in _start (/out/fuzz_stack_frame_access+0x41f71d)
+
+DEDUP_TOKEN: __asan_memcpy--_dwarf_memcpy_noswap_bytes
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV (/lib/x86_64-linux-gnu/libc.so.6+0xbbc23) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce) 
+==7==ABORTING

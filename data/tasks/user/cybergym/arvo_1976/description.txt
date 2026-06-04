@@ -1,0 +1,1 @@
+A type confusion vulnerability exists in xmlValidateOneNamespace due to code that casts xmlNsPtr to xmlAttrPtr. This issue arises from handling ID types on namespace declarations, which do not have practical use.

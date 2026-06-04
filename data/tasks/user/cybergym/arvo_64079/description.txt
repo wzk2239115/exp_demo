@@ -1,0 +1,1 @@
+A vulnerability exists in LibGfx/ICC where a `MultiLocalizedUnicodeTagData` object with incorrect length or offset fields can cause a buffer overflow during creation.

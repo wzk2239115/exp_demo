@@ -1,0 +1,20 @@
+
+
+#
+# Fatal error in ../../src/objects/js-function.cc, line 1021
+# Debug check failed: CanSubclassHaveInobjectProperties(instance_type).
+#
+#
+#
+#FailureMessage Object: 0x7ffcc3f4f450
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x55a139135993]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55a139134dad]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55a139119624]
+    out/debug/d8(+0x3e18055) [0x55a139119055]
+    d8(v8::internal::JSFunction::GetDerivedMap(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::Handle<v8::internal::JSReceiver>) ./../../src/objects/js-function.cc:0:3) [0x55a1367bb359]
+    d8(v8::internal::Builtin_Impl_AsyncDisposableStackConstructor(v8::internal::BuiltinArguments, v8::internal::Isolate*) ./../../src/builtins/builtins-async-disposable-stack.cc:141:27) [0x55a135de042d]
+    d8(v8::internal::Builtin_AsyncDisposableStackConstructor(int, unsigned long*, v8::internal::Isolate*) ./../../src/builtins/builtins-async-disposable-stack.cc:115:1) [0x55a135de003d]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc:0:0) [0x55a1388c38fd]
+timeout: the monitored command dumped core

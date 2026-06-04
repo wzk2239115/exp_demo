@@ -1,0 +1,32 @@
+V8 is running with experimental features enabled. Stability and security will suffer.
+
+
+#
+# Fatal error in ../../src/maglev/maglev-ir.h, line 6508
+# Debug check failed: use_count_ > 0 (0 vs. 0).
+#
+#
+#
+#FailureMessage Object: 0x7ffe5ad2ed70
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x5644e250a023]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x5644e250918d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x5644e24eee14]
+    out/debug/d8(+0x4782805) [0x5644e24ee805]
+    d8(void v8::internal::maglev::DeoptInfoVisitor<v8::internal::maglev::EagerDeoptInfo>::VisitSingleFrame<false, v8::internal::maglev::SweepIdentityNodes::Process(v8::internal::maglev::NodeBase*, v8::internal::maglev::ProcessingState const&)::'lambda0'(v8::internal::maglev::ValueNode*)&>(v8::internal::maglev::DeoptFrame&, v8::internal::maglev::SweepIdentityNodes::Process(v8::internal::maglev::NodeBase*, v8::internal::maglev::ProcessingState const&)::'lambda0'(v8::internal::maglev::ValueNode*)&)::'lambda'(v8::internal::maglev::ValueNode*&)::operator()(v8::internal::maglev::ValueNode*&) const ./../../src/maglev/maglev-ir.h:0:3) [0x5644dfd7c613]
+    d8(void v8::internal::maglev::DeoptInfoVisitor<v8::internal::maglev::EagerDeoptInfo>::VisitSingleFrame<false, v8::internal::maglev::SweepIdentityNodes::Process(v8::internal::maglev::NodeBase*, v8::internal::maglev::ProcessingState const&)::'lambda0'(v8::internal::maglev::ValueNode*)&>(v8::internal::maglev::DeoptFrame&, v8::internal::maglev::SweepIdentityNodes::Process(v8::internal::maglev::NodeBase*, v8::internal::maglev::ProcessingState const&)::'lambda0'(v8::internal::maglev::ValueNode*)&) ./../../src/base/discriminated-union.h:79:55) [0x5644dfd7c128]
+    d8(v8::internal::maglev::SweepIdentityNodes::Process(v8::internal::maglev::NodeBase*, v8::internal::maglev::ProcessingState const&) ./../../src/maglev/maglev-post-hoc-optimizations-processors.h:44:5) [0x5644dfd75d54]
+    d8(v8::internal::maglev::GraphProcessor<v8::internal::maglev::SweepIdentityNodes, true>::ProcessGraph(v8::internal::maglev::Graph*) ./../../src/maglev/maglev-graph-processor.h:173:9) [0x5644dfd5647c]
+    d8(v8::internal::maglev::MaglevInliner::Run() ./../../src/maglev/maglev-inlining.cc:72:11) [0x5644e00dd5a4]
+    d8(v8::internal::maglev::MaglevCompiler::Compile(v8::internal::LocalIsolate*, v8::internal::maglev::MaglevCompilationInfo*) ./../../src/maglev/maglev-compiler.cc:0:15) [0x5644dfd54c28]
+    d8(v8::internal::maglev::MaglevCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../third_party/libc++/src/include/__memory/unique_ptr.h:277:12) [0x5644dff1de7a]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:451:22) [0x5644ded13ea2]
+    d8(v8::internal::(anonymous namespace)::CompileMaglev(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1304:16) [0x5644ded37855]
+    d8(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:0:0) [0x5644ded26112]
+    d8(v8::internal::Compiler::CompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind) ./../../src/handles/maybe-handles-inl.h:35:17) [0x5644ded25228]
+    d8(v8::internal::(anonymous namespace)::CompileOptimized(v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::Isolate*) ./../../src/handles/handles.h:202:22) [0x5644dfa28f55]
+    d8(v8::internal::__RT_impl_Runtime_OptimizeMaglevEager(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/common/ptr-compr-inl.h:74:18) [0x5644dfa21f62]
+    d8(v8::internal::Runtime_OptimizeMaglevEager(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:212:1) [0x5644dfa21b50]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x5644e1bbb63d]
+timeout: the monitored command dumped core

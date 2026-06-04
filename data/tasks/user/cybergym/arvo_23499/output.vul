@@ -1,0 +1,97 @@
+INFO: Seed: 2989089439
+INFO: Loaded 1 modules   (44442 inline 8-bit counters): 44442 [0xe77840, 0xe825da), 
+INFO: Loaded 1 PC tables (44442 PCs): 44442 [0xe825e0,0xf2ff80), 
+/out/clamav_scanfile_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x61900000d617 at pc 0x000000463328 bp 0x7ffcd15d4090 sp 0x7ffcd15d3838
+READ of size 919 at 0x61900000d617 thread T0
+SCARINESS: 26 (multi-byte-read-heap-buffer-overflow)
+    #0 0x463327 in iconv /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors.inc:5122:5
+    #1 0x6ef2a0 in cli_codepage_to_utf8 /src/clamav-devel/libclamav/entconv.c:970:35
+    #2 0x603550 in cli_vba_readdir_new /src/clamav-devel/libclamav/vba_extract.c:1124:39
+    #3 0x5cd346 in cli_vba_scandir_new /src/clamav-devel/libclamav/scanners.c:1628:24
+    #4 0x5c6894 in cli_scanole2 /src/clamav-devel/libclamav/scanners.c:2367:19
+    #5 0x5b24dd in magic_scandesc /src/clamav-devel/libclamav/scanners.c:3931:23
+    #6 0x5ae4fa in cli_base_scandesc /src/clamav-devel/libclamav/scanners.c:4266:14
+    #7 0x6769f6 in unz /src/clamav-devel/libclamav/unzip.c:344:15
+    #8 0x677fa1 in parse_local_file_header /src/clamav-devel/libclamav/unzip.c:708:28
+    #9 0x678fce in unzip_single_internal /src/clamav-devel/libclamav/unzip.c:1285:5
+    #10 0x5b97c1 in cli_scanraw /src/clamav-devel/libclamav/scanners.c:3146:36
+    #11 0x5b29b3 in magic_scandesc /src/clamav-devel/libclamav/scanners.c:4082:15
+    #12 0x5ae4fa in cli_base_scandesc /src/clamav-devel/libclamav/scanners.c:4266:14
+    #13 0x5b6916 in scan_common /src/clamav-devel/libclamav/scanners.c:4505:16
+    #14 0x5b50f8 in cl_scandesc_callback /src/clamav-devel/libclamav/scanners.c:4629:12
+    #15 0x5b71b6 in cl_scanfile_callback /src/clamav-devel/libclamav/scanners.c:4692:11
+    #16 0x4cc13f in LLVMFuzzerTestOneInput /src/clamav-devel/fuzz/clamav_scanfile_fuzzer.cpp:127:5
+    #17 0x51c506 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:556:15
+    #18 0x4cccff in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:292:6
+    #19 0x4da962 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:774:9
+    #20 0x4cc347 in main /src/libfuzzer/FuzzerMain.cpp:19:10
+    #21 0x7f9997fcc83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #22 0x420ab8 in _start (/out/clamav_scanfile_fuzzer+0x420ab8)
+
+DEDUP_TOKEN: iconv--cli_codepage_to_utf8--cli_vba_readdir_new
+0x61900000d617 is located 0 bytes to the right of 919-byte region [0x61900000d280,0x61900000d617)
+allocated by thread T0 here:
+    #0 0x4999b9 in realloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:164:3
+    #1 0x89b93a in cli_realloc /src/clamav-devel/libclamav/others_common.c:235:13
+    #2 0x8e17f1 in blobClose /src/clamav-devel/libclamav/blob.c:310:34
+    #3 0x8e165d in blobToMem /src/clamav-devel/libclamav/blob.c:128:9
+    #4 0x60595f in cli_vba_inflate /src/clamav-devel/libclamav/vba_extract.c:1492:29
+    #5 0x6032f3 in cli_vba_readdir_new /src/clamav-devel/libclamav/vba_extract.c:1115:35
+    #6 0x5cd346 in cli_vba_scandir_new /src/clamav-devel/libclamav/scanners.c:1628:24
+    #7 0x5c6894 in cli_scanole2 /src/clamav-devel/libclamav/scanners.c:2367:19
+    #8 0x5b24dd in magic_scandesc /src/clamav-devel/libclamav/scanners.c:3931:23
+    #9 0x5ae4fa in cli_base_scandesc /src/clamav-devel/libclamav/scanners.c:4266:14
+    #10 0x6769f6 in unz /src/clamav-devel/libclamav/unzip.c:344:15
+    #11 0x677fa1 in parse_local_file_header /src/clamav-devel/libclamav/unzip.c:708:28
+    #12 0x678fce in unzip_single_internal /src/clamav-devel/libclamav/unzip.c:1285:5
+    #13 0x5b97c1 in cli_scanraw /src/clamav-devel/libclamav/scanners.c:3146:36
+    #14 0x5b29b3 in magic_scandesc /src/clamav-devel/libclamav/scanners.c:4082:15
+    #15 0x5ae4fa in cli_base_scandesc /src/clamav-devel/libclamav/scanners.c:4266:14
+    #16 0x5b6916 in scan_common /src/clamav-devel/libclamav/scanners.c:4505:16
+    #17 0x5b50f8 in cl_scandesc_callback /src/clamav-devel/libclamav/scanners.c:4629:12
+    #18 0x5b71b6 in cl_scanfile_callback /src/clamav-devel/libclamav/scanners.c:4692:11
+    #19 0x4cc13f in LLVMFuzzerTestOneInput /src/clamav-devel/fuzz/clamav_scanfile_fuzzer.cpp:127:5
+    #20 0x51c506 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:556:15
+    #21 0x4cccff in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:292:6
+    #22 0x4da962 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:774:9
+    #23 0x4cc347 in main /src/libfuzzer/FuzzerMain.cpp:19:10
+    #24 0x7f9997fcc83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: realloc--cli_realloc--blobClose
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors.inc:5122:5 in iconv
+Shadow bytes around the buggy address:
+  0x0c327fff9a70: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c327fff9a80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c327fff9a90: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c327fff9aa0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c327fff9ab0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0c327fff9ac0: 00 00[07]fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c327fff9ad0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c327fff9ae0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c327fff9af0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c327fff9b00: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c327fff9b10: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==7==ABORTING

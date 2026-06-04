@@ -1,0 +1,1 @@
+A buffer overread occurs in the xmlDetectEBCDIC function in the parser, potentially leading to security issues.

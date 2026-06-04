@@ -1,0 +1,164 @@
+diff --git a/src/compiler/simplified-lowering.cc b/src/compiler/simplified-lowering.cc
+index e2a9dc51eb6..2c04291d43c 100644
+--- a/src/compiler/simplified-lowering.cc
++++ b/src/compiler/simplified-lowering.cc
+@@ -2435,6 +2435,24 @@ class RepresentationSelector {
+         }
+       } else {
+         InsertUnreachableIfNecessary<T>(node);
++        if (node->op()->ValueOutputCount() > 0 &&
++            node->op()->ControlOutputCount() == 0 &&
++            node->opcode() != IrOpcode::kPhi &&
++            node->opcode() != IrOpcode::kStateValues &&
++            node->opcode() != IrOpcode::kFrameState) {
++          for (int i = 0; i < node->op()->ValueInputCount(); i++) {
++            Node* input = node->InputAt(i);
++            // If one of the node's inputs produces a None-type, we don't need
++            // to lower the node.
++            if (TypeOf(input).IsNone()) {
++              DeferReplacement(
++                  node, graph()->NewNode(common()->DeadValue(
++                                             GetInfo(node)->representation()),
++                                         input));
++              return;
++            }
++          }
++        }
+       }
+     }
+ 
+diff --git a/test/mjsunit/regress/regress-378229888.js b/test/mjsunit/regress/regress-378229888.js
+new file mode 100644
+index 00000000000..2e52d4c5ff8
+--- /dev/null
++++ b/test/mjsunit/regress/regress-378229888.js
+@@ -0,0 +1,25 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax
++
++function f1(a2) {
++    const v4 = Infinity ? "23446" : Infinity;
++    let v5 = 0;
++    v5++;
++    const v9 = Math.min(v4, !v5);
++    let v10 = 0;
++    v10--;
++    let v12 = v9 % v10;
++    if (a2) {
++        v12 = 1.3;
++    }
++    const v16 = v12 ? 1 : 0;
++    v16 / v16;
++    return f1;
++}
++%PrepareFunctionForOptimization(f1);
++f1();
++%OptimizeFunctionOnNextCall(f1);
++f1();
+diff --git a/test/mjsunit/regress/regress-410809965.js b/test/mjsunit/regress/regress-410809965.js
+new file mode 100644
+index 00000000000..74d63b66db9
+--- /dev/null
++++ b/test/mjsunit/regress/regress-410809965.js
+@@ -0,0 +1,22 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax
++
++
++function __f_1(__v_9) {
++    %PrepareFunctionForOptimization(__v_9);
++    __v_9();
++    %OptimizeFunctionOnNextCall(__v_9);
++ __v_9();
++}
++function __f_6() {
++  try {
++    return Math.max(Math.__v_16 |  1010);
++  } catch (e) {}
++}
++function __f_7() {
++  return __f_6() * -127;
++}
++__f_1(__f_7, -254);
+diff --git a/test/mjsunit/regress/regress-410809966.js b/test/mjsunit/regress/regress-410809966.js
+new file mode 100644
+index 00000000000..e3feffb64ae
+--- /dev/null
++++ b/test/mjsunit/regress/regress-410809966.js
+@@ -0,0 +1,16 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax
++
++
++var __v_6 = "gaga";
++function __f_3() {
++  let __v_8 = Math.min(Infinity ? __v_6 : 0) / 0;
++  return __v_8 ? 1 : 0;
++}
++%PrepareFunctionForOptimization(__f_3);
++__f_3();
++%OptimizeFunctionOnNextCall(__f_3);
++__f_3();
+diff --git a/test/mjsunit/regress/regress-410811025.js b/test/mjsunit/regress/regress-410811025.js
+new file mode 100644
+index 00000000000..ec0761eeaf3
+--- /dev/null
++++ b/test/mjsunit/regress/regress-410811025.js
+@@ -0,0 +1,21 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax
++
++
++(function () {
++  async function __f_13() {
++      for (let __v_24 = 0; __v_24 < 4; __v_24++) {
++        __v_24.__lookupGetter__();
++        for (let __v_26 = 0; __v_26 == 6; __v_26++) {
++          await 7;
++        }
++      }
++  }
++  %PrepareFunctionForOptimization(__f_13);
++  __f_13();
++  %OptimizeFunctionOnNextCall(__f_13);
++  __f_13();
++})();
+diff --git a/test/mjsunit/regress/regress-410842388.js b/test/mjsunit/regress/regress-410842388.js
+new file mode 100644
+index 00000000000..0365cd61054
+--- /dev/null
++++ b/test/mjsunit/regress/regress-410842388.js
+@@ -0,0 +1,21 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax
++
++
++function __wrapTC(f) {
++    return f();
++}
++function __f_0() {
++  try {
++    const __v_4 = Array();
++      __v_4.reduceRight(__f_0);
++  } catch (e) {}
++}
++const __v_0 = __wrapTC(() => __f_0());
++%PrepareFunctionForOptimization(__f_0);
++const __v_1 = __wrapTC(() => new __f_0);
++%OptimizeFunctionOnNextCall(__f_0);
++__f_0();

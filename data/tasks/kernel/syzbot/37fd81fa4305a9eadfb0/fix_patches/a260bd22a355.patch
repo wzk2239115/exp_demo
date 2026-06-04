@@ -1,0 +1,43 @@
+From a260bd22a355bcdb74cedac6ab9b10739cd2c62c Mon Sep 17 00:00:00 2001
+From: Mathias Krause <minipli@grsecurity.net>
+Date: Tue, 9 Dec 2025 22:09:03 +0100
+Subject: media: mc: fix potential use-after-free in media_request_alloc()
+
+Commit 6f504cbf108a ("media: convert media_request_alloc() to
+FD_PREPARE()") moved the call to fd_install() (now hidden in
+fd_publish()) before the snprintf(), making the later write to
+potentially already freed memory, as userland is free to call
+close() concurrently right after the call to fd_install() which
+may end up in the request_fops.release() handler freeing 'req'.
+
+Fixes: 6f504cbf108a ("media: convert media_request_alloc() to FD_PREPARE()")
+Signed-off-by: Mathias Krause <minipli@grsecurity.net>
+Link: https://patch.msgid.link/20251209210903.603958-1-minipli@grsecurity.net
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+---
+ drivers/media/mc/mc-request.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/media/mc/mc-request.c b/drivers/media/mc/mc-request.c
+index 2ac9ac0a740bd..3cca9a0c7c973 100644
+--- a/drivers/media/mc/mc-request.c
++++ b/drivers/media/mc/mc-request.c
+@@ -315,12 +315,12 @@ int media_request_alloc(struct media_device *mdev, int *alloc_fd)
+ 
+ 	fd_prepare_file(fdf)->private_data = req;
+ 
+-	*alloc_fd = fd_publish(fdf);
+-
+ 	snprintf(req->debug_str, sizeof(req->debug_str), "%u:%d",
+-		 atomic_inc_return(&mdev->request_id), *alloc_fd);
++		 atomic_inc_return(&mdev->request_id), fd_prepare_fd(fdf));
+ 	dev_dbg(mdev->dev, "request: allocated %s\n", req->debug_str);
+ 
++	*alloc_fd = fd_publish(fdf);
++
+ 	return 0;
+ 
+ err_free_req:
+-- 
+cgit 1.3-korg
+

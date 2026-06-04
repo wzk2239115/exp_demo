@@ -1,0 +1,39 @@
+Listening on port 9001
+INFO: Seed: 2905713269
+INFO: Loaded 1 modules   (2883 inline 8-bit counters): 2883 [0x8a5048, 0x8a5b8b), 
+INFO: Loaded 1 PC tables (2883 PCs): 2883 [0x634680,0x63fab0), 
+/out/MockedEchoServer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+Too long message passed
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0xffffffffffffffef (pc 0x0000004ab2a4 bp 0x000000000000 sp 0x7ffcd528e520 T0)
+==7==The signal is caused by a WRITE memory access.
+SCARINESS: 30 (wild-addr-write)
+    #0 0x4ab2a4 in atomic_compare_exchange_strong<__sanitizer::atomic_uint8_t> /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_atomic_clang.h:80:10
+    #1 0x4ab2a4 in AtomicallySetQuarantineFlagIfAllocated /src/llvm-project/compiler-rt/lib/asan/asan_allocator.cpp:570:10
+    #2 0x4ab2a4 in __asan::Allocator::Deallocate(void*, unsigned long, unsigned long, __sanitizer::BufferedStackTrace*, __asan::AllocType) /src/llvm-project/compiler-rt/lib/asan/asan_allocator.cpp:647:10
+    #3 0x522961 in free /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:128:3
+    #4 0x55f2fc in operator()<uWS::WebSocket<false, true> > /src/uWebSockets/fuzzing/MockedEchoServer.cpp:37:17
+    #5 0x55f2fc in invoke<(lambda at MockedEchoServer.cpp:33:20) &, uWS::WebSocket<false, true> *, std::__1::basic_string_view<char, std::__1::char_traits<char> >, uWS::OpCode> /src/uWebSockets/fuzzing/../src/f2/function2.hpp:184:10
+    #6 0x55f2fc in fu2::abi_400::detail::type_erasure::invocation_table::function_trait<void (uWS::WebSocket<false, true>*, std::__1::basic_string_view<char, std::__1::char_traits<char> >, uWS::OpCode)>::internal_invoker<fu2::abi_400::detail::type_erasure::box<false, LLVMFuzzerInitialize::$_1, std::__1::allocator<LLVMFuzzerInitialize::$_1> >, true>::invoke(fu2::abi_400::detail::type_erasure::data_accessor*, unsigned long, uWS::WebSocket<false, true>*, std::__1::basic_string_view<char, std::__1::char_traits<char> >, uWS::OpCode) /src/uWebSockets/fuzzing/../src/f2/function2.hpp:587:1
+    #7 0x582015 in invoke<0, fu2::abi_400::detail::type_erasure::data_accessor *, const unsigned long &, uWS::WebSocket<false, true> *, std::__1::basic_string_view<char, std::__1::char_traits<char> >, uWS::OpCode> /src/uWebSockets/fuzzing/../src/f2/function2.hpp:995:12
+    #8 0x582015 in invoke<0, fu2::abi_400::detail::type_erasure::erasure<true, fu2::abi_400::detail::config<true, false, fu2::capacity_default>, fu2::abi_400::detail::property<true, false, void (uWS::WebSocket<false, true> *, std::__1::basic_string_view<char, std::__1::char_traits<char> >, uWS::OpCode)> > &, uWS::WebSocket<false, true> *, std::__1::basic_string_view<char, std::__1::char_traits<char> >, uWS::OpCode> /src/uWebSockets/fuzzing/../src/f2/function2.hpp:1213:37
+    #9 0x582015 in operator() /src/uWebSockets/fuzzing/../src/f2/function2.hpp:775:1
+    #10 0x582015 in uWS::WebSocketContext<false, true>::handleFragment(char*, unsigned long, unsigned int, int, bool, uWS::WebSocketState<true>*, void*) /src/uWebSockets/fuzzing/../src/WebSocketContext.h:151:25
+    #11 0x580d75 in uWS::WebSocketProtocol<true, uWS::WebSocketContext<false, true> >::consumeContinuation(char*&, unsigned int&, uWS::WebSocketState<true>*, void*) /src/uWebSockets/fuzzing/../src/WebSocketProtocol.h:353:17
+    #12 0x57bb1f in uWS::WebSocketProtocol<true, uWS::WebSocketContext<false, true> >::consume(char*, unsigned int, uWS::WebSocketState<true>*, void*) /src/uWebSockets/fuzzing/../src/WebSocketProtocol.h:424:20
+    #13 0x57b7dc in auto uWS::WebSocketContext<false, true>::init()::'lambda'(auto*, char*, int)::operator()<us_socket_t>(auto*, char*, int) const /src/uWebSockets/fuzzing/../src/WebSocketContext.h:277:13
+    #14 0x59d0c6 in us_loop_read_mocked_data /src/uWebSockets/fuzzing/uSocketsMock.c:258:17
+    #15 0x558c86 in LLVMFuzzerTestOneInput /src/uWebSockets/fuzzing/MockedEchoServer.cpp:72:5
+    #16 0x45afc1 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:556:15
+    #17 0x445ae1 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6
+    #18 0x44b79e in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:774:9
+    #19 0x4756c2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10
+    #20 0x7f8b68ef183f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #21 0x41ef58 in _start (/out/MockedEchoServer+0x41ef58)
+
+DEDUP_TOKEN: atomic_compare_exchange_strong<__sanitizer::atomic_uint8_t>--AtomicallySetQuarantineFlagIfAllocated--__asan::Allocator::Deallocate(void*, unsigned long, unsigned long, __sanitizer::BufferedStackTrace*, __asan::AllocType)
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_atomic_clang.h:80:10 in atomic_compare_exchange_strong<__sanitizer::atomic_uint8_t>
+==7==ABORTING

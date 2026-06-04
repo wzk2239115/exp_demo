@@ -1,0 +1,26 @@
+
+
+#
+# Fatal error in ../../src/strings/string-hasher-inl.h, line 183
+# Debug check failed: index > 0 (0 vs. 0).
+#
+#
+#
+#FailureMessage Object: 0x7ffd5f92ab50
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:390:32) [0x558813aaab23]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x558813aa9f0d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x558813a90e94]
+    out/debug/d8(+0x42a78b5) [0x558813a908b5]
+    d8(v8::internal::detail::IndexParseResult v8::internal::detail::TryParseIntegerIndex<unsigned char>(unsigned char const*, unsigned int, unsigned int, unsigned int) ./../../third_party/libc++/src/include/string:1892:12) [0x55881035a29e]
+    d8(unsigned int v8::internal::StringHasher::HashSequentialString<unsigned char>(unsigned char const*, unsigned int, unsigned long) ./../../src/strings/string-hasher-inl.h:234:11) [0x558810358288]
+    d8(v8::internal::String::ComputeAndSetRawHash(v8::internal::SharedStringAccessGuardIfNeeded const&) ./../../src/objects/string.cc:0:0) [0x558811061602]
+    d8(v8::internal::String::ComputeAndSetRawHash() ./../../src/objects/string.cc:1826:10) [0x558811061153]
+    d8(v8::internal::StringTable::LookupString(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::String>) ./../../src/objects/string-table.cc:379:34) [0x55881104dd7a]
+    d8(v8::internal::LookupIterator::LookupIterator(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::Union<v8::internal::Smi, v8::internal::HeapNumber, v8::internal::BigInt, v8::internal::String, v8::internal::Symbol, v8::internal::Boolean, v8::internal::Null, v8::internal::Undefined, v8::internal::JSReceiver>>, v8::internal::DirectHandle<v8::internal::Name>, unsigned long, v8::internal::DirectHandle<v8::internal::Union<v8::internal::Smi, v8::internal::HeapNumber, v8::internal::BigInt, v8::internal::String, v8::internal::Symbol, v8::internal::Boolean, v8::internal::Null, v8::internal::Undefined, v8::internal::JSReceiver>>, v8::internal::LookupIterator::Configuration) ./../../src/objects/lookup-inl.h:91:13) [0x5588102c72e8]
+    d8(v8::internal::Runtime::SetObjectProperty(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::Union<v8::internal::Smi, v8::internal::HeapNumber, v8::internal::BigInt, v8::internal::String, v8::internal::Symbol, v8::internal::Boolean, v8::internal::Null, v8::internal::Undefined, v8::internal::JSReceiver>>, v8::internal::DirectHandle<v8::internal::Object>, v8::internal::DirectHandle<v8::internal::Object>, v8::internal::MaybeDirectHandle<v8::internal::Union<v8::internal::Smi, v8::internal::HeapNumber, v8::internal::BigInt, v8::internal::String, v8::internal::Symbol, v8::internal::Boolean, v8::internal::Null, v8::internal::Undefined, v8::internal::JSReceiver>>, v8::internal::StoreOrigin, v8::Maybe<v8::internal::ShouldThrow>) ./../../src/handles/handles.h:197:22) [0x558811244e62]
+    d8(v8::internal::__RT_impl_Runtime_SetKeyedProperty(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/runtime/runtime-object.cc:417:10) [0x55881124b1ef]
+    d8(v8::internal::Runtime_SetKeyedProperty(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-object.cc:724:1) [0x55881124ada0]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x55881315bb3d]
+timeout: the monitored command dumped core

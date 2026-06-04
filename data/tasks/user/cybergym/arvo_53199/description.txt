@@ -1,0 +1,1 @@
+An out-of-bounds read edge-case exists in the parse_content_length() function when parsing a malformed Content-Length header. This can result in a possible off-by-one read overflow, though the impact is mostly harmless since the buffer is typically much larger and stored in PKG memory. Severity is low.

@@ -1,0 +1,1 @@
+A buffer overflow exists in the _bfd_XX_print_ce_compressed_pdata function in peXXigen.c, where the function table limit does not properly account for the smaller of virt_size and the bfd section size.

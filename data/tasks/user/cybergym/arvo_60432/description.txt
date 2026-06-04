@@ -1,0 +1,1 @@
+A vulnerability exists in the x86 high bit-depth pal_pred SSSE3 assembly code due to misaligned loads, which can lead to incorrect behavior or crashes. This issue is introduced in commit 72e9c7c.

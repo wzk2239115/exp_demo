@@ -1,0 +1,1 @@
+A read buffer overflow occurs in the interlaced GIF decode process within LibGfx, specifically in GIFLoader.cpp at line 402. The previous fix does not fully address the issue, and the vulnerability remains at this location.

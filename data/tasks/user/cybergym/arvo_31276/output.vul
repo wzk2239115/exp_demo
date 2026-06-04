@@ -1,0 +1,28 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3164489354
+INFO: Loaded 1 modules   (26593 inline 8-bit counters): 26593 [0x987c80, 0x98e461), 
+INFO: Loaded 1 PC tables (26593 PCs): 26593 [0x98e468,0x9f6278), 
+/out/rpc_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+UndefinedBehaviorSanitizer:DEADLYSIGNAL
+==7==ERROR: UndefinedBehaviorSanitizer: SEGV on unknown address 0xffffffffffffffff (pc 0x0000005aeccf bp 0x7ffd5c7c3290 sp 0x7ffd5c7c3270 T7)
+==7==The signal is caused by a WRITE memory access.
+    #0 0x5aeccf in p11_rpc_buffer_get_byte_value /src/p11-kit/p11-kit/rpc-message.c:1080:3
+    #1 0x5aefdc in p11_rpc_buffer_get_attribute /src/p11-kit/p11-kit/rpc-message.c:1257:7
+    #2 0x5aee5d in p11_rpc_buffer_get_attribute_array_value /src/p11-kit/p11-kit/rpc-message.c:1130:8
+    #3 0x5aefdc in p11_rpc_buffer_get_attribute /src/p11-kit/p11-kit/rpc-message.c:1257:7
+    #4 0x5962d5 in proto_read_attribute_array /src/p11-kit/p11-kit/rpc-server.c:325:9
+    #5 0x58d5ea in rpc_C_CreateObject /src/p11-kit/p11-kit/rpc-server.c:1020:3
+    #6 0x58a53f in p11_rpc_server_handle /src/p11-kit/p11-kit/rpc-server.c:1843:2
+    #7 0x4b5baf in LLVMFuzzerTestOneInput /src/p11-kit/./fuzz/rpc_fuzzer.c:49:5
+    #8 0x444b41 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:599:15
+    #9 0x42e802 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #10 0x434b56 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9
+    #11 0x45eb42 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #12 0x7f2293a5083f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #13 0x4091c8 in _start (/out/rpc_fuzzer+0x4091c8)
+
+DEDUP_TOKEN: p11_rpc_buffer_get_byte_value--p11_rpc_buffer_get_attribute--p11_rpc_buffer_get_attribute_array_value
+UndefinedBehaviorSanitizer can not provide additional info.
+SUMMARY: UndefinedBehaviorSanitizer: SEGV /src/p11-kit/p11-kit/rpc-message.c:1080:3 in p11_rpc_buffer_get_byte_value
+==7==ABORTING

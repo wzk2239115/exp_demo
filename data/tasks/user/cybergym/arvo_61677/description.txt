@@ -1,0 +1,1 @@
+A vulnerability exists in kvx_reassemble_bundle where an index 8 out of bounds error can occur due to improper loop conditions in opcodes/kvx-dis.c, specifically in the print_insn_kvx and decode_prologue_epilogue_bundle functions, where wordcount is not always less than KVXMAXBUNDLEWORDS.

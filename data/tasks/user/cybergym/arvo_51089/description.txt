@@ -1,0 +1,1 @@
+A security vulnerability exists in the Type 2 charstring code due to insufficient operand stack checking, which can lead to potential stack overflows or other unintended behavior.

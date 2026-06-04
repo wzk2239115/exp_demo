@@ -1,0 +1,1 @@
+A vulnerability in ucl_check_variable occurs when the input contains '${' without a following '}', causing out_len to not be incremented. This leads to a mismatch since ucl_expand_variable will copy the '$' into the destination buffer, potentially resulting in buffer mismanagement.

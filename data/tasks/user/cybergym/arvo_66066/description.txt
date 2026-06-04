@@ -1,0 +1,1 @@
+A vulnerability exists in the SMTP implementation where the SMTP_IN_DATA state is reused instead of having a separate SMTP_IN_BDAT state. This can lead to spurious EndData() calls upon a server's reply, potentially disrupting the client's ability to continue sending the full in-flight chunk.

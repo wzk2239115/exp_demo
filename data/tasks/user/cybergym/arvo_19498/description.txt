@@ -1,0 +1,1 @@
+The function tui_copy_source_line in tui/tui-winsource.c contains a vulnerability where it can advance past the terminating \0 in its input string.

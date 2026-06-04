@@ -1,0 +1,128 @@
+diff --git a/src/wasm/canonical-types.cc b/src/wasm/canonical-types.cc
+index 157cea919bc..50120e0a567 100644
+--- a/src/wasm/canonical-types.cc
++++ b/src/wasm/canonical-types.cc
+@@ -5,7 +5,6 @@
+ #include "src/wasm/canonical-types.h"
+ 
+ #include "src/base/hashing.h"
+-#include "src/base/string-format.h"
+ #include "src/execution/isolate.h"
+ #include "src/handles/handles-inl.h"
+ #include "src/heap/heap-inl.h"
+@@ -39,11 +38,7 @@ void TypeCanonicalizer::AddRecursiveGroup(WasmModule* module, uint32_t size) {
+   // Compute the first canonical index in the recgroup in the case that it does
+   // not already exist.
+   if (V8_UNLIKELY(size > kMaxCanonicalTypes - canonical_supertypes_.size())) {
+-    auto oom_detail = base::FormattedString{}
+-                      << "Previously: " << canonical_supertypes_.size()
+-                      << ", adding: " << size;
+-    V8::FatalProcessOutOfMemory(nullptr, "too many canonicalized types",
+-                                oom_detail.PrintToArray().data());
++    V8::FatalProcessOutOfMemory(nullptr, "too many canonicalized types");
+   }
+   CanonicalTypeIndex first_new_canonical_index{
+       static_cast<uint32_t>(canonical_supertypes_.size())};
+@@ -101,11 +96,7 @@ void TypeCanonicalizer::AddRecursiveSingletonGroup(WasmModule* module) {
+   uint32_t type_index = static_cast<uint32_t>(module->types.size() - 1);
+   base::MutexGuard guard(&mutex_);
+   if (V8_UNLIKELY(canonical_supertypes_.size() == kMaxCanonicalTypes)) {
+-    auto oom_detail = base::FormattedString{}
+-                      << "Previously: " << canonical_supertypes_.size()
+-                      << ", adding: 1 (singleton)";
+-    V8::FatalProcessOutOfMemory(nullptr, "too many canonicalized types",
+-                                oom_detail.PrintToArray().data());
++    V8::FatalProcessOutOfMemory(nullptr, "too many canonicalized types");
+   }
+   CanonicalTypeIndex new_canonical_index{
+       static_cast<uint32_t>(canonical_supertypes_.size())};
+@@ -158,11 +149,7 @@ CanonicalTypeIndex TypeCanonicalizer::AddRecursiveGroup(
+                           CanonicalTypeIndex{kNoSuperType}, kFinal, kNotShared};
+   base::MutexGuard guard(&mutex_);
+   if (V8_UNLIKELY(canonical_supertypes_.size() == kMaxCanonicalTypes)) {
+-    auto oom_detail = base::FormattedString{}
+-                      << "Previously: " << canonical_supertypes_.size()
+-                      << ", adding: 1 (functionsig)";
+-    V8::FatalProcessOutOfMemory(nullptr, "too many canonicalized types",
+-                                oom_detail.PrintToArray().data());
++    V8::FatalProcessOutOfMemory(nullptr, "too many canonicalized types");
+   }
+ 
+   // Fast path lookup before canonicalizing (== copying into the
+@@ -435,9 +422,8 @@ void TypeCanonicalizer::PrepareForCanonicalTypeId(Isolate* isolate,
+                                                   CanonicalTypeIndex id) {
+   if (!id.valid()) return;
+   Heap* heap = isolate->heap();
+-  // This invocation's {id} may be the next invocation's {old_length}, and
+-  // the {old_length * 3} computation below must not overflow.
+-  static_assert(kMaxCanonicalTypes <= kMaxInt / 3 - 1);
++  // {2 * (id + 1)} needs to fit in an int.
++  CHECK_LE(id.index, kMaxInt / 2 - 1);
+   // Canonical types are zero-indexed.
+   const int length = id.index + 1;
+   // The fast path is non-handlified.
+diff --git a/src/wasm/canonical-types.h b/src/wasm/canonical-types.h
+index 490b3a42e6d..5301224b0f1 100644
+--- a/src/wasm/canonical-types.h
++++ b/src/wasm/canonical-types.h
+@@ -24,8 +24,10 @@ struct WasmModule;
+ 
+ // We use ValueType instances constructed from canonical type indices, so we
+ // can't let them get bigger than what we have storage space for.
+-// We can raise this limit as long as we have unused bits in the ValueType.
+-static constexpr size_t kMaxCanonicalTypes = 2 * kV8MaxWasmTypes;
++// We could raise this limit using unused bits in the ValueType, but that
++// doesn't seem urgent, as we have no evidence of the current limit being
++// an actual limitation in practice.
++static constexpr size_t kMaxCanonicalTypes = kV8MaxWasmTypes;
+ // We don't want any valid modules to fail canonicalization.
+ static_assert(kMaxCanonicalTypes >= kV8MaxWasmTypes);
+ // We want the invalid index to fail any range checks.
+@@ -446,13 +448,13 @@ class TypeCanonicalizer {
+   // Conceptually a vector of CanonicalType. Modification generally requires
+   // synchronization, read-only access can be done without locking.
+   class CanonicalTypeVector {
+-    static constexpr uint32_t kSegmentSize = 2048;
++    static constexpr uint32_t kSegmentSize = 1024;
+     static constexpr uint32_t kNumSegments =
+         (kMaxCanonicalTypes + kSegmentSize - 1) / kSegmentSize;
+     static_assert(kSegmentSize * kNumSegments >= kMaxCanonicalTypes);
+     static_assert(
+         kNumSegments <= 1024,
+-        "Reconsider this data structure when increasing kMaxCanonicalTypes");
++        "Reconsider this data structures when increasing kMaxCanonicalTypes");
+ 
+    public:
+     const CanonicalType* operator[](CanonicalTypeIndex index) const {
+diff --git a/src/wasm/value-type.h b/src/wasm/value-type.h
+index 03ae6dbe8c5..76fb6a4f152 100644
+--- a/src/wasm/value-type.h
++++ b/src/wasm/value-type.h
+@@ -237,10 +237,10 @@ using RefTypeKindField = IsSharedField::Next<RefTypeKind, 3>;
+ static_assert(RefTypeKindField::is_valid(RefTypeKind::kLastValue));
+ 
+ // Stores the index if {has_index()}, or the {StandardType} otherwise.
+-using PayloadField = RefTypeKindField::Next<uint32_t, 21>;
++using PayloadField = RefTypeKindField::Next<uint32_t, 20>;
+ 
+ // Reserved for future use.
+-using ReservedField = PayloadField::Next<uint32_t, 3>;
++using ReservedField = PayloadField::Next<uint32_t, 4>;
+ static_assert(ReservedField::kShift + ReservedField::kSize == 32);
+ 
+ // Useful for HeapTypes, whose "shared" bit is orthogonal to their kind.
+diff --git a/src/wasm/wasm-export-wrapper-cache.h b/src/wasm/wasm-export-wrapper-cache.h
+index e620c5a4f17..091fff75852 100644
+--- a/src/wasm/wasm-export-wrapper-cache.h
++++ b/src/wasm/wasm-export-wrapper-cache.h
+@@ -63,8 +63,8 @@ class WasmExportWrapperCache : public AllStatic {
+     // Note: "hash" is a bit of a misnomer here; we require this value to
+     // fully represent the identity of the cached value. See {FirstProbe} for
+     // the step where collisions can and do happen.
+-    static_assert(kMaxCanonicalTypes < (1u << 21));
+-    return ((receiver_is_first_param ? 1 : 0) << 21) | sig_index.index;
++    static_assert(kMaxCanonicalTypes < (1u << 20));
++    return ((receiver_is_first_param ? 1 : 0) << 20) | sig_index.index;
+   }
+ 
+   // Maps the n-th entry to an index in the underlying WeakFixedArray.

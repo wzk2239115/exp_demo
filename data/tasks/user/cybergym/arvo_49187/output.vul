@@ -1,0 +1,90 @@
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x607000000063 at pc 0x000000666ce9 bp 0x7fff478aafa0 sp 0x7fff478aaf98
+READ of size 2 at 0x607000000063 thread T0
+SCARINESS: 14 (2-byte-read-heap-buffer-overflow)
+    #0 0x666ce8 in BEInt<unsigned short, 2>::operator unsigned short() const /work/build/../../src/harfbuzz/src/hb-algs.hh:118:59
+    #1 0x666ce8 in OT::IntType<unsigned short, 2u>::operator unsigned int() const /work/build/../../src/harfbuzz/src/hb-open-type.hh:67:109
+    #2 0x666ce8 in OT::Offset<OT::IntType<unsigned short, 2u>, true>::is_null() const /work/build/../../src/harfbuzz/src/hb-open-type.hh:222:51
+    #3 0x666ce8 in OT::OffsetTo<OT::Layout::GSUB::SubstLookupSubTable, OT::IntType<unsigned short, 2u>, true>::operator()(void const*) const /work/build/../../src/harfbuzz/src/hb-open-type.hh:309:9
+    #4 0x666ce8 in OT::Layout::GSUB::SubstLookupSubTable const& OT::operator+<OT::Lookup const*, (void*)0>(OT::Lookup const* const&, OT::OffsetTo<OT::Layout::GSUB::SubstLookupSubTable, OT::IntType<unsigned short, 2u>, true> const&) /work/build/../../src/harfbuzz/src/hb-open-type.hh:320:85
+    #5 0x666ce8 in OT::Layout::GSUB::SubstLookupSubTable const& OT::Lookup::get_subtable<OT::Layout::GSUB::SubstLookupSubTable>(unsigned int) const /work/build/../../src/harfbuzz/src/hb-ot-layout-common.hh:1242:16
+    #6 0x666ce8 in OT::Layout::GSUB::SubstLookup::get_subtable(unsigned int) const /work/build/../../src/harfbuzz/src/OT/Layout/GSUB/SubstLookup.hh:19:20
+    #7 0x666ce8 in OT::Layout::GSUB::SubstLookup::is_reverse() const /work/build/../../src/harfbuzz/src/OT/Layout/GSUB/SubstLookup.hh:28:56
+    #8 0x666ce8 in void apply_string<GSUBProxy>(OT::hb_ot_apply_context_t*, GSUBProxy::Lookup const&, OT::hb_ot_layout_lookup_accelerator_t const&) /work/build/../../src/harfbuzz/src/hb-ot-layout.cc:1890:7
+    #9 0x68551f in void hb_ot_map_t::apply<GSUBProxy>(GSUBProxy const&, hb_ot_shape_plan_t const*, hb_font_t*, hb_buffer_t*) const /work/build/../../src/harfbuzz/src/hb-ot-layout.cc:1936:7
+    #10 0x664f27 in hb_ot_map_t::substitute(hb_ot_shape_plan_t const*, hb_font_t*, hb_buffer_t*) const /work/build/../../src/harfbuzz/src/hb-ot-layout.cc:1951:3
+    #11 0x7796f9 in hb_ot_shape_plan_t::substitute(hb_font_t*, hb_buffer_t*) const /work/build/../../src/harfbuzz/src/hb-ot-shape.cc:273:9
+    #12 0x7796f9 in hb_ot_substitute_complex(hb_ot_shape_context_t const*) /work/build/../../src/harfbuzz/src/hb-ot-shape.cc:939:12
+    #13 0x7796f9 in hb_ot_substitute_pre(hb_ot_shape_context_t const*) /work/build/../../src/harfbuzz/src/hb-ot-shape.cc:949:3
+    #14 0x7796f9 in hb_ot_shape_internal(hb_ot_shape_context_t*) /work/build/../../src/harfbuzz/src/hb-ot-shape.cc:1184:3
+    #15 0x7796f9 in _hb_ot_shape /work/build/../../src/harfbuzz/src/hb-ot-shape.cc:1206:3
+    #16 0x7a6d9e in _hb_shape_plan_execute_internal(hb_shape_plan_t*, hb_font_t*, hb_buffer_t*, hb_feature_t const*, unsigned int) /work/build/../../src/harfbuzz/src/hb-shaper-list.hh:42:1
+    #17 0x7a6d9e in hb_shape_plan_execute /work/build/../../src/harfbuzz/src/hb-shape-plan.cc:453:14
+    #18 0x7a8a18 in hb_shape_full /work/build/../../src/harfbuzz/src/hb-shape.cc:140:19
+    #19 0x7a8bf3 in hb_shape /work/build/../../src/harfbuzz/src/hb-shape.cc:179:3
+    #20 0x4d5fec in LLVMFuzzerTestOneInput /work/build/../../src/harfbuzz/test/fuzzing/hb-shape-fuzzer.cc:39:5
+    #21 0x9a7c9a in ExecuteFilesOnyByOne /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c:234:7
+    #22 0x9a7a6d in main /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c:318:12
+    #23 0x7f48612d9082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)
+    #24 0x41d4ad in _start (/out/hb-shape-fuzzer+0x41d4ad)
+
+DEDUP_TOKEN: BEInt<unsigned short, 2>::operator unsigned short() const--OT::IntType<unsigned short, 2u>::operator unsigned int() const--OT::Offset<OT::IntType<unsigned short, 2u>, true>::is_null() const
+0x607000000063 is located 0 bytes to the right of 67-byte region [0x607000000020,0x607000000063)
+allocated by thread T0 here:
+    #0 0x49c7ad in __interceptor_malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:129:3
+    #1 0x7ad123 in hb_malloc_impl /work/build/../../src/harfbuzz/src/failing-alloc.c:45:31
+    #2 0x551e76 in hb_blob_t::try_make_writable() /work/build/../../src/harfbuzz/src/hb-blob.cc:494:23
+    #3 0x551e76 in hb_blob_get_data_writable /work/build/../../src/harfbuzz/src/hb-blob.cc:405:13
+    #4 0x6e5d61 in hb_blob_t* hb_sanitize_context_t::sanitize_blob<OT::Layout::GSUB::GSUB>(hb_blob_t*) /work/build/../../src/harfbuzz/src/hb-sanitize.hh:367:10
+    #5 0x6e4824 in hb_blob_t* hb_sanitize_context_t::reference_table<OT::Layout::GSUB::GSUB>(hb_face_t const*, unsigned int) /work/build/../../src/harfbuzz/src/hb-sanitize.hh:400:12
+    #6 0x6e4824 in OT::GSUBGPOS::accelerator_t<OT::Layout::GSUB::GSUB>::accelerator_t(hb_face_t*) /work/build/../../src/harfbuzz/src/OT/Layout/GSUB/../../../hb-ot-layout-gsubgpos.hh:3930:46
+    #7 0x680cf0 in OT::GSUB_accelerator_t::GSUB_accelerator_t(hb_face_t*) /work/build/../../src/harfbuzz/src/OT/Layout/GSUB/GSUB.hh:52:42
+    #8 0x680cf0 in hb_lazy_loader_t<OT::GSUB_accelerator_t, hb_face_lazy_loader_t<OT::GSUB_accelerator_t, 24u>, hb_face_t, 24u, OT::GSUB_accelerator_t>::create(hb_face_t*) /work/build/../../src/harfbuzz/src/hb-machinery.hh:248:19
+    #9 0x680cf0 in OT::GSUB_accelerator_t* hb_data_wrapper_t<hb_face_t, 24u>::call_create<OT::GSUB_accelerator_t, hb_face_lazy_loader_t<OT::GSUB_accelerator_t, 24u> >() const /work/build/../../src/harfbuzz/src/hb-machinery.hh:152:42
+    #10 0x680cf0 in hb_lazy_loader_t<OT::GSUB_accelerator_t, hb_face_lazy_loader_t<OT::GSUB_accelerator_t, 24u>, hb_face_t, 24u, OT::GSUB_accelerator_t>::get_stored() const /work/build/../../src/harfbuzz/src/hb-machinery.hh:212:26
+    #11 0x680cf0 in hb_lazy_loader_t<OT::GSUB_accelerator_t, hb_face_lazy_loader_t<OT::GSUB_accelerator_t, 24u>, hb_face_t, 24u, OT::GSUB_accelerator_t>::get() const /work/build/../../src/harfbuzz/src/hb-machinery.hh:235:58
+    #12 0x680cf0 in hb_lazy_loader_t<OT::GSUB_accelerator_t, hb_face_lazy_loader_t<OT::GSUB_accelerator_t, 24u>, hb_face_t, 24u, OT::GSUB_accelerator_t>::operator->() const /work/build/../../src/harfbuzz/src/hb-machinery.hh:196:50
+    #13 0x65c29a in get_gsubgpos_table(hb_face_t*, unsigned int) /work/build/../../src/harfbuzz/src/hb-ot-layout.cc:418:34
+    #14 0x65c29a in hb_ot_layout_table_find_feature_variations /work/build/../../src/harfbuzz/src/hb-ot-layout.cc:1327:27
+    #15 0x7a3288 in hb_ot_shape_plan_key_t::init(hb_face_t*, int const*, unsigned int) /work/build/../../src/harfbuzz/src/hb-ot-shape.hh:45:7
+    #16 0x7a3288 in hb_shape_plan_key_t::init(bool, hb_face_t*, hb_segment_properties_t const*, hb_feature_t const*, unsigned int, int const*, unsigned int, char const* const*) /work/build/../../src/harfbuzz/src/hb-shape-plan.cc:90:12
+    #17 0x7a772e in hb_shape_plan_create_cached2 /work/build/../../src/harfbuzz/src/hb-shape-plan.cc:537:14
+    #18 0x7a89fd in hb_shape_full /work/build/../../src/harfbuzz/src/hb-shape.cc:136:33
+    #19 0x7a8bf3 in hb_shape /work/build/../../src/harfbuzz/src/hb-shape.cc:179:3
+    #20 0x4d5fec in LLVMFuzzerTestOneInput /work/build/../../src/harfbuzz/test/fuzzing/hb-shape-fuzzer.cc:39:5
+    #21 0x9a7c9a in ExecuteFilesOnyByOne /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c:234:7
+
+DEDUP_TOKEN: __interceptor_malloc--hb_malloc_impl--hb_blob_t::try_make_writable()
+SUMMARY: AddressSanitizer: heap-buffer-overflow /work/build/../../src/harfbuzz/src/hb-algs.hh:118:59 in BEInt<unsigned short, 2>::operator unsigned short() const
+Shadow bytes around the buggy address:
+  0x0c0e7fff7fb0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c0e7fff7fc0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c0e7fff7fd0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c0e7fff7fe0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c0e7fff7ff0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0c0e7fff8000: fa fa fa fa 00 00 00 00 00 00 00 00[03]fa fa fa
+  0x0c0e7fff8010: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c0e7fff8020: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c0e7fff8030: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c0e7fff8040: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c0e7fff8050: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

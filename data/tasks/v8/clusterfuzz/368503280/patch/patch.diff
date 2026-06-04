@@ -1,0 +1,26 @@
+diff --git a/src/objects/js-function.cc b/src/objects/js-function.cc
+index 5e282fde39d..5826f5cd27b 100644
+--- a/src/objects/js-function.cc
++++ b/src/objects/js-function.cc
+@@ -887,6 +887,8 @@ bool CanSubclassHaveInobjectProperties(InstanceType instance_type) {
+     case JS_PROMISE_CONSTRUCTOR_TYPE:
+     case JS_REG_EXP_CONSTRUCTOR_TYPE:
+     case JS_ARRAY_CONSTRUCTOR_TYPE:
++    case JS_ASYNC_DISPOSABLE_STACK_TYPE:
++    case JS_SYNC_DISPOSABLE_STACK_TYPE:
+ #define TYPED_ARRAY_CONSTRUCTORS_SWITCH(Type, type, TYPE, Ctype) \
+   case TYPE##_TYPED_ARRAY_CONSTRUCTOR_TYPE:
+       TYPED_ARRAYS(TYPED_ARRAY_CONSTRUCTORS_SWITCH)
+diff --git a/test/mjsunit/harmony/regress/regress-368503280.js b/test/mjsunit/harmony/regress/regress-368503280.js
+new file mode 100644
+index 00000000000..ef86a7e5d0e
+--- /dev/null
++++ b/test/mjsunit/harmony/regress/regress-368503280.js
+@@ -0,0 +1,7 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --js-explicit-resource-management
++const stack = this.AsyncDisposableStack;
++Reflect.construct(stack, [], Float64Array);

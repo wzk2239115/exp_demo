@@ -1,0 +1,1 @@
+A vulnerability exists in wasm_loader and wasm_mini_loader due to incorrect table index calculations.

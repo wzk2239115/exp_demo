@@ -1,0 +1,72 @@
+Accepting input from '/tmp/poc'
+Usage for fuzzing: honggfuzz -P [flags] -- /out/fuzz_objdump_safe
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x602000000074 at pc 0x00000094de60 bp 0x7ffe71f3cf50 sp 0x7ffe71f3cf48
+READ of size 1 at 0x602000000074 thread T0
+SCARINESS: 12 (1-byte-read-heap-buffer-overflow)
+    #0 0x94de5f in bfd_getl32 /src/binutils-gdb/bfd/libbfd.c:727:23
+    #1 0xade643 in _bfd_pe_print_ce_compressed_pdata /src/binutils-gdb/bfd/peXXigen.c:2028:20
+    #2 0xae1758 in _bfd_pe_print_private_bfd_data_common /src/binutils-gdb/bfd/peXXigen.c:2906:5
+    #3 0x13e8eb1 in pe_print_private_bfd_data /src/binutils-gdb/bfd/./peicode.h:357:8
+    #4 0x4e6708 in dump_bfd_private_header /src/binutils-gdb/binutils/./fuzz_objdump.h:4269:8
+    #5 0x4e6708 in dump_bfd /src/binutils-gdb/binutils/./fuzz_objdump.h:4912:5
+    #6 0x4e5bee in display_object_bfd /src/binutils-gdb/binutils/./fuzz_objdump.h
+    #7 0x4e5bee in display_any_bfd /src/binutils-gdb/binutils/./fuzz_objdump.h:5143:5
+    #8 0x4e59a4 in display_file /src/binutils-gdb/binutils/./fuzz_objdump.h:5164:3
+    #9 0x4e59a4 in LLVMFuzzerTestOneInput /src/binutils-gdb/binutils/fuzz_objdump.c:62:3
+    #10 0x4d873b in main (/out/fuzz_objdump_safe+0x4d873b)
+    #11 0x7fc7a6a6b082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)
+    #12 0x41e71d in _start (/out/fuzz_objdump_safe+0x41e71d)
+
+DEDUP_TOKEN: bfd_getl32--_bfd_pe_print_ce_compressed_pdata--_bfd_pe_print_private_bfd_data_common
+0x602000000074 is located 0 bytes to the right of 4-byte region [0x602000000070,0x602000000074)
+allocated by thread T0 here:
+    #0 0x49ef0d in __interceptor_malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:129:3
+    #1 0x94d29c in bfd_malloc /src/binutils-gdb/bfd/libbfd.c:289:9
+    #2 0x940d6b in bfd_get_full_section_contents /src/binutils-gdb/bfd/compress.c:274:21
+    #3 0x957b81 in bfd_malloc_and_get_section /src/binutils-gdb/bfd/section.c:1629:10
+    #4 0xade4f7 in _bfd_pe_print_ce_compressed_pdata /src/binutils-gdb/bfd/peXXigen.c:2008:9
+    #5 0xae1758 in _bfd_pe_print_private_bfd_data_common /src/binutils-gdb/bfd/peXXigen.c:2906:5
+    #6 0x13e8eb1 in pe_print_private_bfd_data /src/binutils-gdb/bfd/./peicode.h:357:8
+    #7 0x4e6708 in dump_bfd_private_header /src/binutils-gdb/binutils/./fuzz_objdump.h:4269:8
+    #8 0x4e6708 in dump_bfd /src/binutils-gdb/binutils/./fuzz_objdump.h:4912:5
+    #9 0x4e5bee in display_object_bfd /src/binutils-gdb/binutils/./fuzz_objdump.h
+    #10 0x4e5bee in display_any_bfd /src/binutils-gdb/binutils/./fuzz_objdump.h:5143:5
+    #11 0x4e59a4 in display_file /src/binutils-gdb/binutils/./fuzz_objdump.h:5164:3
+    #12 0x4e59a4 in LLVMFuzzerTestOneInput /src/binutils-gdb/binutils/fuzz_objdump.c:62:3
+    #13 0x4d873b in main (/out/fuzz_objdump_safe+0x4d873b)
+
+DEDUP_TOKEN: __interceptor_malloc--bfd_malloc--bfd_get_full_section_contents
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/binutils-gdb/bfd/libbfd.c:727:23 in bfd_getl32
+Shadow bytes around the buggy address:
+  0x0c047fff7fb0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c047fff7fc0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c047fff7fd0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c047fff7fe0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c047fff7ff0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0c047fff8000: fa fa fd fd fa fa fd fd fa fa 00 07 fa fa[04]fa
+  0x0c047fff8010: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff8020: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff8030: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff8040: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff8050: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

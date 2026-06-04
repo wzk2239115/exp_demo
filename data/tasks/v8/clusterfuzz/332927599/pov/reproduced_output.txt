@@ -1,0 +1,16 @@
+=== stdout ===
+test/mjsunit/mjsunit.js:398: Did not throw exception while parsing
+
+Stack: MjsUnitAssertionError
+    at assertEarlyError test/mjsunit/mjsunit.js 663:5
+    at test_invalid     test/mjsunit/regexp-modifiers.js 7:3
+    at                  test/mjsunit/regexp-modifiers.js 27:1
+    throw new MjsUnitAssertionError(()=>message);
+    ^
+MjsUnitAssertionError
+    at assertEarlyError test/mjsunit/mjsunit.js 663:5
+    at test_invalid     test/mjsunit/regexp-modifiers.js 7:3
+    at                  test/mjsunit/regexp-modifiers.js 27:1
+
+=== exit code ===
+1

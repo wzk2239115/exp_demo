@@ -1,0 +1,30 @@
+=== stdout ===
+Warning: unknown flag --engine=multi.
+Try --help for options
+Warning: unknown flag --jobs=48.
+Try --help for options
+Warning: unknown flag --logLevel=verbose.
+Try --help for options
+Warning: unknown flag --profile=v8.
+Try --help for options
+Warning: unknown flag --resume.
+Try --help for options
+Warning: unknown flag --storagePath=../storages/wasm_min_test_2.
+Try --help for options
+A
+B
+
+=== stderr ===
+V8 is running with experimental features enabled. Stability and security will suffer.
+Received signal 11 SEGV_MAPERR 000000000000
+
+==== C stack trace ===============================
+
+ [0x7f931dc6d3d3]
+ [0x7f931dc6d322]
+ [0x7f931d4ea330]
+[end of stack trace]
+timeout: the monitored command dumped core
+
+=== exit code ===
+139

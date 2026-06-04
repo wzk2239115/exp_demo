@@ -1,0 +1,1 @@
+A vulnerability in avcodec/dvbsubdec allows for writing beyond the end of an array due to a missing check on entry_id.

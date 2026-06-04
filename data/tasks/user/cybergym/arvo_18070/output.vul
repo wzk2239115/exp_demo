@@ -1,0 +1,73 @@
+======================= INFO =========================
+This binary is built for AFL-fuzz.
+To run the target function on individual input(s) execute this:
+  /out/fuzzer_connect < INPUT_FILE
+or
+  /out/fuzzer_connect INPUT_FILE1 [INPUT_FILE2 ... ]
+To fuzz with afl-fuzz execute this:
+  afl-fuzz [afl-flags] /out/fuzzer_connect [-N]
+afl-fuzz will run N iterations before re-spawning the process (default: 1000)
+======================================================
+Reading 4195 bytes from /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x611000002800 at pc 0x000000662e39 bp 0x7fff72078430 sp 0x7fff72078428
+READ of size 2 at 0x611000002800 thread T0
+SCARINESS: 14 (2-byte-read-heap-buffer-overflow)
+    #0 0x662e38 in sctp_process_asconf_delete_ip /src/usrsctp/usrsctplib/netinet/sctp_asconf.c:347:15
+    #1 0x662e38 in sctp_handle_asconf /src/usrsctp/usrsctplib/netinet/sctp_asconf.c:765:15
+    #2 0x4f021a in sctp_process_control /src/usrsctp/usrsctplib/netinet/sctp_input.c:5496:5
+    #3 0x4eb3de in sctp_common_input_processing /src/usrsctp/usrsctplib/netinet/sctp_input.c:5903:10
+    #4 0x4e13b5 in usrsctp_conninput /src/usrsctp/usrsctplib/user_socket.c:3518:2
+    #5 0x4c9024 in LLVMFuzzerTestOneInput /src/usrsctp/fuzzer/fuzzer_connect.c:461:2
+    #6 0x4c9bbe in ExecuteFilesOnyByOne /src/libfuzzer/afl/afl_driver.cpp:216:5
+    #7 0x4c9bbe in main /src/libfuzzer/afl/afl_driver.cpp:253:12
+    #8 0x7f39631ce83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #9 0x41de78 in _start (/out/fuzzer_connect+0x41de78)
+
+DEDUP_TOKEN: sctp_process_asconf_delete_ip--sctp_handle_asconf--sctp_process_control
+0x611000002800 is located 0 bytes to the right of 256-byte region [0x611000002700,0x611000002800)
+allocated by thread T0 here:
+    #0 0x4962cd in malloc /src/llvm/projects/compiler-rt/lib/asan/asan_malloc_linux.cpp:145:3
+    #1 0x654839 in m_get /src/usrsctp/usrsctplib/user_mbuf.c:125:9
+    #2 0x654839 in m_copyback /src/usrsctp/usrsctplib/user_mbuf.c:1328:8
+    #3 0x4e1209 in usrsctp_conninput /src/usrsctp/usrsctplib/user_socket.c:3507:2
+    #4 0x4c9024 in LLVMFuzzerTestOneInput /src/usrsctp/fuzzer/fuzzer_connect.c:461:2
+    #5 0x4c9bbe in ExecuteFilesOnyByOne /src/libfuzzer/afl/afl_driver.cpp:216:5
+    #6 0x4c9bbe in main /src/libfuzzer/afl/afl_driver.cpp:253:12
+    #7 0x7f39631ce83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: malloc--m_get--m_copyback
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/usrsctp/usrsctplib/netinet/sctp_asconf.c:347:15 in sctp_process_asconf_delete_ip
+Shadow bytes around the buggy address:
+  0x0c227fff84b0: fa fa fa fa fa fa fa fa 00 00 00 00 00 00 00 00
+  0x0c227fff84c0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c227fff84d0: 00 00 00 00 00 00 00 00 fa fa fa fa fa fa fa fa
+  0x0c227fff84e0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c227fff84f0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0c227fff8500:[fa]fa fa fa fa fa fa fa 00 00 00 00 00 00 00 00
+  0x0c227fff8510: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c227fff8520: 00 00 00 00 00 00 00 00 fa fa fa fa fa fa fa fa
+  0x0c227fff8530: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c227fff8540: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c227fff8550: fa fa fa fa fa fa fa fa 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==7==ABORTING

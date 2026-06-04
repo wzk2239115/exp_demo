@@ -1,0 +1,110 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3648555819
+INFO: Loaded 1 modules   (246655 inline 8-bit counters): 246655 [0x38fef48, 0x393b2c7), 
+INFO: Loaded 1 PC tables (246655 PCs): 246655 [0x323c8e8,0x36000d8), 
+/out/fuzz_objdump_safe: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+
+/tmp/libfuzzer.7:     file format pe-x86-64
+/tmp/libfuzzer.7
+
+Characteristics 0x2068
+	symbols stripped
+	large address aware
+	DLL
+
+Time/Date		Fri Jan 30 03:38:08 1987
+Magic			0000
+MajorLinkerVersion	0
+MinorLinkerVersion	0
+SizeOfCode		0000000000000000
+SizeOfInitializedData	0000000000000000
+SizeOfUninitializedData	0000000000000000
+AddressOfEntryPoint	0000000000000000
+BaseOfCode		0000000000000000
+ImageBase		0000000000000000
+SectionAlignment	00000000
+FileAlignment		00000000
+MajorOSystemVersion	0
+MinorOSystemVersion	0
+MajorImageVersion	0
+MinorImageVersion	0
+MajorSubsystemVersion	0
+MinorSubsystemVersion	0
+Win32Version		00000000
+SizeOfImage		00000000
+SizeOfHeaders		00000000
+CheckSum		00000000
+Subsystem		00000000	(unspecified)
+DllCharacteristics	00000000
+SizeOfStackReserve	0000000000000000
+SizeOfStackCommit	0000000000000000
+SizeOfHeapReserve	0000000000000000
+SizeOfHeapCommit	0000000000000000
+LoaderFlags		00000000
+NumberOfRvaAndSizes	00000000
+
+The Data Directory
+Entry 0 0000000000000000 00000000 Export Directory [.edata (or where ever we found it)]
+Entry 1 0000000000000000 00000000 Import Directory [parts of .idata]
+Entry 2 0000000000000000 00000000 Resource Directory [.rsrc]
+Entry 3 0000000000000000 00000000 Exception Directory [.pdata]
+Entry 4 0000000000000000 00000000 Security Directory
+Entry 5 0000000000000000 00000000 Base Relocation Directory [.reloc]
+Entry 6 0000000000000000 00000000 Debug Directory
+Entry 7 0000000000000000 00000000 Description Directory
+Entry 8 0000000000000000 00000000 Special Directory
+Entry 9 0000000000000000 00000000 Thread Storage Directory [.tls]
+Entry a 0000000000000000 00000000 Load Configuration Directory
+Entry b 0000000000000000 00000000 Bound Import Directory
+Entry c 0000000000000000 00000000 Import Address Table Directory
+Entry d 0000000000000000 00000000 Delay Import Directory
+Entry e 0000000000000000 00000000 CLR Runtime Header
+Entry f 0000000000000000 00000000 Reserved
+
+/tmp/libfuzzer.7: failed to read symbol table from: /tmp/libfuzzer.7
+/tmp/libfuzzer.7: error message was: invalid operation
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x53f4e5 in sanitize_string /src/binutils-gdb/binutils/./fuzz_objdump.h:701:11
+    #1 0x54abe8 in dump_section_header /src/binutils-gdb/binutils/./fuzz_objdump.h:847:4
+    #2 0xe284ef in bfd_map_over_sections /src/binutils-gdb/bfd/section.c:1366:5
+    #3 0x542cb3 in dump_headers /src/binutils-gdb/binutils/./fuzz_objdump.h:989:3
+    #4 0x542cb3 in dump_bfd /src/binutils-gdb/binutils/./fuzz_objdump.h:5644:2
+    #5 0x53ff03 in display_object_bfd /src/binutils-gdb/binutils/./fuzz_objdump.h
+    #6 0x53ff03 in display_any_bfd /src/binutils-gdb/binutils/./fuzz_objdump.h:5831:5
+    #7 0x53fb27 in display_file /src/binutils-gdb/binutils/./fuzz_objdump.h:5852:3
+    #8 0x53fb27 in LLVMFuzzerTestOneInput /src/binutils-gdb/binutils/fuzz_objdump.c:69:3
+    #9 0x43edf3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #10 0x42a552 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #11 0x42fdfc in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #12 0x459332 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #13 0x7fa66c0f8082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #14 0x42071d in _start (/out/fuzz_objdump_safe+0x42071d)
+
+DEDUP_TOKEN: sanitize_string--dump_section_header--bfd_map_over_sections
+  Uninitialized value was created by a heap deallocation
+    #0 0x4dd52c in free /src/llvm-project/compiler-rt/lib/msan/msan_interceptors.cpp:215:3
+    #1 0x265b9d0 in objalloc_free_block /src/binutils-gdb/libiberty/./objalloc.c:248:8
+    #2 0xe1efa2 in bfd_release /src/binutils-gdb/bfd/opncls.c:1069:3
+    #3 0x115d089 in coff_get_normalized_symtab /src/binutils-gdb/bfd/coffgen.c:1760:4
+    #4 0x1178c2a in coff_slurp_symbol_table /src/binutils-gdb/bfd/./coffcode.h:4611:25
+    #5 0x11507aa in coff_get_symtab_upper_bound /src/binutils-gdb/bfd/coffgen.c:389:8
+    #6 0x548b74 in slurp_symtab /src/binutils-gdb/binutils/./fuzz_objdump.h:1000:18
+    #7 0x542398 in dump_bfd /src/binutils-gdb/binutils/./fuzz_objdump.h:5606:14
+    #8 0x53ff03 in display_object_bfd /src/binutils-gdb/binutils/./fuzz_objdump.h
+    #9 0x53ff03 in display_any_bfd /src/binutils-gdb/binutils/./fuzz_objdump.h:5831:5
+    #10 0x53fb27 in display_file /src/binutils-gdb/binutils/./fuzz_objdump.h:5852:3
+    #11 0x53fb27 in LLVMFuzzerTestOneInput /src/binutils-gdb/binutils/fuzz_objdump.c:69:3
+    #12 0x43edf3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #13 0x42a552 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #14 0x42fdfc in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #15 0x459332 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #16 0x7fa66c0f8082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+
+DEDUP_TOKEN: free--objalloc_free_block--bfd_release
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /src/binutils-gdb/binutils/./fuzz_objdump.h:701:11 in sanitize_string
+Unique heap origins: 64
+Stack depot allocated bytes: 9764880
+Unique origin histories: 12
+History depot allocated bytes: 196608
+Exiting

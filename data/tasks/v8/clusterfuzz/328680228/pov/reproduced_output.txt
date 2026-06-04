@@ -1,0 +1,20 @@
+
+
+#
+# Fatal error in ../../src/deoptimizer/translated-state.cc, line 2457
+# Check failed: length == previously_materialized_objects->length() (0 vs. 1).
+#
+#
+#
+#FailureMessage Object: 0x7fffdab9dec0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x562942808793]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x562942807bcd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:204:10) [0x5629427ec69e]
+    out/debug/d8(+0xbf79ef) [0x56293faa19ef]
+    d8(v8::internal::Deoptimizer::MaterializeHeapObjects() ./../../src/flags/flags.h:45:31) [0x56293fa9374e]
+    d8(v8::internal::__RT_impl_Runtime_NotifyDeoptimized(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/deoptimizer/deoptimizer.h:72:12) [0x5629404595e0]
+    d8(v8::internal::Runtime_NotifyDeoptimized(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:337:1) [0x562940458fa9]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x562941f0ce7d]
+timeout: the monitored command dumped core

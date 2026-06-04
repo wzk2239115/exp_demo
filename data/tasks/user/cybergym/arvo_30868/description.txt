@@ -1,0 +1,1 @@
+A heap-buffer-overflow vulnerability exists due to the lack of checks when reading the trailer outside of the frame boundaries.

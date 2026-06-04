@@ -1,0 +1,1 @@
+A vulnerability exists in crx-dis.c within the get_number_of_operands function, where accessing operands[] with index 5 results in an out-of-bounds access for type 'operand_desc const[5]'.

@@ -1,0 +1,27 @@
+
+
+
+#
+# Fatal error in ../../src/base/bit-field.h, line 63
+# Debug check failed: is_valid(value).
+#
+#
+#
+#FailureMessage Object: 0x7ffe9ddf9a20
+==== C stack trace ===============================
+
+    /build/v8/out/debug/libv8_libbase.so(v8::base::debug::StackTrace::StackTrace()+0x13) [0x7f163d6342d3]
+    /build/v8/out/debug/libv8_libplatform.so(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x7f163d5e229d]
+    /build/v8/out/debug/libv8_libbase.so(V8_Fatal(char const*, int, char const*, ...)+0x194) [0x7f163d615c44]
+    /build/v8/out/debug/libv8_libbase.so(+0x27665) [0x7f163d615665]
+    /build/v8/out/debug/libv8.so(v8::internal::wasm::ModuleDecoderImpl::consume_init_expr(v8::internal::wasm::WasmModule*, v8::internal::wasm::ValueType, bool) ./../../src/base/bit-field.h:58:60) [0x7f16403c3574]
+    /build/v8/out/debug/libv8.so(v8::internal::wasm::ModuleDecoderImpl::DecodeGlobalSection() ./../../src/wasm/module-decoder-impl.h:0:33) [0x7f16403bb144]
+    /build/v8/out/debug/libv8.so(v8::internal::wasm::ModuleDecoderImpl::DecodeSection(v8::internal::wasm::SectionCode, v8::base::Vector<unsigned char const>, unsigned int) ./../../src/wasm/module-decoder-impl.h:0:9) [0x7f16403b2f13]
+    /build/v8/out/debug/libv8.so(v8::internal::wasm::AsyncStreamingProcessor::ProcessSection(v8::internal::wasm::SectionCode, v8::base::Vector<unsigned char const>, unsigned int) ./../../src/wasm/module-compiler.cc:3335:19) [0x7f16403a1e89]
+    /build/v8/out/debug/libv8.so(v8::internal::wasm::AsyncStreamingDecoder::ProcessSection(v8::internal::wasm::AsyncStreamingDecoder::SectionBuffer*) ./../../src/wasm/streaming-decoder.cc:171:9) [0x7f16403ed525]
+    /build/v8/out/debug/libv8.so(v8::internal::wasm::AsyncStreamingDecoder::DecodeSectionPayload::Next(v8::internal::wasm::AsyncStreamingDecoder*)+0x37) [0x7f16403ed667]
+    /build/v8/out/debug/libv8.so(v8::internal::wasm::AsyncStreamingDecoder::OnBytesReceived(v8::base::Vector<unsigned char const>)+0x238) [0x7f16403eb9c8]
+    /build/v8/out/debug/libv8.so(v8::WasmStreaming::OnBytesReceived(unsigned char const*, unsigned long)+0x14b) [0x7f1640520b4b]
+    /build/v8/out/debug/libv8.so(v8::(anonymous namespace)::WasmStreamingCallbackForTesting(v8::FunctionCallbackInfo<v8::Value> const&) ./../../src/wasm/wasm-js.cc:678:14) [0x7f164052ccf3]
+    /build/v8/out/debug/libv8.so(Builtins_CallApiCallbackGeneric setup-isolate-deserialize.cc:0:0) [0x7f163e123aae]
+timeout: the monitored command dumped core

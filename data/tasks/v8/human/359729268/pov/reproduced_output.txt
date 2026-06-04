@@ -1,0 +1,14 @@
+=== stderr ===
+Received signal 11 SEGV_MAPERR ffffffffffffffff
+
+==== C stack trace ===============================
+
+ [0x7fa45f8dc283]
+ [0x7fa45f8dc1d2]
+ [0x7fa45f181330]
+ [0x7fa4c0380301]
+[end of stack trace]
+timeout: the monitored command dumped core
+
+=== exit code ===
+139

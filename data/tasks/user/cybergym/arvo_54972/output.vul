@@ -1,0 +1,88 @@
+Running LLVMFuzzerInitialize ...
+oss-fuzzshark: disabling: ip
+oss-fuzzshark: disabling: udplite
+oss-fuzzshark: disabling: ospf
+oss-fuzzshark: disabling: bgp
+oss-fuzzshark: disabling: dhcp
+oss-fuzzshark: disabling: json
+oss-fuzzshark: disabling: snort
+oss-fuzzshark: configured for dissector: udp in table: ip.proto
+continue...
+=================================================================
+==7==ERROR: AddressSanitizer: use-after-poison on address 0x7f9e61f78829 at pc 0x0000004a0651 bp 0x7ffce9388eb0 sp 0x7ffce9388680
+READ of size 187 at 0x7f9e61f78829 thread T0
+SCARINESS: 36 (multi-byte-read-use-after-poison)
+    #0 0x4a0650 in __asan_memcpy /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3
+    #1 0xa0781b in dissect_alp_mpegts /src/wireshark/epan/dissectors/packet-alp.c:186:5
+    #2 0xa0781b in dissect_alp /src/wireshark/epan/dissectors/packet-alp.c:235:16
+    #3 0x6f3ff7 in call_dissector_through_handle /src/wireshark/epan/packet.c:822:9
+    #4 0x6f3ff7 in call_dissector_work /src/wireshark/epan/packet.c:920:9
+    #5 0x6f3828 in dissector_try_uint_new /src/wireshark/epan/packet.c:1526:8
+    #6 0x1d606b0 in dissect_pcap_pktdata /src/wireshark/epan/dissectors/packet-pcap_pktdata.c:378:14
+    #7 0x6f3ff7 in call_dissector_through_handle /src/wireshark/epan/packet.c:822:9
+    #8 0x6f3ff7 in call_dissector_work /src/wireshark/epan/packet.c:920:9
+    #9 0x6ef13a in call_dissector_only /src/wireshark/epan/packet.c:3403:8
+    #10 0x6ef13a in call_dissector_with_data /src/wireshark/epan/packet.c:3416:8
+    #11 0x1f129c6 in dissect_rftap /src/wireshark/epan/dissectors/packet-rftap.c:321:9
+    #12 0x1f12d00 in dissect_rftap_heur /src/wireshark/epan/dissectors/packet-rftap.c:342:12
+    #13 0x6fd17f in dissector_try_heuristic /src/wireshark/epan/packet.c:2952:9
+    #14 0x2501486 in decode_udp_ports /src/wireshark/epan/dissectors/packet-udp.c:692:13
+    #15 0x2508178 in dissect /src/wireshark/epan/dissectors/packet-udp.c:1251:9
+    #16 0x2503acc in dissect_udp /src/wireshark/epan/dissectors/packet-udp.c:1257:5
+    #17 0x6f3ff7 in call_dissector_through_handle /src/wireshark/epan/packet.c:822:9
+    #18 0x6f3ff7 in call_dissector_work /src/wireshark/epan/packet.c:920:9
+    #19 0x7025db in call_dissector_only /src/wireshark/epan/packet.c:3403:8
+    #20 0x7025db in call_all_postdissectors /src/wireshark/epan/packet.c:3776:3
+    #21 0x12954e4 in dissect_frame /src/wireshark/epan/dissectors/packet-frame.c:1196:5
+    #22 0x6f3ff7 in call_dissector_through_handle /src/wireshark/epan/packet.c:822:9
+    #23 0x6f3ff7 in call_dissector_work /src/wireshark/epan/packet.c:920:9
+    #24 0x6ef13a in call_dissector_only /src/wireshark/epan/packet.c:3403:8
+    #25 0x6ef13a in call_dissector_with_data /src/wireshark/epan/packet.c:3416:8
+    #26 0x6ee58d in dissect_record /src/wireshark/epan/packet.c:626:3
+    #27 0x6dc8b8 in epan_dissect_run /src/wireshark/epan/epan.c:623:2
+    #28 0x4de93b in LLVMFuzzerTestOneInput /src/wireshark/fuzz/fuzzshark.c:382:2
+    #29 0x39b3e0a in ExecuteFilesOnyByOne /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c:234:7
+    #30 0x39b3bdc in main /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c:318:12
+    #31 0x7f9e66483082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #32 0x41fe8d in _start (/out/fuzzshark_ip_proto-udp+0x41fe8d)
+
+DEDUP_TOKEN: __asan_memcpy--dissect_alp_mpegts--dissect_alp
+0x7f9e61f78829 is located 41 bytes inside of 1048576-byte region [0x7f9e61f78800,0x7f9e62078800)
+allocated by thread T0 here:
+    #0 0x4a12c6 in malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:69:3
+    #1 0x39b3d29 in ExecuteFilesOnyByOne /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c:200:41
+
+DEDUP_TOKEN: malloc--ExecuteFilesOnyByOne
+SUMMARY: AddressSanitizer: use-after-poison /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3 in __asan_memcpy
+Shadow bytes around the buggy address:
+  0x0ff44c3e70b0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0ff44c3e70c0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0ff44c3e70d0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0ff44c3e70e0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0ff44c3e70f0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+=>0x0ff44c3e7100: 00 00 00 00 00[01]f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+  0x0ff44c3e7110: f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+  0x0ff44c3e7120: f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+  0x0ff44c3e7130: f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+  0x0ff44c3e7140: f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+  0x0ff44c3e7150: f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

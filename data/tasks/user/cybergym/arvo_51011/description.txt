@@ -1,0 +1,1 @@
+A lack of bounds checking on the CharString opstack for the SEAC opcode in the code allows for a security vulnerability.

@@ -1,0 +1,29 @@
+INFO: Seed: 2901948579
+INFO: Loaded 1 modules   (12076 inline 8-bit counters): 12076 [0x2581278, 0x25841a4), 
+INFO: Loaded 1 PC tables (12076 PCs): 12076 [0x226be38,0x229b0f8), 
+/out/libarchive_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x7efeef4abfe6 (pc 0x0000005def14 bp 0x7fff3560a9d0 sp 0x7fff3560a990 T0)
+==7==The signal is caused by a READ memory access.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x5def13 in copy_string /src/libarchive/libarchive/archive_read_support_format_rar5.c
+    #1 0x5dd437 in do_uncompress_block /src/libarchive/libarchive/archive_read_support_format_rar5.c:2986:21
+    #2 0x5da8d0 in process_block /src/libarchive/libarchive/archive_read_support_format_rar5.c:3381:8
+    #3 0x5da1bf in do_uncompress_file /src/libarchive/libarchive/archive_read_support_format_rar5.c:3550:10
+    #4 0x5d9aae in uncompress_file /src/libarchive/libarchive/archive_read_support_format_rar5.c:3634:9
+    #5 0x5d2c41 in rar5_read_data /src/libarchive/libarchive/archive_read_support_format_rar5.c:3861:8
+    #6 0x56efa4 in archive_read_data /src/libarchive/libarchive/archive_read.c:851:8
+    #7 0x56a647 in LLVMFuzzerTestOneInput /src/libarchive_fuzzer.cc:55:17
+    #8 0x473c91 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:553:15
+    #9 0x45eca1 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6
+    #10 0x46466a in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:773:9
+    #11 0x48d332 in main /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10
+    #12 0x7efeedd9583f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #13 0x41fa98 in _start (/out/libarchive_fuzzer+0x41fa98)
+
+DEDUP_TOKEN: copy_string--do_uncompress_block--process_block
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/libarchive/libarchive/archive_read_support_format_rar5.c in copy_string
+==7==ABORTING

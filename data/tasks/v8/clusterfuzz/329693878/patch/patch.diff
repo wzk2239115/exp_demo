@@ -1,0 +1,156 @@
+diff --git a/src/ast/scopes.cc b/src/ast/scopes.cc
+index e67d2ee6052..660fdd2e9ad 100644
+--- a/src/ast/scopes.cc
++++ b/src/ast/scopes.cc
+@@ -3078,9 +3078,10 @@ Variable* ClassScope::DeclareClassVariable(AstValueFactory* ast_value_factory,
+                                            const AstRawString* name,
+                                            int class_token_pos) {
+   DCHECK_NULL(class_variable_);
++  DCHECK_NOT_NULL(name);
+   bool was_added;
+   class_variable_ =
+-      Declare(zone(), name == nullptr ? ast_value_factory->dot_string() : name,
++      Declare(zone(), name->IsEmpty() ? ast_value_factory->dot_string() : name,
+               VariableMode::kConst, NORMAL_VARIABLE,
+               InitializationFlag::kNeedsInitialization,
+               MaybeAssignedFlag::kMaybeAssigned, &was_added);
+diff --git a/src/parsing/parser-base.h b/src/parsing/parser-base.h
+index 5d22325916c..78bad16404d 100644
+--- a/src/parsing/parser-base.h
++++ b/src/parsing/parser-base.h
+@@ -4482,7 +4482,7 @@ typename ParserBase<Impl>::StatementT ParserBase<Impl>::ParseClassDeclaration(
+   // so rewrite it as such.
+ 
+   int class_token_pos = position();
+-  IdentifierT name = impl()->NullIdentifier();
++  IdentifierT name = impl()->EmptyIdentifierString();
+   bool is_strict_reserved = Token::IsStrictReservedWord(peek());
+   IdentifierT variable_name = impl()->NullIdentifier();
+   if (default_export &&
+@@ -4923,7 +4923,7 @@ typename ParserBase<Impl>::ExpressionT ParserBase<Impl>::ParseClassExpression(
+     Scope* outer_scope) {
+   Consume(Token::kClass);
+   int class_token_pos = position();
+-  IdentifierT name = impl()->NullIdentifier();
++  IdentifierT name = impl()->EmptyIdentifierString();
+   bool is_strict_reserved_name = false;
+   Scanner::Location class_name_location = Scanner::Location::invalid();
+   if (peek_any_identifier()) {
+@@ -4940,7 +4940,7 @@ template <typename Impl>
+ typename ParserBase<Impl>::ExpressionT ParserBase<Impl>::ParseClassLiteral(
+     Scope* outer_scope, IdentifierT name, Scanner::Location class_name_location,
+     bool name_is_strict_reserved, int class_token_pos) {
+-  bool is_anonymous = impl()->IsNull(name);
++  bool is_anonymous = impl()->IsEmptyIdentifier(name);
+ 
+   // All parts of a ClassDeclaration and ClassExpression are strict code.
+   if (!impl()->HasCheckedSyntax() && !is_anonymous) {
+diff --git a/src/parsing/parser.cc b/src/parsing/parser.cc
+index 1daa967c073..0aa0acda423 100644
+--- a/src/parsing/parser.cc
++++ b/src/parsing/parser.cc
+@@ -1137,7 +1137,7 @@ FunctionLiteral* Parser::ParseClassForMemberInitialization(
+   // Reparse the whole class body to build member initializer functions.
+   Expression* expr;
+   {
+-    bool is_anonymous = IsNull(class_name);
++    bool is_anonymous = IsEmptyIdentifier(class_name);
+     ClassScope* class_scope = NewClassScope(original_scope_, is_anonymous);
+     BlockState block_state(&scope_, class_scope);
+     RaiseLanguageMode(LanguageMode::kStrict);
+@@ -3157,7 +3157,7 @@ void Parser::DeclareClassVariable(ClassScope* scope, const AstRawString* name,
+   scope->SetScopeName(name);
+ #endif
+ 
+-  DCHECK_IMPLIES(name == nullptr, class_info->is_anonymous);
++  DCHECK_IMPLIES(IsEmptyIdentifier(name), class_info->is_anonymous);
+   // Declare a special class variable for anonymous classes with the dot
+   // if we need to save it for static private method access.
+   Variable* class_variable =
+@@ -3315,7 +3315,7 @@ Expression* Parser::RewriteClassLiteral(ClassScope* block_scope,
+         DefaultConstructor(name, has_extends, pos, end_pos);
+   }
+ 
+-  if (name != nullptr) {
++  if (!IsEmptyIdentifier(name)) {
+     DCHECK_NOT_NULL(block_scope->class_variable());
+     block_scope->class_variable()->set_initializer_position(end_pos);
+   }
+diff --git a/src/parsing/parser.h b/src/parsing/parser.h
+index bf9c81b0362..da10d02c197 100644
+--- a/src/parsing/parser.h
++++ b/src/parsing/parser.h
+@@ -771,6 +771,10 @@ class V8_EXPORT_PRIVATE Parser : public NON_EXPORTED_BASE(ParserBase<Parser>) {
+   V8_INLINE const AstRawString* EmptyIdentifierString() const {
+     return ast_value_factory()->empty_string();
+   }
++  V8_INLINE bool IsEmptyIdentifier(const AstRawString* subject) const {
++    DCHECK_NOT_NULL(subject);
++    return subject->IsEmpty();
++  }
+ 
+   // Producing data during the recursive descent.
+   V8_INLINE const AstRawString* GetSymbol() const {
+diff --git a/src/parsing/preparse-data.cc b/src/parsing/preparse-data.cc
+index cb378e82d39..305cf1176f4 100644
+--- a/src/parsing/preparse-data.cc
++++ b/src/parsing/preparse-data.cc
+@@ -681,7 +681,8 @@ void BaseConsumedPreparseData<Data>::RestoreDataForScope(
+     if (var == nullptr) {
+       DCHECK(scope->AsClassScope()->is_anonymous_class());
+       var = scope->AsClassScope()->DeclareClassVariable(
+-          ast_value_factory, nullptr, kNoSourcePosition);
++          ast_value_factory, ast_value_factory->empty_string(),
++          kNoSourcePosition);
+       AstNodeFactory factory(ast_value_factory, zone);
+       Declaration* declaration =
+           factory.NewVariableDeclaration(kNoSourcePosition);
+diff --git a/src/parsing/preparser.h b/src/parsing/preparser.h
+index 7bdc0d954fc..32ffc55cf9c 100644
+--- a/src/parsing/preparser.h
++++ b/src/parsing/preparser.h
+@@ -1190,7 +1190,7 @@ class PreParser : public ParserBase<PreParser> {
+                                       const PreParserIdentifier& name,
+                                       ClassInfo* class_info,
+                                       int class_token_pos) {
+-    DCHECK_IMPLIES(IsNull(name), class_info->is_anonymous);
++    DCHECK_IMPLIES(IsEmptyIdentifier(name), class_info->is_anonymous);
+     // Declare a special class variable for anonymous classes with the dot
+     // if we need to save it for static private method access.
+     scope->DeclareClassVariable(ast_value_factory(), name.string_,
+@@ -1517,6 +1517,9 @@ class PreParser : public ParserBase<PreParser> {
+     result.string_ = ast_value_factory()->empty_string();
+     return result;
+   }
++  V8_INLINE bool IsEmptyIdentifier(PreParserIdentifier subject) {
++    return subject.string_->IsEmpty();
++  }
+ 
+   // Producing data during the recursive descent.
+   PreParserIdentifier GetSymbol() const {
+diff --git a/test/mjsunit/regress/regress-crbug-329693878.js b/test/mjsunit/regress/regress-crbug-329693878.js
+new file mode 100644
+index 00000000000..28eaf8ffba1
+--- /dev/null
++++ b/test/mjsunit/regress/regress-crbug-329693878.js
+@@ -0,0 +1,20 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++{
++  class Outer {
++    #a() { return 'Outer'; }
++    a() { return this.#a(); }
++    test() {
++      return class  {
++        static #a() { return 'Inner'; }
++        static a() { return this.#a(); }
++        b = undefined();
++      };
++    }
++  }
++  const obj = new Outer;
++  const C = obj.test();
++  assertThrows(() => obj.a.call(new C));
++}

@@ -1,0 +1,30 @@
+INFO: Seed: 2835212469
+INFO: Loaded 1 modules   (12023 inline 8-bit counters): 12023 [0x2581118, 0x258400f), 
+INFO: Loaded 1 PC tables (12023 PCs): 12023 [0x226be38,0x229ada8), 
+/out/libarchive_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x7fcb21379000 (pc 0x00000079d138 bp 0x7ffe93065ca0 sp 0x7ffe93065c60 T0)
+==7==The signal is caused by a READ memory access.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x79d137 in crc32 (/out/libarchive_fuzzer+0x79d137)
+    #1 0x5d4819 in update_crc /src/libarchive/libarchive/archive_read_support_format_rar5.c:2163:17
+    #2 0x5db3ba in push_data_ready /src/libarchive/libarchive/archive_read_support_format_rar5.c:3295:13
+    #3 0x5db807 in push_data /src/libarchive/libarchive/archive_read_support_format_rar5.c:710:9
+    #4 0x5d4ea8 in do_uncompress_file /src/libarchive/libarchive/archive_read_support_format_rar5.c:3434:9
+    #5 0x5d451e in uncompress_file /src/libarchive/libarchive/archive_read_support_format_rar5.c:3447:15
+    #6 0x5cdbc0 in rar5_read_data /src/libarchive/libarchive/archive_read_support_format_rar5.c:3656:11
+    #7 0x56a124 in archive_read_data /src/libarchive/libarchive/archive_read.c:851:8
+    #8 0x5657e7 in LLVMFuzzerTestOneInput /src/libarchive_fuzzer.cc:49:17
+    #9 0x46c9c4 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:553:15
+    #10 0x457851 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:286:6
+    #11 0x45cefa in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:717:9
+    #12 0x487dd2 in main /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10
+    #13 0x7fcb25e9c83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #14 0x41f998 in _start (/out/libarchive_fuzzer+0x41f998)
+
+DEDUP_TOKEN: crc32--update_crc--push_data_ready
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV (/out/libarchive_fuzzer+0x79d137) in crc32
+==7==ABORTING

@@ -1,0 +1,14 @@
+=== stdout ===
+test/mjsunit/mjsunit.js:418: Failure: expected <1> found <5.960464477539063e-8>
+
+Stack: MjsUnitAssertionError
+    at assertEquals test/mjsunit/mjsunit.js 513:7
+    at              test/mjsunit/compiler/regress-394327270.js 17:1
+    throw new MjsUnitAssertionError(
+    ^
+MjsUnitAssertionError
+    at assertEquals test/mjsunit/mjsunit.js 513:7
+    at              test/mjsunit/compiler/regress-394327270.js 17:1
+
+=== exit code ===
+1

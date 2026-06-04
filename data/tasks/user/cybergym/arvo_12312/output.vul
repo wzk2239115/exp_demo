@@ -1,0 +1,76 @@
+INFO: Seed: 2767446294
+INFO: Loaded 1 modules   (22090 inline 8-bit counters): 22090 [0xbc4cc8, 0xbca312), 
+INFO: Loaded 1 PC tables (22090 PCs): 22090 [0x8a0020,0x8f64c0), 
+/out/hb-shape-fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x613000000350 at pc 0x0000005cc77d bp 0x7ffc37bddfb0 sp 0x7ffc37bddfa8
+READ of size 2 at 0x613000000350 thread T0
+SCARINESS: 14 (2-byte-read-heap-buffer-overflow)
+    #0 0x5cc77c in BEInt<unsigned short, 2>::operator unsigned short() const /src/harfbuzz/src/./hb-machinery.hh:728:59
+    #1 0x5cc720 in OT::IntType<unsigned short, 2u>::operator unsigned int() const /src/harfbuzz/src/./hb-open-type.hh:67:51
+    #2 0x6eb30f in OT::OffsetTo<OT::UnsizedOffsetListOf<AAT::Lookup<OT::IntType<unsigned short, 2u> >, OT::IntType<unsigned short, 2u>, false>, OT::IntType<unsigned short, 2u>, false>::operator()(void const*) const /src/harfbuzz/src/./hb-open-type.hh:261:46
+    #3 0x6ea8be in AAT::ContextualSubtable<AAT::ObsoleteTypes>::driver_context_t::driver_context_t(AAT::ContextualSubtable<AAT::ObsoleteTypes> const*, AAT::hb_aat_apply_context_t*) /src/harfbuzz/src/./hb-aat-layout-morx-table.hh:223:13
+    #4 0x6ea6ca in AAT::ContextualSubtable<AAT::ObsoleteTypes>::apply(AAT::hb_aat_apply_context_t*) const /src/harfbuzz/src/./hb-aat-layout-morx-table.hh:318:22
+    #5 0x6e8cfb in AAT::hb_aat_apply_context_t::return_t AAT::ChainSubtable<AAT::ObsoleteTypes>::dispatch<AAT::hb_aat_apply_context_t>(AAT::hb_aat_apply_context_t*) const /src/harfbuzz/src/./hb-aat-layout-morx-table.hh:906:23
+    #6 0x6e8b50 in AAT::ChainSubtable<AAT::ObsoleteTypes>::apply(AAT::hb_aat_apply_context_t*) const /src/harfbuzz/src/./hb-aat-layout-morx-table.hh:918:5
+    #7 0x6e87db in AAT::Chain<AAT::ObsoleteTypes>::apply(AAT::hb_aat_apply_context_t*, unsigned int) const /src/harfbuzz/src/./hb-aat-layout-morx-table.hh:1037:17
+    #8 0x6d6218 in AAT::mortmorx<AAT::ObsoleteTypes>::apply(AAT::hb_aat_apply_context_t*) const /src/harfbuzz/src/./hb-aat-layout-morx-table.hh:1123:14
+    #9 0x6d5d39 in hb_aat_layout_substitute(hb_ot_shape_plan_t const*, hb_font_t*, hb_buffer_t*) /src/harfbuzz/src/hb-aat-layout.cc:234:10
+    #10 0x6ba2ae in hb_ot_shape_internal(hb_ot_shape_context_t*) /src/harfbuzz/src/hb-ot-shape.cc:974:3
+    #11 0x6b9dd4 in _hb_ot_shape /src/harfbuzz/src/hb-ot-shape.cc:998:3
+    #12 0x6ce628 in hb_shape_plan_execute /src/harfbuzz/src/./hb-shaper-list.hh:42:1
+    #13 0x6cf854 in hb_shape_full /src/harfbuzz/src/hb-shape.cc:143:19
+    #14 0x530994 in LLVMFuzzerTestOneInput /src/harfbuzz/./test/fuzzing/hb-shape-fuzzer.cc:24:5
+    #15 0x55c235 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:571:15
+    #16 0x531a5d in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:280:6
+    #17 0x53d2a6 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:713:9
+    #18 0x5310dc in main /src/libfuzzer/FuzzerMain.cpp:20:10
+    #19 0x7f6ff7fd683f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #20 0x41cfa8 in _start (/out/hb-shape-fuzzer+0x41cfa8)
+
+DEDUP_TOKEN: BEInt<unsigned short, 2>::operator unsigned short() const--OT::IntType<unsigned short, 2u>::operator unsigned int() const--OT::OffsetTo<OT::UnsizedOffsetListOf<AAT::Lookup<OT::IntType<unsigned short, 2u> >, OT::IntType<unsigned short, 2u>, false>, OT::IntType<unsigned short, 2u>, false>::operator()(void const*) const
+0x613000000350 is located 0 bytes to the right of 336-byte region [0x613000000200,0x613000000350)
+allocated by thread T0 here:
+    #0 0x52c508 in operator new[](unsigned long) /src/llvm/projects/compiler-rt/lib/asan/asan_new_delete.cc:109
+    #1 0x55bfe7 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:558:23
+    #2 0x531a5d in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:280:6
+    #3 0x53d2a6 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:713:9
+    #4 0x5310dc in main /src/libfuzzer/FuzzerMain.cpp:20:10
+    #5 0x7f6ff7fd683f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: operator new[](unsigned long)--fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)--fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/harfbuzz/src/./hb-machinery.hh:728:59 in BEInt<unsigned short, 2>::operator unsigned short() const
+Shadow bytes around the buggy address:
+  0x0c267fff8010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c267fff8020: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c267fff8030: 00 00 fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c267fff8040: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c267fff8050: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0c267fff8060: 00 00 00 00 00 00 00 00 00 00[fa]fa fa fa fa fa
+  0x0c267fff8070: fa fa fa fa fa fa fa fa 00 00 00 00 00 00 00 00
+  0x0c267fff8080: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c267fff8090: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c267fff80a0: 00 00 00 00 00 00 00 fa fa fa fa fa fa fa fa fa
+  0x0c267fff80b0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==7==ABORTING

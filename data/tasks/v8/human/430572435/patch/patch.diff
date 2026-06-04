@@ -1,0 +1,31 @@
+diff --git a/src/codegen/source-position.h b/src/codegen/source-position.h
+index 85dcd964b22..3b0ff0e4ebf 100644
+--- a/src/codegen/source-position.h
++++ b/src/codegen/source-position.h
+@@ -116,6 +116,8 @@ class SourcePosition final {
+     value_ = InliningIdField::update(value_, inlining_id + 1);
+   }
+ 
++  static constexpr int MaxInliningId() { return InliningIdField::kMax; }
++
+   static const int kNotInlined = -1;
+   static_assert(kNoSourcePosition == -1);
+ 
+diff --git a/src/maglev/maglev-graph-builder.cc b/src/maglev/maglev-graph-builder.cc
+index 861d64b6c06..3d5a3a3944b 100644
+--- a/src/maglev/maglev-graph-builder.cc
++++ b/src/maglev/maglev-graph-builder.cc
+@@ -8002,6 +8002,13 @@ ReduceResult MaglevGraphBuilder::BuildInlineFunction(
+ 
+ bool MaglevGraphBuilder::CanInlineCall(compiler::SharedFunctionInfoRef shared,
+                                        float call_frequency) {
++  if (static_cast<int>(graph()->inlined_functions().size()) >=
++      SourcePosition::MaxInliningId()) {
++    compilation_unit_->info()->set_could_not_inline_all_candidates();
++    TRACE_CANNOT_INLINE("maximum inlining ids");
++    return false;
++  }
++
+   if (graph()->total_inlined_bytecode_size() >
+       max_inlined_bytecode_size_cumulative()) {
+     compilation_unit_->info()->set_could_not_inline_all_candidates();

@@ -1,0 +1,19 @@
+
+
+#
+# Fatal error in ../../src/runtime/runtime-wasm.cc, line 685
+# Debug check failed: Tagged<To> v8::internal::Cast(Tagged<From>, const v8::SourceLocation &) [To = v8::internal::WasmTrustedInstanceData, From = v8::internal::TrustedObject].
+#
+#
+#
+#FailureMessage Object: 0x7ffc06e18290
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x560060cd6b13]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x560060cd5efd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x560060cba854]
+    out/debug/d8(+0x3e37275) [0x560060cba275]
+    d8(v8::internal::__RT_impl_Runtime_TierUpWasmToJSWrapper(v8::internal::RuntimeArgumentsWithoutHandles, v8::internal::Isolate*) ./../../src/objects/tagged-field-inl.h:214:20) [0x56005ee75418]
+    d8(v8::internal::Runtime_TierUpWasmToJSWrapper(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-wasm.cc:618:1) [0x56005ee733c0]
+    d8(Builtins_WasmCEntry setup-isolate-deserialize.cc:0:0) [0x56006045df17]
+timeout: the monitored command dumped core

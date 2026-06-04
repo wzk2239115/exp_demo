@@ -1,0 +1,51 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+=====================================================
+BUG: KMSAN: kernel-infoleak-after-free in instrument_copy_to_user include/linux/instrumented.h:114 [inline]
+BUG: KMSAN: kernel-infoleak-after-free in _inline_copy_to_user include/linux/uaccess.h:196 [inline]
+BUG: KMSAN: kernel-infoleak-after-free in _copy_to_user+0xcc/0x120 lib/usercopy.c:26
+ instrument_copy_to_user include/linux/instrumented.h:114 [inline]
+ _inline_copy_to_user include/linux/uaccess.h:196 [inline]
+ _copy_to_user+0xcc/0x120 lib/usercopy.c:26
+ copy_to_user include/linux/uaccess.h:225 [inline]
+ do_insn_ioctl+0x59c/0x6d0 drivers/comedi/comedi_fops.c:1661
+ comedi_unlocked_ioctl+0x1432/0x1e80 drivers/comedi/comedi_fops.c:2286
+ vfs_ioctl fs/ioctl.c:51 [inline]
+ __do_sys_ioctl fs/ioctl.c:907 [inline]
+ __se_sys_ioctl+0x23c/0x400 fs/ioctl.c:893
+ __x64_sys_ioctl+0x97/0xe0 fs/ioctl.c:893
+ x64_sys_call+0x1ebe/0x3db0 arch/x86/include/generated/asm/syscalls_64.h:17
+ do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
+ do_syscall_64+0xd9/0x210 arch/x86/entry/syscall_64.c:94
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+Uninit was created at:
+ slab_free_hook mm/slub.c:2307 [inline]
+ slab_free mm/slub.c:4643 [inline]
+ kfree+0x252/0xec0 mm/slub.c:4842
+ put_css_set_locked+0xf5c/0x1440 kernel/cgroup/cgroup.c:971
+ cgroup_migrate_finish+0x1d0/0x7c0 kernel/cgroup/cgroup.c:2758
+ cgroup_attach_task+0x6ec/0x970 kernel/cgroup/cgroup.c:2957
+ __cgroup1_procs_write+0x4ba/0x670 kernel/cgroup/cgroup-v1.c:528
+ cgroup1_procs_write+0x44/0x60 kernel/cgroup/cgroup-v1.c:541
+ cgroup_file_write+0x38d/0x920 kernel/cgroup/cgroup.c:4183
+ kernfs_fop_write_iter+0x545/0x9e0 fs/kernfs/file.c:334
+ new_sync_write fs/read_write.c:593 [inline]
+ vfs_write+0xb4b/0x1580 fs/read_write.c:686
+ ksys_write fs/read_write.c:738 [inline]
+ __do_sys_write fs/read_write.c:749 [inline]
+ __se_sys_write fs/read_write.c:746 [inline]
+ __x64_sys_write+0x1fb/0x4d0 fs/read_write.c:746
+ x64_sys_call+0x38c3/0x3db0 arch/x86/include/generated/asm/syscalls_64.h:2
+ do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
+ do_syscall_64+0xd9/0x210 arch/x86/entry/syscall_64.c:94
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+Bytes 4-59 of 60 are uninitialized
+Memory access of size 60 starts at ffff88804acc6380
+Data copied to user address 0000200000000080
+
+CPU: 0 UID: 0 PID: 6052 Comm: syz.0.16 Not tainted 6.16.0-rc7-syzkaller #0 PREEMPT(none) 
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 05/07/2025
+=====================================================

@@ -1,0 +1,30 @@
+
+
+#
+# Fatal error in ../../src/wasm/function-body-decoder-impl.h, line 204
+# Debug check failed: ValidationTag::validate.
+#
+#
+#
+#FailureMessage Object: 0x7ffec412d0a0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x55cd7bf3e023]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55cd7bf3d18d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55cd7bf22e14]
+    out/debug/d8(+0x4741805) [0x55cd7bf22805]
+    d8(bool v8::internal::wasm::WasmFullDecoder<v8::internal::wasm::Decoder::NoValidationTag, v8::internal::wasm::TurboshaftGraphBuildingInterface, (v8::internal::wasm::DecodingMode)0>::TypeCheckStackAgainstMerge_Slow<(v8::internal::wasm::WasmFullDecoder<v8::internal::wasm::Decoder::NoValidationTag, v8::internal::wasm::TurboshaftGraphBuildingInterface, (v8::internal::wasm::DecodingMode)0>::StackElementsCountMode)1, (v8::internal::wasm::WasmFullDecoder<v8::internal::wasm::Decoder::NoValidationTag, v8::internal::wasm::TurboshaftGraphBuildingInterface, (v8::internal::wasm::DecodingMode)0>::PushBranchValues)0, (v8::internal::wasm::WasmFullDecoder<v8::internal::wasm::Decoder::NoValidationTag, v8::internal::wasm::TurboshaftGraphBuildingInterface, (v8::internal::wasm::DecodingMode)0>::MergeType)2, (v8::internal::wasm::WasmFullDecoder<v8::internal::wasm::Decoder::NoValidationTag, v8::internal::wasm::TurboshaftGraphBuildingInterface, (v8::internal::wasm::DecodingMode)0>::RewriteStackTypes)0>(v8::internal::wasm::Merge<v8::internal::wasm::TurboshaftGraphBuildingInterface::Value>*) ./../../src/wasm/function-body-decoder-impl.h:1659:5) [0x55cd79fc02df]
+    d8(bool v8::internal::wasm::WasmFullDecoder<v8::internal::wasm::Decoder::NoValidationTag, v8::internal::wasm::TurboshaftGraphBuildingInterface, (v8::internal::wasm::DecodingMode)0>::DoReturn<(v8::internal::wasm::WasmFullDecoder<v8::internal::wasm::Decoder::NoValidationTag, v8::internal::wasm::TurboshaftGraphBuildingInterface, (v8::internal::wasm::DecodingMode)0>::StackElementsCountMode)1, (v8::internal::wasm::WasmFullDecoder<v8::internal::wasm::Decoder::NoValidationTag, v8::internal::wasm::TurboshaftGraphBuildingInterface, (v8::internal::wasm::DecodingMode)0>::MergeType)2>() ./../../src/wasm/function-body-decoder-impl.h:58:3) [0x55cd79fbe14c]
+    d8(v8::internal::wasm::WasmFullDecoder<v8::internal::wasm::Decoder::NoValidationTag, v8::internal::wasm::TurboshaftGraphBuildingInterface, (v8::internal::wasm::DecodingMode)0>::DecodeEndImpl(v8::internal::wasm::WasmFullDecoder<v8::internal::wasm::Decoder::NoValidationTag, v8::internal::wasm::TurboshaftGraphBuildingInterface, (v8::internal::wasm::DecodingMode)0>::TraceLine*, v8::internal::wasm::WasmOpcode) ./../../src/wasm/function-body-decoder-impl.h:4030:12) [0x55cd79fbbfd7]
+    d8(v8::internal::wasm::WasmFullDecoder<v8::internal::wasm::Decoder::NoValidationTag, v8::internal::wasm::TurboshaftGraphBuildingInterface, (v8::internal::wasm::DecodingMode)0>::DecodeEnd(v8::internal::wasm::WasmFullDecoder<v8::internal::wasm::Decoder::NoValidationTag, v8::internal::wasm::TurboshaftGraphBuildingInterface, (v8::internal::wasm::DecodingMode)0>*, v8::internal::wasm::WasmOpcode) ./../../src/wasm/function-body-decoder-impl.h:3933:3) [0x55cd79f9d937]
+    d8(v8::internal::wasm::WasmFullDecoder<v8::internal::wasm::Decoder::NoValidationTag, v8::internal::wasm::TurboshaftGraphBuildingInterface, (v8::internal::wasm::DecodingMode)0>::DecodeFunctionBody() ./../../src/wasm/function-body-decoder-impl.h:3277:17) [0x55cd79f93c33]
+    d8(v8::internal::wasm::WasmFullDecoder<v8::internal::wasm::Decoder::NoValidationTag, v8::internal::wasm::TurboshaftGraphBuildingInterface, (v8::internal::wasm::DecodingMode)0>::Decode() ./../../src/wasm/wasm-result.h:47:5) [0x55cd79f85035]
+    d8(v8::internal::wasm::BuildTSGraph(v8::internal::compiler::turboshaft::PipelineData*, v8::internal::AccountingAllocator*, v8::internal::wasm::CompilationEnv*, v8::internal::wasm::WasmDetectedFeatures*, v8::internal::compiler::turboshaft::Graph&, v8::internal::wasm::FunctionBody const&, v8::internal::wasm::WireBytesStorage const*, std::__Cr::unique_ptr<v8::internal::wasm::AssumptionsJournal, std::__Cr::default_delete<v8::internal::wasm::AssumptionsJournal>>*, v8::internal::ZoneVector<v8::internal::WasmInliningPosition>*, int, v8::internal::wasm::WasmFunctionCoverageData*) ./../../src/wasm/wasm-result.h:47:5) [0x55cd79f84b48]
+    d8(v8::internal::compiler::Pipeline::GenerateWasmCode(v8::internal::wasm::CompilationEnv*, v8::internal::compiler::WasmCompilationData&, v8::internal::wasm::WasmDetectedFeatures*, v8::internal::Counters*) ./../../src/compiler/pipeline.cc:3137:3) [0x55cd7a672f1f]
+    d8(v8::internal::compiler::turboshaft::ExecuteTurboshaftWasmCompilation(v8::internal::wasm::CompilationEnv*, v8::internal::compiler::WasmCompilationData&, v8::internal::wasm::WasmDetectedFeatures*, v8::internal::Counters*) ./../../src/wasm/function-compiler.h:74:52) [0x55cd7b09d158]
+    d8(v8::internal::wasm::WasmCompilationUnit::ExecuteCompilation(v8::internal::wasm::CompilationEnv*, v8::internal::wasm::WireBytesStorage const*, v8::internal::Counters*, v8::internal::wasm::WasmDetectedFeatures*) ./../../src/wasm/function-compiler.cc:139:14) [0x55cd79f1c7d6]
+    d8(v8::internal::wasm::CompileLazy(v8::internal::Isolate*, v8::internal::Tagged<v8::internal::WasmTrustedInstanceData>, int) ./../../third_party/libc++/src/include/__memory/shared_ptr.h:477:9) [0x55cd79f22e24]
+    d8(v8::internal::__RT_impl_Runtime_WasmCompileLazy(v8::internal::RuntimeArgumentsWithoutHandles, v8::internal::Isolate*) ./../../src/runtime/runtime-wasm.cc:380:7) [0x55cd79da41f8]
+    d8(v8::internal::Runtime_WasmCompileLazy(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-wasm.cc:365:1) [0x55cd79da3b30]
+    d8(Builtins_WasmCEntry setup-isolate-deserialize.cc:0:0) [0x55cd7b5ea997]
+timeout: the monitored command dumped core

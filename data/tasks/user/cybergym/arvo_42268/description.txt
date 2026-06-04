@@ -1,0 +1,1 @@
+A vulnerability exists where memcpy() is used instead of memmove(), which can lead to issues when handling possibly overlapping memory regions.

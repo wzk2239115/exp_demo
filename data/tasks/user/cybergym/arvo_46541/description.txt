@@ -1,0 +1,1 @@
+A vulnerability exists where a buffer is not marked with fz_var(), which can lead to the use of a freed pointer.

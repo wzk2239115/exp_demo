@@ -1,0 +1,34 @@
+
+
+#
+# Fatal error in ../../src/maglev/maglev-graph-builder.cc, line 7723
+# Debug check failed: iterator_.current_bytecode() == interpreter::Bytecode::kGetNamedProperty || iterator_.current_bytecode() == interpreter::Bytecode::kGetNamedPropertyFromSuper.
+#
+#
+#
+#FailureMessage Object: 0x7fffd3227b60
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x5626cede6aa3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x5626cede5c0d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x5626cedcbdf4]
+    out/debug/d8(+0x46167e5) [0x5626cedcb7e5]
+    d8(v8::internal::maglev::MaglevGraphBuilder::FindContinuationForPolymorphicPropertyLoad() ./../../src/interpreter/bytecode-array-iterator.h:179:37) [0x5626cc813922]
+    d8(v8::internal::maglev::MaybeReduceResult v8::internal::maglev::MaglevGraphBuilder::TryBuildPolymorphicPropertyAccess<v8::internal::maglev::MaglevGraphBuilder::TryBuildLoadNamedProperty(v8::internal::maglev::ValueNode*, v8::internal::compiler::NameRef, v8::internal::compiler::FeedbackSource&)::$_0&>(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::compiler::NamedAccessFeedback const&, v8::internal::compiler::AccessMode, v8::internal::ZoneVector<v8::internal::compiler::PropertyAccessInfo> const&, v8::internal::maglev::MaglevGraphBuilder::TryBuildLoadNamedProperty(v8::internal::maglev::ValueNode*, v8::internal::compiler::NameRef, v8::internal::compiler::FeedbackSource&)::$_0&) ./../../src/maglev/maglev-graph-builder.cc:0:20) [0x5626cc8c77d1]
+    d8(v8::internal::maglev::MaybeReduceResult v8::internal::maglev::MaglevGraphBuilder::TryBuildLoadNamedProperty<v8::internal::maglev::MaglevGraphBuilder::TryBuildLoadNamedProperty(v8::internal::maglev::ValueNode*, v8::internal::compiler::NameRef, v8::internal::compiler::FeedbackSource&)::$_0&>(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::compiler::NameRef, v8::internal::compiler::FeedbackSource&, v8::internal::maglev::MaglevGraphBuilder::TryBuildLoadNamedProperty(v8::internal::maglev::ValueNode*, v8::internal::compiler::NameRef, v8::internal::compiler::FeedbackSource&)::$_0&) ./../../src/maglev/maglev-graph-builder.cc:0:12) [0x5626cc814506]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryReduceGetIterator(v8::internal::maglev::ValueNode*, int, int) ./../../src/maglev/maglev-graph-builder.cc:15968:9) [0x5626cc860873]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitGetIterator() ./../../src/maglev/maglev-graph-builder.cc:16015:3) [0x5626cc86125e]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitSingleBytecode() ./../../src/maglev/maglev-graph-builder.h:0:7) [0x5626cc6e3478]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildBody() ./../../src/interpreter/bytecode-array-iterator.h:82:16) [0x5626cc6dea10]
+    d8(v8::internal::maglev::MaglevGraphBuilder::Build() ./../../src/maglev/maglev-graph-builder.h:277:3) [0x5626cc6da2de]
+    d8(v8::internal::maglev::MaglevCompiler::Compile(v8::internal::LocalIsolate*, v8::internal::maglev::MaglevCompilationInfo*) ./../../src/maglev/maglev-compiler.cc:0:21) [0x5626cc6d8463]
+    d8(v8::internal::maglev::MaglevCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../third_party/libc++/src/include/__memory/unique_ptr.h:277:12) [0x5626cc7e457a]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:471:22) [0x5626cb6dda52]
+    d8(v8::internal::(anonymous namespace)::CompileMaglev(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1324:16) [0x5626cb701725]
+    d8(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:0:0) [0x5626cb6ee08f]
+    d8(v8::internal::Compiler::CompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind) ./../../src/handles/maybe-handles-inl.h:40:17) [0x5626cb6efdd9]
+    d8(v8::internal::(anonymous namespace)::CompileOptimized(v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::Isolate*) ./../../src/handles/handles.h:202:22) [0x5626cc3d9dc5]
+    d8(v8::internal::__RT_impl_Runtime_OptimizeMaglevEager(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/common/ptr-compr-inl.h:74:18) [0x5626cc3d2da2]
+    d8(v8::internal::Runtime_OptimizeMaglevEager(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:214:1) [0x5626cc3d2990]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x5626ce4588fd]
+timeout: the monitored command dumped core

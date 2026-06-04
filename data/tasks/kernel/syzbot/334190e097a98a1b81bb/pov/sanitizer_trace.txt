@@ -1,0 +1,97 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+BUG: unable to handle page fault for address: ffffed1011a42200
+#PF: supervisor read access in kernel mode
+#PF: error_code(0x0000) - not-present page
+PGD 5ffcd067 P4D 5ffcd067 PUD 2fff7067 PMD 0 
+Oops: Oops: 0000 [#1] SMP KASAN NOPTI
+CPU: 0 UID: 0 PID: 5538 Comm: syz.0.18 Not tainted 6.17.0-rc1-syzkaller-00014-g0e39a731820a #0 PREEMPT(full) 
+Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2~bpo12+1 04/01/2014
+RIP: 0010:__mkroute_output net/ipv4/route.c:2639 [inline]
+RIP: 0010:ip_route_output_key_hash_rcu+0x1319/0x23d0 net/ipv4/route.c:2866
+Code: 4c 8b 35 12 d3 b5 08 49 83 c7 38 4c 89 f8 48 c1 e8 03 80 3c 28 00 74 08 4c 89 ff e8 f1 89 39 f8 4d 03 37 4c 89 f0 48 c1 e8 03 <80> 3c 28 00 74 08 4c 89 f7 e8 d9 89 39 f8 4d 8b 36 e8 91 11 90 01
+RSP: 0018:ffffc90002bfe8c8 EFLAGS: 00010a06
+RAX: 1ffff11011a42200 RBX: 0000000080000000 RCX: ffff8880330c8000
+RDX: 0000000000000000 RSI: 0000000000000000 RDI: 0000000000000000
+RBP: dffffc0000000000 R08: ffff8880330c8000 R09: 0000000000000003
+R10: 0000000000000005 R11: 0000000000000000 R12: ffffc90002bfeb53
+R13: 0000000000000000 R14: ffff88808d211000 R15: ffff888036974658
+FS:  000055557a4f4500(0000) GS:ffff88808d211000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: ffffed1011a42200 CR3: 0000000059230000 CR4: 0000000000352ef0
+Call Trace:
+ <TASK>
+ ip_route_output_key_hash+0x1b9/0x2e0 net/ipv4/route.c:2696
+ __ip_route_output_key include/net/route.h:169 [inline]
+ ip_route_output_flow+0x2a/0x150 net/ipv4/route.c:2923
+ ip_route_output_key include/net/route.h:179 [inline]
+ sctp_v4_get_dst+0x3c7/0x1200 net/sctp/protocol.c:454
+ sctp_transport_route+0x115/0x2f0 net/sctp/transport.c:457
+ sctp_ootb_pkt_new+0x28b/0x3c0 net/sctp/sm_statefuns.c:6435
+ sctp_sf_abort_violation+0x14b/0xc60 net/sctp/sm_statefuns.c:4769
+ sctp_sf_violation_chunklen net/sctp/sm_statefuns.c:4828 [inline]
+ sctp_sf_ootb+0x4df/0x7c0 net/sctp/sm_statefuns.c:-1
+ sctp_do_sm+0x1e7/0x5a20 net/sctp/sm_sideeffect.c:1172
+ sctp_endpoint_bh_rcv+0x591/0x7e0 net/sctp/endpointola.c:407
+ sctp_rcv+0x1d01/0x24f0 net/sctp/input.c:243
+ ip_protocol_deliver_rcu+0x2dd/0x440 net/ipv4/ip_input.c:205
+ ip_local_deliver_finish+0x3bb/0x6f0 net/ipv4/ip_input.c:239
+ NF_HOOK+0x30c/0x3a0 include/linux/netfilter.h:318
+ NF_HOOK+0x30c/0x3a0 include/linux/netfilter.h:318
+ __netif_receive_skb_one_core net/core/dev.c:5979 [inline]
+ __netif_receive_skb+0x143/0x380 net/core/dev.c:6092
+ netif_receive_skb_internal net/core/dev.c:6178 [inline]
+ netif_receive_skb+0x1cb/0x790 net/core/dev.c:6237
+ tun_rx_batched+0x1b9/0x730 drivers/net/tun.c:1485
+ tun_get_user+0x2aa2/0x3e20 drivers/net/tun.c:1950
+ tun_chr_write_iter+0x113/0x200 drivers/net/tun.c:1996
+ new_sync_write fs/read_write.c:593 [inline]
+ vfs_write+0x5c6/0xb30 fs/read_write.c:686
+ ksys_write+0x145/0x250 fs/read_write.c:738
+ do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
+ do_syscall_64+0xfa/0x3b0 arch/x86/entry/syscall_64.c:94
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7f9a7c58ebe9
+Code: ff ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 40 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 a8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007ffececd45f8 EFLAGS: 00000246 ORIG_RAX: 0000000000000001
+RAX: ffffffffffffffda RBX: 00007f9a7c7b5fa0 RCX: 00007f9a7c58ebe9
+RDX: 000000000000004e RSI: 0000200000000280 RDI: 0000000000000004
+RBP: 00007f9a7c611e19 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000246 R12: 0000000000000000
+R13: 00007f9a7c7b5fa0 R14: 00007f9a7c7b5fa0 R15: 0000000000000003
+ </TASK>
+Modules linked in:
+CR2: ffffed1011a42200
+---[ end trace 0000000000000000 ]---
+RIP: 0010:__mkroute_output net/ipv4/route.c:2639 [inline]
+RIP: 0010:ip_route_output_key_hash_rcu+0x1319/0x23d0 net/ipv4/route.c:2866
+Code: 4c 8b 35 12 d3 b5 08 49 83 c7 38 4c 89 f8 48 c1 e8 03 80 3c 28 00 74 08 4c 89 ff e8 f1 89 39 f8 4d 03 37 4c 89 f0 48 c1 e8 03 <80> 3c 28 00 74 08 4c 89 f7 e8 d9 89 39 f8 4d 8b 36 e8 91 11 90 01
+RSP: 0018:ffffc90002bfe8c8 EFLAGS: 00010a06
+RAX: 1ffff11011a42200 RBX: 0000000080000000 RCX: ffff8880330c8000
+RDX: 0000000000000000 RSI: 0000000000000000 RDI: 0000000000000000
+RBP: dffffc0000000000 R08: ffff8880330c8000 R09: 0000000000000003
+R10: 0000000000000005 R11: 0000000000000000 R12: ffffc90002bfeb53
+R13: 0000000000000000 R14: ffff88808d211000 R15: ffff888036974658
+FS:  000055557a4f4500(0000) GS:ffff88808d211000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: ffffed1011a42200 CR3: 0000000059230000 CR4: 0000000000352ef0
+----------------
+Code disassembly (best guess):
+   0:	4c 8b 35 12 d3 b5 08 	mov    0x8b5d312(%rip),%r14        # 0x8b5d319
+   7:	49 83 c7 38          	add    $0x38,%r15
+   b:	4c 89 f8             	mov    %r15,%rax
+   e:	48 c1 e8 03          	shr    $0x3,%rax
+  12:	80 3c 28 00          	cmpb   $0x0,(%rax,%rbp,1)
+  16:	74 08                	je     0x20
+  18:	4c 89 ff             	mov    %r15,%rdi
+  1b:	e8 f1 89 39 f8       	call   0xf8398a11
+  20:	4d 03 37             	add    (%r15),%r14
+  23:	4c 89 f0             	mov    %r14,%rax
+  26:	48 c1 e8 03          	shr    $0x3,%rax
+* 2a:	80 3c 28 00          	cmpb   $0x0,(%rax,%rbp,1) <-- trapping instruction
+  2e:	74 08                	je     0x38
+  30:	4c 89 f7             	mov    %r14,%rdi
+  33:	e8 d9 89 39 f8       	call   0xf8398a11
+  38:	4d 8b 36             	mov    (%r14),%r14
+  3b:	e8 91 11 90 01       	call   0x19011d1

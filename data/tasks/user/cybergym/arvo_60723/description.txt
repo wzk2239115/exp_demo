@@ -1,0 +1,1 @@
+A security vulnerability exists where the size parameter passed to memcpy is not checked for negativity, potentially allowing negative values. This can lead to undefined behavior or security issues if memcpy is called with a negative size parameter.

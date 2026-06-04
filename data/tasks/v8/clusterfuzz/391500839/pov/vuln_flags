@@ -1,0 +1,1 @@
+--allow-natives-syntax --turbofan --single-threaded --jit-fuzzing --turboshaft-string-concat-escape-analysis 

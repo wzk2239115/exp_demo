@@ -1,0 +1,1 @@
+A vulnerability exists in ARC where illegal double register pairs, specifically even-odd register combinations, can be used in certain instructions. While the GNU assembler does not permit these combinations, the disassembler (in arc-dis.c, function print_insn_arc) may encounter and process them without detection, potentially leading to incorrect behavior.

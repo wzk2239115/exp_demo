@@ -1,0 +1,1 @@
+The vulnerability occurs in the archive module where files are not written in binary mode. On Windows systems, this causes line feeds ("\n") to be transformed into "\r\n" sequences during write operations, leading to corrupted images.

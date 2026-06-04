@@ -1,0 +1,1 @@
+A vulnerability exists where the pointer *ucp can move past ue, potentially leading to out-of-bounds access.

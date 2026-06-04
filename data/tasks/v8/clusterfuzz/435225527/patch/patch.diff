@@ -1,0 +1,420 @@
+diff --git a/src/maglev/maglev-compiler.cc b/src/maglev/maglev-compiler.cc
+index f10ff7ee2da..394f3d7f7fa 100644
+--- a/src/maglev/maglev-compiler.cc
++++ b/src/maglev/maglev-compiler.cc
+@@ -169,8 +169,8 @@ bool MaglevCompiler::Compile(LocalIsolate* local_isolate,
+     if (graph->may_have_unreachable_blocks()) {
+       graph->RemoveUnreachableBlocks();
+     }
+-    GraphMultiProcessor<ReturnedValueRepresentationSelector,
+-                        AnyUseMarkingProcessor>
++    GraphMultiProcessorWithIdentities<ReturnedValueRepresentationSelector,
++                                      AnyUseMarkingProcessor>
+         processor;
+     processor.ProcessGraph(graph);
+     PrintGraph(graph, v8_flags.print_maglev_graphs, "After use marking");
+diff --git a/src/maglev/maglev-graph-builder.cc b/src/maglev/maglev-graph-builder.cc
+index 368aa7e0c1e..b376c39919c 100644
+--- a/src/maglev/maglev-graph-builder.cc
++++ b/src/maglev/maglev-graph-builder.cc
+@@ -441,7 +441,7 @@ class V8_NODISCARD MaglevGraphBuilder::DeoptFrameScopeBase {
+   ~DeoptFrameScopeBase() {
+     // We might have cached a checkpointed frame which includes this scope;
+     // reset it just in case.
+-    builder_->latest_checkpointed_frame_.reset();
++    builder_->latest_checkpointed_frame_ = nullptr;
+   }
+ 
+   DeoptFrame::FrameData& data() { return data_; }
+@@ -1409,9 +1409,9 @@ DeoptFrame* MaglevGraphBuilder::GetDeoptFrameForEagerCall(
+       interpreter::Bytecodes::WritesAccumulator(iterator_.current_bytecode()) ||
+       interpreter::Bytecodes::ClobbersAccumulator(
+           iterator_.current_bytecode()));
+-  DeoptFrame* deopt_frame = zone()->New<DeoptFrame>(
++  DeoptFrame* deopt_frame =
+       GetDeoptFrameForLazyDeoptHelper(interpreter::Register::invalid_value(), 0,
+-                                      current_lazy_deopt_scope_, true));
++                                      current_lazy_deopt_scope_, true);
+   return AddInlinedArgumentsToDeoptFrame(deopt_frame, unit, closure, args);
+ }
+ 
+@@ -1434,18 +1434,18 @@ DeoptFrame* RecursivelyWrapDeoptFrameWithContinuations(
+ }
+ }  // namespace
+ 
+-DeoptFrame MaglevGraphBuilder::GetLatestCheckpointedFrame() {
++DeoptFrame* MaglevGraphBuilder::GetLatestCheckpointedFrame() {
+   if (in_prologue_) {
+     return GetDeoptFrameForEntryStackCheck();
+   }
+   if (!latest_checkpointed_frame_) {
+     current_interpreter_frame_.virtual_objects().Snapshot();
+-    latest_checkpointed_frame_.emplace(InterpretedDeoptFrame(
++    latest_checkpointed_frame_ = zone()->New<InterpretedDeoptFrame>(
+         *compilation_unit_,
+         zone()->New<CompactInterpreterFrameState>(
+             *compilation_unit_, GetInLiveness(), current_interpreter_frame_),
+         GetClosure(), BytecodeOffset(iterator_.current_offset()),
+-        GetCurrentSourcePosition(), GetCallerDeoptFrame()));
++        GetCurrentSourcePosition(), GetCallerDeoptFrame());
+ 
+     latest_checkpointed_frame_->as_interpreted().frame_state()->ForEachValue(
+         *compilation_unit_,
+@@ -1454,16 +1454,16 @@ DeoptFrame MaglevGraphBuilder::GetLatestCheckpointedFrame() {
+ 
+     const EagerDeoptFrameScope* deopt_scope = current_eager_deopt_scope_;
+     if (deopt_scope != nullptr) {
+-      latest_checkpointed_frame_.emplace(
++      latest_checkpointed_frame_ = zone()->New<DeoptFrame>(
+           deopt_scope->data(),
+           RecursivelyWrapDeoptFrameWithContinuations(
+               zone(), *latest_checkpointed_frame_, deopt_scope->parent()));
+     }
+   }
+-  return *latest_checkpointed_frame_;
++  return latest_checkpointed_frame_;
+ }
+ 
+-std::tuple<DeoptFrame, interpreter::Register, int>
++std::tuple<DeoptFrame*, interpreter::Register, int>
+ MaglevGraphBuilder::GetDeoptFrameForLazyDeopt() {
+   interpreter::Register result_location;
+   int result_size;
+@@ -1479,7 +1479,7 @@ MaglevGraphBuilder::GetDeoptFrameForLazyDeopt() {
+       result_location, result_size);
+ }
+ 
+-DeoptFrame MaglevGraphBuilder::GetDeoptFrameForLazyDeoptHelper(
++DeoptFrame* MaglevGraphBuilder::GetDeoptFrameForLazyDeoptHelper(
+     interpreter::Register result_location, int result_size,
+     LazyDeoptFrameScope* scope, bool mark_accumulator_dead) {
+   if (scope == nullptr) {
+@@ -1501,13 +1501,13 @@ DeoptFrame MaglevGraphBuilder::GetDeoptFrameForLazyDeoptHelper(
+       liveness->MarkAccumulatorDead();
+     }
+     current_interpreter_frame_.virtual_objects().Snapshot();
+-    InterpretedDeoptFrame ret(
++    InterpretedDeoptFrame* ret = zone()->New<InterpretedDeoptFrame>(
+         *compilation_unit_,
+         zone()->New<CompactInterpreterFrameState>(*compilation_unit_, liveness,
+                                                   current_interpreter_frame_),
+         GetClosure(), BytecodeOffset(iterator_.current_offset()),
+         GetCurrentSourcePosition(), GetCallerDeoptFrame());
+-    ret.frame_state()->ForEachValue(
++    ret->frame_state()->ForEachValue(
+         *compilation_unit_, [this](ValueNode* node, interpreter::Register reg) {
+           // Receiver and closure values have to be materialized, even if
+           // they don't otherwise escape.
+@@ -1518,7 +1518,7 @@ DeoptFrame MaglevGraphBuilder::GetDeoptFrameForLazyDeoptHelper(
+             AddDeoptUse(node);
+           }
+         });
+-    AddDeoptUse(ret.closure());
++    AddDeoptUse(ret->closure());
+     return ret;
+   }
+ 
+@@ -1529,18 +1529,18 @@ DeoptFrame MaglevGraphBuilder::GetDeoptFrameForLazyDeoptHelper(
+ 
+   // Mark the accumulator dead in parent frames since we know that the
+   // continuation will write it.
+-  return DeoptFrame(scope->data(),
+-                    zone()->New<DeoptFrame>(GetDeoptFrameForLazyDeoptHelper(
+-                        result_location, result_size, scope->parent(),
+-                        scope->data().tag() ==
+-                            DeoptFrame::FrameType::kBuiltinContinuationFrame)));
++  return zone()->New<DeoptFrame>(
++      scope->data(), GetDeoptFrameForLazyDeoptHelper(
++                         result_location, result_size, scope->parent(),
++                         scope->data().tag() ==
++                             DeoptFrame::FrameType::kBuiltinContinuationFrame));
+ }
+ 
+-InterpretedDeoptFrame MaglevGraphBuilder::GetDeoptFrameForEntryStackCheck() {
+-  if (entry_stack_check_frame_) return *entry_stack_check_frame_;
++InterpretedDeoptFrame* MaglevGraphBuilder::GetDeoptFrameForEntryStackCheck() {
++  if (entry_stack_check_frame_) return entry_stack_check_frame_;
+   DCHECK_EQ(iterator_.current_offset(), entrypoint_);
+   DCHECK(!is_inline());
+-  entry_stack_check_frame_.emplace(
++  entry_stack_check_frame_ = zone()->New<InterpretedDeoptFrame>(
+       *compilation_unit_,
+       zone()->New<CompactInterpreterFrameState>(
+           *compilation_unit_,
+@@ -1549,13 +1549,11 @@ InterpretedDeoptFrame MaglevGraphBuilder::GetDeoptFrameForEntryStackCheck() {
+       GetClosure(), BytecodeOffset(bailout_for_entrypoint()),
+       GetCurrentSourcePosition(), nullptr);
+ 
+-  (*entry_stack_check_frame_)
+-      .frame_state()
+-      ->ForEachValue(
+-          *compilation_unit_,
+-          [&](ValueNode* node, interpreter::Register) { AddDeoptUse(node); });
+-  AddDeoptUse((*entry_stack_check_frame_).closure());
+-  return *entry_stack_check_frame_;
++  entry_stack_check_frame_->frame_state()->ForEachValue(
++      *compilation_unit_,
++      [&](ValueNode* node, interpreter::Register) { AddDeoptUse(node); });
++  AddDeoptUse(entry_stack_check_frame_->closure());
++  return entry_stack_check_frame_;
+ }
+ 
+ ReduceResult MaglevGraphBuilder::GetSmiValue(
+@@ -8298,7 +8296,7 @@ ReduceResult MaglevGraphBuilder::BuildEagerInlineCall(
+   // Prapagate back (or reset) builder state.
+   unobserved_context_slot_stores_ =
+       inner_graph_builder.unobserved_context_slot_stores_;
+-  latest_checkpointed_frame_.reset();
++  latest_checkpointed_frame_ = nullptr;
+   ClearCurrentAllocationBlock();
+ 
+   if (result.IsDoneWithAbort()) {
+diff --git a/src/maglev/maglev-graph-builder.h b/src/maglev/maglev-graph-builder.h
+index ef6462b0b5a..6b10e31dd80 100644
+--- a/src/maglev/maglev-graph-builder.h
++++ b/src/maglev/maglev-graph-builder.h
+@@ -193,11 +193,11 @@ class MaglevGraphBuilder {
+     return caller_details_->is_eager_inline;
+   }
+ 
+-  DeoptFrame GetLatestCheckpointedFrame();
+-  DeoptFrame GetDeoptFrameForEagerDeopt() {
++  DeoptFrame* GetLatestCheckpointedFrame();
++  DeoptFrame* GetDeoptFrameForEagerDeopt() {
+     return GetLatestCheckpointedFrame();
+   }
+-  std::tuple<DeoptFrame, interpreter::Register, int>
++  std::tuple<DeoptFrame*, interpreter::Register, int>
+   GetDeoptFrameForLazyDeopt();
+ 
+   bool need_checkpointed_loop_entry() {
+@@ -839,10 +839,10 @@ class MaglevGraphBuilder {
+   DeoptFrame* GetDeoptFrameForEagerCall(const MaglevCompilationUnit* unit,
+                                         ValueNode* closure,
+                                         base::Vector<ValueNode*> args);
+-  DeoptFrame GetDeoptFrameForLazyDeoptHelper(
++  DeoptFrame* GetDeoptFrameForLazyDeoptHelper(
+       interpreter::Register result_location, int result_size,
+       LazyDeoptFrameScope* scope, bool mark_accumulator_dead);
+-  InterpretedDeoptFrame GetDeoptFrameForEntryStackCheck();
++  InterpretedDeoptFrame* GetDeoptFrameForEntryStackCheck();
+ 
+   int next_offset() const {
+     return iterator_.current_offset() + iterator_.current_bytecode_size();
+@@ -1946,8 +1946,10 @@ class MaglevGraphBuilder {
+ 
+   // Current block information.
+   bool in_prologue_ = true;
+-  std::optional<InterpretedDeoptFrame> entry_stack_check_frame_;
+-  std::optional<DeoptFrame> latest_checkpointed_frame_;
++  // TODO(victorgomes): I think we can merge entry_stack_check_frame_ into
++  // latest_checkpointed_frame_.
++  InterpretedDeoptFrame* entry_stack_check_frame_ = nullptr;
++  DeoptFrame* latest_checkpointed_frame_ = nullptr;
+   struct ForInState {
+     ValueNode* receiver = nullptr;
+     ValueNode* cache_type = nullptr;
+@@ -2023,7 +2025,7 @@ class MaglevGraphBuilder {
+ 
+ template <bool is_possible_map_change>
+ void MaglevGraphBuilder::ResetBuilderCachedState() {
+-  latest_checkpointed_frame_.reset();
++  latest_checkpointed_frame_ = nullptr;
+ 
+   // If a map might have changed, then we need to re-check it for for-in.
+   // TODO(leszeks): Track this on merge states / known node aspects, rather
+diff --git a/src/maglev/maglev-graph-optimizer.h b/src/maglev/maglev-graph-optimizer.h
+index 41549587ed3..d4436716d77 100644
+--- a/src/maglev/maglev-graph-optimizer.h
++++ b/src/maglev/maglev-graph-optimizer.h
+@@ -41,8 +41,8 @@ class MaglevGraphOptimizer {
+ 
+   KnownNodeAspects& known_node_aspects() { return empty_known_node_aspects_; }
+ 
+-  DeoptFrame GetDeoptFrameForEagerDeopt() {
+-    return current_node()->eager_deopt_info()->top_frame();
++  DeoptFrame* GetDeoptFrameForEagerDeopt() {
++    return &current_node()->eager_deopt_info()->top_frame();
+   }
+ 
+  private:
+diff --git a/src/maglev/maglev-graph-processor.h b/src/maglev/maglev-graph-processor.h
+index 93a2416a734..8707b606490 100644
+--- a/src/maglev/maglev-graph-processor.h
++++ b/src/maglev/maglev-graph-processor.h
+@@ -441,6 +441,12 @@ class NodeMultiProcessor<Processor, Processors...>
+ template <typename... Processors>
+ using GraphMultiProcessor = GraphProcessor<NodeMultiProcessor<Processors...>>;
+ 
++// TODO(victorgomes): Remove this visit_identity_nodes flag, ideally all
++// processors should visit it.
++template <typename... Processors>
++using GraphMultiProcessorWithIdentities =
++    GraphProcessor<NodeMultiProcessor<Processors...>, true>;
++
+ }  // namespace maglev
+ }  // namespace internal
+ }  // namespace v8
+diff --git a/src/maglev/maglev-interpreter-frame-state.cc b/src/maglev/maglev-interpreter-frame-state.cc
+index 1997c729f32..9357d687ead 100644
+--- a/src/maglev/maglev-interpreter-frame-state.cc
++++ b/src/maglev/maglev-interpreter-frame-state.cc
+@@ -770,8 +770,7 @@ void MergePointInterpreterFrameState::MergeLoop(
+   DCHECK(is_unmerged_loop());
+   predecessors_[predecessor_count_ - 1] = loop_end_block;
+ 
+-  backedge_deopt_frame_ =
+-      builder->zone()->New<DeoptFrame>(builder->GetLatestCheckpointedFrame());
++  backedge_deopt_frame_ = builder->GetLatestCheckpointedFrame();
+ 
+   if (V8_UNLIKELY(v8_flags.trace_maglev_graph_building &&
+                   compilation_unit.is_tracing_enabled())) {
+@@ -812,8 +811,7 @@ bool MergePointInterpreterFrameState::TryMergeLoop(
+   DCHECK_EQ(predecessors_so_far_, predecessor_count_ - 1);
+   DCHECK(is_unmerged_loop());
+ 
+-  backedge_deopt_frame_ =
+-      builder->zone()->New<DeoptFrame>(builder->GetLatestCheckpointedFrame());
++  backedge_deopt_frame_ = builder->GetLatestCheckpointedFrame();
+ 
+   auto& compilation_unit = *builder->compilation_unit();
+ 
+diff --git a/src/maglev/maglev-ir.cc b/src/maglev/maglev-ir.cc
+index c3d61dc5534..3f46599fbb9 100644
+--- a/src/maglev/maglev-ir.cc
++++ b/src/maglev/maglev-ir.cc
+@@ -406,7 +406,7 @@ void Input::clear() {
+   node_ = nullptr;
+ }
+ 
+-DeoptInfo::DeoptInfo(Zone* zone, const DeoptFrame top_frame,
++DeoptInfo::DeoptInfo(Zone* zone, DeoptFrame* top_frame,
+                      compiler::FeedbackSource feedback_to_update)
+     : top_frame_(top_frame), feedback_to_update_(feedback_to_update) {}
+ 
+diff --git a/src/maglev/maglev-ir.h b/src/maglev/maglev-ir.h
+index c5310d46dc3..16d896e3172 100644
+--- a/src/maglev/maglev-ir.h
++++ b/src/maglev/maglev-ir.h
+@@ -1961,12 +1961,12 @@ inline compiler::BytecodeArrayRef DeoptFrame::GetBytecodeArray() const {
+ 
+ class DeoptInfo {
+  protected:
+-  DeoptInfo(Zone* zone, const DeoptFrame top_frame,
++  DeoptInfo(Zone* zone, DeoptFrame* top_frame,
+             compiler::FeedbackSource feedback_to_update);
+ 
+  public:
+-  DeoptFrame& top_frame() { return top_frame_; }
+-  const DeoptFrame& top_frame() const { return top_frame_; }
++  DeoptFrame& top_frame() { return *top_frame_; }
++  const DeoptFrame& top_frame() const { return *top_frame_; }
+   const compiler::FeedbackSource& feedback_to_update() const {
+     return feedback_to_update_;
+   }
+@@ -1988,7 +1988,7 @@ class DeoptInfo {
+ #endif  // DEBUG
+ 
+  private:
+-  DeoptFrame top_frame_;
++  DeoptFrame* top_frame_;
+   const compiler::FeedbackSource feedback_to_update_;
+   InputLocation* input_locations_ = nullptr;
+ #ifdef DEBUG
+@@ -2006,7 +2006,7 @@ struct RegisterSnapshot {
+ 
+ class EagerDeoptInfo : public DeoptInfo {
+  public:
+-  EagerDeoptInfo(Zone* zone, const DeoptFrame top_frame,
++  EagerDeoptInfo(Zone* zone, DeoptFrame* top_frame,
+                  compiler::FeedbackSource feedback_to_update)
+       : DeoptInfo(zone, top_frame, feedback_to_update) {}
+ 
+@@ -2024,7 +2024,7 @@ class EagerDeoptInfo : public DeoptInfo {
+ 
+ class LazyDeoptInfo : public DeoptInfo {
+  public:
+-  LazyDeoptInfo(Zone* zone, const DeoptFrame top_frame,
++  LazyDeoptInfo(Zone* zone, DeoptFrame* top_frame,
+                 interpreter::Register result_location, int result_size,
+                 compiler::FeedbackSource feedback_to_update)
+       : DeoptInfo(zone, top_frame, feedback_to_update),
+@@ -2424,12 +2424,12 @@ class NodeBase : public ZoneObject {
+   }
+ 
+   void CopyEagerDeoptInfoOf(NodeBase* other, Zone* zone) {
+-    new (eager_deopt_info())
+-        EagerDeoptInfo(zone, other->eager_deopt_info()->top_frame(),
+-                       other->eager_deopt_info()->feedback_to_update());
++    new (eager_deopt_info()) EagerDeoptInfo(
++        zone, zone->New<DeoptFrame>(other->eager_deopt_info()->top_frame()),
++        other->eager_deopt_info()->feedback_to_update());
+   }
+ 
+-  void SetEagerDeoptInfo(Zone* zone, DeoptFrame deopt_frame,
++  void SetEagerDeoptInfo(Zone* zone, DeoptFrame* deopt_frame,
+                          compiler::FeedbackSource feedback_to_update =
+                              compiler::FeedbackSource()) {
+     DCHECK(properties().can_eager_deopt() ||
+diff --git a/src/maglev/maglev-phi-representation-selector.h b/src/maglev/maglev-phi-representation-selector.h
+index c2ec3f25ae2..e852f3bf030 100644
+--- a/src/maglev/maglev-phi-representation-selector.h
++++ b/src/maglev/maglev-phi-representation-selector.h
+@@ -67,9 +67,9 @@ class MaglevPhiRepresentationSelector {
+     return UpdateNodeInputs(node, &state);
+   }
+ 
+-  DeoptFrame GetDeoptFrameForEagerDeopt() {
++  DeoptFrame* GetDeoptFrameForEagerDeopt() {
+     DCHECK_NOT_NULL(eager_deopt_frame_);
+-    return *eager_deopt_frame_;
++    return eager_deopt_frame_;
+   }
+ 
+  private:
+diff --git a/src/maglev/maglev-post-hoc-optimizations-processors.h b/src/maglev/maglev-post-hoc-optimizations-processors.h
+index e6b61e6a5d9..3a36f588ea5 100644
+--- a/src/maglev/maglev-post-hoc-optimizations-processors.h
++++ b/src/maglev/maglev-post-hoc-optimizations-processors.h
+@@ -168,8 +168,9 @@ class LoopOptimizationProcessor {
+       if (auto j = current_block->predecessor_at(0)
+                        ->control_node()
+                        ->TryCast<CheckpointedJump>()) {
+-        maps->SetEagerDeoptInfo(zone, j->eager_deopt_info()->top_frame(),
+-                                maps->eager_deopt_info()->feedback_to_update());
++        maps->SetEagerDeoptInfo(
++            zone, zone->New<DeoptFrame>(j->eager_deopt_info()->top_frame()),
++            maps->eager_deopt_info()->feedback_to_update());
+         return ProcessResult::kHoist;
+       }
+     }
+diff --git a/test/mjsunit/maglev/regress-435225527.js b/test/mjsunit/maglev/regress-435225527.js
+new file mode 100644
+index 00000000000..c85dc99d797
+--- /dev/null
++++ b/test/mjsunit/maglev/regress-435225527.js
+@@ -0,0 +1,24 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax --maglev-non-eager-inlining
++// Flags: --max-maglev-inlined-bytecode-size-small=0
++// Flags: --no-lazy-feedback-allocation
++
++function f1() {
++  try {
++    return function (a, b) {
++      return a + b;
++    };
++  } catch (e) {}
++}
++function f2(a, b,) {
++  return f1()(a, b);
++}
++
++%PrepareFunctionForOptimization(f2);
++f2();
++f2();
++%OptimizeMaglevOnNextCall(f2);
++f2();

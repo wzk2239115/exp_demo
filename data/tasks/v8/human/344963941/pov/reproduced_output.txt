@@ -1,0 +1,27 @@
+re @ 0x4a054
+re->data @ 0x4ac99
+re->bytecode @ 0x4ace1
+
+Sandbox testing mode is enabled. Write to the page starting at 0x31ea3a46e000 (available from JavaScript as `Sandbox.targetPage`) to demonstrate a sandbox bypass.
+# Ignoring debug check failure in ../../src/regexp/regexp-interpreter.cc, line 138: !data_.empty()
+# Ignoring debug check failure in ../../src/base/small-vector.h, line 135: 0 != size() (0 vs. 0)
+# Ignoring debug check failure in ../../src/base/small-vector.h, line 162: size() >= count (0 vs. 1)
+# Ignoring debug check failure in ../../src/regexp/regexp-interpreter.cc, line 138: !data_.empty()
+# Ignoring debug check failure in ../../src/base/small-vector.h, line 135: 0 != size() (0 vs. 0)
+# Ignoring debug check failure in ../../src/base/small-vector.h, line 162: size() >= count (0 vs. 1)
+
+## V8 sandbox violation detected!
+
+Received signal 11 SEGV_ACCERR 31ea3a46e000
+
+==== C stack trace ===============================
+
+ [0x55ef75a34c07]
+ [0x7f9d67737330]
+ [0x55ef736210f3]
+ [0x55ef7361d400]
+ [0x55ef7361cfee]
+ [0x55ef736355c9]
+ [0x55ef7552ad7c]
+[end of stack trace]
+timeout: the monitored command dumped core

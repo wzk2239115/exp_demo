@@ -1,0 +1,99 @@
+=== stderr ===
+Sandbox testing mode is enabled. Only sandbox violations will be reported, all other crashes will be ignored.
+=================================================================
+==11800==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x7d23611e5138 at pc 0x55ac84cb0351 bp 0x7ffcc2e9bc10 sp 0x7ffcc2e9bc08
+READ of size 8 at 0x7d23611e5138 thread T0
+    #0 0x55ac84cb0350 in __cxx_atomic_load<long> third_party/libc++/src/include/__atomic/cxx_atomic_impl.h:311:10
+    #1 0x55ac84cb0350 in load third_party/libc++/src/include/__atomic/atomic_base.h:55:12
+    #2 0x55ac84cb0350 in atomic_load_explicit<long> third_party/libc++/src/include/__atomic/atomic.h:327:15
+    #3 0x55ac84cb0350 in Acquire_Load src/base/atomicops.h:352:10
+    #4 0x55ac84cb0350 in Acquire_Load<heap::base::BasicSlotSet<4UL>::Bucket *> src/base/atomic-utils.h:80:9
+    #5 0x55ac84cb0350 in LoadBucket<(heap::base::BasicSlotSet<4UL>::AccessMode)0> src/heap/base/basic-slot-set.h:407:14
+    #6 0x55ac84cb0350 in LoadBucket<(heap::base::BasicSlotSet<4UL>::AccessMode)1> src/heap/base/basic-slot-set.h:413:12
+    #7 0x55ac84cb0350 in Insert<(heap::base::BasicSlotSet<4UL>::AccessMode)1> src/heap/base/basic-slot-set.h:117:22
+    #8 0x55ac84cb0350 in Insert<(v8::internal::AccessMode)1> src/heap/remembered-set.h:31:15
+    #9 0x55ac84cb0350 in Insert<(v8::internal::AccessMode)1> src/heap/remembered-set.h:102:5
+    #10 0x55ac84cb0350 in v8::internal::Heap::InsertIntoRememberedSetFromCode(v8::internal::MutablePageMetadata*, unsigned long) src/heap/heap.cc:6527:3
+    #11 0x55ac887a794f in Builtins_RecordWriteSaveFP setup-isolate-deserialize.cc
+    #12 0x55ac887bf31e in Builtins_KeyedStoreIC_Megamorphic setup-isolate-deserialize.cc
+    #13 0x55ac88947ace in Builtins_SetKeyedPropertyHandler setup-isolate-deserialize.cc
+    #14 0x55ac887b4a0a in Builtins_InterpreterEntryTrampoline setup-isolate-deserialize.cc
+    #15 0x55ac887b261b in Builtins_JSEntryTrampoline setup-isolate-deserialize.cc
+    #16 0x55ac887b235e in Builtins_JSEntry setup-isolate-deserialize.cc
+    #17 0x55ac84aae45b in Call src/execution/simulator.h:191:12
+    #18 0x55ac84aae45b in v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) src/execution/execution.cc:417:22
+    #19 0x55ac84aafa86 in v8::internal::Execution::CallScript(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>) src/execution/execution.cc:514:10
+    #20 0x55ac846917fc in v8::Script::Run(v8::Local<v8::Context>, v8::Local<v8::Data>) src/api/api.cc:2151:7
+    #21 0x55ac844b58f3 in v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::String>, v8::Shell::ReportExceptions, v8::Global<v8::Value>*) src/d8/d8.cc:1012:44
+    #22 0x55ac844e0c03 in v8::SourceGroup::Execute(v8::Isolate*) src/d8/d8.cc:4914:10
+    #23 0x55ac844ebade in v8::Shell::RunMainIsolate(v8::Isolate*, bool) src/d8/d8.cc:5858:37
+    #24 0x55ac844eb1d6 in v8::Shell::RunMain(v8::Isolate*, bool) src/d8/d8.cc:5767:18
+    #25 0x55ac844ee1c8 in v8::Shell::Main(int, char**) src/d8/d8.cc:6621:18
+    #26 0x7fd361f331c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 8e9fd827446c24067541ac5390e6f527fb5947bb)
+    #27 0x7fd361f3328a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 8e9fd827446c24067541ac5390e6f527fb5947bb)
+    #28 0x55ac843b0029 in _start (/build/v8/out/debug/d8+0x10c3029) (BuildId: bc7ee4d237dbd75c)
+
+0x7d23611e5138 is located 312 bytes after 512-byte region [0x7d23611e4e00,0x7d23611e5000)
+allocated by thread T0 here:
+    #0 0x55ac8444f757 in posix_memalign /b/s/w/ir/cache/builder/src/third_party/llvm/compiler-rt/lib/asan/asan_malloc_linux.cpp:139:3
+    #1 0x55ac84e517af in AlignedAlloc src/base/platform/memory.h:94:7
+    #2 0x55ac84e517af in Allocate src/heap/base/basic-slot-set.h:59:24
+    #3 0x55ac84e517af in Allocate src/heap/slot-set.h:134:34
+    #4 0x55ac84e517af in v8::internal::MutablePageMetadata::AllocateSlotSet(v8::internal::RememberedSetType) src/heap/mutable-page-metadata.cc:164:27
+    #5 0x55ac84cb0274 in Insert<(v8::internal::AccessMode)1> src/heap/remembered-set.h:100:24
+    #6 0x55ac84cb0274 in v8::internal::Heap::InsertIntoRememberedSetFromCode(v8::internal::MutablePageMetadata*, unsigned long) src/heap/heap.cc:6527:3
+    #7 0x55ac887a849f in Builtins_RecordWriteIgnoreFP setup-isolate-deserialize.cc
+    #8 0x55ac88941f28 in Builtins_StaCurrentContextSlotHandler setup-isolate-deserialize.cc
+    #9 0x55ac887b261b in Builtins_JSEntryTrampoline setup-isolate-deserialize.cc
+    #10 0x55ac887b235e in Builtins_JSEntry setup-isolate-deserialize.cc
+    #11 0x55ac84aae45b in Call src/execution/simulator.h:191:12
+    #12 0x55ac84aae45b in v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) src/execution/execution.cc:417:22
+    #13 0x55ac84aafa86 in v8::internal::Execution::CallScript(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>) src/execution/execution.cc:514:10
+    #14 0x55ac846917fc in v8::Script::Run(v8::Local<v8::Context>, v8::Local<v8::Data>) src/api/api.cc:2151:7
+    #15 0x55ac844b58f3 in v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::String>, v8::Shell::ReportExceptions, v8::Global<v8::Value>*) src/d8/d8.cc:1012:44
+    #16 0x55ac844e0c03 in v8::SourceGroup::Execute(v8::Isolate*) src/d8/d8.cc:4914:10
+    #17 0x55ac844ebade in v8::Shell::RunMainIsolate(v8::Isolate*, bool) src/d8/d8.cc:5858:37
+    #18 0x55ac844eb1d6 in v8::Shell::RunMain(v8::Isolate*, bool) src/d8/d8.cc:5767:18
+    #19 0x55ac844ee1c8 in v8::Shell::Main(int, char**) src/d8/d8.cc:6621:18
+    #20 0x7fd361f331c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 8e9fd827446c24067541ac5390e6f527fb5947bb)
+    #21 0x7fd361f3328a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 8e9fd827446c24067541ac5390e6f527fb5947bb)
+    #22 0x55ac843b0029 in _start (/build/v8/out/debug/d8+0x10c3029) (BuildId: bc7ee4d237dbd75c)
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow third_party/libc++/src/include/__atomic/cxx_atomic_impl.h:311:10 in __cxx_atomic_load<long>
+Shadow bytes around the buggy address:
+  0x7d23611e4e80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x7d23611e4f00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x7d23611e4f80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x7d23611e5000: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x7d23611e5080: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+=>0x7d23611e5100: fa fa fa fa fa fa fa[fa]fa fa fa fa fa fa fa fa
+  0x7d23611e5180: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x7d23611e5200: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x7d23611e5280: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x7d23611e5300: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x7d23611e5380: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==11800==ABORTING
+
+## V8 sandbox violation detected!
+
+=== exit code ===
+1

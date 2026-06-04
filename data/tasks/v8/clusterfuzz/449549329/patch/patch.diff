@@ -1,0 +1,198 @@
+diff --git a/src/codegen/source-position-table.h b/src/codegen/source-position-table.h
+index 284654c3fe0..dc72b8a264f 100644
+--- a/src/codegen/source-position-table.h
++++ b/src/codegen/source-position-table.h
+@@ -36,6 +36,8 @@ struct PositionTableEntry {
+   int code_offset;
+   bool is_statement;
+   bool is_breakable;
++
++  bool operator==(const PositionTableEntry&) const = default;
+ };
+ 
+ class V8_EXPORT_PRIVATE SourcePositionTableBuilder {
+@@ -95,6 +97,8 @@ class V8_EXPORT_PRIVATE SourcePositionTableIterator {
+     PositionTableEntry position_;
+     IterationFilter iteration_filter_;
+     FunctionEntryFilter function_entry_filter_;
++
++    bool operator==(const IndexAndPositionState&) const = default;
+   };
+ 
+   // We expose three flavours of the iterator, depending on the argument passed
+diff --git a/src/maglev/maglev-graph-builder.cc b/src/maglev/maglev-graph-builder.cc
+index b0e70c45388..1f38cb8d7fa 100644
+--- a/src/maglev/maglev-graph-builder.cc
++++ b/src/maglev/maglev-graph-builder.cc
+@@ -6930,15 +6930,18 @@ MaglevGraphBuilder::FindContinuationForPolymorphicPropertyLoad() {
+   }
+ 
+   int start_offset = iterator_.current_offset();
++#ifdef DEBUG
+   SourcePositionTableIterator::IndexAndPositionState
+       start_source_position_iterator_state =
+           source_position_iterator_.GetState();
++#endif
+ 
+   std::optional<ContinuationOffsets> continuation =
+       FindContinuationForPolymorphicPropertyLoadImpl();
+ 
+   iterator_.SetOffset(start_offset);
+-  source_position_iterator_.RestoreState(start_source_position_iterator_state);
++  DCHECK_EQ(start_source_position_iterator_state,
++            source_position_iterator_.GetState());
+   return continuation;
+ }
+ 
+@@ -6955,11 +6958,64 @@ MaglevGraphBuilder::FindContinuationForPolymorphicPropertyLoadImpl() {
+   // Where <allowed bytecodes> are:
+   // - not affecting control flow
+   // - not storing into REG
++  // - not the start or end of a try block
+   // and the continuation is limited in length.
+ 
+-  // Skip GetnamedProperty.
++  // Try-block starts are not visible as control flow or basic blocks, so detect
++  // them using the bytecode offset.
++  int next_handler_change = kMaxInt;
++  HandlerTable table(*bytecode().object());
++  if (next_handler_table_index_ < table.NumberOfRangeEntries()) {
++    next_handler_change = table.GetRangeStart(next_handler_table_index_);
++  }
++  // Try-block ends are detected via the top end offset in the current handler
++  // stack.
++  if (IsInsideTryBlock()) {
++    const HandlerTableEntry& entry = catch_block_stack_.top();
++    next_handler_change = std::min(next_handler_change, entry.end);
++  }
++
++  auto IsOffsetAPolymorphicContinuationInterrupt =
++      [this, next_handler_change](int offset) {
++        // We can't continue a polymorphic load over a merge, since the
++        // other side of the merge will observe the call without the load.
++        //
++        // TODO(leszeks): I guess we could split that merge if we wanted to,
++        // introducing a new merge that has the polymorphic loads+calls on one
++        // side and the generic call on the other.
++        if (IsOffsetAMergePoint(offset)) return false;
++
++        // We currently can't continue a polymorphic load across a peeled
++        // loop header -- not because of any actual semantic reason, a peeled
++        // loop should be just like straightline code, but just because this
++        // iteration isn't compatible with the PeelLoop iteration.
++        //
++        // TODO(leszeks): We could probably make loop peeling work happen on the
++        // JumpLoop rather than loop header, and then this continuation code
++        // would work. Only for the first peeled iteration though, not for
++        // speeling.
++        if (loop_headers_to_peel_.Contains(offset)) return false;
++
++        // Loop peeling should be the only reason there was no merge point for a
++        // loop header.
++        DCHECK(!bytecode_analysis_.IsLoopHeader(offset));
++
++        // We can't currently continue a polymorphic load over a try-catch
++        // start/end -- again, not for any semantic reason, but just because
++        // this iteration doesn't consider the catch handler stack.
++        //
++        // TODO(leszeks): If this saved/restore the handler stack, it would
++        // probably work, but we'd need to confirm that later phases don't need
++        // strict nesting of handlers (since the first polymorphic call would
++        // be inside the handler range, but the second polymorphic load after it
++        // in linear scan order would be outside of the handler range).
++        if (offset >= next_handler_change) return false;
++        return true;
++      };
++
++  // Skip GetNamedProperty.
+   iterator_.Advance();
+-  if (IsOffsetAMergePointOrLoopHeapder(iterator_.current_offset())) {
++  if (IsOffsetAPolymorphicContinuationInterrupt(iterator_.current_offset())) {
+     return {};
+   }
+ 
+@@ -6981,7 +7037,7 @@ MaglevGraphBuilder::FindContinuationForPolymorphicPropertyLoadImpl() {
+   int limit = 20;
+   while (--limit > 0) {
+     iterator_.Advance();
+-    if (IsOffsetAMergePointOrLoopHeapder(iterator_.current_offset())) {
++    if (IsOffsetAPolymorphicContinuationInterrupt(iterator_.current_offset())) {
+       return {};
+     }
+ 
+diff --git a/src/maglev/maglev-graph-builder.h b/src/maglev/maglev-graph-builder.h
+index 9ff1f45363a..f4167e267cb 100644
+--- a/src/maglev/maglev-graph-builder.h
++++ b/src/maglev/maglev-graph-builder.h
+@@ -441,15 +441,10 @@ class MaglevGraphBuilder {
+ 
+   // Return true if the given offset is a merge point, i.e. there are jumps
+   // targetting it.
+-  bool IsOffsetAMergePoint(int offset) {
++  bool IsOffsetAMergePoint(int offset) const {
+     return merge_states_[offset] != nullptr;
+   }
+ 
+-  bool IsOffsetAMergePointOrLoopHeapder(int offset) {
+-    return IsOffsetAMergePoint(offset) ||
+-           bytecode_analysis().IsLoopHeader(offset);
+-  }
+-
+   ValueNode* GetContextAtDepth(ValueNode* context, size_t depth);
+   bool CheckContextExtensions(size_t depth);
+ 
+diff --git a/test/mjsunit/regress/regress-449549329.js b/test/mjsunit/regress/regress-449549329.js
+new file mode 100644
+index 00000000000..2e2e1e6cb37
+--- /dev/null
++++ b/test/mjsunit/regress/regress-449549329.js
+@@ -0,0 +1,49 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --allow-natives-syntax
++
++// Create two distinct iterator types which both have a getter for `next`.
++class Iterator1 {
++  get next() {
++    return () => ({ done: true });
++  }
++}
++class Iterator2 {
++  get next() {
++    return () => ({ done: true });
++  }
++}
++
++// Create two iterables which return instances of these two distinct iterators.
++const iterable1 = {
++  [Symbol.iterator]() {
++    return new Iterator1();
++  },
++};
++const iterable2 = {
++  [Symbol.iterator]() {
++    return new Iterator2();
++  },
++};
++
++// Iterate the iterable using for-of.
++function foo(iterable) {
++  for (const x of iterable) {
++    return x;
++  }
++}
++
++// Make foo polymorphic in the iterator, specifically so that the feedback for
++// the iterator.next named load is polymorphic, with the feedback being two
++// distinct getters.
++%PrepareFunctionForOptimization(foo);
++foo(iterable1);
++foo(iterable2);
++
++// The optimization should be successful and not trigger any DCHECKs, despite
++// the iterator.next load being before the for-of's implicit try block, and the
++// iterator.next() call being inside it.
++%OptimizeMaglevOnNextCall(foo);
++foo(iterable1);

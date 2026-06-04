@@ -1,0 +1,40 @@
+Accepting input from '/tmp/poc'
+Usage for fuzzing: honggfuzz -P [flags] -- /out/fuzz_process_packet
+=================================================================
+==7==ERROR: AddressSanitizer: negative-size-param: (size=-1)
+SCARINESS: 10 (negative-size-param)
+    #0 0x489cae in __interceptor_strncpy /src/llvm-project/compiler-rt/lib/asan/asan_interceptors.cpp:471:5
+    #1 0x5bb9c4 in ndpi_http_check_content /src/ndpi/src/lib/protocols/http.c
+    #2 0x5bb9c4 in check_content_type_and_change_protocol /src/ndpi/src/lib/protocols/http.c:900:46
+    #3 0x5b7750 in process_response /src/ndpi/src/lib/protocols/http.c:1279:3
+    #4 0x5b6d96 in ndpi_check_http_tcp /src/ndpi/src/lib/protocols/http.c:1372:9
+    #5 0x5b60c2 in ndpi_search_http_tcp /src/ndpi/src/lib/protocols/http.c:1458:3
+    #6 0x514dd9 in check_ndpi_detection_func /src/ndpi/src/lib/ndpi_main.c:5949:6
+    #7 0x5161ec in ndpi_check_flow_func /src/ndpi/src/lib/ndpi_main.c
+    #8 0x51f4a7 in ndpi_internal_detection_process_packet /src/ndpi/src/lib/ndpi_main.c:7017:15
+    #9 0x51f4a7 in ndpi_detection_process_packet /src/ndpi/src/lib/ndpi_main.c:7184:22
+    #10 0x4dbfdc in LLVMFuzzerTestOneInput /src/ndpi/fuzz/fuzz_process_packet.c:24:5
+    #11 0x4dcccb in main (/out/fuzz_process_packet+0x4dcccb)
+    #12 0x7f2fe49b7082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #13 0x41d5fd in _start (/out/fuzz_process_packet+0x41d5fd)
+
+DEDUP_TOKEN: __interceptor_strncpy--ndpi_http_check_content--check_content_type_and_change_protocol
+0x60200015cc70 is located 0 bytes inside of 1-byte region [0x60200015cc70,0x60200015cc71)
+allocated by thread T0 here:
+    #0 0x49ea36 in __interceptor_malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:69:3
+    #1 0x4e66e8 in ndpi_malloc /src/ndpi/src/lib/ndpi_memory.c:60:46
+    #2 0x5bb81d in ndpi_http_check_content /src/ndpi/src/lib/protocols/http.c:305:28
+    #3 0x5bb81d in check_content_type_and_change_protocol /src/ndpi/src/lib/protocols/http.c:900:46
+    #4 0x5b7750 in process_response /src/ndpi/src/lib/protocols/http.c:1279:3
+    #5 0x5b6d96 in ndpi_check_http_tcp /src/ndpi/src/lib/protocols/http.c:1372:9
+    #6 0x5b60c2 in ndpi_search_http_tcp /src/ndpi/src/lib/protocols/http.c:1458:3
+    #7 0x514dd9 in check_ndpi_detection_func /src/ndpi/src/lib/ndpi_main.c:5949:6
+    #8 0x5161ec in ndpi_check_flow_func /src/ndpi/src/lib/ndpi_main.c
+    #9 0x51f4a7 in ndpi_internal_detection_process_packet /src/ndpi/src/lib/ndpi_main.c:7017:15
+    #10 0x51f4a7 in ndpi_detection_process_packet /src/ndpi/src/lib/ndpi_main.c:7184:22
+    #11 0x4dbfdc in LLVMFuzzerTestOneInput /src/ndpi/fuzz/fuzz_process_packet.c:24:5
+    #12 0x4dcccb in main (/out/fuzz_process_packet+0x4dcccb)
+
+DEDUP_TOKEN: __interceptor_malloc--ndpi_malloc--ndpi_http_check_content
+SUMMARY: AddressSanitizer: negative-size-param /src/llvm-project/compiler-rt/lib/asan/asan_interceptors.cpp:471:5 in __interceptor_strncpy
+==7==ABORTING

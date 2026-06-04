@@ -1,0 +1,35 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3214623601
+INFO: Loaded 1 modules   (40525 inline 8-bit counters): 40525 [0x8750640, 0x875a48d), 
+INFO: Loaded 1 PC tables (40525 PCs): 40525 [0x86b1c24,0x8700e8c), 
+/out/decompress_frame_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: negative-size-param: (size=2147483647)
+SCARINESS: 10 (negative-size-param)
+    #0 0x8173fe4 in __asan_memcpy /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3
+    #1 0x81f497b in get_vlmeta_from_trailer /src/c-blosc2/blosc/frame.c:1397:5
+    #2 0x81f497b in frame_get_vlmetalayers /src/c-blosc2/blosc/frame.c:1456:9
+    #3 0x81f59cb in frame_to_schunk /src/c-blosc2/blosc/frame.c:1686:8
+    #4 0x81e2df9 in blosc2_schunk_from_buffer /src/c-blosc2/blosc/schunk.c:461:27
+    #5 0x81abfbf in LLVMFuzzerTestOneInput /src/c-blosc2/tests/fuzz/fuzz_decompress_frame.c:23:27
+    #6 0x80a59be in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:599:15
+    #7 0x808f7fe in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #8 0x8095779 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned int)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9
+    #9 0x80c11b7 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #10 0xf7d65646 in __libc_start_main (/lib32/libc.so.6+0x18646)
+    #11 0x8069f18 in _start (/out/decompress_frame_fuzzer+0x8069f18)
+
+DEDUP_TOKEN: __asan_memcpy--get_vlmeta_from_trailer--frame_get_vlmetalayers
+0xf6102901 is located 49 bytes inside of 97-byte region [0xf61028d0,0xf6102931)
+allocated by thread T0 here:
+    #0 0x8174c95 in malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:145:3
+    #1 0x80844b4 in operator new(unsigned int) (/out/decompress_frame_fuzzer+0x80844b4)
+    #2 0x808f7fe in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #3 0x8095779 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned int)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9
+    #4 0x80c11b7 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #5 0xf7d65646 in __libc_start_main (/lib32/libc.so.6+0x18646)
+
+DEDUP_TOKEN: malloc--operator new(unsigned int)--fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int)
+SUMMARY: AddressSanitizer: negative-size-param /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3 in __asan_memcpy
+==7==ABORTING

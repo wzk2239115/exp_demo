@@ -1,0 +1,9 @@
+=== stdout ===
+53555016_poc.js:6: CompileError: WebAssembly.Module(): Compiling function #17 failed: Invalid opcode 0x1f (enable with --experimental-wasm-exnref) @+8631
+    var wasm_module = new WebAssembly.Module(wasm_code, kBuiltins);
+                      ^
+CompileError: WebAssembly.Module(): Compiling function #17 failed: Invalid opcode 0x1f (enable with --experimental-wasm-exnref) @+8631
+    at 53555016_poc.js:6:23
+
+=== exit code ===
+1

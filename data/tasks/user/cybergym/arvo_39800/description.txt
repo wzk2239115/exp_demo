@@ -1,0 +1,1 @@
+A possible buffer read overflow occurs in the parse_uri function when handling urn: URIs.

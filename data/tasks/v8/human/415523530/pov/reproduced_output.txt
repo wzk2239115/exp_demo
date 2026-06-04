@@ -1,0 +1,35 @@
+
+
+#
+# Fatal error in ../../src/maglev/maglev-graph-builder.cc, line 5496
+# Debug check failed: CanElideWriteBarrier(object, value).
+#
+#
+#
+#FailureMessage Object: 0x7fffbd51f140
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:390:32) [0x557444d11d83]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x557444d1112d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x557444cf80d4]
+    out/debug/d8(+0x43a9ac5) [0x557444cf7ac5]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildStoreTaggedFieldNoWriteBarrier(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, int, v8::internal::maglev::StoreTaggedMode) ./../../src/maglev/maglev-graph-builder.cc:5494:3) [0x557442877c35]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TrySpecializeStoreScriptContextSlot(v8::internal::maglev::ValueNode*, int, v8::internal::maglev::ValueNode*, v8::internal::maglev::Node**) ./../../src/maglev/maglev-graph-builder.cc:0:16) [0x55744287759e]
+    d8(v8::internal::maglev::MaglevGraphBuilder::StoreAndCacheContextSlot(v8::internal::maglev::ValueNode*, int, v8::internal::maglev::ValueNode*, v8::internal::ContextKind) ./../../src/maglev/maglev-graph-builder.cc:3590:9) [0x557442878013]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitSingleBytecode() ./../../src/maglev/maglev-graph-builder.h:0:7) [0x557442768dda]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildLoopForPeeling() ./../../src/interpreter/bytecode-array-iterator.h:82:16) [0x5574428cc0ae]
+    d8(v8::internal::maglev::MaglevGraphBuilder::PeelLoop() ./../../src/maglev/maglev-graph-builder.h:3231:5) [0x5574428cbd9c]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildBody() ./../../src/maglev/maglev-graph-builder.h:311:9) [0x5574427647c0]
+    d8(v8::internal::maglev::MaglevGraphBuilder::Build() ./../../src/maglev/maglev-graph-builder.h:276:3) [0x55744276001e]
+    d8(v8::internal::compiler::turboshaft::MaglevGraphBuildingPhase::Run(v8::internal::compiler::turboshaft::PipelineData*, v8::internal::Zone*, v8::internal::compiler::Linkage*) ./../../src/compiler/turboshaft/phase.h:329:51) [0x557443a3c4e0]
+    d8(auto v8::internal::compiler::turboshaft::Pipeline::Run<v8::internal::compiler::turboshaft::MaglevGraphBuildingPhase, v8::internal::compiler::Linkage*&>(v8::internal::compiler::Linkage*&) ./../../src/compiler/turboshaft/pipelines.h:92:27) [0x5574434fc914]
+    d8(v8::internal::compiler::turboshaft::Pipeline::CreateGraphWithMaglev(v8::internal::compiler::Linkage*) ./../../src/compiler/turboshaft/pipelines.h:143:9) [0x5574434ef56f]
+    d8(v8::internal::compiler::PipelineCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/compiler/pipeline.cc:780:9) [0x5574434ef333]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:470:22) [0x55744179b24d]
+    d8(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1105:7) [0x5574417aa48d]
+    d8(v8::internal::Compiler::CompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind) ./../../src/handles/maybe-handles-inl.h:40:17) [0x5574417ad32c]
+    d8(v8::internal::(anonymous namespace)::CompileOptimized(v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::Isolate*) ./../../src/handles/handles.h:201:22) [0x5574424c3b59]
+    d8(v8::internal::__RT_impl_Runtime_OptimizeTurbofanEager(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/common/ptr-compr-inl.h:72:18) [0x5574424bce72]
+    d8(v8::internal::Runtime_OptimizeTurbofanEager(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:222:1) [0x5574424bca60]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x55744438d87d]
+timeout: the monitored command dumped core

@@ -1,0 +1,1 @@
+The vulnerability is that cpuid results are hardcoded in the code, rather than being set by the selected CPU. This can lead to incorrect or insecure behavior if the cpuid values do not match the actual CPU configuration.

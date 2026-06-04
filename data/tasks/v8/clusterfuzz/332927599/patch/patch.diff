@@ -1,0 +1,62 @@
+diff --git a/src/regexp/regexp-parser.cc b/src/regexp/regexp-parser.cc
+index a879ef7d5a1..2648a3f2a9a 100644
+--- a/src/regexp/regexp-parser.cc
++++ b/src/regexp/regexp-parser.cc
+@@ -1333,19 +1333,31 @@ RegExpParserState* RegExpParserImpl<CharT>::ParseOpenParenthesis(
+           break;
+         case '=':
+           Advance(2);
+-          parsing_modifiers = false;
++          if (parsing_modifiers) {
++            DCHECK(v8_flags.js_regexp_modifiers);
++            ReportError(RegExpError::kInvalidGroup);
++            return nullptr;
++          }
+           lookaround_type = RegExpLookaround::LOOKAHEAD;
+           subexpr_type = POSITIVE_LOOKAROUND;
+           break;
+         case '!':
+           Advance(2);
+-          parsing_modifiers = false;
++          if (parsing_modifiers) {
++            DCHECK(v8_flags.js_regexp_modifiers);
++            ReportError(RegExpError::kInvalidGroup);
++            return nullptr;
++          }
+           lookaround_type = RegExpLookaround::LOOKAHEAD;
+           subexpr_type = NEGATIVE_LOOKAROUND;
+           break;
+         case '<':
+           Advance();
+-          parsing_modifiers = false;
++          if (parsing_modifiers) {
++            DCHECK(v8_flags.js_regexp_modifiers);
++            ReportError(RegExpError::kInvalidGroup);
++            return nullptr;
++          }
+           if (Next() == '=') {
+             Advance(2);
+             lookaround_type = RegExpLookaround::LOOKBEHIND;
+diff --git a/test/mjsunit/harmony/regexp-modifiers.js b/test/mjsunit/harmony/regexp-modifiers.js
+index b353c0b67b4..5bf961b2cfd 100644
+--- a/test/mjsunit/harmony/regexp-modifiers.js
++++ b/test/mjsunit/harmony/regexp-modifiers.js
+@@ -24,6 +24,18 @@ test_invalid('(?i-i:.)');
+ test_invalid('(?s-s:.)');
+ test_invalid('(?msi-ims:.)');
+ test_invalid('(?i--m:.)');
++test_invalid('(?i<)');
++test_invalid('(?i=)');
++test_invalid('(?i!)');
++test_invalid('(?m<)');
++test_invalid('(?m=)');
++test_invalid('(?m!)');
++test_invalid('(?s<)');
++test_invalid('(?s=)');
++test_invalid('(?s!)');
++test_invalid('(?-<)');
++test_invalid('(?-=)');
++test_invalid('(?-!)');
+ 
+ function test(re, expectedMatch, expectedNoMatch = []) {
+   for (const match of expectedMatch) {

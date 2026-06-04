@@ -1,0 +1,53 @@
+diff --git a/src/builtins/function.tq b/src/builtins/function.tq
+index 413de586191..356d37b904d 100644
+--- a/src/builtins/function.tq
++++ b/src/builtins/function.tq
+@@ -23,6 +23,8 @@ const kNameDescriptorIndex: constexpr int32
+     ;
+ const kMinDescriptorsForFastBindAndWrap: constexpr int31
+     generates 'JSFunction::kMinDescriptorsForFastBindAndWrap';
++const kCodeMaxArguments:
++    constexpr intptr generates 'Code::kMaxArguments';
+ 
+ macro CheckAccessor(
+     implicit context: Context)(array: DescriptorArray, index: constexpr int32,
+@@ -43,6 +45,8 @@ transitioning javascript builtin FastFunctionPrototypeBind(
+   try {
+     typeswitch (receiver) {
+       case (fn: JSFunction|JSBoundFunction|JSWrappedFunction): {
++        if (argc >= kCodeMaxArguments) goto Slow;
++
+         // Disallow binding of slow-mode functions. We need to figure out
+         // whether the length and name property are in the original state.
+         Comment('Disallow binding of slow-mode functions');
+diff --git a/test/mjsunit/regress/regress-344664770.js b/test/mjsunit/regress/regress-344664770.js
+new file mode 100644
+index 00000000000..1f58605044a
+--- /dev/null
++++ b/test/mjsunit/regress/regress-344664770.js
+@@ -0,0 +1,14 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++function __f_4() {
++    return arguments;
++}
++
++arr = [];
++arr.length = 65535;
++
++assertThrows(() => __f_4.bind(null,...arr),
++             RangeError,
++             "Too many arguments in function call (only 65535 allowed)");
+diff --git a/test/mjsunit/regress/regress-v8-6716.js b/test/mjsunit/regress/regress-v8-6716.js
+index 3033fa7c5f3..87b72e14882 100644
+--- a/test/mjsunit/regress/regress-v8-6716.js
++++ b/test/mjsunit/regress/regress-v8-6716.js
+@@ -3,5 +3,5 @@
+ // found in the LICENSE file.
+ 
+ function f() {}
+-var a = Array(2 ** 16);  // Elements in large-object-space.
++var a = Array(2 ** 16 - 2);  // Elements in large-object-space.
+ f.bind(...a);

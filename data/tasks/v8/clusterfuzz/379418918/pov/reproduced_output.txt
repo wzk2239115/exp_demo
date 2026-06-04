@@ -1,0 +1,17 @@
+=== stderr ===
+Sandbox testing mode is enabled. Only sandbox violations will be reported, all other crashes will be ignored.
+
+## V8 sandbox violation detected!
+
+Received signal 11 SEGV_MAPERR 7ffe82d043c0
+
+==== C stack trace ===============================
+
+ [0x564901a316d7]
+ [0x7fa0f3f4d330]
+ [0x564902d539d5]
+[end of stack trace]
+timeout: the monitored command dumped core
+
+=== exit code ===
+139

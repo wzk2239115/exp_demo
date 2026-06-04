@@ -1,0 +1,1 @@
+A vulnerability exists where a temporary forwarding device is not freed on error, potentially leading to a memory leak.

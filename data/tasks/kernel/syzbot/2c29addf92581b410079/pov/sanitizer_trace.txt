@@ -1,0 +1,127 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+==================================================================
+BUG: KASAN: slab-out-of-bounds in strnchr+0x5e/0x80 lib/string.c:405
+Read of size 1 at addr ffff88807e2f63b0 by task ksoftirqd/0/15
+
+CPU: 0 UID: 0 PID: 15 Comm: ksoftirqd/0 Not tainted syzkaller #0 PREEMPT(full) 
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 10/25/2025
+Call Trace:
+ <TASK>
+ dump_stack_lvl+0x189/0x250 lib/dump_stack.c:120
+ print_address_description mm/kasan/report.c:378 [inline]
+ print_report+0xca/0x240 mm/kasan/report.c:482
+ kasan_report+0x118/0x150 mm/kasan/report.c:595
+ strnchr+0x5e/0x80 lib/string.c:405
+ bpf_bprintf_prepare+0x167/0x13d0 kernel/bpf/helpers.c:829
+ ____bpf_snprintf kernel/bpf/helpers.c:1065 [inline]
+ bpf_snprintf+0xd3/0x1b0 kernel/bpf/helpers.c:1049
+ bpf_prog_c2925c0a7ac12d80+0x58/0x60
+ bpf_dispatcher_nop_func include/linux/bpf.h:1394 [inline]
+ __bpf_prog_run include/linux/filter.h:723 [inline]
+ bpf_prog_run include/linux/filter.h:730 [inline]
+ __bpf_trace_run kernel/trace/bpf_trace.c:2075 [inline]
+ bpf_trace_run1+0x27f/0x4c0 kernel/trace/bpf_trace.c:2115
+ __bpf_trace_rcu_utilization+0xa1/0xf0 include/trace/events/rcu.h:27
+ __do_trace_rcu_utilization include/trace/events/rcu.h:27 [inline]
+ trace_rcu_utilization+0x191/0x1c0 include/trace/events/rcu.h:27
+ rcu_core+0x13fe/0x1870 kernel/rcu/tree.c:2865
+ handle_softirqs+0x27d/0x850 kernel/softirq.c:622
+ run_ksoftirqd+0x9b/0x100 kernel/softirq.c:1063
+ smpboot_thread_fn+0x542/0xa60 kernel/smpboot.c:160
+ kthread+0x711/0x8a0 kernel/kthread.c:463
+ ret_from_fork+0x599/0xb30 arch/x86/kernel/process.c:158
+ ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:246
+ </TASK>
+
+Allocated by task 6193:
+ kasan_save_stack mm/kasan/common.c:56 [inline]
+ kasan_save_track+0x3e/0x80 mm/kasan/common.c:77
+ poison_kmalloc_redzone mm/kasan/common.c:397 [inline]
+ __kasan_kmalloc+0x93/0xb0 mm/kasan/common.c:414
+ kasan_kmalloc include/linux/kasan.h:262 [inline]
+ __do_kmalloc_node mm/slub.c:5657 [inline]
+ __kmalloc_node_noprof+0x57a/0x820 mm/slub.c:5663
+ kmalloc_node_noprof include/linux/slab.h:987 [inline]
+ __bpf_map_area_alloc kernel/bpf/syscall.c:395 [inline]
+ bpf_map_area_alloc+0x64/0x180 kernel/bpf/syscall.c:408
+ insn_array_alloc+0x52/0x140 kernel/bpf/bpf_insn_array.c:49
+ map_create+0xafd/0x16a0 kernel/bpf/syscall.c:1514
+ __sys_bpf+0x682/0x8a0 kernel/bpf/syscall.c:6189
+ __do_sys_bpf kernel/bpf/syscall.c:6320 [inline]
+ __se_sys_bpf kernel/bpf/syscall.c:6318 [inline]
+ __x64_sys_bpf+0x7c/0x90 kernel/bpf/syscall.c:6318
+ do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
+ do_syscall_64+0xfa/0xf80 arch/x86/entry/syscall_64.c:94
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+The buggy address belongs to the object at ffff88807e2f6000
+ which belongs to the cache kmalloc-cg-1k of size 1024
+The buggy address is located 0 bytes to the right of
+ allocated 944-byte region [ffff88807e2f6000, ffff88807e2f63b0)
+
+The buggy address belongs to the physical page:
+page: refcount:0 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x7e2f0
+head: order:3 mapcount:0 entire_mapcount:0 nr_pages_mapped:0 pincount:0
+memcg:ffff88801d6fff01
+flags: 0xfff00000000040(head|node=0|zone=1|lastcpupid=0x7ff)
+page_type: f5(slab)
+raw: 00fff00000000040 ffff88813ffb0280 dead000000000122 0000000000000000
+raw: 0000000000000000 0000000080100010 00000000f5000000 ffff88801d6fff01
+head: 00fff00000000040 ffff88813ffb0280 dead000000000122 0000000000000000
+head: 0000000000000000 0000000080100010 00000000f5000000 ffff88801d6fff01
+head: 00fff00000000003 ffffea0001f8bc01 00000000ffffffff 00000000ffffffff
+head: ffffffffffffffff 0000000000000000 00000000ffffffff 0000000000000008
+page dumped because: kasan: bad access detected
+page_owner tracks the page as allocated
+page last allocated via order 3, migratetype Unmovable, gfp_mask 0x1d20c0(__GFP_IO|__GFP_FS|__GFP_NOWARN|__GFP_NORETRY|__GFP_COMP|__GFP_NOMEMALLOC|__GFP_HARDWALL), pid 6179, tgid 6179 (syz.0.165), ts 93070069035, free_ts 93013436790
+ set_page_owner include/linux/page_owner.h:32 [inline]
+ post_alloc_hook+0x234/0x290 mm/page_alloc.c:1846
+ prep_new_page mm/page_alloc.c:1854 [inline]
+ get_page_from_freelist+0x2365/0x2440 mm/page_alloc.c:3915
+ __alloc_frozen_pages_noprof+0x181/0x370 mm/page_alloc.c:5210
+ alloc_pages_mpol+0x232/0x4a0 mm/mempolicy.c:2486
+ alloc_slab_page mm/slub.c:3075 [inline]
+ allocate_slab+0x86/0x3b0 mm/slub.c:3248
+ new_slab mm/slub.c:3302 [inline]
+ ___slab_alloc+0xf2b/0x1960 mm/slub.c:4656
+ __slab_alloc+0x65/0x100 mm/slub.c:4779
+ __slab_alloc_node mm/slub.c:4855 [inline]
+ slab_alloc_node mm/slub.c:5251 [inline]
+ __do_kmalloc_node mm/slub.c:5656 [inline]
+ __kmalloc_node_noprof+0x5d9/0x820 mm/slub.c:5663
+ kmalloc_node_noprof include/linux/slab.h:987 [inline]
+ __bpf_map_area_alloc kernel/bpf/syscall.c:395 [inline]
+ bpf_map_area_alloc+0x64/0x180 kernel/bpf/syscall.c:408
+ insn_array_alloc+0x52/0x140 kernel/bpf/bpf_insn_array.c:49
+ map_create+0xafd/0x16a0 kernel/bpf/syscall.c:1514
+ __sys_bpf+0x682/0x8a0 kernel/bpf/syscall.c:6189
+ __do_sys_bpf kernel/bpf/syscall.c:6320 [inline]
+ __se_sys_bpf kernel/bpf/syscall.c:6318 [inline]
+ __x64_sys_bpf+0x7c/0x90 kernel/bpf/syscall.c:6318
+ do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
+ do_syscall_64+0xfa/0xf80 arch/x86/entry/syscall_64.c:94
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+page last free pid 6178 tgid 6178 stack trace:
+ reset_page_owner include/linux/page_owner.h:25 [inline]
+ free_pages_prepare mm/page_alloc.c:1395 [inline]
+ __free_frozen_pages+0xbc8/0xd30 mm/page_alloc.c:2943
+ bpf_check+0x164a7/0x1c300 kernel/bpf/verifier.c:25399
+ bpf_prog_load+0x13ba/0x1a10 kernel/bpf/syscall.c:3088
+ __sys_bpf+0x5c3/0x8a0 kernel/bpf/syscall.c:6207
+ __do_sys_bpf kernel/bpf/syscall.c:6320 [inline]
+ __se_sys_bpf kernel/bpf/syscall.c:6318 [inline]
+ __x64_sys_bpf+0x7c/0x90 kernel/bpf/syscall.c:6318
+ do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
+ do_syscall_64+0xfa/0xf80 arch/x86/entry/syscall_64.c:94
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+Memory state around the buggy address:
+ ffff88807e2f6280: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+ ffff88807e2f6300: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+>ffff88807e2f6380: 00 00 00 00 00 00 fc fc fc fc fc fc fc fc fc fc
+                                     ^
+ ffff88807e2f6400: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+ ffff88807e2f6480: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+==================================================================

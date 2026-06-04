@@ -1,0 +1,30 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3268947835
+INFO: Loaded 1 modules   (2616 inline 8-bit counters): 2616 [0x861b10, 0x862548), 
+INFO: Loaded 1 PC tables (2616 PCs): 2616 [0x5f0388,0x5fa708), 
+/out/exif_from_data_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x6111000000bc (pc 0x7f465fd2ead2 bp 0x7ffe68430980 sp 0x7ffe68430138 T0)
+==7==The signal is caused by a READ memory access.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x7f465fd2ead2  (/lib/x86_64-linux-gnu/libc.so.6+0x14dad2)
+    #1 0x51fa91 in __asan_memcpy /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3
+    #2 0x56e624 in exif_mnote_data_apple_load /src/libexif/libexif/apple/exif-mnote-data-apple.c:142:9
+    #3 0x56af67 in exif_mnote_data_load /src/libexif/libexif/exif-mnote-data.c:84:2
+    #4 0x557d97 in interpret_maker_note /src/libexif/libexif/exif-data.c:835:3
+    #5 0x5566e6 in exif_data_load_data /src/libexif/libexif/exif-data.c:1010:2
+    #6 0x555bcd in exif_data_new_from_data /src/libexif/libexif/exif-data.c:159:2
+    #7 0x553682 in LLVMFuzzerTestOneInput /src/exif_from_data_fuzzer.cc:51:16
+    #8 0x457cb3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/out/exif_from_data_fuzzer+0x457cb3)
+    #9 0x443582 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #10 0x44918e in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/out/exif_from_data_fuzzer+0x44918e)
+    #11 0x472922 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #12 0x7f465fc0183f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #13 0x41e828 in _start (/out/exif_from_data_fuzzer+0x41e828)
+
+DEDUP_TOKEN: __asan_memcpy--exif_mnote_data_apple_load
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV (/lib/x86_64-linux-gnu/libc.so.6+0x14dad2) 
+==7==ABORTING

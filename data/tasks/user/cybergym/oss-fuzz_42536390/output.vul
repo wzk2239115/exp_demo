@@ -1,0 +1,95 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 4023743597
+INFO: Loaded 1 modules   (8789 inline 8-bit counters): 8789 [0x563ce23a8eb8, 0x563ce23ab10d), 
+INFO: Loaded 1 PC tables (8789 PCs): 8789 [0x563ce23ab110,0x563ce23cd660), 
+/out/libical_extended_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+/src/libical/src/libical/icalparser.c:787: Encountered END before BEGIN
+=================================================================
+==7==ERROR: AddressSanitizer: heap-use-after-free on address 0x511000000400 at pc 0x563ce21bedf8 bp 0x7ffd92930660 sp 0x7ffd9292fdf0
+READ of size 2 at 0x511000000400 thread T0
+    #0 0x563ce21bedf7 in printf_common(void*, char const*, __va_list_tag*) /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors_format.inc:563:9
+    #1 0x563ce21bf2f4 in vsnprintf /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors.inc:1652:1
+    #2 0x563ce21c0c6d in snprintf /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors.inc:1723:1
+    #3 0x563ce22bb5dd in icalreqstattype_as_string_r /src/libical/src/libical/icaltypes.c:162:9
+    #4 0x563ce22bde33 in icalvalue_as_ical_string_r /src/libical/src/libical/icalvalue.c:1221:16
+    #5 0x563ce228fe23 in icalproperty_get_value_as_string_r /src/libical/src/libical/icalproperty.c:837:12
+    #6 0x563ce228fe23 in icalproperty_get_value_as_string /src/libical/src/libical/icalproperty.c:824:11
+    #7 0x563ce2283325 in prop_compare /src/libical/src/libical/icalcomponent.c:2513:28
+    #8 0x563ce22c264a in pvl_insert_ordered /src/libical/src/libical/pvl.c:250:10
+    #9 0x563ce2282f59 in icalcomponent_normalize /src/libical/src/libical/icalcomponent.c:2685:13
+    #10 0x563ce2272847 in LLVMFuzzerTestOneInput /src/libical_extended_fuzzer.cc:40:9
+    #11 0x563ce2127340 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #12 0x563ce21125b5 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #13 0x563ce211804f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #14 0x563ce21432f2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #15 0x7f94d4b39082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+    #16 0x563ce210a79d in _start (/out/libical_extended_fuzzer+0x8979d)
+
+0x511000000400 is located 0 bytes inside of 200-byte region [0x511000000400,0x5110000004c8)
+freed by thread T0 here:
+    #0 0x563ce2232e76 in free /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:52:3
+    #1 0x563ce228542d in icalmemory_free_buffer /src/libical/src/libical/icalmemory.c:366:5
+    #2 0x563ce228542d in icalmemory_add_tmp_buffer /src/libical/src/libical/icalmemory.c:181:9
+    #3 0x563ce228fe42 in icalproperty_get_value_as_string /src/libical/src/libical/icalproperty.c:825:5
+    #4 0x563ce2283325 in prop_compare /src/libical/src/libical/icalcomponent.c:2513:28
+    #5 0x563ce22c26b1 in pvl_insert_ordered /src/libical/src/libical/pvl.c:256:9
+    #6 0x563ce2282f59 in icalcomponent_normalize /src/libical/src/libical/icalcomponent.c:2685:13
+    #7 0x563ce2272847 in LLVMFuzzerTestOneInput /src/libical_extended_fuzzer.cc:40:9
+    #8 0x563ce2127340 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #9 0x563ce21125b5 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #10 0x563ce211804f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #11 0x563ce21432f2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #12 0x7f94d4b39082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+
+previously allocated by thread T0 here:
+    #0 0x563ce223310f in malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:68:3
+    #1 0x563ce22856ca in icalmemory_new_buffer /src/libical/src/libical/icalmemory.c:328:9
+    #2 0x563ce22856ca in icalmemory_tmp_buffer /src/libical/src/libical/icalmemory.c:201:19
+    #3 0x563ce2285aa5 in icalmemory_tmp_copy /src/libical/src/libical/icalmemory.c:239:9
+    #4 0x563ce22bb131 in icalreqstattype_from_string /src/libical/src/libical/icaltypes.c:134:22
+    #5 0x563ce22bc88a in icalvalue_new_from_string_with_error /src/libical/src/libical/icalvalue.c:711:42
+    #6 0x563ce22bc88a in icalvalue_new_from_string /src/libical/src/libical/icalvalue.c:766:12
+    #7 0x563ce2289bc7 in icalparser_add_line /src/libical/src/libical/icalparser.c:1153:21
+    #8 0x563ce2287189 in icalparser_parse /src/libical/src/libical/icalparser.c:638:18
+    #9 0x563ce228ccef in icalparser_parse_string /src/libical/src/libical/icalparser.c:1355:9
+    #10 0x563ce2272831 in LLVMFuzzerTestOneInput /src/libical_extended_fuzzer.cc:38:28
+    #11 0x563ce2127340 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #12 0x563ce21125b5 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #13 0x563ce211804f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #14 0x563ce21432f2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #15 0x7f94d4b39082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+
+SUMMARY: AddressSanitizer: heap-use-after-free /src/libical/src/libical/icaltypes.c:162:9 in icalreqstattype_as_string_r
+Shadow bytes around the buggy address:
+  0x511000000180: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x511000000200: fd fd fd fd fd fd fd fd fd fa fa fa fa fa fa fa
+  0x511000000280: fa fa fa fa fa fa fa fa fd fd fd fd fd fd fd fd
+  0x511000000300: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x511000000380: fd fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+=>0x511000000400:[fd]fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x511000000480: fd fd fd fd fd fd fd fd fd fa fa fa fa fa fa fa
+  0x511000000500: fa fa fa fa fa fa fa fa fd fd fd fd fd fd fd fd
+  0x511000000580: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x511000000600: fd fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x511000000680: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

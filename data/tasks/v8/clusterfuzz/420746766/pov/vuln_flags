@@ -1,0 +1,1 @@
+--allow-natives-syntax --no-lazy-feedback-allocation --single-threaded --invocation-count-for-maglev=10 

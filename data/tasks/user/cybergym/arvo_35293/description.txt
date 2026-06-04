@@ -1,0 +1,1 @@
+A vulnerability exists where `PrepareBlending` receives pointers to elements of a growing vector, which can lead to errors when handling `decoded->extra_channels()` and the corresponding Rects.

@@ -1,0 +1,37 @@
+
+
+#
+# Fatal error in ../../src/base/bit-field.h, line 56
+# Debug check failed: is_valid(value).
+#
+#
+#
+#FailureMessage Object: 0x7f85b3ffcf50
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x557fc3585c03]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x557fc3584d6d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x557fc356ae14]
+    out/debug/d8(+0x4679805) [0x557fc356a805]
+    d8(v8::internal::SourcePosition::SetInliningId(int) ./../../src/base/bit-field.h:0:5) [0x557fbff9af77]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildInlineFunction(v8::internal::SourcePosition, v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*) ./../../src/maglev/maglev-reducer.h:287:34) [0x557fc0fc46ed]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildEagerInlineCall(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::compiler::SharedFunctionInfoRef, v8::internal::compiler::FeedbackCellRef, v8::internal::maglev::CallArguments&, float) ./../../src/maglev/maglev-graph-builder.cc:8204:45) [0x557fc0fc69f7]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryBuildInlineCall(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::base::StrongAlias<v8::internal::JSDispatchHandleAliasTag, unsigned int>, v8::internal::compiler::SharedFunctionInfoRef, v8::internal::compiler::FeedbackCellRef, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-graph-builder.cc:8112:12) [0x557fc0fc5e8f]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryBuildCallKnownJSFunction(v8::internal::compiler::JSFunctionRef, v8::internal::maglev::ValueNode*, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-reducer.h:57:39) [0x557fc0fd8dbf]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryReduceCallForConstant(v8::internal::compiler::JSFunctionRef, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-reducer.h:57:39) [0x557fc0faaba1]
+    d8(v8::internal::maglev::MaglevGraphBuilder::ReduceCall(v8::internal::maglev::ValueNode*, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-reducer.h:57:39) [0x557fc0fc9dbc]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildCallWithFeedback(v8::internal::maglev::ValueNode*, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-graph-builder.cc:11124:3) [0x557fc0fda084]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildCallFromRegisters(int, v8::internal::ConvertReceiverMode) ./../../src/base/small-vector.h:78:20) [0x557fc0fdbe5f]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitSingleBytecode() ./../../src/maglev/maglev-graph-builder.cc:15653:5) [0x557fc0fb2cd3]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildBody() ./../../src/maglev/maglev-reducer.h:67:48) [0x557fc0fc5224]
+    d8(v8::internal::maglev::MaglevGraphBuilder::Build() ./../../src/maglev/maglev-graph-builder.cc:15212:1) [0x557fc0ffa1ee]
+    d8(v8::internal::maglev::MaglevCompiler::Compile(v8::internal::LocalIsolate*, v8::internal::maglev::MaglevCompilationInfo*) ./../../src/maglev/maglev-compiler.cc:0:21) [0x557fc0e92a01]
+    d8(v8::internal::maglev::MaglevCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../third_party/libc++/src/include/__memory/unique_ptr.h:277:12) [0x557fc0f8ecea]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:472:22) [0x557fbfe6c522]
+    d8(v8::internal::maglev::MaglevConcurrentDispatcher::JobTask::Run(v8::JobDelegate*) ./../../src/maglev/maglev-concurrent-dispatcher.cc:288:20) [0x557fc0f90e4c]
+    d8(v8::platform::DefaultJobWorker::Run() ./../../src/libplatform/default-job.cc:19:46) [0x557fc358770f]
+    d8(v8::platform::DefaultWorkerThreadsTaskRunner::WorkerThread::Run() ./../../src/libplatform/default-worker-threads-task-runner.cc:96:9) [0x557fc358d50c]
+    d8(v8::base::ThreadEntry(void*) ./../../src/base/platform/platform-posix.cc:1274:3) [0x557fc358230f]
+    /lib/x86_64-linux-gnu/libc.so.6(+0x9caa4) [0x7f85e93bfaa4]
+    /lib/x86_64-linux-gnu/libc.so.6(__clone+0x44) [0x7f85e944ca64]
+timeout: the monitored command dumped core

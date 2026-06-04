@@ -1,0 +1,20 @@
+
+
+
+#
+# Fatal error in ../../src/execution/isolate-inl.h, line 103
+# Check failed: has_exception().
+#
+#
+#
+#FailureMessage Object: 0x7ffd3fa2ec60
+==== C stack trace ===============================
+
+    /build/v8/out/debug/libv8_libbase.so(v8::base::debug::StackTrace::StackTrace()+0x13) [0x7f64fc58e863]
+    /build/v8/out/debug/libv8_libplatform.so(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x7f64fc53b69d]
+    /build/v8/out/debug/libv8_libbase.so(V8_Fatal(char const*, int, char const*, ...)+0x194) [0x7f64fc570174]
+    /build/v8/out/debug/libv8.so(v8::internal::JSAsyncDisposableStack::NextDisposeAsyncIteration(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSDisposableStackBase>, v8::internal::Handle<v8::internal::JSPromise>) ./../../src/common/ptr-compr-inl.h:70:3) [0x7f64fe8004c4]
+    /build/v8/out/debug/libv8.so(v8::internal::Builtin_Impl_AsyncDisposableStackPrototypeDisposeAsync(v8::internal::BuiltinArguments, v8::internal::Isolate*) ./../../src/builtins/builtins-async-disposable-stack.cc:239:3) [0x7f64fdd65799]
+    /build/v8/out/debug/libv8.so(v8::internal::Builtin_AsyncDisposableStackPrototypeDisposeAsync(int, unsigned long*, v8::internal::Isolate*) ./../../src/builtins/builtins-async-disposable-stack.cc:194:1) [0x7f64fdd6515d]
+    [0x7f647f8309fd]
+timeout: the monitored command dumped core

@@ -1,0 +1,1 @@
+The vulnerability allows the raw svalue to be printed and permits incrementing past the end of string (EOS) in OP_NONE.

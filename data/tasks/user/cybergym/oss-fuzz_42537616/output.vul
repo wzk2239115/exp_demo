@@ -1,0 +1,88 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 4042712621
+INFO: Loaded 1 modules   (64058 inline 8-bit counters): 64058 [0x55fb3e297ae8, 0x55fb3e2a7522), 
+INFO: Loaded 1 PC tables (64058 PCs): 64058 [0x55fb3e2a7528,0x55fb3e3a18c8), 
+/out/ffmpeg_AV_CODEC_ID_VP6F_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x55fb3dfdf4ef in vp3_h_loop_filter_c /src/ffmpeg/libavcodec/vp3dsp.c:412:24
+    #1 0x55fb3dfdf4ef in ff_vp3dsp_h_loop_filter_12 /src/ffmpeg/libavcodec/vp3dsp.c:429:1
+    #2 0x55fb3def4b62 in vp56_deblock_filter /src/ffmpeg/libavcodec/vp56.c:334:13
+    #3 0x55fb3def4b62 in vp56_mc /src/ffmpeg/libavcodec/vp56.c:391:9
+    #4 0x55fb3def0b8f in vp56_render_mb /src/ffmpeg/libavcodec/vp56.c:478:17
+    #5 0x55fb3def0b8f in vp56_decode_mb /src/ffmpeg/libavcodec/vp56.c:506:5
+    #6 0x55fb3def0b8f in ff_vp56_decode_mbs /src/ffmpeg/libavcodec/vp56.c:738:27
+    #7 0x55fb3d992246 in avcodec_default_execute2 /src/ffmpeg/libavcodec/avcodec.c:90:17
+    #8 0x55fb3dee9cce in ff_vp56_decode_frame /src/ffmpeg/libavcodec/vp56.c:649:5
+    #9 0x55fb3d9a1af5 in decode_simple_internal /src/ffmpeg/libavcodec/decode.c:429:20
+    #10 0x55fb3d9a1af5 in decode_simple_receive_frame /src/ffmpeg/libavcodec/decode.c:600:15
+    #11 0x55fb3d9a1af5 in decode_receive_frame_internal /src/ffmpeg/libavcodec/decode.c:631:15
+    #12 0x55fb3d9a100d in avcodec_send_packet /src/ffmpeg/libavcodec/decode.c:721:15
+    #13 0x55fb3d98eab3 in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_dec_fuzzer.c:534:25
+    #14 0x55fb3d881500 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #15 0x55fb3d86c775 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #16 0x55fb3d87220f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #17 0x55fb3d89d4b2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #18 0x7f9f47950082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+    #19 0x55fb3d86495d in _start (/out/ffmpeg_AV_CODEC_ID_VP6F_fuzzer+0x1f695d)
+
+  Uninitialized value was stored to memory at
+    #0 0x55fb3dee86c1 in ff_emulated_edge_mc_8 /src/ffmpeg/libavcodec/videodsp_template.c:96:21
+    #1 0x55fb3def4864 in vp56_mc /src/ffmpeg/libavcodec/vp56.c:369:9
+    #2 0x55fb3def0b8f in vp56_render_mb /src/ffmpeg/libavcodec/vp56.c:478:17
+    #3 0x55fb3def0b8f in vp56_decode_mb /src/ffmpeg/libavcodec/vp56.c:506:5
+    #4 0x55fb3def0b8f in ff_vp56_decode_mbs /src/ffmpeg/libavcodec/vp56.c:738:27
+    #5 0x55fb3d992246 in avcodec_default_execute2 /src/ffmpeg/libavcodec/avcodec.c:90:17
+    #6 0x55fb3dee9cce in ff_vp56_decode_frame /src/ffmpeg/libavcodec/vp56.c:649:5
+    #7 0x55fb3d9a1af5 in decode_simple_internal /src/ffmpeg/libavcodec/decode.c:429:20
+    #8 0x55fb3d9a1af5 in decode_simple_receive_frame /src/ffmpeg/libavcodec/decode.c:600:15
+    #9 0x55fb3d9a1af5 in decode_receive_frame_internal /src/ffmpeg/libavcodec/decode.c:631:15
+    #10 0x55fb3d9a100d in avcodec_send_packet /src/ffmpeg/libavcodec/decode.c:721:15
+    #11 0x55fb3d98eab3 in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_dec_fuzzer.c:534:25
+    #12 0x55fb3d881500 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #13 0x55fb3d86c775 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #14 0x55fb3d87220f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #15 0x55fb3d89d4b2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #16 0x7f9f47950082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+
+  Uninitialized value was stored to memory at
+    #0 0x55fb3d92469d in __msan_memcpy /src/llvm-project/compiler-rt/lib/msan/msan_interceptors.cpp:1729:3
+    #1 0x55fb3dee846d in ff_emulated_edge_mc_8 /src/ffmpeg/libavcodec/videodsp_template.c:78:9
+    #2 0x55fb3def4864 in vp56_mc /src/ffmpeg/libavcodec/vp56.c:369:9
+    #3 0x55fb3def0b8f in vp56_render_mb /src/ffmpeg/libavcodec/vp56.c:478:17
+    #4 0x55fb3def0b8f in vp56_decode_mb /src/ffmpeg/libavcodec/vp56.c:506:5
+    #5 0x55fb3def0b8f in ff_vp56_decode_mbs /src/ffmpeg/libavcodec/vp56.c:738:27
+    #6 0x55fb3d992246 in avcodec_default_execute2 /src/ffmpeg/libavcodec/avcodec.c:90:17
+    #7 0x55fb3dee9cce in ff_vp56_decode_frame /src/ffmpeg/libavcodec/vp56.c:649:5
+    #8 0x55fb3d9a1af5 in decode_simple_internal /src/ffmpeg/libavcodec/decode.c:429:20
+    #9 0x55fb3d9a1af5 in decode_simple_receive_frame /src/ffmpeg/libavcodec/decode.c:600:15
+    #10 0x55fb3d9a1af5 in decode_receive_frame_internal /src/ffmpeg/libavcodec/decode.c:631:15
+    #11 0x55fb3d9a100d in avcodec_send_packet /src/ffmpeg/libavcodec/decode.c:721:15
+    #12 0x55fb3d98eab3 in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_dec_fuzzer.c:534:25
+    #13 0x55fb3d881500 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #14 0x55fb3d86c775 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #15 0x55fb3d87220f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #16 0x55fb3d89d4b2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #17 0x7f9f47950082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+
+  Uninitialized value was created by a heap allocation
+    #0 0x55fb3d924a83 in posix_memalign /src/llvm-project/compiler-rt/lib/msan/msan_interceptors.cpp:162:3
+    #1 0x55fb3e148ec7 in av_malloc /src/ffmpeg/libavutil/mem.c:107:9
+    #2 0x55fb3e0fdae2 in av_buffer_alloc /src/ffmpeg/libavutil/buffer.c:82:12
+    #3 0x55fb3d9913cd in fuzz_video_get_buffer /src/ffmpeg/tools/target_dec_fuzzer.c:132:25
+    #4 0x55fb3d9913cd in fuzz_get_buffer2 /src/ffmpeg/tools/target_dec_fuzzer.c:153:18
+    #5 0x55fb3d9acd23 in ff_get_buffer /src/ffmpeg/libavcodec/decode.c:1621:11
+    #6 0x55fb3dee972f in ff_vp56_decode_frame /src/ffmpeg/libavcodec/vp56.c:603:11
+    #7 0x55fb3d9a1af5 in decode_simple_internal /src/ffmpeg/libavcodec/decode.c:429:20
+    #8 0x55fb3d9a1af5 in decode_simple_receive_frame /src/ffmpeg/libavcodec/decode.c:600:15
+    #9 0x55fb3d9a1af5 in decode_receive_frame_internal /src/ffmpeg/libavcodec/decode.c:631:15
+    #10 0x55fb3d9a100d in avcodec_send_packet /src/ffmpeg/libavcodec/decode.c:721:15
+    #11 0x55fb3d98eab3 in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_dec_fuzzer.c:534:25
+    #12 0x55fb3d881500 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #13 0x55fb3d86c775 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #14 0x55fb3d87220f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #15 0x55fb3d89d4b2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #16 0x7f9f47950082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /src/ffmpeg/libavcodec/vp3dsp.c:412:24 in vp3_h_loop_filter_c
+Exiting

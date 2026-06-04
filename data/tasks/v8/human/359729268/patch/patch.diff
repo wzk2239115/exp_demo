@@ -1,0 +1,42 @@
+diff --git a/src/compiler/js-native-context-specialization.cc b/src/compiler/js-native-context-specialization.cc
+index 13d29c3a778..9fcb1d00756 100644
+--- a/src/compiler/js-native-context-specialization.cc
++++ b/src/compiler/js-native-context-specialization.cc
+@@ -2676,8 +2676,8 @@ Reduction JSNativeContextSpecialization::ReduceJSLoadPropertyWithEnumeratedKey(
+     }
+ 
+     // Ensure that {receiver} is a HeapObject.
+-    effect = graph()->NewNode(simplified()->CheckHeapObject(), receiver, effect,
+-                              control);
++    receiver = effect = graph()->NewNode(simplified()->CheckHeapObject(),
++                                         receiver, effect, control);
+     speculating_object_is_receiver = true;
+   }
+ 
+diff --git a/test/mjsunit/compiler/regress-359729268.js b/test/mjsunit/compiler/regress-359729268.js
+new file mode 100644
+index 00000000000..a216389f8bc
+--- /dev/null
++++ b/test/mjsunit/compiler/regress-359729268.js
+@@ -0,0 +1,21 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax --always-turbofan
++
++let nop = function () { };
++function func(args) {
++  var bar = 0;
++  for (var arg in args) {
++    try {
++      for (var i = 0; i < 2; i++) {
++        nop();
++        bar += i[arg];
++      }
++    } catch (e) { }
++  }
++}
++%PrepareFunctionForOptimization(func);
++%OptimizeFunctionOnNextCall(func);
++func({x: 20, y: 11});

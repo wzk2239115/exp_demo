@@ -1,0 +1,142 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+==================================================================
+BUG: KASAN: slab-use-after-free in __lock_acquire+0x4208/0x5de0 kernel/locking/lockdep.c:5004
+Read of size 8 at addr ffff888023e972f0 by task kworker/2:0/22
+
+CPU: 2 PID: 22 Comm: kworker/2:0 Not tainted 6.6.0-syzkaller-15156-g13d88ac54ddd #0
+Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.2-debian-1.16.2-1 04/01/2014
+Workqueue: events l2cap_chan_timeout
+Call Trace:
+ <TASK>
+ __dump_stack lib/dump_stack.c:88 [inline]
+ dump_stack_lvl+0xd9/0x1b0 lib/dump_stack.c:106
+ print_address_description mm/kasan/report.c:364 [inline]
+ print_report+0xc4/0x620 mm/kasan/report.c:475
+ kasan_report+0xda/0x110 mm/kasan/report.c:588
+ __lock_acquire+0x4208/0x5de0 kernel/locking/lockdep.c:5004
+ lock_acquire kernel/locking/lockdep.c:5753 [inline]
+ lock_acquire+0x1ae/0x510 kernel/locking/lockdep.c:5718
+ __raw_spin_lock include/linux/spinlock_api_smp.h:133 [inline]
+ _raw_spin_lock+0x2e/0x40 kernel/locking/spinlock.c:154
+ __mutex_lock_common kernel/locking/mutex.c:617 [inline]
+ __mutex_lock+0x4c3/0x1340 kernel/locking/mutex.c:747
+ l2cap_chan_timeout+0x68/0x2f0 net/bluetooth/l2cap_core.c:438
+ process_one_work+0x884/0x15c0 kernel/workqueue.c:2630
+ process_scheduled_works kernel/workqueue.c:2703 [inline]
+ worker_thread+0x8b9/0x1290 kernel/workqueue.c:2784
+ kthread+0x33c/0x440 kernel/kthread.c:388
+ ret_from_fork+0x45/0x80 arch/x86/kernel/process.c:147
+ ret_from_fork_asm+0x11/0x20 arch/x86/entry/entry_64.S:242
+ </TASK>
+
+Allocated by task 6728:
+ kasan_save_stack+0x33/0x50 mm/kasan/common.c:45
+ kasan_set_track+0x25/0x30 mm/kasan/common.c:52
+ ____kasan_kmalloc mm/kasan/common.c:374 [inline]
+ __kasan_kmalloc+0xa3/0xb0 mm/kasan/common.c:383
+ kmalloc include/linux/slab.h:600 [inline]
+ kzalloc include/linux/slab.h:721 [inline]
+ l2cap_conn_add.part.0+0x60/0xdf0 net/bluetooth/l2cap_core.c:7845
+ l2cap_conn_add include/net/bluetooth/hci_core.h:1545 [inline]
+ l2cap_chan_connect+0x15de/0x2170 net/bluetooth/l2cap_core.c:8053
+ l2cap_sock_connect+0x33f/0x720 net/bluetooth/l2cap_sock.c:256
+ __sys_connect_file+0x15b/0x1a0 net/socket.c:2050
+ __sys_connect+0x145/0x170 net/socket.c:2067
+ __do_sys_connect net/socket.c:2077 [inline]
+ __se_sys_connect net/socket.c:2074 [inline]
+ __x64_sys_connect+0x72/0xb0 net/socket.c:2074
+ do_syscall_x64 arch/x86/entry/common.c:51 [inline]
+ do_syscall_64+0x3f/0x110 arch/x86/entry/common.c:82
+ entry_SYSCALL_64_after_hwframe+0x63/0x6b
+
+Freed by task 5179:
+ kasan_save_stack+0x33/0x50 mm/kasan/common.c:45
+ kasan_set_track+0x25/0x30 mm/kasan/common.c:52
+ kasan_save_free_info+0x28/0x40 mm/kasan/generic.c:522
+ ____kasan_slab_free mm/kasan/common.c:236 [inline]
+ ____kasan_slab_free+0x138/0x190 mm/kasan/common.c:200
+ kasan_slab_free include/linux/kasan.h:164 [inline]
+ __cache_free mm/slab.c:3370 [inline]
+ __do_kmem_cache_free mm/slab.c:3557 [inline]
+ __kmem_cache_free+0xcc/0x3d0 mm/slab.c:3564
+ l2cap_conn_free net/bluetooth/l2cap_core.c:1949 [inline]
+ kref_put include/linux/kref.h:65 [inline]
+ l2cap_conn_put net/bluetooth/l2cap_core.c:1961 [inline]
+ l2cap_conn_del+0x592/0x740 net/bluetooth/l2cap_core.c:1941
+ l2cap_connect_cfm+0xa10/0xfb0 net/bluetooth/l2cap_core.c:8238
+ hci_connect_cfm include/net/bluetooth/hci_core.h:1959 [inline]
+ hci_conn_failed+0x1c3/0x370 net/bluetooth/hci_conn.c:1283
+ hci_abort_conn_sync+0x758/0xb50 net/bluetooth/hci_sync.c:5424
+ abort_conn_sync+0x187/0x390 net/bluetooth/hci_conn.c:2957
+ hci_cmd_sync_work+0x1a4/0x410 net/bluetooth/hci_sync.c:306
+ process_one_work+0x884/0x15c0 kernel/workqueue.c:2630
+ process_scheduled_works kernel/workqueue.c:2703 [inline]
+ worker_thread+0x8b9/0x1290 kernel/workqueue.c:2784
+ kthread+0x33c/0x440 kernel/kthread.c:388
+ ret_from_fork+0x45/0x80 arch/x86/kernel/process.c:147
+ ret_from_fork_asm+0x11/0x20 arch/x86/entry/entry_64.S:242
+
+The buggy address belongs to the object at ffff888023e97000
+ which belongs to the cache kmalloc-1k of size 1024
+The buggy address is located 752 bytes inside of
+ freed 1024-byte region [ffff888023e97000, ffff888023e97400)
+
+The buggy address belongs to the physical page:
+page:ffffea00008fa5c0 refcount:1 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x23e97
+flags: 0xfff00000000800(slab|node=0|zone=1|lastcpupid=0x7ff)
+page_type: 0x2()
+raw: 00fff00000000800 ffff888013040700 ffffea000081ddd0 ffffea000077cf50
+raw: 0000000000000000 ffff888023e97000 0000000100000002 0000000000000000
+page dumped because: kasan: bad access detected
+page_owner tracks the page as allocated
+page last allocated via order 0, migratetype Unmovable, gfp_mask 0x2420c0(__GFP_IO|__GFP_FS|__GFP_NOWARN|__GFP_COMP|__GFP_THISNODE), pid 4937, tgid 4937 (dhcpcd-run-hook), ts 25724113461, free_ts 25677144554
+ set_page_owner include/linux/page_owner.h:31 [inline]
+ post_alloc_hook+0x2cf/0x340 mm/page_alloc.c:1537
+ prep_new_page mm/page_alloc.c:1544 [inline]
+ get_page_from_freelist+0xa25/0x36c0 mm/page_alloc.c:3312
+ __alloc_pages+0x1d0/0x4a0 mm/page_alloc.c:4568
+ __alloc_pages_node include/linux/gfp.h:238 [inline]
+ kmem_getpages mm/slab.c:1356 [inline]
+ cache_grow_begin+0x99/0x3a0 mm/slab.c:2550
+ cache_alloc_refill+0x294/0x3a0 mm/slab.c:2923
+ ____cache_alloc mm/slab.c:2999 [inline]
+ ____cache_alloc mm/slab.c:2982 [inline]
+ __do_cache_alloc mm/slab.c:3182 [inline]
+ slab_alloc_node mm/slab.c:3230 [inline]
+ __kmem_cache_alloc_node+0x3ba/0x460 mm/slab.c:3521
+ __do_kmalloc_node mm/slab_common.c:1006 [inline]
+ __kmalloc+0x4f/0x100 mm/slab_common.c:1020
+ kmalloc include/linux/slab.h:604 [inline]
+ load_elf_phdrs+0x103/0x210 fs/binfmt_elf.c:526
+ load_elf_binary+0x1fe/0x4e30 fs/binfmt_elf.c:855
+ search_binary_handler fs/exec.c:1737 [inline]
+ exec_binprm fs/exec.c:1779 [inline]
+ bprm_execve fs/exec.c:1854 [inline]
+ bprm_execve+0x7f9/0x1a90 fs/exec.c:1810
+ do_execveat_common.isra.0+0x5d3/0x740 fs/exec.c:1962
+ do_execve fs/exec.c:2036 [inline]
+ __do_sys_execve fs/exec.c:2112 [inline]
+ __se_sys_execve fs/exec.c:2107 [inline]
+ __x64_sys_execve+0x8c/0xb0 fs/exec.c:2107
+ do_syscall_x64 arch/x86/entry/common.c:51 [inline]
+ do_syscall_64+0x3f/0x110 arch/x86/entry/common.c:82
+ entry_SYSCALL_64_after_hwframe+0x63/0x6b
+page last free stack trace:
+ reset_page_owner include/linux/page_owner.h:24 [inline]
+ free_pages_prepare mm/page_alloc.c:1137 [inline]
+ free_unref_page_prepare+0x4f8/0xa90 mm/page_alloc.c:2347
+ free_unref_page+0x33/0x3b0 mm/page_alloc.c:2487
+ rcu_do_batch kernel/rcu/tree.c:2153 [inline]
+ rcu_core+0x830/0x1c50 kernel/rcu/tree.c:2417
+ __do_softirq+0x21a/0x968 kernel/softirq.c:553
+
+Memory state around the buggy address:
+ ffff888023e97180: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+ ffff888023e97200: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+>ffff888023e97280: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+                                                             ^
+ ffff888023e97300: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+ ffff888023e97380: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+==================================================================

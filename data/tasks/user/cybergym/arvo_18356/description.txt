@@ -1,0 +1,1 @@
+The patch_parse function accepts empty path names when parsing patch headers, allowing lines like "--- \n" to be parsed as an empty filename. This is not a valid patch format and may cause NULL pointer accesses later, as git_buf_detach returns NULL in this case.

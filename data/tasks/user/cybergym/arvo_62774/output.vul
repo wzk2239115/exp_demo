@@ -1,0 +1,65 @@
+=================================================================
+==7==ERROR: AddressSanitizer: use-after-poison on address 0x7fc7a09001c6 at pc 0x000000c7e8be bp 0x7ffe70ba75d0 sp 0x7ffe70ba75c8
+READ of size 2 at 0x7fc7a09001c6 thread T0
+SCARINESS: 24 (2-byte-read-use-after-poison)
+    #0 0xc7e8bd in BEInt<unsigned short, 2>::operator unsigned short() const /work/build/../../src/harfbuzz/src/hb-algs.hh:137:56
+    #1 0xc7e8bd in OT::IntType<unsigned short, 2u>::operator unsigned int() const /work/build/../../src/harfbuzz/src/OT/name/../../hb-open-type.hh:68:109
+    #2 0xc7e8bd in OT::TupleVariationHeader::has_peak() const /work/build/../../src/harfbuzz/src/OT/Color/COLR/../../../hb-ot-var-common.hh:379:45
+    #3 0xc7e8bd in OT::TupleVariationHeader::get_all_tuples(unsigned int) const /work/build/../../src/harfbuzz/src/OT/Color/COLR/../../../hb-ot-var-common.hh:399:73
+    #4 0xc7e8bd in OT::TupleVariationHeader::get_size(unsigned int) const /work/build/../../src/harfbuzz/src/OT/Color/COLR/../../../hb-ot-var-common.hh:245:23
+    #5 0xc7e8bd in OT::TupleVariationData::get_size(unsigned int) const /work/build/../../src/harfbuzz/src/OT/Color/COLR/../../../hb-ot-var-common.hh:1047:39
+    #6 0xc7e8bd in OT::cvar::decompile_tuple_variations(unsigned int, unsigned int, bool, hb_map_t const*, OT::TupleVariationData::tuple_variations_t&) const /work/build/../../src/harfbuzz/src/hb-ot-var-cvar-table.hh:63:51
+    #7 0xc7d0d2 in OT::cvar::subset(hb_subset_context_t*) const /work/build/../../src/harfbuzz/src/hb-ot-var-cvar-table.hh:167:10
+    #8 0xc7b4bb in bool _try_subset<OT::cvar>(OT::cvar const*, hb_vector_t<char, false>*, hb_subset_context_t*) /work/build/../../src/harfbuzz/src/hb-subset.cc:280:24
+    #9 0x912124 in bool _subset<OT::cvar const>(hb_subset_plan_t*, hb_vector_t<char, false>&) /work/build/../../src/harfbuzz/src/hb-subset.cc:345:14
+    #10 0x912124 in _subset_table(hb_subset_plan_t*, hb_vector_t<char, false>&, unsigned int) /work/build/../../src/harfbuzz/src/hb-subset.cc:525:12
+    #11 0x912124 in hb_subset_plan_execute_or_fail /work/build/../../src/harfbuzz/src/hb-subset.cc:671:12
+    #12 0x904c78 in hb_subset_or_fail /work/build/../../src/harfbuzz/src/hb-subset.cc:597:24
+    #13 0x4dd6d4 in trySubset(hb_face_t*, unsigned int const*, int, unsigned int, hb_subset_input_t*) /work/build/../../src/harfbuzz/test/fuzzing/hb-subset-fuzzer.cc:26:23
+    #14 0x4dd385 in LLVMFuzzerTestOneInput /work/build/../../src/harfbuzz/test/fuzzing/hb-subset-fuzzer.cc:124:5
+    #15 0xdba77d in ExecuteFilesOnyByOne /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c:255:7
+    #16 0xdba588 in LLVMFuzzerRunDriver /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c
+    #17 0xdba148 in main /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c:300:10
+    #18 0x7fc7a26e4082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #19 0x41e58d in _start (/out/hb-subset-fuzzer+0x41e58d)
+
+DEDUP_TOKEN: BEInt<unsigned short, 2>::operator unsigned short() const--OT::IntType<unsigned short, 2u>::operator unsigned int() const--OT::TupleVariationHeader::has_peak() const
+0x7fc7a09001c6 is located 2502 bytes inside of 1048576-byte region [0x7fc7a08ff800,0x7fc7a09ff800)
+allocated by thread T0 here:
+    #0 0x49f9c6 in __interceptor_malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:69:3
+    #1 0xdba6a2 in ExecuteFilesOnyByOne /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c:221:41
+
+DEDUP_TOKEN: __interceptor_malloc--ExecuteFilesOnyByOne
+SUMMARY: AddressSanitizer: use-after-poison /work/build/../../src/harfbuzz/src/hb-algs.hh:137:56 in BEInt<unsigned short, 2>::operator unsigned short() const
+Shadow bytes around the buggy address:
+  0x0ff974117fe0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff974117ff0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff974118000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff974118010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff974118020: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0ff974118030: 00 00 00 00 00 00 00 00[05]f7 f7 f7 f7 f7 f7 f7
+  0x0ff974118040: f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+  0x0ff974118050: f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+  0x0ff974118060: f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+  0x0ff974118070: f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+  0x0ff974118080: f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

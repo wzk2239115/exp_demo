@@ -1,0 +1,33 @@
+
+
+#
+# Fatal error in ../../src/base/bit-field.h, line 56
+# Debug check failed: is_valid(value).
+#
+#
+#
+#FailureMessage Object: 0x7f34757f8790
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x5598b061ff33]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x5598b061f08d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x5598b0604de4]
+    out/debug/d8(+0x480b7e5) [0x5598b06047e5]
+    d8(v8::internal::maglev::MergePointInterpreterFrameState::MergeValue(v8::internal::maglev::MaglevGraphBuilder const*, v8::internal::interpreter::Register, v8::internal::maglev::KnownNodeAspects const&, v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::base::ThreadedListBase<v8::internal::maglev::MergePointInterpreterFrameState::Alternatives, v8::base::EmptyBase, v8::base::ThreadedListTraits<v8::internal::maglev::MergePointInterpreterFrameState::Alternatives>, false>*, bool) ./../../src/base/bit-field.h:0:5) [0x5598ae223d12]
+    d8(v8::internal::maglev::MergePointInterpreterFrameState::MergePhis(v8::internal::maglev::MaglevGraphBuilder*, v8::internal::maglev::MaglevCompilationUnit&, v8::internal::maglev::InterpreterFrameState&, v8::internal::maglev::BasicBlock*, bool)::$_0::operator()(v8::internal::maglev::ValueNode*&, v8::internal::interpreter::Register) const ./../../src/maglev/maglev-interpreter-frame-state.cc:597:17) [0x5598ae228c90]
+    d8(v8::internal::maglev::MergePointInterpreterFrameState::MergePhis(v8::internal::maglev::MaglevGraphBuilder*, v8::internal::maglev::MaglevCompilationUnit&, v8::internal::maglev::InterpreterFrameState&, v8::internal::maglev::BasicBlock*, bool) ./../../src/maglev/maglev-interpreter-frame-state.h:875:50) [0x5598ae21fda9]
+    d8(v8::internal::maglev::MergePointInterpreterFrameState::Merge(v8::internal::maglev::MaglevGraphBuilder*, v8::internal::maglev::MaglevCompilationUnit&, v8::internal::maglev::InterpreterFrameState&, v8::internal::maglev::BasicBlock*) ./../../src/maglev/maglev-interpreter-frame-state.cc:759:3) [0x5598ae21fb85]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitJump() ./../../src/maglev/maglev-reducer.h:281:46) [0x5598ae0a8e6c]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitSingleBytecode() ./../../src/maglev/maglev-graph-builder.cc:0:5) [0x5598ae067e84]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildBody() ./../../src/maglev/maglev-reducer.h:67:48) [0x5598ae07af2b]
+    d8(v8::internal::maglev::MaglevGraphBuilder::Build() ./../../src/maglev/maglev-graph-builder.cc:15445:1) [0x5598ae0b1ac6]
+    d8(v8::internal::maglev::MaglevCompiler::Compile(v8::internal::LocalIsolate*, v8::internal::maglev::MaglevCompilationInfo*) ./../../src/maglev/maglev-compiler.cc:0:21) [0x5598ade95a4f]
+    d8(v8::internal::maglev::MaglevCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./gen/third_party/libc++/src/include/__memory/unique_ptr.h:277:12) [0x5598ae0427ca]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:451:22) [0x5598ace5f592]
+    d8(v8::internal::maglev::MaglevConcurrentDispatcher::JobTask::Run(v8::JobDelegate*) ./../../src/maglev/maglev-concurrent-dispatcher.cc:288:20) [0x5598ae04490c]
+    d8(v8::platform::DefaultJobWorker::Run() ./../../src/libplatform/default-job.cc:19:46) [0x5598b0621b1f]
+    d8(v8::platform::DefaultWorkerThreadsTaskRunner::WorkerThread::Run() ./../../src/libplatform/default-worker-threads-task-runner.cc:96:9) [0x5598b06277fc]
+    d8(v8::base::ThreadEntry(void*) ./../../src/base/platform/platform-posix.cc:1274:3) [0x5598b061c67f]
+    /lib/x86_64-linux-gnu/libc.so.6(+0x9caa4) [0x7f34a7bd0aa4]
+    /lib/x86_64-linux-gnu/libc.so.6(__clone+0x44) [0x7f34a7c5da64]
+timeout: the monitored command dumped core

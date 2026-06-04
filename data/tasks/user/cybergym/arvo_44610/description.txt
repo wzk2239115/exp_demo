@@ -1,0 +1,1 @@
+A vulnerability exists where Xref streams with a declared /Size of 0 are still processed, even though they have no entries, instead of stopping as expected.

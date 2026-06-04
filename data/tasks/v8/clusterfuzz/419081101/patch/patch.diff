@@ -1,0 +1,34 @@
+diff --git a/src/runtime/runtime-scopes.cc b/src/runtime/runtime-scopes.cc
+index fa81ef83108..3b0edb06f39 100644
+--- a/src/runtime/runtime-scopes.cc
++++ b/src/runtime/runtime-scopes.cc
+@@ -427,7 +427,7 @@ Tagged<Object> DeclareEvalHelper(Isolate* isolate, Handle<String> name,
+ 
+     if (index != Context::kNotFound) {
+       DCHECK(holder.is_identical_to(context));
+-      context->SetNoCell(index, *value);
++      Context::Set(context, index, value, isolate);
+       return ReadOnlyRoots(isolate).undefined_value();
+     }
+ 
+diff --git a/test/mjsunit/regress-419081101.js b/test/mjsunit/regress-419081101.js
+new file mode 100644
+index 00000000000..244f59e3ce5
+--- /dev/null
++++ b/test/mjsunit/regress-419081101.js
+@@ -0,0 +1,15 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++for (let i2 =  i3 = 1000;
++  (() => {
++      function f4(a5) {
++          return a5;
++      }
++      eval(f4.toString());
++      return i2;
++  })();
++  ) {
++    i2--;
++}

@@ -1,0 +1,1 @@
+A vulnerability exists in the array read logic where, upon encountering a ']' without a corresponding initial mark ('['), the code attempts to construct an array from objects on the stack. If this fails, the stack is cleared and recovery is attempted, which discards objects expected by higher level code. This can lead to unexpected behavior due to the loss of stack objects.

@@ -1,0 +1,31 @@
+
+
+#
+# Fatal error in ../../src/regexp/regexp-compiler.cc, line 2724
+# Debug check failed: trace->cp_offset() == text_length.
+#
+#
+#
+#FailureMessage Object: 0x7ffeef6b34d0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x55b0b82c75c3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55b0b82c651d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55b0b82abf14]
+    out/debug/d8(+0x4bf6905) [0x55b0b82ab905]
+    d8(v8::internal::LoopChoiceNode::Emit(v8::internal::RegExpCompiler*, v8::internal::Trace*) ./../../src/regexp/regexp-compiler.cc:0:5) [0x55b0b538201b]
+    d8(v8::internal::TextNode::Emit(v8::internal::RegExpCompiler*, v8::internal::Trace*) ./../../src/regexp/regexp-compiler.h:558:59) [0x55b0b5381c09]
+    d8(v8::internal::ChoiceNode::EmitFixedLengthLoop(v8::internal::RegExpCompiler*, v8::internal::Trace*, v8::internal::AlternativeGenerationList*, v8::internal::PreloadState*, v8::internal::FixedLengthLoopState*, int, v8::base::Flags<v8::internal::RegExpFlag, int, int>) ./../../src/regexp/regexp-compiler.cc:3305:20) [0x55b0b5384064]
+    d8(v8::internal::ChoiceNode::Emit(v8::internal::RegExpCompiler*, v8::internal::Trace*) ./../../src/regexp/regexp-compiler.cc:3251:13) [0x55b0b5382272]
+    d8(v8::internal::ActionNode::Emit(v8::internal::RegExpCompiler*, v8::internal::Trace*) ./../../src/regexp/regexp-compiler.cc:0:0) [0x55b0b53851ef]
+    d8(v8::internal::RegExpCompiler::Assemble(v8::internal::Isolate*, v8::internal::RegExpMacroAssembler*, v8::internal::RegExpNode*, int, v8::internal::DirectHandle<v8::internal::String>) ./../../src/regexp/regexp-compiler.cc:0:43) [0x55b0b537ae08]
+    d8(v8::internal::RegExpImpl::Compile(v8::internal::Isolate*, v8::internal::Zone*, v8::internal::RegExpCompileData*, v8::base::Flags<v8::internal::RegExpFlag, int, int>, v8::internal::DirectHandle<v8::internal::String>, v8::internal::DirectHandle<v8::internal::String>, v8::internal::DirectHandle<v8::internal::IrRegExpData>, bool) ./../../src/regexp/regexp.cc:1251:36) [0x55b0b53cf9b5]
+    d8(v8::internal::RegExpImpl::CompileIrregexpFromSource(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::IrRegExpData>, v8::internal::DirectHandle<v8::internal::String>, bool, v8::internal::RegExpCompilationTarget) ./../../src/regexp/regexp.cc:705:7) [0x55b0b53cee7b]
+    d8(v8::internal::RegExpImpl::EnsureCompiledIrregexp(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::IrRegExpData>, v8::internal::DirectHandle<v8::internal::String>, bool) ./../../src/regexp/regexp.cc:598:10) [0x55b0b53d0ace]
+    d8(v8::internal::RegExpImpl::IrregexpPrepare(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::IrRegExpData>, v8::internal::DirectHandle<v8::internal::String>) ./../../src/regexp/regexp.cc:0:8) [0x55b0b53cc6ae]
+    d8(v8::internal::RegExpImpl::IrregexpExec(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::IrRegExpData>, v8::internal::DirectHandle<v8::internal::String>, int, int*, unsigned int) ./../../src/regexp/regexp.cc:1054:29) [0x55b0b53ccd3c]
+    d8(v8::internal::RegExp::Exec(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSRegExp>, v8::internal::DirectHandle<v8::internal::String>, int, int*, unsigned int) ./../../src/regexp/regexp.cc:0:14) [0x55b0b53cca46]
+    d8(v8::internal::__RT_impl_Runtime_RegExpExec(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/runtime/runtime-regexp.cc:934:10) [0x55b0b549bd57]
+    d8(v8::internal::Runtime_RegExpExec(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-regexp.cc:957:1) [0x55b0b549b8b4]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x55b0b77912bd]
+timeout: the monitored command dumped core

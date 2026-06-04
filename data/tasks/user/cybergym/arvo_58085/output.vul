@@ -1,0 +1,91 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3683520522
+INFO: Loaded 1 modules   (18973 inline 8-bit counters): 18973 [0x7c7710, 0x7cc12d), 
+INFO: Loaded 1 PC tables (18973 PCs): 18973 [0x7cc130,0x816300), 
+/out/secilc-fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x603000005468 at pc 0x000000643c7d bp 0x7fffa44d9af0 sp 0x7fffa44d9ae8
+READ of size 8 at 0x603000005468 thread T0
+SCARINESS: 23 (8-byte-read-heap-buffer-overflow)
+    #0 0x643c7c in __cil_verify_classperms /src/selinux/libsepol/src/../cil/src/cil_verify.c:1746:41
+    #1 0x6416d3 in __cil_verify_classpermission /src/selinux/libsepol/src/../cil/src/cil_verify.c:1792:9
+    #2 0x6416d3 in __cil_pre_verify_helper /src/selinux/libsepol/src/../cil/src/cil_verify.c:1856:8
+    #3 0x63c65f in cil_tree_walk_core /src/selinux/libsepol/src/../cil/src/cil_tree.c:279:9
+    #4 0x63c65f in cil_tree_walk /src/selinux/libsepol/src/../cil/src/cil_tree.c:323:7
+    #5 0x63c729 in cil_tree_walk_core /src/selinux/libsepol/src/../cil/src/cil_tree.c:291:9
+    #6 0x63c729 in cil_tree_walk /src/selinux/libsepol/src/../cil/src/cil_tree.c:323:7
+    #7 0x60812e in cil_pre_verify /src/selinux/libsepol/src/../cil/src/cil_post.c:2528:7
+    #8 0x60812e in cil_post_process /src/selinux/libsepol/src/../cil/src/cil_post.c:2542:7
+    #9 0x589747 in cil_compile /src/selinux/libsepol/src/../cil/src/cil.c:574:7
+    #10 0x56c65c in LLVMFuzzerTestOneInput /src/selinux/libsepol/fuzz/secilc-fuzzer.c:46:6
+    #11 0x43de13 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #12 0x429572 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #13 0x42ee1c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #14 0x458352 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #15 0x7f0c87125082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #16 0x41f73d in _start (/out/secilc-fuzzer+0x41f73d)
+
+DEDUP_TOKEN: __cil_verify_classperms--__cil_verify_classpermission--__cil_pre_verify_helper
+0x603000005468 is located 8 bytes to the left of 24-byte region [0x603000005470,0x603000005488)
+allocated by thread T0 here:
+    #0 0x52efa6 in __interceptor_malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:69:3
+    #1 0x5f5d57 in cil_malloc /src/selinux/libsepol/src/../cil/src/cil_mem.c:40:14
+    #2 0x5f485d in cil_list_item_init /src/selinux/libsepol/src/../cil/src/cil_list.c:82:35
+    #3 0x5f485d in cil_list_append /src/selinux/libsepol/src/../cil/src/cil_list.c:107:2
+    #4 0x6166e3 in __cil_resolve_perms /src/selinux/libsepol/src/../cil/src/cil_resolve_ast.c:146:4
+    #5 0x61649b in __cil_resolve_perms /src/selinux/libsepol/src/../cil/src/cil_resolve_ast.c:124:9
+    #6 0x615fe3 in cil_resolve_classperms /src/selinux/libsepol/src/../cil/src/cil_resolve_ast.c:183:7
+    #7 0x6169f7 in cil_resolve_classperms_list /src/selinux/libsepol/src/../cil/src/cil_resolve_ast.c:226:9
+    #8 0x6170a2 in cil_resolve_classpermissionset /src/selinux/libsepol/src/../cil/src/cil_resolve_ast.c:257:7
+    #9 0x62d8c4 in __cil_resolve_ast_node /src/selinux/libsepol/src/../cil/src/cil_resolve_ast.c:3770:9
+    #10 0x62d8c4 in __cil_resolve_ast_node_helper /src/selinux/libsepol/src/../cil/src/cil_resolve_ast.c:3991:7
+    #11 0x63c65f in cil_tree_walk_core /src/selinux/libsepol/src/../cil/src/cil_tree.c:279:9
+    #12 0x63c65f in cil_tree_walk /src/selinux/libsepol/src/../cil/src/cil_tree.c:323:7
+    #13 0x63c729 in cil_tree_walk_core /src/selinux/libsepol/src/../cil/src/cil_tree.c:291:9
+    #14 0x63c729 in cil_tree_walk /src/selinux/libsepol/src/../cil/src/cil_tree.c:323:7
+    #15 0x63c729 in cil_tree_walk_core /src/selinux/libsepol/src/../cil/src/cil_tree.c:291:9
+    #16 0x63c729 in cil_tree_walk /src/selinux/libsepol/src/../cil/src/cil_tree.c:323:7
+    #17 0x62b05d in cil_resolve_ast /src/selinux/libsepol/src/../cil/src/cil_resolve_ast.c:4130:8
+    #18 0x5896aa in cil_compile /src/selinux/libsepol/src/../cil/src/cil.c:560:7
+    #19 0x56c65c in LLVMFuzzerTestOneInput /src/selinux/libsepol/fuzz/secilc-fuzzer.c:46:6
+    #20 0x43de13 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #21 0x429572 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #22 0x42ee1c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #23 0x458352 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #24 0x7f0c87125082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+
+DEDUP_TOKEN: __interceptor_malloc--cil_malloc--cil_list_item_init
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/selinux/libsepol/src/../cil/src/cil_verify.c:1746:41 in __cil_verify_classperms
+Shadow bytes around the buggy address:
+  0x0c067fff8a30: 00 fa fa fa 00 00 00 fa fa fa 00 00 00 fa fa fa
+  0x0c067fff8a40: 00 00 00 fa fa fa 00 00 00 fa fa fa fd fd fd fa
+  0x0c067fff8a50: fa fa fd fd fd fa fa fa fd fd fd fa fa fa fd fd
+  0x0c067fff8a60: fd fa fa fa 00 00 00 fa fa fa 00 00 00 fa fa fa
+  0x0c067fff8a70: 00 00 00 fa fa fa 00 00 00 fa fa fa 00 00 00 fa
+=>0x0c067fff8a80: fa fa 00 00 00 fa fa fa 00 00 00 fa fa[fa]00 00
+  0x0c067fff8a90: 00 fa fa fa 00 00 00 fa fa fa 00 00 00 fa fa fa
+  0x0c067fff8aa0: 00 00 00 fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c067fff8ab0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c067fff8ac0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c067fff8ad0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

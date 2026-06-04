@@ -1,0 +1,122 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3446460644
+INFO: Loaded 1 modules   (150792 inline 8-bit counters): 150792 [0x404ab2d, 0x406f835), 
+INFO: Loaded 1 PC tables (150792 PCs): 150792 [0x1d52320,0x1f9f3a0), 
+/out/pdf_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+error: cannot recognize xref format
+warning: trying to repair broken xref
+warning: repairing PDF document
+error: object is not a stream
+warning: ignored error when loading embedded font; attempting to load system font
+error: unknown keyword: '-3.623urg'
+error: unknown keyword: 'T'
+error: unknown keyword: '.q'
+error: unknown keyword: '18ne5'
+warning: lineto with no current point
+warning: ... repeated 2 times...
+error: unknown keyword: '85MC'
+error: unknown keyword: '62fj89.342'
+warning: lineto with no current point
+warning: ... repeated 2 times...
+warning: closepath with no current point
+error: unknown keyword: '1_i591.4444.581'
+warning: lineto with no current point
+warning: ... repeated 4 times...
+warning: closepath with no current point
+error: unknown keyword: '-e581'
+error: unknown keyword: '-e58'
+error: unknown keyword: '-e58'
+error: unknown keyword: '-e58'
+error: unknown keyword: '0io.5'
+error: unknown keyword: '-e58'
+error: unknown keyword: '-e58'
+error: unknown keyword: 'cte3q'
+error: unknown keyword: '-e581'
+error: unknown keyword: '-e58'
+error: unknown keyword: '-e58'
+error: unknown keyword: '0Tv0'
+error: unknown keyword: '14f1'
+error: unknown keyword: '78A1i60.5'
+error: unknown keyword: '-e58'
+error: unknown keyword: 'cte3q'
+error: unknown keyword: '0r.iia3.iiia3.iiia3.iiia3.2f'
+error: unknown keyword: '1_i591.444l'
+error: unknown keyword: '6l'
+error: unknown keyword: '0.rtil3_n6l'
+warning: closepath with no current point
+error: unknown keyword: '444e15'
+error: unknown keyword: '7Q'
+error: unknown keyword: '0.6n4.eu415'
+error: unknown keyword: 'l93i6'
+error: unknown keyword: '1.ge'
+error: unknown keyword: 'cte3g8'
+error: unknown keyword: 'io..502'
+error: unknown keyword: 'te344.581'
+error: zlib error: invalid stored block lengths
+warning: read error; treating as end of file
+warning: ignoring zlib error: incorrect data check
+warning: ... repeated 2 times...
+error: FT_New_Memory_Face(MyriadPro-Regular): invalid argument
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x8aaf0f in fz_drop_imp /src/mupdf/include/mupdf/fitz/context.h:753:7
+    #1 0x8aaf0f in fz_drop_buffer /src/mupdf/source/fitz/buffer.c:141:6
+    #2 0xb238b5 in pdf_load_embedded_font /src/mupdf/source/pdf/pdf-font.c:577:3
+    #3 0xb211c9 in pdf_load_font_descriptor /src/mupdf/source/pdf/pdf-font.c:1410:4
+    #4 0xb16919 in pdf_load_simple_font /src/mupdf/source/pdf/pdf-font.c:772:4
+    #5 0xb1dac5 in pdf_load_font /src/mupdf/source/pdf/pdf-font.c
+    #6 0xb88a41 in pdf_try_load_font /src/mupdf/source/pdf/pdf-interpret.c:100:10
+    #7 0xb7e15b in pdf_process_keyword /src/mupdf/source/pdf/pdf-interpret.c:701:12
+    #8 0xb78c8a in pdf_process_stream /src/mupdf/source/pdf/pdf-interpret.c:978:6
+    #9 0xb778cf in pdf_process_contents /src/mupdf/source/pdf/pdf-interpret.c:1072:3
+    #10 0xd1fd78 in pdf_run_xobject /src/mupdf/source/pdf/pdf-op-run.c:1292:3
+    #11 0xd1697a in pdf_run_Do_form /src/mupdf/source/pdf/pdf-op-run.c:1955:2
+    #12 0xb7b189 in pdf_process_annot /src/mupdf/source/pdf/pdf-interpret.c:1148:3
+    #13 0xc6ae90 in pdf_run_annot_with_usage /src/mupdf/source/pdf/pdf-run.c:79:3
+    #14 0xc6c5fd in pdf_run_page_widgets_with_usage_imp /src/mupdf/source/pdf/pdf-run.c:250:3
+    #15 0xc6c5fd in pdf_run_page_widgets_with_usage /src/mupdf/source/pdf/pdf-run.c:321:3
+    #16 0xc6c896 in pdf_run_page_widgets /src/mupdf/source/pdf/pdf-run.c:336:2
+    #17 0x54d6fd in fz_run_page_widgets /src/mupdf/source/fitz/document.c:676:4
+    #18 0x54dadc in fz_run_page /src/mupdf/source/fitz/document.c:692:2
+    #19 0x776bec in fz_new_pixmap_from_page_with_separations /src/mupdf/source/fitz/util.c:219:3
+    #20 0x7772ef in fz_new_pixmap_from_page_number_with_separations /src/mupdf/source/fitz/util.c:249:9
+    #21 0x776f7b in fz_new_pixmap_from_page_number /src/mupdf/source/fitz/util.c:238:9
+    #22 0x528502 in LLVMFuzzerTestOneInput /src/pdf_fuzzer.cc:146:13
+    #23 0x4563c2 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #24 0x441ff2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #25 0x44784c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #26 0x470122 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #27 0x7f758a5c5082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)
+    #28 0x42074d in _start (/out/pdf_fuzzer+0x42074d)
+
+DEDUP_TOKEN: fz_drop_imp--fz_drop_buffer--pdf_load_embedded_font
+  Uninitialized value was created by a heap deallocation
+    #0 0x4cfbd9 in free /src/llvm-project/compiler-rt/lib/msan/msan_interceptors.cpp:223:3
+    #1 0x529879 in fz_free_ossfuzz(void*, void*) /src/pdf_fuzzer.cc:78:3
+    #2 0x6c579c in fz_free /src/mupdf/source/fitz/memory.c:163:3
+    #3 0x8aaedc in fz_drop_buffer /src/mupdf/source/fitz/buffer.c:145:3
+    #4 0xb2400b in pdf_load_embedded_font /src/mupdf/source/pdf/pdf-font.c:568:6
+    #5 0xb211c9 in pdf_load_font_descriptor /src/mupdf/source/pdf/pdf-font.c:1410:4
+    #6 0xb16919 in pdf_load_simple_font /src/mupdf/source/pdf/pdf-font.c:772:4
+    #7 0xb1dac5 in pdf_load_font /src/mupdf/source/pdf/pdf-font.c
+    #8 0xb88a41 in pdf_try_load_font /src/mupdf/source/pdf/pdf-interpret.c:100:10
+    #9 0xb7e15b in pdf_process_keyword /src/mupdf/source/pdf/pdf-interpret.c:701:12
+    #10 0xb78c8a in pdf_process_stream /src/mupdf/source/pdf/pdf-interpret.c:978:6
+    #11 0xb778cf in pdf_process_contents /src/mupdf/source/pdf/pdf-interpret.c:1072:3
+    #12 0xd1fd78 in pdf_run_xobject /src/mupdf/source/pdf/pdf-op-run.c:1292:3
+    #13 0xd1697a in pdf_run_Do_form /src/mupdf/source/pdf/pdf-op-run.c:1955:2
+    #14 0xb7b189 in pdf_process_annot /src/mupdf/source/pdf/pdf-interpret.c:1148:3
+    #15 0xc6ae90 in pdf_run_annot_with_usage /src/mupdf/source/pdf/pdf-run.c:79:3
+    #16 0xc6c5fd in pdf_run_page_widgets_with_usage_imp /src/mupdf/source/pdf/pdf-run.c:250:3
+    #17 0xc6c5fd in pdf_run_page_widgets_with_usage /src/mupdf/source/pdf/pdf-run.c:321:3
+    #18 0xc6c896 in pdf_run_page_widgets /src/mupdf/source/pdf/pdf-run.c:336:2
+    #19 0x54d6fd in fz_run_page_widgets /src/mupdf/source/fitz/document.c:676:4
+    #20 0x54dadc in fz_run_page /src/mupdf/source/fitz/document.c:692:2
+
+DEDUP_TOKEN: free--fz_free_ossfuzz(void*, void*)--fz_free
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /src/mupdf/include/mupdf/fitz/context.h:753:7 in fz_drop_imp
+Unique heap origins: 895
+Stack depot allocated bytes: 1769472
+Unique origin histories: 260
+History depot allocated bytes: 196608
+Exiting

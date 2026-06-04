@@ -1,0 +1,18 @@
+
+
+#
+# Fatal error in ../../src/wasm/wasm-js.cc, line 1265
+# Debug check failed: Holder<To> v8::internal::TrustedCast(Holder<From>, SourceLocation) [To = v8::internal::WasmModuleObject, From = v8::internal::Object, Holder = v8::internal::DirectHandle].
+#
+#
+#
+#FailureMessage Object: 0x7fff73af5120
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x55e729c3d323]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55e729c3c28d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:231:10) [0x55e729c22044]
+    out/debug/d8(+0x4df1935) [0x55e729c21935]
+    d8(v8::(anonymous namespace)::WebAssemblyInstantiateImpl(v8::FunctionCallbackInfo<v8::Value> const&)::$_0::__invoke(v8::FunctionCallbackInfo<v8::Value> const&) ./../../src/wasm/wasm-js.cc:1267:9) [0x55e727850ed9]
+    d8(Builtins_CallApiCallbackGeneric setup-isolate-deserialize.cc:0:0) [0x55e728b9eed0]
+timeout: the monitored command dumped core

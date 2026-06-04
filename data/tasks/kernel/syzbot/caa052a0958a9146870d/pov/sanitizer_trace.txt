@@ -1,0 +1,194 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+==================================================================
+BUG: KASAN: slab-use-after-free in ax25_find_cb+0x3e3/0x410 net/ax25/af_ax25.c:236
+Read of size 8 at addr ffff88803de18810 by task syz.2.275/6689
+
+CPU: 3 UID: 0 PID: 6689 Comm: syz.2.275 Not tainted syzkaller #0 PREEMPT(full) 
+Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
+Call Trace:
+ <TASK>
+ __dump_stack lib/dump_stack.c:94 [inline]
+ dump_stack_lvl+0x100/0x190 lib/dump_stack.c:120
+ print_address_description mm/kasan/report.c:378 [inline]
+ print_report+0x156/0x4c9 mm/kasan/report.c:482
+ kasan_report+0xdf/0x1a0 mm/kasan/report.c:595
+ ax25_find_cb+0x3e3/0x410 net/ax25/af_ax25.c:236
+ rose_link_up net/rose/rose_link.c:129 [inline]
+ rose_transmit_link+0x11a/0x5d0 net/rose/rose_link.c:271
+ rose_write_internal+0x3ee/0x1700 net/rose/rose_subr.c:198
+ rose_release+0x1f1/0x740 net/rose/af_rose.c:671
+ __sock_release+0xb3/0x260 net/socket.c:662
+ sock_close+0x1c/0x30 net/socket.c:1455
+ __fput+0x3ff/0xb40 fs/file_table.c:468
+ task_work_run+0x150/0x240 kernel/task_work.c:233
+ get_signal+0x1bd/0x21e0 kernel/signal.c:2807
+ arch_do_signal_or_restart+0x91/0x7a0 arch/x86/kernel/signal.c:337
+ __exit_to_user_mode_loop kernel/entry/common.c:41 [inline]
+ exit_to_user_mode_loop+0x86/0x4b0 kernel/entry/common.c:75
+ __exit_to_user_mode_prepare include/linux/irq-entry-common.h:226 [inline]
+ syscall_exit_to_user_mode_prepare include/linux/irq-entry-common.h:256 [inline]
+ syscall_exit_to_user_mode_work include/linux/entry-common.h:159 [inline]
+ syscall_exit_to_user_mode include/linux/entry-common.h:194 [inline]
+ do_syscall_64+0x4fe/0xf80 arch/x86/entry/syscall_64.c:100
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7f06c9f9aeb9
+Code: ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 e8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007f06caf44028 EFLAGS: 00000246 ORIG_RAX: 000000000000002a
+RAX: fffffffffffffe00 RBX: 00007f06ca215fa0 RCX: 00007f06c9f9aeb9
+RDX: 0000000000000040 RSI: 0000200000000100 RDI: 0000000000000009
+RBP: 00007f06ca008c1f R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000246 R12: 0000000000000000
+R13: 00007f06ca216038 R14: 00007f06ca215fa0 R15: 00007ffc1d9a5208
+ </TASK>
+
+Allocated by task 6615:
+ kasan_save_stack+0x30/0x50 mm/kasan/common.c:57
+ kasan_save_track+0x14/0x30 mm/kasan/common.c:78
+ poison_kmalloc_redzone mm/kasan/common.c:398 [inline]
+ __kasan_kmalloc+0xaa/0xb0 mm/kasan/common.c:415
+ kmalloc_noprof include/linux/slab.h:957 [inline]
+ kzalloc_noprof include/linux/slab.h:1094 [inline]
+ ax25_dev_device_up+0x47/0x680 net/ax25/ax25_dev.c:57
+ ax25_device_event+0x49b/0x6e0 net/ax25/af_ax25.c:143
+ notifier_call_chain+0x99/0x3b0 kernel/notifier.c:85
+ call_netdevice_notifiers_info+0xbe/0x110 net/core/dev.c:2243
+ call_netdevice_notifiers_extack net/core/dev.c:2281 [inline]
+ call_netdevice_notifiers net/core/dev.c:2295 [inline]
+ __dev_notify_flags+0x12c/0x2e0 net/core/dev.c:9788
+ netif_change_flags+0x108/0x160 net/core/dev.c:9817
+ dev_change_flags+0xba/0x250 net/core/dev_api.c:68
+ dev_ifsioc+0x164d/0x1f50 net/core/dev_ioctl.c:583
+ dev_ioctl+0x342/0x10e0 net/core/dev_ioctl.c:842
+ sock_do_ioctl+0x1a0/0x280 net/socket.c:1268
+ sock_ioctl+0x599/0x6b0 net/socket.c:1375
+ vfs_ioctl fs/ioctl.c:51 [inline]
+ __do_sys_ioctl fs/ioctl.c:597 [inline]
+ __se_sys_ioctl fs/ioctl.c:583 [inline]
+ __x64_sys_ioctl+0x18e/0x210 fs/ioctl.c:583
+ do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
+ do_syscall_64+0xc9/0xf80 arch/x86/entry/syscall_64.c:94
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+Freed by task 1153:
+ kasan_save_stack+0x30/0x50 mm/kasan/common.c:57
+ kasan_save_track+0x14/0x30 mm/kasan/common.c:78
+ kasan_save_free_info+0x3b/0x70 mm/kasan/generic.c:584
+ poison_slab_object mm/kasan/common.c:253 [inline]
+ __kasan_slab_free+0x5f/0x80 mm/kasan/common.c:285
+ kasan_slab_free include/linux/kasan.h:235 [inline]
+ slab_free_hook mm/slub.c:2540 [inline]
+ slab_free_freelist_hook mm/slub.c:2569 [inline]
+ slab_free_bulk mm/slub.c:6711 [inline]
+ kmem_cache_free_bulk mm/slub.c:7398 [inline]
+ kmem_cache_free_bulk+0x167/0x650 mm/slub.c:7377
+ kfree_bulk include/linux/slab.h:830 [inline]
+ kvfree_rcu_bulk+0x1a2/0x1d0 mm/slab_common.c:1523
+ kfree_rcu_work+0x122/0x1a0 mm/slab_common.c:1601
+ process_one_work+0x9c2/0x1840 kernel/workqueue.c:3257
+ process_scheduled_works kernel/workqueue.c:3340 [inline]
+ worker_thread+0x5da/0xe40 kernel/workqueue.c:3421
+ kthread+0x3b3/0x730 kernel/kthread.c:463
+ ret_from_fork+0x754/0xaf0 arch/x86/kernel/process.c:158
+ ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:246
+
+Last potentially related work creation:
+ kasan_save_stack+0x30/0x50 mm/kasan/common.c:57
+ kasan_record_aux_stack+0xa7/0xc0 mm/kasan/generic.c:556
+ kvfree_call_rcu+0x6a/0x4f0 mm/slab_common.c:1994
+ ax25_dev_put include/net/ax25.h:295 [inline]
+ ax25_dev_put include/net/ax25.h:292 [inline]
+ ax25_dev_device_down+0x400/0x4c0 net/ax25/ax25_dev.c:131
+ ax25_device_event+0x4c6/0x6e0 net/ax25/af_ax25.c:148
+ notifier_call_chain+0x99/0x3b0 kernel/notifier.c:85
+ call_netdevice_notifiers_info+0xbe/0x110 net/core/dev.c:2243
+ call_netdevice_notifiers_extack net/core/dev.c:2281 [inline]
+ call_netdevice_notifiers net/core/dev.c:2295 [inline]
+ __dev_notify_flags+0x1f7/0x2e0 net/core/dev.c:9790
+ netif_change_flags+0x108/0x160 net/core/dev.c:9817
+ dev_change_flags+0xba/0x250 net/core/dev_api.c:68
+ dev_ifsioc+0x164d/0x1f50 net/core/dev_ioctl.c:583
+ dev_ioctl+0x342/0x10e0 net/core/dev_ioctl.c:842
+ sock_do_ioctl+0x1a0/0x280 net/socket.c:1268
+ sock_ioctl+0x599/0x6b0 net/socket.c:1375
+ vfs_ioctl fs/ioctl.c:51 [inline]
+ __do_sys_ioctl fs/ioctl.c:597 [inline]
+ __se_sys_ioctl fs/ioctl.c:583 [inline]
+ __x64_sys_ioctl+0x18e/0x210 fs/ioctl.c:583
+ do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
+ do_syscall_64+0xc9/0xf80 arch/x86/entry/syscall_64.c:94
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+The buggy address belongs to the object at ffff88803de18800
+ which belongs to the cache kmalloc-256 of size 256
+The buggy address is located 16 bytes inside of
+ freed 256-byte region [ffff88803de18800, ffff88803de18900)
+
+The buggy address belongs to the physical page:
+page: refcount:0 mapcount:0 mapping:0000000000000000 index:0xffff88803de19a00 pfn:0x3de18
+head: order:1 mapcount:0 entire_mapcount:0 nr_pages_mapped:0 pincount:0
+ksm flags: 0xfff00000000040(head|node=0|zone=1|lastcpupid=0x7ff)
+page_type: f5(slab)
+raw: 00fff00000000040 ffff88801b842b40 ffffea0000a08700 dead000000000003
+raw: ffff88803de19a00 000000000010000e 00000000f5000000 0000000000000000
+head: 00fff00000000040 ffff88801b842b40 ffffea0000a08700 dead000000000003
+head: ffff88803de19a00 000000000010000e 00000000f5000000 0000000000000000
+head: 00fff00000000001 ffffea0000f78601 00000000ffffffff 00000000ffffffff
+head: ffffffffffffffff 0000000000000000 00000000ffffffff 0000000000000002
+page dumped because: kasan: bad access detected
+page_owner tracks the page as allocated
+page last allocated via order 1, migratetype Unmovable, gfp_mask 0x252800(GFP_NOWAIT|__GFP_NORETRY|__GFP_COMP|__GFP_THISNODE), pid 6026, tgid 6026 (syz-executor), ts 127608322891, free_ts 127551925749
+ set_page_owner include/linux/page_owner.h:32 [inline]
+ post_alloc_hook+0x1e1/0x250 mm/page_alloc.c:1884
+ prep_new_page mm/page_alloc.c:1892 [inline]
+ get_page_from_freelist+0xe3d/0x2e10 mm/page_alloc.c:3945
+ __alloc_frozen_pages_noprof+0x26c/0x2410 mm/page_alloc.c:5240
+ alloc_slab_page mm/slub.c:3077 [inline]
+ allocate_slab mm/slub.c:3248 [inline]
+ new_slab+0xaf/0x440 mm/slub.c:3302
+ ___slab_alloc+0xda3/0x1ca0 mm/slub.c:4656
+ __slab_alloc.isra.0+0x63/0x110 mm/slub.c:4779
+ __slab_alloc_node mm/slub.c:4855 [inline]
+ slab_alloc_node mm/slub.c:5251 [inline]
+ __do_kmalloc_node mm/slub.c:5656 [inline]
+ __kmalloc_node_noprof+0x62b/0x9e0 mm/slub.c:5663
+ kmalloc_array_node_noprof include/linux/slab.h:1075 [inline]
+ alloc_slab_obj_exts+0x46/0x110 mm/slub.c:2123
+ account_slab mm/slub.c:3202 [inline]
+ allocate_slab mm/slub.c:3267 [inline]
+ new_slab+0x354/0x440 mm/slub.c:3302
+ ___slab_alloc+0xda3/0x1ca0 mm/slub.c:4656
+ __slab_alloc.isra.0+0x63/0x110 mm/slub.c:4779
+ __slab_alloc_node mm/slub.c:4855 [inline]
+ slab_alloc_node mm/slub.c:5251 [inline]
+ __do_kmalloc_node mm/slub.c:5656 [inline]
+ __kvmalloc_node_noprof+0x749/0xac0 mm/slub.c:7144
+ allocate_hook_entries_size net/netfilter/core.c:58 [inline]
+ nf_hook_entries_grow+0x255/0x870 net/netfilter/core.c:137
+ __nf_register_net_hook+0x112/0x780 net/netfilter/core.c:432
+ nf_register_net_hook+0xdb/0x170 net/netfilter/core.c:575
+ nf_register_net_hooks+0x5d/0xd0 net/netfilter/core.c:591
+page last free pid 3 tgid 3 stack trace:
+ reset_page_owner include/linux/page_owner.h:25 [inline]
+ free_pages_prepare mm/page_alloc.c:1433 [inline]
+ __free_frozen_pages+0x822/0x1130 mm/page_alloc.c:2973
+ rcu_do_batch kernel/rcu/tree.c:2605 [inline]
+ rcu_core+0x7c0/0x15c0 kernel/rcu/tree.c:2857
+ handle_softirqs+0x1ea/0x910 kernel/softirq.c:622
+ __do_softirq kernel/softirq.c:656 [inline]
+ invoke_softirq kernel/softirq.c:496 [inline]
+ __irq_exit_rcu+0xef/0x150 kernel/softirq.c:723
+ irq_exit_rcu+0x9/0x30 kernel/softirq.c:739
+ instr_sysvec_apic_timer_interrupt arch/x86/kernel/apic/apic.c:1056 [inline]
+ sysvec_apic_timer_interrupt+0xa3/0xc0 arch/x86/kernel/apic/apic.c:1056
+ asm_sysvec_apic_timer_interrupt+0x1a/0x20 arch/x86/include/asm/idtentry.h:697
+
+Memory state around the buggy address:
+ ffff88803de18700: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+ ffff88803de18780: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+>ffff88803de18800: fa fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+                         ^
+ ffff88803de18880: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+ ffff88803de18900: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+==================================================================

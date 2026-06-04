@@ -1,0 +1,27 @@
+Received signal 11 SEGV_ACCERR 103ebeadbef6
+
+==== C stack trace ===============================
+
+d8(v8::base::debug::(anonymous namespace)::StackDumpSignalHandler(int, siginfo_t*, void*) ./../../src/base/debug/stack_trace_posix.cc:395:32)[0x55590ce412c4]
+/lib/x86_64-linux-gnu/libc.so.6(+0x45330)[0x7f123498d330]
+d8(v8::internal::IsJSObject(v8::internal::Tagged<v8::internal::HeapObject>, v8::internal::PtrComprCageBase) ./gen/third_party/libc++/src/include/__atomic/support/c11.h:75:10)[0x5559091cb8fc]
+d8(v8::internal::compiler::NodeProperties::InferMapsUnsafe(v8::internal::compiler::JSHeapBroker*, v8::internal::compiler::Node*, v8::internal::compiler::Effect, v8::internal::ZoneCompactSet<v8::internal::compiler::MapRef>*) ./../../src/compiler/node-properties.cc:419:27)[0x55590b0d0e54]
+d8(v8::internal::compiler::MapInference::MapInference(v8::internal::compiler::JSHeapBroker*, v8::internal::compiler::Node*, v8::internal::compiler::Effect) ./../../src/compiler/map-inference.cc:21:25)[0x55590b0c1f2d]
+d8(v8::internal::compiler::JSNativeContextSpecialization::ReduceJSToObject(v8::internal::compiler::Node*) ./../../src/compiler/js-native-context-specialization.cc:3329:18)[0x55590b03c779]
+d8(v8::internal::compiler::GraphReducer::Reduce(v8::internal::compiler::Node*) ./../../src/compiler/graph-reducer.cc:34:25)[0x55590af7d96a]
+d8(v8::internal::compiler::GraphReducer::ReduceTop() ./../../src/compiler/graph-reducer.h:39:47)[0x55590af7d586]
+d8(v8::internal::compiler::GraphReducer::ReduceNode(v8::internal::compiler::Node*) ./gen/third_party/libc++/src/include/deque:769:88)[0x55590af7cfe8]
+d8(v8::internal::compiler::InliningPhase::Run(v8::internal::compiler::TFPipelineData*, v8::internal::Zone*) ./../../src/compiler/js-inlining-heuristic.h:63:43)[0x55590b183ad0]
+d8(bool v8::internal::compiler::PipelineImpl::Run<v8::internal::compiler::InliningPhase>() ./../../src/compiler/pipeline.cc:3543:63)[0x55590b0e43bb]
+d8(v8::internal::compiler::PipelineImpl::CreateGraph(v8::internal::compiler::Linkage*) ./../../src/compiler/pipeline.cc:1971:3)[0x55590b0e0328]
+d8(v8::internal::compiler::PipelineCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/compiler/pipeline.cc:788:9)[0x55590b0dfdfa]
+d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:451:22)[0x555909388e62]
+d8(v8::internal::(anonymous namespace)::CompileTurbofan(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::DirectHandle<v8::internal::SharedFunctionInfo>, v8::internal::ConcurrencyMode, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1087:7)[0x5559093abf7b]
+d8(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1400:12)[0x55590939a14c]
+d8(v8::internal::Compiler::CompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind) ./../../src/handles/maybe-handles-inl.h:35:17)[0x5559093993f8]
+d8(v8::internal::(anonymous namespace)::CompileOptimized(v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::Isolate*) ./../../src/handles/handles.h:202:22)[0x55590a08a26c]
+d8(v8::internal::__RT_impl_Runtime_OptimizeTurbofanEager(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/common/ptr-compr-inl.h:74:18)[0x55590a083ad2]
+d8(v8::internal::Runtime_OptimizeTurbofanEager(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:222:1)[0x55590a0836d4]
+d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0)[0x55590c32df3d]
+[end of stack trace]
+timeout: the monitored command dumped core

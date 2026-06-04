@@ -1,0 +1,14 @@
+diff --git a/src/interpreter/interpreter.cc b/src/interpreter/interpreter.cc
+index cc6f350b05a..1473e6e17f1 100644
+--- a/src/interpreter/interpreter.cc
++++ b/src/interpreter/interpreter.cc
+@@ -293,6 +293,9 @@ InterpreterCompilationJob::Status InterpreterCompilationJob::DoFinalizeJobImpl(
+   }
+ 
+ #ifdef DEBUG
++  if (parse_info()->literal()->shared_function_info().is_null()) {
++    parse_info()->literal()->set_shared_function_info(shared_info);
++  }
+   CheckAndPrintBytecodeMismatch(
+       isolate, handle(Cast<Script>(shared_info->script()), isolate), bytecodes);
+ #endif

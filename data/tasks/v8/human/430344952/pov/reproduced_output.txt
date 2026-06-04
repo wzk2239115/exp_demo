@@ -1,0 +1,23 @@
+
+
+#
+# Fatal error in ../../src/objects/fixed-array-inl.h, line 116
+# Debug check failed: IsInBounds(index).
+#
+#
+#
+#FailureMessage Object: 0x7ffd60c13d50
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x55652758fc23]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55652758ed8d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x556527574e14]
+    out/debug/d8(+0x466c805) [0x556527574805]
+    d8(void v8::internal::DeclarationScope::AllocateScopeInfos<v8::internal::Isolate>(v8::internal::ParseInfo*, v8::internal::DirectHandle<v8::internal::Script>, v8::internal::Isolate*) ./../../src/objects/fixed-array-inl.h:0:3) [0x556523d88330]
+    d8(bool v8::internal::(anonymous namespace)::IterativelyExecuteAndFinalizeUnoptimizedCompilationJobs<v8::internal::Isolate>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Script>, v8::internal::ParseInfo*, v8::internal::AccountingAllocator*, v8::internal::IsCompiledScope*, std::__Cr::vector<v8::internal::FinalizeUnoptimizedCompilationData, std::__Cr::allocator<v8::internal::FinalizeUnoptimizedCompilationData>>*, std::__Cr::vector<v8::internal::DeferredFinalizationJobData, std::__Cr::allocator<v8::internal::DeferredFinalizationJobData>>*) ./../../src/codegen/compiler.cc:872:33) [0x556523e8e56f]
+    d8(v8::internal::Compiler::Compile(v8::internal::Isolate*, v8::internal::Handle<v8::internal::SharedFunctionInfo>, v8::internal::Compiler::ClearExceptionFlag, v8::internal::IsCompiledScope*, v8::internal::CreateSourcePositions) ./../../src/codegen/compiler.cc:2988:8) [0x556523e8db58]
+    d8(v8::internal::Compiler::Compile(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::Compiler::ClearExceptionFlag, v8::internal::IsCompiledScope*) ./../../src/codegen/compiler.cc:3042:41) [0x556523e8ed58]
+    d8(v8::internal::__RT_impl_Runtime_CompileLazy(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:74:7) [0x556524b77e6d]
+    d8(v8::internal::Runtime_CompileLazy(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:55:1) [0x556524b77960]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x556526c3b1fd]
+timeout: the monitored command dumped core

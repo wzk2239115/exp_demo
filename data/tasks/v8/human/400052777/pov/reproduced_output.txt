@@ -1,0 +1,22 @@
+
+
+#
+# Fatal error in ../../src/objects/object-type.cc, line 82
+# Type cast failed in CAST(elements) at ../../src/builtins/builtins-array-gen.cc:1343
+  Expected FixedDoubleArray but found 0x360700288855: [FixedArray]
+ - map: 0x360700000565 <Map(FIXED_ARRAY_TYPE)>
+ - length: 1
+           0: 0x360700288861 <HeapNumber 0.1>
+
+#
+#
+#
+#FailureMessage Object: 0x7ffe11e32620
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x55f8e7293a23]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55f8e7292e0d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55f8e7277cf4]
+    d8(v8::internal::CheckObjectType(unsigned long, unsigned long, unsigned long) ./../../src/objects/object-type.cc:0:3) [0x55f8e4980191]
+    d8(Builtins_ArrayIndexOfHoleyDoubles setup-isolate-deserialize.cc:0:0) [0x55f8e66bfbb5]
+timeout: the monitored command dumped core

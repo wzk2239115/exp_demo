@@ -1,0 +1,1 @@
+A heap-buffer-overflow occurs in the findNextBorderPixel() function due to a missing check of the pix boundary when searching for the next pixel.

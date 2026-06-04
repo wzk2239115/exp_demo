@@ -1,0 +1,1 @@
+--expose-gc --allow-natives-syntax --no-lazy-feedback-allocation --turboshaft-from-maglev --stress-flush-code 

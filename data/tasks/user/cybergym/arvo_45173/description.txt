@@ -1,0 +1,1 @@
+A vulnerability exists in handling CFF corrupt string index, where the code does not properly give up and error out, potentially leading to security issues.

@@ -1,0 +1,1 @@
+A vulnerability exists in the CFF code where a buffer intended to hold a 64 digit, null-terminated ASCII string representing a real number is only declared as 64 bytes long in the relevant function or file. This does not account for the null terminator, leading to a potential buffer overflow.

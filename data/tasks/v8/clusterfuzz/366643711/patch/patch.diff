@@ -1,0 +1,60 @@
+diff --git a/src/builtins/builtins-atomics-synchronization.cc b/src/builtins/builtins-atomics-synchronization.cc
+index 7abb3941e0b..a7faa00676f 100644
+--- a/src/builtins/builtins-atomics-synchronization.cc
++++ b/src/builtins/builtins-atomics-synchronization.cc
+@@ -327,8 +327,8 @@ BUILTIN(AtomicsConditionNotify) {
+     ASSIGN_RETURN_FAILURE_ON_EXCEPTION(isolate, count_obj,
+                                        Object::ToInteger(isolate, count_obj));
+     double count_double = Object::NumberValue(*count_obj);
+-    if (count_double < 0) {
+-      count_double = 0;
++    if (count_double <= 0) {
++      return Smi::zero();
+     } else if (count_double > JSAtomicsCondition::kAllWaiters) {
+       count_double = JSAtomicsCondition::kAllWaiters;
+     }
+diff --git a/test/mjsunit/shared-memory/regress-crbug-366643711.js b/test/mjsunit/shared-memory/regress-crbug-366643711.js
+new file mode 100644
+index 00000000000..a5be84dd03e
+--- /dev/null
++++ b/test/mjsunit/shared-memory/regress-crbug-366643711.js
+@@ -0,0 +1,39 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --harmony-struct --allow-natives-syntax
++
++(function TestNegativeNotify() {
++  const mutex = new Atomics.Mutex;
++  const cv = new Atomics.Condition;
++  let done = false;
++  let promise = Atomics.Mutex.lockAsync(mutex, async () => {
++    await Atomics.Condition.waitAsync(cv, mutex);
++  })
++  promise.then(() => {
++    done = true;
++  })
++
++  const cleanupLoop = () => {
++    assertEquals(0, %AtomicsSynchronizationPrimitiveNumWaitersForTesting(cv));
++    if (done) {
++      return;
++    }
++    setTimeout(cleanupLoop, 0);
++  };
++
++  const notifyLoop = () => {
++    if (%AtomicsSynchronizationPrimitiveNumWaitersForTesting(cv) === 1) {
++      Atomics.Condition.notify(cv, -14);
++      assertEquals(
++          1, %AtomicsSynchronizationPrimitiveNumWaitersForTesting(cv));
++      assertFalse(done);
++      Atomics.Condition.notify(cv);
++      cleanupLoop();
++      return;
++    }
++    setTimeout(notifyLoop, 0);
++  };
++  notifyLoop();
++})();

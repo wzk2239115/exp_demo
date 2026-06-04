@@ -1,0 +1,75 @@
+======================= INFO =========================
+This binary is built for AFL-fuzz.
+To run the target function on individual input(s) execute this:
+  /out/radio-receive-done-fuzzer < INPUT_FILE
+or
+  /out/radio-receive-done-fuzzer INPUT_FILE1 [INPUT_FILE2 ... ]
+To fuzz with afl-fuzz execute this:
+  afl-fuzz [afl-flags] /out/radio-receive-done-fuzzer [-N]
+afl-fuzz will run N iterations before re-spawning the process (default: 1000)
+======================================================
+Reading 56 bytes from /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x7f1d4be9cd9b at pc 0x000000582468 bp 0x7ffe5c9ef6a0 sp 0x7ffe5c9ef698
+READ of size 1 at 0x7f1d4be9cd9b thread T0
+SCARINESS: 27 (1-byte-read-stack-buffer-overflow)
+    #0 0x582467 in ot::Mle::RouteTlv::GetRouteCost(unsigned char) const /src/openthread/src/core/./thread/mle_tlvs.hpp:534:16
+    #1 0x573ee6 in ot::Mle::MleRouter::UpdateRoutes(ot::Mle::RouteTlv const&, unsigned char) /src/openthread/src/core/thread/mle_router.cpp:1609:35
+    #2 0x5753a8 in ot::Mle::MleRouter::HandleAdvertisement(ot::Message const&, ot::Ip6::MessageInfo const&) /src/openthread/src/core/thread/mle_router.cpp:1552:5
+    #3 0x566737 in ot::Mle::Mle::HandleAdvertisement(ot::Message const&, ot::Ip6::MessageInfo const&) /src/openthread/src/core/thread/mle.cpp:2394:13
+    #4 0x565199 in ot::Mle::Mle::HandleUdpReceive(ot::Message&, ot::Ip6::MessageInfo const&) /src/openthread/src/core/thread/mle.cpp:2305:9
+    #5 0x547e1d in ot::Ip6::Udp::HandleMessage(ot::Message&, ot::Ip6::MessageInfo&) /src/openthread/src/core/net/udp6.cpp:278:17
+    #6 0x53e442 in ot::Ip6::Ip6::HandleDatagram(ot::Message&, ot::Ip6::Netif*, signed char, void const*, bool) /src/openthread/src/core/net/ip6.cpp:786:9
+    #7 0x5572f6 in ot::MeshForwarder::HandleReceivedFrame(ot::Mac::Frame&) /src/openthread/src/core/thread/mesh_forwarder.cpp:1918:13
+    #8 0x52c1cc in ot::Mac::Mac::HandleReceivedFrame(ot::Mac::Frame*, otError) /src/openthread/src/core/mac/mac.cpp:1734:23
+    #9 0x51ac05 in LLVMFuzzerTestOneInput /src/openthread/tests/fuzz/radio_receive_done.cpp:71:5
+    #10 0x60a29f in ExecuteFilesOnyByOne(int, char**) /src/libfuzzer/afl/afl_driver.cpp:271:5
+    #11 0x60a83f in main /src/libfuzzer/afl/afl_driver.cpp:308:12
+    #12 0x7f1d4ae6583f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #13 0x41be98 in _start (/out/radio-receive-done-fuzzer+0x41be98)
+
+DEDUP_TOKEN: ot::Mle::RouteTlv::GetRouteCost(unsigned char) const--ot::Mle::MleRouter::UpdateRoutes(ot::Mle::RouteTlv const&, unsigned char)--ot::Mle::MleRouter::HandleAdvertisement(ot::Message const&, ot::Ip6::MessageInfo const&)
+Address 0x7f1d4be9cd9b is located in stack of thread T0 at offset 155 in frame
+    #0 0x5748bf in ot::Mle::MleRouter::HandleAdvertisement(ot::Message const&, ot::Ip6::MessageInfo const&) /src/openthread/src/core/thread/mle_router.cpp:1304
+
+DEDUP_TOKEN: ot::Mle::MleRouter::HandleAdvertisement(ot::Message const&, ot::Ip6::MessageInfo const&)
+  This frame has 4 object(s):
+    [32, 40) 'macAddr' (line 1309)
+    [64, 68) 'sourceAddress' (line 1310)
+    [80, 90) 'leaderData' (line 1311)
+    [112, 155) 'route' (line 1312) <== Memory access at offset 155 overflows this variable
+HINT: this may be a false positive if your program uses some custom stack unwind mechanism or swapcontext
+      (longjmp and C++ exceptions *are* supported)
+SUMMARY: AddressSanitizer: stack-buffer-overflow /src/openthread/src/core/./thread/mle_tlvs.hpp:534:16 in ot::Mle::RouteTlv::GetRouteCost(unsigned char) const
+Shadow bytes around the buggy address:
+  0x0fe4297cb960: f1 f1 f1 f1 00 00 00 00 00 00 f2 f2 f2 f2 00 00
+  0x0fe4297cb970: 00 00 00 f2 f2 f2 f2 f2 01 f2 01 f3 00 00 00 00
+  0x0fe4297cb980: f1 f1 f1 f1 00 f2 f2 f2 04 f2 00 02 f2 f2 00 00
+  0x0fe4297cb990: 00 00 00 03 f2 f2 f2 f2 01 f3 f3 f3 00 00 00 00
+  0x0fe4297cb9a0: f1 f1 f1 f1 00 f2 f2 f2 04 f2 00 02 f2 f2 00 00
+=>0x0fe4297cb9b0: 00 00 00[03]f3 f3 f3 f3 00 00 00 00 00 00 00 00
+  0x0fe4297cb9c0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe4297cb9d0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe4297cb9e0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe4297cb9f0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe4297cba00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

@@ -1,0 +1,65 @@
+Accepting input from '/tmp/poc'
+Usage for fuzzing: honggfuzz -P [flags] -- /out/fuzz_dwarf
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x62d000044438 at pc 0x00000094f700 bp 0x7fff7d13f650 sp 0x7fff7d13f648
+READ of size 1 at 0x62d000044438 thread T0
+SCARINESS: 12 (1-byte-read-heap-buffer-overflow)
+    #0 0x94f6ff in bfd_getb32 /src/binutils-gdb/bfd/libbfd.c:714:23
+    #1 0xe21ccb in mmo_xore_32 /src/binutils-gdb/bfd/mmo.c:763:27
+    #2 0xe21ccb in mmo_scan /src/binutils-gdb/bfd/mmo.c:2074:9
+    #3 0xe1e4b8 in mmo_object_p /src/binutils-gdb/bfd/mmo.c:543:9
+    #4 0x949f2b in bfd_check_format_matches /src/binutils-gdb/bfd/format.c:344:17
+    #5 0x4e6ef1 in LLVMFuzzerTestOneInput /src/binutils-gdb/binutils/fuzz_dwarf.c:36:7
+    #6 0x4d91ab in main (/out/fuzz_dwarf+0x4d91ab)
+    #7 0x7feb9cfd1082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)
+    #8 0x41e71d in _start (/out/fuzz_dwarf+0x41e71d)
+
+DEDUP_TOKEN: bfd_getb32--mmo_xore_32--mmo_scan
+0x62d000044438 is located 0 bytes to the right of 32824-byte region [0x62d00003c400,0x62d000044438)
+allocated by thread T0 here:
+    #0 0x49f99d in __interceptor_malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:129:3
+    #1 0x161629c in _objalloc_alloc /src/binutils-gdb/libiberty/./objalloc.c:143:22
+    #2 0x952ede in bfd_alloc /src/binutils-gdb/bfd/opncls.c:1032:9
+    #3 0x952ede in bfd_zalloc /src/binutils-gdb/bfd/opncls.c:1057:9
+    #4 0xe25528 in mmo_get_loc /src/binutils-gdb/bfd/mmo.c:1536:5
+    #5 0xe21c46 in mmo_xore_32 /src/binutils-gdb/bfd/mmo.c:760:19
+    #6 0xe21c46 in mmo_scan /src/binutils-gdb/bfd/mmo.c:2074:9
+    #7 0xe1e4b8 in mmo_object_p /src/binutils-gdb/bfd/mmo.c:543:9
+    #8 0x949f2b in bfd_check_format_matches /src/binutils-gdb/bfd/format.c:344:17
+    #9 0x4e6ef1 in LLVMFuzzerTestOneInput /src/binutils-gdb/binutils/fuzz_dwarf.c:36:7
+    #10 0x4d91ab in main (/out/fuzz_dwarf+0x4d91ab)
+
+DEDUP_TOKEN: __interceptor_malloc--_objalloc_alloc--bfd_alloc
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/binutils-gdb/bfd/libbfd.c:714:23 in bfd_getb32
+Shadow bytes around the buggy address:
+  0x0c5a80000830: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c5a80000840: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c5a80000850: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c5a80000860: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c5a80000870: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0c5a80000880: 00 00 00 00 00 00 00[fa]fa fa fa fa fa fa fa fa
+  0x0c5a80000890: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c5a800008a0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c5a800008b0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c5a800008c0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c5a800008d0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

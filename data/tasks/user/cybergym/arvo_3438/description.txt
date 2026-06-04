@@ -1,0 +1,1 @@
+The vulnerability occurs in UncompressedDecompressor::sanityCheck(), where the function does not always throw an exception if there is not enough data, potentially allowing truncated cases to be mishandled.

@@ -1,0 +1,50 @@
+diff --git a/src/wasm/baseline/x64/liftoff-assembler-x64-inl.h b/src/wasm/baseline/x64/liftoff-assembler-x64-inl.h
+index 4e909757bed..359dbebb7ff 100644
+--- a/src/wasm/baseline/x64/liftoff-assembler-x64-inl.h
++++ b/src/wasm/baseline/x64/liftoff-assembler-x64-inl.h
+@@ -54,6 +54,8 @@ constexpr Operand kInstanceDataOperand =
+ 
+ constexpr Operand kOSRTargetSlot = GetStackSlot(kOSRTargetOffset);
+ 
++// Note: The returned Operand might contain {kScratchRegister2}; make sure not
++// to clobber that until after the last use of the Operand.
+ inline Operand GetMemOp(LiftoffAssembler* assm, Register addr,
+                         Register offset_reg, uintptr_t offset_imm,
+                         ScaleFactor scale_factor = times_1) {
+@@ -64,7 +66,7 @@ inline Operand GetMemOp(LiftoffAssembler* assm, Register addr,
+                : Operand(addr, offset_reg, scale_factor, offset_imm32);
+   }
+   // Offset immediate does not fit in 31 bits.
+-  Register scratch = kScratchRegister;
++  Register scratch = kScratchRegister2;
+   assm->MacroAssembler::Move(scratch, offset_imm);
+   if (offset_reg != no_reg) assm->addq(scratch, offset_reg);
+   return Operand(addr, scratch, scale_factor, 0);
+diff --git a/test/mjsunit/regress/wasm/regress-378779897.js b/test/mjsunit/regress/wasm/regress-378779897.js
+new file mode 100644
+index 00000000000..fed1bc80716
+--- /dev/null
++++ b/test/mjsunit/regress/wasm/regress-378779897.js
+@@ -0,0 +1,22 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++d8.file.execute("test/mjsunit/wasm/wasm-module-builder.js");
++
++const builder = new WasmModuleBuilder();
++builder.addMemory(49149);
++
++builder.addFunction('main', kSig_i_v).addBody([
++  ...wasmI32Const(-1118406780),
++  ...wasmI32Const(-1),
++  kAtomicPrefix, kExprI32AtomicOr8U, 0, 0
++]).exportFunc();
++
++let instance;
++try {
++  instance = builder.instantiate();
++} catch (e) {
++  assertException(e, RangeError, /Out of memory/);
++}
++if (instance) instance.exports.main();

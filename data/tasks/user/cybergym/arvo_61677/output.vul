@@ -1,0 +1,56 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3772579132
+INFO: Loaded 1 modules   (233330 inline 8-bit counters): 233330 [0x382b760, 0x38646d2), 
+INFO: Loaded 1 PC tables (233330 PCs): 233330 [0x29cc7d0,0x2d5bef0), 
+/out/fuzz_disassemble: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: global-buffer-overflow on address 0x00000426ef80 at pc 0x0000006664e9 bp 0x7ffdaad7f530 sp 0x7ffdaad7f528
+READ of size 4 at 0x00000426ef80 thread T0
+SCARINESS: 17 (4-byte-read-global-buffer-overflow)
+    #0 0x6664e8 in kvx_reassemble_bundle /src/binutils-gdb/opcodes/kvx-dis.c:496:29
+    #1 0x664253 in print_insn_kvx /src/binutils-gdb/opcodes/kvx-dis.c:1077:24
+    #2 0x56ca24 in LLVMFuzzerTestOneInput /src/binutils-gdb/fuzz/fuzz_disassemble.c:95:30
+    #3 0x43df33 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #4 0x429692 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #5 0x42ef3c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #6 0x458472 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #7 0x7ff8b9dbc082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #8 0x41f85d in _start (/out/fuzz_disassemble+0x41f85d)
+
+DEDUP_TOKEN: kvx_reassemble_bundle--print_insn_kvx--LLVMFuzzerTestOneInput
+0x00000426ef80 is located 32 bytes to the left of global variable 'bundle_insn' defined in 'kvx-dis.c:112:15' (0x426efa0) of size 96
+0x00000426ef80 is located 0 bytes to the right of global variable 'bundle_words' defined in 'kvx-dis.c:110:17' (0x426ef60) of size 32
+SUMMARY: AddressSanitizer: global-buffer-overflow /src/binutils-gdb/opcodes/kvx-dis.c:496:29 in kvx_reassemble_bundle
+Shadow bytes around the buggy address:
+  0x000080845da0: 04 f9 f9 f9 04 f9 f9 f9 00 00 00 00 00 00 00 00
+  0x000080845db0: 00 00 00 00 04 f9 f9 f9 f9 f9 f9 f9 01 f9 f9 f9
+  0x000080845dc0: 01 f9 f9 f9 04 f9 f9 f9 04 f9 f9 f9 04 f9 f9 f9
+  0x000080845dd0: 00 f9 f9 f9 00 f9 f9 f9 00 f9 f9 f9 00 f9 f9 f9
+  0x000080845de0: 00 f9 f9 f9 04 f9 f9 f9 01 f9 f9 f9 00 00 00 00
+=>0x000080845df0:[f9]f9 f9 f9 00 00 00 00 00 00 00 00 00 00 00 00
+  0x000080845e00: f9 f9 f9 f9 00 f9 f9 f9 00 f9 f9 f9 00 f9 f9 f9
+  0x000080845e10: 04 f9 f9 f9 04 f9 f9 f9 00 00 00 00 00 00 00 00
+  0x000080845e20: 00 00 00 00 04 f9 f9 f9 f9 f9 f9 f9 00 f9 f9 f9
+  0x000080845e30: 00 f9 f9 f9 00 f9 f9 f9 04 f9 f9 f9 04 f9 f9 f9
+  0x000080845e40: 00 00 00 00 00 00 00 00 00 00 00 00 04 f9 f9 f9
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

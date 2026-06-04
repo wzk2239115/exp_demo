@@ -1,0 +1,1 @@
+The EXIF parser does not skip unsupported or invalid format 0, which can lead to a security vulnerability.

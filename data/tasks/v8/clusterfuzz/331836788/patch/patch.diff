@@ -1,0 +1,187 @@
+diff --git a/src/base/small-vector.h b/src/base/small-vector.h
+index 79276b6f2b4..cb152047657 100644
+--- a/src/base/small-vector.h
++++ b/src/base/small-vector.h
+@@ -202,12 +202,12 @@ class SmallVector {
+     end_ = begin_ + new_size;
+   }
+ 
+-  void resize_and_init(size_t new_size) {
++  void resize_and_init(size_t new_size, const T& initial_value = {}) {
+     static_assert(std::is_trivially_destructible_v<T>);
+     if (new_size > capacity()) Grow(new_size);
+     T* new_end = begin_ + new_size;
+     if (new_end > end_) {
+-      std::uninitialized_fill(end_, new_end, T{});
++      std::uninitialized_fill(end_, new_end, initial_value);
+     }
+     end_ = new_end;
+   }
+diff --git a/src/maglev/maglev-phi-representation-selector.cc b/src/maglev/maglev-phi-representation-selector.cc
+index 6f636be051c..02e030bcb54 100644
+--- a/src/maglev/maglev-phi-representation-selector.cc
++++ b/src/maglev/maglev-phi-representation-selector.cc
+@@ -6,6 +6,7 @@
+ 
+ #include "src/base/enum-set.h"
+ #include "src/base/logging.h"
++#include "src/base/small-vector.h"
+ #include "src/flags/flags.h"
+ #include "src/handles/handles-inl.h"
+ #include "src/maglev/maglev-graph-processor.h"
+@@ -84,7 +85,8 @@ MaglevPhiRepresentationSelector::ProcessPhi(Phi* node) {
+   // {input_mask} represents the ValueRepresentation that {node} could have,
+   // based on the ValueRepresentation of its inputs.
+   ValueRepresentationSet input_reprs;
+-  HoistType hoist_untagging = HoistType::kNone;
++  HoistTypeList hoist_untagging;
++  hoist_untagging.resize_and_init(node->input_count(), HoistType::kNone);
+ 
+   bool has_tagged_phi_input = false;
+   for (int i = 0; i < node->input_count(); i++) {
+@@ -140,25 +142,22 @@ MaglevPhiRepresentationSelector::ProcessPhi(Phi* node) {
+           v8_flags.maglev_hoist_osr_value_phi_untagging &&
+           input->Is<InitialValue>() &&
+           CanHoistUntaggingTo(*builder_->graph()->begin())) {
+-        hoist_untagging = HoistType::kPrologue;
++        hoist_untagging[i] = HoistType::kPrologue;
+         continue;
+       }
+-      if (node->is_loop_phi()) {
+-        BasicBlock* dominator = node->merge_state()->predecessor_at(0);
+-        if ((input->Is<InitialValue>() || i == 0 ||
+-             (input->has_id() &&
+-              input->id() < dominator->control_node()->id())) &&
+-            CanHoistUntaggingTo(dominator)) {
++      if (node->is_loop_phi() && !node->is_backedge_offset(i)) {
++        BasicBlock* pred = node->merge_state()->predecessor_at(i);
++        if (CanHoistUntaggingTo(pred)) {
+           auto static_type = StaticTypeForNode(
+               builder_->broker(), builder_->local_isolate(), input);
+           if (NodeTypeIs(static_type, NodeType::kSmi)) {
+             input_reprs.Add(ValueRepresentation::kInt32);
+-            hoist_untagging = HoistType::kLoopEntryUnchecked;
++            hoist_untagging[i] = HoistType::kLoopEntryUnchecked;
+             continue;
+           }
+           if (NodeTypeIs(static_type, NodeType::kNumber)) {
+             input_reprs.Add(ValueRepresentation::kFloat64);
+-            hoist_untagging = HoistType::kLoopEntryUnchecked;
++            hoist_untagging[i] = HoistType::kLoopEntryUnchecked;
+             continue;
+           }
+ 
+@@ -170,9 +169,9 @@ MaglevPhiRepresentationSelector::ProcessPhi(Phi* node) {
+           if (v8_flags.maglev_speculative_hoist_phi_untagging) {
+             // TODO(olivf): Currently there is no hard guarantee that the phi
+             // merge state has a checkpointed jump.
+-            if (dominator->control_node()->Is<CheckpointedJump>()) {
++            if (pred->control_node()->Is<CheckpointedJump>()) {
+               DCHECK(!node->merge_state()->is_resumable_loop());
+-              hoist_untagging = HoistType::kLoopEntry;
++              hoist_untagging[i] = HoistType::kLoopEntry;
+               continue;
+             }
+           }
+@@ -416,7 +415,7 @@ Opcode GetOpcodeForConversion(ValueRepresentation from, ValueRepresentation to,
+ }  // namespace
+ 
+ void MaglevPhiRepresentationSelector::ConvertTaggedPhiTo(
+-    Phi* phi, ValueRepresentation repr, HoistType hoist_untagging) {
++    Phi* phi, ValueRepresentation repr, const HoistTypeList& hoist_untagging) {
+   // We currently only support Int32, Float64, and HoleyFloat64 untagged phis.
+   DCHECK(repr == ValueRepresentation::kInt32 ||
+          repr == ValueRepresentation::kFloat64 ||
+@@ -553,7 +552,7 @@ void MaglevPhiRepresentationSelector::ConvertTaggedPhiTo(
+         TRACE_UNTAGGING(TRACE_INPUT_LABEL
+                         << ": Keeping untagged Phi input as-is");
+       }
+-    } else if (hoist_untagging != HoistType::kNone) {
++    } else if (hoist_untagging[i] != HoistType::kNone) {
+       CHECK_EQ(input->value_representation(), ValueRepresentation::kTagged);
+       BasicBlock* block;
+       DeoptFrame* deopt_frame;
+@@ -563,13 +562,13 @@ void MaglevPhiRepresentationSelector::ConvertTaggedPhiTo(
+                     ->eager_deopt_info()
+                     ->top_frame();
+       };
+-      switch (hoist_untagging) {
++      switch (hoist_untagging[i]) {
+         case HoistType::kLoopEntryUnchecked:
+-          block = phi->merge_state()->predecessor_at(0);
++          block = phi->merge_state()->predecessor_at(i);
+           deopt_frame = nullptr;
+           break;
+         case HoistType::kLoopEntry:
+-          block = phi->merge_state()->predecessor_at(0);
++          block = phi->merge_state()->predecessor_at(i);
+           deopt_frame = GetDeoptFrame(block);
+           break;
+         case HoistType::kPrologue:
+@@ -579,6 +578,9 @@ void MaglevPhiRepresentationSelector::ConvertTaggedPhiTo(
+         case HoistType::kNone:
+           UNREACHABLE();
+       }
++      // Ensure the hoisted value is actually live at the hoist location.
++      CHECK(input->Is<InitialValue>() ||
++            phi->is_loop_phi() && !phi->is_backedge_offset(i));
+       ValueNode* untagged;
+       switch (repr) {
+         case ValueRepresentation::kInt32:
+diff --git a/src/maglev/maglev-phi-representation-selector.h b/src/maglev/maglev-phi-representation-selector.h
+index da467a084d1..5c93a3a351b 100644
+--- a/src/maglev/maglev-phi-representation-selector.h
++++ b/src/maglev/maglev-phi-representation-selector.h
+@@ -5,6 +5,7 @@
+ #ifndef V8_MAGLEV_MAGLEV_PHI_REPRESENTATION_SELECTOR_H_
+ #define V8_MAGLEV_MAGLEV_PHI_REPRESENTATION_SELECTOR_H_
+ 
++#include "src/base/small-vector.h"
+ #include "src/compiler/turboshaft/snapshot-table.h"
+ #include "src/maglev/maglev-compilation-info.h"
+ #include "src/maglev/maglev-graph-builder.h"
+@@ -64,17 +65,18 @@ class MaglevPhiRepresentationSelector {
+   }
+ 
+  private:
+-  enum class HoistType {
++  enum class HoistType : uint8_t {
+     kNone,
+     kLoopEntry,
+     kLoopEntryUnchecked,
+     kPrologue,
+   };
++  using HoistTypeList = base::SmallVector<HoistType, 8>;
+ 
+   // Update the inputs of {phi} so that they all have {repr} representation, and
+   // updates {phi}'s representation to {repr}.
+   void ConvertTaggedPhiTo(Phi* phi, ValueRepresentation repr,
+-                          HoistType hoist_untagging);
++                          const HoistTypeList& hoist_untagging);
+ 
+   // Since this pass changes the representation of Phis, it makes some untagging
+   // operations outdated: if we've decided that a Phi should have Int32
+diff --git a/test/mjsunit/regress/regress-crbug-331836788.js b/test/mjsunit/regress/regress-crbug-331836788.js
+new file mode 100644
+index 00000000000..cd653d202f0
+--- /dev/null
++++ b/test/mjsunit/regress/regress-crbug-331836788.js
+@@ -0,0 +1,18 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax
++
++function F1(a4) {
++  for (let v5 = 0; v5 < 5; v5++) {
++    let v6 = +this;
++    for (let v7 = 0; v7 < 5; v7++) {
++      v6 *0 + 128;
++      v6 = a4;
++    }
++    %OptimizeOsr();
++  }
++}
++%PrepareFunctionForOptimization(F1);
++F1();

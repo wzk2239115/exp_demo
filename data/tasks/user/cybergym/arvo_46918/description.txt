@@ -1,0 +1,1 @@
+A stack-buffer-overflow occurs in the function `dynapi_set_helper` due to `dwg_dynapi_header_set_value` in `json_HEADER` being called with a pointer to a long variable, while the field `f->size` is set to 255. This causes `memcpy (old, value, f->size)` in `dynapi_set_helper` to overflow the stack.

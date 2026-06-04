@@ -1,0 +1,1 @@
+A buffer overflow vulnerability exists in the RAR5 reader when parsing Huffman tables. RAR5 compresses its Huffman tables using an algorithm similar to Run Length Encoding, and during the uncompression of those tables, the RAR5 reader does not perform sufficient checks to prevent buffer overflow in some cases.

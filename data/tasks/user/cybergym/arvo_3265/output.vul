@@ -1,0 +1,74 @@
+======================= INFO =========================
+This binary is built for AFL-fuzz.
+To run the target function on individual input(s) execute this:
+  /out/TiffDecoderFuzzer-SrwDecoder < INPUT_FILE
+or
+  /out/TiffDecoderFuzzer-SrwDecoder INPUT_FILE1 [INPUT_FILE2 ... ]
+To fuzz with afl-fuzz execute this:
+  afl-fuzz [afl-flags] /out/TiffDecoderFuzzer-SrwDecoder [-N]
+afl-fuzz will run N iterations before re-spawning the process (default: 1000)
+======================================================
+Reading 503 bytes from /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: use-after-poison on address 0x7f3f0e81cafe at pc 0x0000006930d8 bp 0x7ffe199a4e30 sp 0x7ffe199a4e28
+READ of size 2 at 0x7f3f0e81cafe thread T0
+SCARINESS: 24 (2-byte-read-use-after-poison)
+    #0 0x6930d7 in rawspeed::SamsungV2Decompressor::decompress() /src/librawspeed/src/librawspeed/decompressors/SamsungV2Decompressor.cpp
+    #1 0x606463 in rawspeed::SrwDecoder::decodeRawInternal() /src/librawspeed/src/librawspeed/decoders/SrwDecoder.cpp:107:8
+    #2 0x5f40fd in rawspeed::RawDecoder::decodeRaw() /src/librawspeed/src/librawspeed/decoders/RawDecoder.cpp:301:20
+    #3 0x55bb1a in LLVMFuzzerTestOneInput /src/librawspeed/fuzz/librawspeed/decoders/TiffDecoders/main.cpp:81:14
+    #4 0x6cfa3e in ExecuteFilesOnyByOne(int, char**) /src/libfuzzer/afl/afl_driver.cpp:265:5
+    #5 0x6cffce in main /src/libfuzzer/afl/afl_driver.cpp:302:12
+    #6 0x7f3f10f6a83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #7 0x45f7d8 in _start (/out/TiffDecoderFuzzer-SrwDecoder+0x45f7d8)
+
+DEDUP_TOKEN: rawspeed::SamsungV2Decompressor::decompress()--rawspeed::SrwDecoder::decodeRawInternal()--rawspeed::RawDecoder::decodeRaw()
+0x7f3f0e81cafe is located 766 bytes inside of 590592-byte region [0x7f3f0e81c800,0x7f3f0e8acb00)
+allocated by thread T0 here:
+    #0 0x5214a0 in __interceptor_posix_memalign /src/llvm/projects/compiler-rt/lib/asan/asan_malloc_linux.cc:157
+    #1 0x6199db in rawspeed::alignedMalloc(unsigned long, unsigned long) /src/librawspeed/src/librawspeed/common/Memory.cpp:62:12
+    #2 0x55e2d7 in unsigned char* rawspeed::alignedMalloc<unsigned char, 16ul>(unsigned long) /src/librawspeed/src/librawspeed/common/Memory.h:60:31
+    #3 0x55e2d7 in unsigned char* rawspeed::alignedMallocArray<unsigned char, 16ul, false>(unsigned long, unsigned long) /src/librawspeed/src/librawspeed/common/Memory.h:78
+    #4 0x55e2d7 in rawspeed::RawImageData::createData() /src/librawspeed/src/librawspeed/common/RawImage.cpp:94
+    #5 0x68c714 in rawspeed::SamsungV2Decompressor::decompress() /src/librawspeed/src/librawspeed/decompressors/SamsungV2Decompressor.cpp:80:9
+    #6 0x606463 in rawspeed::SrwDecoder::decodeRawInternal() /src/librawspeed/src/librawspeed/decoders/SrwDecoder.cpp:107:8
+    #7 0x5f40fd in rawspeed::RawDecoder::decodeRaw() /src/librawspeed/src/librawspeed/decoders/RawDecoder.cpp:301:20
+    #8 0x55bb1a in LLVMFuzzerTestOneInput /src/librawspeed/fuzz/librawspeed/decoders/TiffDecoders/main.cpp:81:14
+    #9 0x6cfa3e in ExecuteFilesOnyByOne(int, char**) /src/libfuzzer/afl/afl_driver.cpp:265:5
+    #10 0x6cffce in main /src/libfuzzer/afl/afl_driver.cpp:302:12
+    #11 0x7f3f10f6a83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: __interceptor_posix_memalign--rawspeed::alignedMalloc(unsigned long, unsigned long)--unsigned char* rawspeed::alignedMalloc<unsigned char, 16ul>(unsigned long)
+SUMMARY: AddressSanitizer: use-after-poison /src/librawspeed/src/librawspeed/decompressors/SamsungV2Decompressor.cpp in rawspeed::SamsungV2Decompressor::decompress()
+Shadow bytes around the buggy address:
+  0x0fe861cfb900: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe861cfb910: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe861cfb920: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe861cfb930: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe861cfb940: f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+=>0x0fe861cfb950: f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7[f7]
+  0x0fe861cfb960: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe861cfb970: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe861cfb980: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe861cfb990: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe861cfb9a0: f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

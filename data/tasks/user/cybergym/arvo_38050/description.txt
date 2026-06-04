@@ -1,0 +1,1 @@
+A vulnerability exists in core where the parsing of the Content-Length header does not properly consider the multi-line header format. Additionally, there are missing safety checks for log messages when the message buffer is not being parsed.

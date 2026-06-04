@@ -1,0 +1,75 @@
+INFO: Seed: 3191558503
+INFO: Loaded 1 modules   (6941 guards): 6941 [0x98b000, 0x991c74), 
+/out/opj_decompress_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x603000000dc4 at pc 0x0000005ddb87 bp 0x7ffccb56bdf0 sp 0x7ffccb56bde8
+READ of size 4 at 0x603000000dc4 thread T0
+SCARINESS: 17 (4-byte-read-heap-buffer-overflow)
+    #0 0x5ddb86 in opj_mct_decode_real /src/openjpeg/src/lib/openjp2/mct.c:433:25
+    #1 0x5fce17 in opj_tcd_mct_decode /src/openjpeg/src/lib/openjp2/tcd.c
+    #2 0x5fabfa in opj_tcd_decode_tile /src/openjpeg/src/lib/openjp2/tcd.c:1630:8
+    #3 0x5a5954 in opj_j2k_decode_tile /src/openjpeg/src/lib/openjp2/j2k.c:8900:11
+    #4 0x5c1348 in opj_j2k_decode_tiles /src/openjpeg/src/lib/openjp2/j2k.c:10620:15
+    #5 0x5a047c in opj_j2k_exec /src/openjpeg/src/lib/openjp2/j2k.c:8066:33
+    #6 0x5ab72f in opj_j2k_decode /src/openjpeg/src/lib/openjp2/j2k.c:10857:11
+    #7 0x518a6c in LLVMFuzzerTestOneInput /src/openjpeg/./tests/fuzzers/opj_decompress_fuzzer.cpp:197:13
+    #8 0x539f6e in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:463:13
+    #9 0x5199a5 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:273:6
+    #10 0x524c3f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:689:9
+    #11 0x519048 in main /src/libfuzzer/FuzzerMain.cpp:20:10
+    #12 0x7fdd5ce7e83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #13 0x41c298 in _start (/out/opj_decompress_fuzzer+0x41c298)
+
+DEDUP_TOKEN: opj_mct_decode_real--opj_tcd_mct_decode--opj_tcd_decode_tile
+0x603000000dc4 is located 0 bytes to the right of 4-byte region [0x603000000dc0,0x603000000dc4)
+allocated by thread T0 here:
+    #0 0x4ddf60 in __interceptor_posix_memalign /src/llvm/projects/compiler-rt/lib/asan/asan_malloc_linux.cc:157
+    #1 0x597a8f in opj_aligned_alloc_n /src/openjpeg/src/lib/openjp2/opj_malloc.c:61:9
+    #2 0x5f4922 in opj_alloc_tile_component_data /src/openjpeg/src/lib/openjp2/tcd.c:691:39
+    #3 0x5fa22a in opj_tcd_decode_tile /src/openjpeg/src/lib/openjp2/tcd.c:1495:18
+    #4 0x5a5954 in opj_j2k_decode_tile /src/openjpeg/src/lib/openjp2/j2k.c:8900:11
+    #5 0x5c1348 in opj_j2k_decode_tiles /src/openjpeg/src/lib/openjp2/j2k.c:10620:15
+    #6 0x5a047c in opj_j2k_exec /src/openjpeg/src/lib/openjp2/j2k.c:8066:33
+    #7 0x5ab72f in opj_j2k_decode /src/openjpeg/src/lib/openjp2/j2k.c:10857:11
+    #8 0x518a6c in LLVMFuzzerTestOneInput /src/openjpeg/./tests/fuzzers/opj_decompress_fuzzer.cpp:197:13
+    #9 0x539f6e in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:463:13
+    #10 0x5199a5 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:273:6
+    #11 0x524c3f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:689:9
+    #12 0x519048 in main /src/libfuzzer/FuzzerMain.cpp:20:10
+    #13 0x7fdd5ce7e83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: __interceptor_posix_memalign--opj_aligned_alloc_n--opj_alloc_tile_component_data
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/openjpeg/src/lib/openjp2/mct.c:433:25 in opj_mct_decode_real
+Shadow bytes around the buggy address:
+  0x0c067fff8160: 00 fa fa fa 00 00 00 00 fa fa 00 00 00 fa fa fa
+  0x0c067fff8170: fd fd fd fd fa fa fd fd fd fd fa fa fd fd fd fd
+  0x0c067fff8180: fa fa fd fd fd fd fa fa 00 00 00 00 fa fa 00 00
+  0x0c067fff8190: 00 fa fa fa 00 00 00 00 fa fa 00 00 00 fa fa fa
+  0x0c067fff81a0: fd fd fd fd fa fa fd fd fd fd fa fa 00 04 fa fa
+=>0x0c067fff81b0: fa fa 00 04 fa fa fa fa[04]fa fa fa fa fa fd fd
+  0x0c067fff81c0: fd fa fa fa 00 00 00 fa fa fa 04 fa fa fa fa fa
+  0x0c067fff81d0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c067fff81e0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c067fff81f0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c067fff8200: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

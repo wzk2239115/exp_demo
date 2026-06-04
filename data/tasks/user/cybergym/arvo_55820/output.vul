@@ -1,0 +1,61 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3607069699
+INFO: Loaded 1 modules   (10232 inline 8-bit counters): 10232 [0x70ca38, 0x70f230), 
+INFO: Loaded 1 PC tables (10232 PCs): 10232 [0x70f230,0x7371b0), 
+/out/broker_fuzz_test_config: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+1775452892: Error: Invalid bridge port value (0).
+1775452892: Error found at /tmp/mosquitto_7.conf:5.
+=================================================================
+==7==ERROR: AddressSanitizer: attempting free on address which was not malloc()-ed: 0x619000000588 in thread T0
+SCARINESS: 40 (bad-free)
+    #0 0x5326d2 in __interceptor_free /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:52:3
+    #1 0x5aac01 in mosquitto__free /src/mosquitto/src/../lib/memory_mosq.c:80:2
+    #2 0x57d434 in config__bridge_cleanup /src/mosquitto/src/conf.c:442:4
+    #3 0x57c9b4 in config__cleanup /src/mosquitto/src/conf.c:414:4
+    #4 0x570407 in mosquitto_fuzz_main /src/mosquitto/src/mosquitto.c
+    #5 0x56ff0a in run_broker(char*) /src/mosquitto/fuzzing/broker/broker_fuzz_test_config.cpp:42:2
+    #6 0x57011b in LLVMFuzzerTestOneInput /src/mosquitto/fuzzing/broker/broker_fuzz_test_config.cpp:62:2
+    #7 0x4417e3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #8 0x42cf42 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #9 0x4327ec in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #10 0x45bd22 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #11 0x7f91ad8d5082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #12 0x42310d in _start (/out/broker_fuzz_test_config+0x42310d)
+
+DEDUP_TOKEN: __interceptor_free--mosquitto__free--config__bridge_cleanup
+0x619000000588 is located 8 bytes inside of 1000-byte region [0x619000000580,0x619000000968)
+freed by thread T0 here:
+    #0 0x5326d2 in __interceptor_free /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:52:3
+    #1 0x5aac01 in mosquitto__free /src/mosquitto/src/../lib/memory_mosq.c:80:2
+    #2 0x581045 in config__read_file /src/mosquitto/src/conf.c:2501:2
+    #3 0x57ee17 in config__read /src/mosquitto/src/conf.c
+    #4 0x57e168 in config__parse_args /src/mosquitto/src/conf.c:516:8
+    #5 0x5703e8 in mosquitto_fuzz_main /src/mosquitto/src/mosquitto.c:357:7
+    #6 0x56ff0a in run_broker(char*) /src/mosquitto/fuzzing/broker/broker_fuzz_test_config.cpp:42:2
+    #7 0x57011b in LLVMFuzzerTestOneInput /src/mosquitto/fuzzing/broker/broker_fuzz_test_config.cpp:62:2
+    #8 0x4417e3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #9 0x42cf42 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #10 0x4327ec in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #11 0x45bd22 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #12 0x7f91ad8d5082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+
+DEDUP_TOKEN: __interceptor_free--mosquitto__free--config__read_file
+previously allocated by thread T0 here:
+    #0 0x532976 in malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:69:3
+    #1 0x5aac94 in mosquitto__malloc /src/mosquitto/src/../lib/memory_mosq.c:93:8
+    #2 0x580fdc in config__read_file /src/mosquitto/src/conf.c:2493:8
+    #3 0x57ee17 in config__read /src/mosquitto/src/conf.c
+    #4 0x57e168 in config__parse_args /src/mosquitto/src/conf.c:516:8
+    #5 0x5703e8 in mosquitto_fuzz_main /src/mosquitto/src/mosquitto.c:357:7
+    #6 0x56ff0a in run_broker(char*) /src/mosquitto/fuzzing/broker/broker_fuzz_test_config.cpp:42:2
+    #7 0x57011b in LLVMFuzzerTestOneInput /src/mosquitto/fuzzing/broker/broker_fuzz_test_config.cpp:62:2
+    #8 0x4417e3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #9 0x42cf42 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #10 0x4327ec in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #11 0x45bd22 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #12 0x7f91ad8d5082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+
+DEDUP_TOKEN: malloc--mosquitto__malloc--config__read_file
+SUMMARY: AddressSanitizer: bad-free /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:52:3 in __interceptor_free
+==7==ABORTING

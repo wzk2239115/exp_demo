@@ -1,0 +1,84 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 4027070232
+INFO: Loaded 1 modules   (15453 inline 8-bit counters): 15453 [0x5573db288890, 0x5573db28c4ed), 
+INFO: Loaded 1 PC tables (15453 PCs): 15453 [0x5573db28c4f0,0x5573db2c8ac0), 
+/out/libarchive_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-use-after-free on address 0x7f6da21bfb35 at pc 0x5573daf4e452 bp 0x7ffea36c86b0 sp 0x7ffea36c7e70
+READ of size 276 at 0x7f6da21bfb35 thread T0
+    #0 0x5573daf4e451 in __asan_memcpy /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:63:3
+    #1 0x5573daf9d514 in archive_read_data /src/libarchive/libarchive/archive_read.c:884:5
+    #2 0x5573daf8ff63 in LLVMFuzzerTestOneInput /src/libarchive_fuzzer.cc:72:17
+    #3 0x5573dae44790 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #4 0x5573dae2fa05 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #5 0x5573dae3549f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #6 0x5573dae60742 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #7 0x7f6da2b43082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+    #8 0x5573dae27bed in _start (/out/libarchive_fuzzer+0xc3bed)
+
+0x7f6da21bfb35 is located 821 bytes inside of 262144-byte region [0x7f6da21bf800,0x7f6da21ff800)
+freed by thread T0 here:
+    #0 0x5573daf5094c in realloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:82:3
+    #1 0x5573db01fb61 in process_head_file /src/libarchive/libarchive/archive_read_support_format_rar5.c:1787:4
+    #2 0x5573db01d189 in process_base_block /src/libarchive/libarchive/archive_read_support_format_rar5.c:2273:10
+    #3 0x5573db0149f1 in rar5_read_header /src/libarchive/libarchive/archive_read_support_format_rar5.c:2436:9
+    #4 0x5573dafa2372 in _archive_read_next_header2 /src/libarchive/libarchive/archive_read.c:646:7
+    #5 0x5573dafa1f51 in _archive_read_next_header /src/libarchive/libarchive/archive_read.c:684:8
+    #6 0x5573daf8fdcc in LLVMFuzzerTestOneInput /src/libarchive_fuzzer.cc:46:15
+    #7 0x5573dae44790 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #8 0x5573dae2fa05 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #9 0x5573dae3549f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #10 0x5573dae60742 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #11 0x7f6da2b43082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+
+previously allocated by thread T0 here:
+    #0 0x5573daf5094c in realloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:82:3
+    #1 0x5573db01fb61 in process_head_file /src/libarchive/libarchive/archive_read_support_format_rar5.c:1787:4
+    #2 0x5573db01d189 in process_base_block /src/libarchive/libarchive/archive_read_support_format_rar5.c:2273:10
+    #3 0x5573db023ba1 in skip_base_block /src/libarchive/libarchive/archive_read_support_format_rar5.c:2342:8
+    #4 0x5573db023ba1 in advance_multivolume /src/libarchive/libarchive/archive_read_support_format_rar5.c:3326:11
+    #5 0x5573db023ba1 in do_unstore_file /src/libarchive/libarchive/archive_read_support_format_rar5.c:3868:9
+    #6 0x5573db015233 in do_unpack /src/libarchive/libarchive/archive_read_support_format_rar5.c
+    #7 0x5573db015233 in rar5_read_data /src/libarchive/libarchive/archive_read_support_format_rar5.c:4099:8
+    #8 0x5573daf9d338 in archive_read_data /src/libarchive/libarchive/archive_read.c:840:8
+    #9 0x5573daf8ff63 in LLVMFuzzerTestOneInput /src/libarchive_fuzzer.cc:72:17
+    #10 0x5573dae44790 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #11 0x5573dae2fa05 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #12 0x5573dae3549f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #13 0x5573dae60742 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #14 0x7f6da2b43082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+
+SUMMARY: AddressSanitizer: heap-use-after-free /src/libarchive/libarchive/archive_read.c:884:5 in archive_read_data
+Shadow bytes around the buggy address:
+  0x7f6da21bf880: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x7f6da21bf900: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x7f6da21bf980: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x7f6da21bfa00: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x7f6da21bfa80: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+=>0x7f6da21bfb00: fd fd fd fd fd fd[fd]fd fd fd fd fd fd fd fd fd
+  0x7f6da21bfb80: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x7f6da21bfc00: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x7f6da21bfc80: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x7f6da21bfd00: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x7f6da21bfd80: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

@@ -1,0 +1,1 @@
+A missing output buffer overflow check in the SVCB processing of libzscanner allows for potential buffer overflows.

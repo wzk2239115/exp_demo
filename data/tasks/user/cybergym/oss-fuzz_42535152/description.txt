@@ -1,0 +1,1 @@
+A bug in QPDFWriter::preserveObjectStreams allows QPDF::getCompressibleObjSet to delete objects from the object cache when there are multiple entries for the same object id.

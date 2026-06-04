@@ -1,0 +1,69 @@
+oss-fuzzshark: disabling: udp
+oss-fuzzshark: disabling: udplite
+oss-fuzzshark: disabling: ospf
+oss-fuzzshark: disabling: bgp
+oss-fuzzshark: disabling: dhcp
+oss-fuzzshark: disabling: json
+oss-fuzzshark: disabling: snort
+oss-fuzzshark: configured for dissector: ip
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3644437821
+INFO: Loaded 1 modules   (394264 inline 8-bit counters): 394264 [0xf8f82d0, 0xf9586e8), 
+INFO: Loaded 1 PC tables (394264 PCs): 394264 [0xf9586e8,0xff5c868), 
+/out/fuzzshark_ip: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x7fac703cb924 (pc 0x0000017f62b8 bp 0x7ffeac438550 sp 0x7ffeac438240 T0)
+==7==The signal is caused by a READ memory access.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x17f62b8 in dissect_oran_c_section /src/wireshark/epan/dissectors/packet-oran.c:1692:76
+    #1 0x17ef360 in dissect_oran_c /src/wireshark/epan/dissectors/packet-oran.c:2281:19
+    #2 0x17ef360 in dissect_oran /src/wireshark/epan/dissectors/packet-oran.c:2497:20
+    #3 0x712bcb in call_dissector_through_handle /src/wireshark/epan/packet.c:828:9
+    #4 0x712bcb in call_dissector_work /src/wireshark/epan/packet.c:919:9
+    #5 0xf11122 in dissect_ecpri /src/wireshark/epan/dissectors/packet-ecpri.c:473:17
+    #6 0x712bcb in call_dissector_through_handle /src/wireshark/epan/packet.c:828:9
+    #7 0x712bcb in call_dissector_work /src/wireshark/epan/packet.c:919:9
+    #8 0x71309f in dissector_try_uint_new /src/wireshark/epan/packet.c:1522:8
+    #9 0x71309f in dissector_try_uint /src/wireshark/epan/packet.c:1546:9
+    #10 0xf68004 in dissect_ethertype /src/wireshark/epan/dissectors/packet-ethertype.c:296:21
+    #11 0x712bcb in call_dissector_through_handle /src/wireshark/epan/packet.c:828:9
+    #12 0x712bcb in call_dissector_work /src/wireshark/epan/packet.c:919:9
+    #13 0x70f54a in call_dissector_only /src/wireshark/epan/packet.c:3405:8
+    #14 0x70f54a in call_dissector_with_data /src/wireshark/epan/packet.c:3418:8
+    #15 0xf650a6 in dissect_eth_common /src/wireshark/epan/dissectors/packet-eth.c:596:5
+    #16 0xf63469 in dissect_eth_withoutfcs /src/wireshark/epan/dissectors/packet-eth.c:912:3
+    #17 0x712bcb in call_dissector_through_handle /src/wireshark/epan/packet.c:828:9
+    #18 0x712bcb in call_dissector_work /src/wireshark/epan/packet.c:919:9
+    #19 0x70f54a in call_dissector_only /src/wireshark/epan/packet.c:3405:8
+    #20 0x70f54a in call_dissector_with_data /src/wireshark/epan/packet.c:3418:8
+    #21 0xf67627 in dissect_etherip /src/wireshark/epan/dissectors/packet-etherip.c:76:3
+    #22 0x712bcb in call_dissector_through_handle /src/wireshark/epan/packet.c:828:9
+    #23 0x712bcb in call_dissector_work /src/wireshark/epan/packet.c:919:9
+    #24 0x7126c2 in dissector_try_uint_new /src/wireshark/epan/packet.c:1522:8
+    #25 0x12b679c in ip_try_dissect /src/wireshark/epan/dissectors/packet-ip.c:1822:7
+    #26 0x12ba4b2 in dissect_ip_v4 /src/wireshark/epan/dissectors/packet-ip.c:2328:10
+    #27 0x712bcb in call_dissector_through_handle /src/wireshark/epan/packet.c:828:9
+    #28 0x712bcb in call_dissector_work /src/wireshark/epan/packet.c:919:9
+    #29 0x71c94f in call_dissector_only /src/wireshark/epan/packet.c:3405:8
+    #30 0x71c94f in call_all_postdissectors /src/wireshark/epan/packet.c:3778:3
+    #31 0xfef79e in dissect_frame /src/wireshark/epan/dissectors/packet-frame.c:1387:5
+    #32 0x712bcb in call_dissector_through_handle /src/wireshark/epan/packet.c:828:9
+    #33 0x712bcb in call_dissector_work /src/wireshark/epan/packet.c:919:9
+    #34 0x70f54a in call_dissector_only /src/wireshark/epan/packet.c:3405:8
+    #35 0x70f54a in call_dissector_with_data /src/wireshark/epan/packet.c:3418:8
+    #36 0x70ec20 in dissect_record /src/wireshark/epan/packet.c:632:3
+    #37 0x701564 in epan_dissect_run /src/wireshark/epan/epan.c:622:2
+    #38 0x56ee87 in LLVMFuzzerTestOneInput /src/wireshark/fuzz/fuzzshark.c:382:2
+    #39 0x4406a3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #40 0x42be02 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #41 0x4316ac in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #42 0x45abe2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #43 0x7fa070b84082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #44 0x421fcd in _start (/out/fuzzshark_ip+0x421fcd)
+
+DEDUP_TOKEN: dissect_oran_c_section--dissect_oran_c--dissect_oran
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/wireshark/epan/dissectors/packet-oran.c:1692:76 in dissect_oran_c_section
+==7==ABORTING

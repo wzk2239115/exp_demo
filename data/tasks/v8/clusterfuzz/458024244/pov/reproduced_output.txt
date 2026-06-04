@@ -1,0 +1,33 @@
+V8 is running with experimental features enabled. Stability and security will suffer.
+
+
+#
+# Fatal error in ../../src/compiler/backend/instruction.h, line 634
+# Debug check failed: ALLOCATED == op.kind() (5 vs. 0).
+#
+#
+#
+#FailureMessage Object: 0x7fff89d40770
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x55586586e623]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55586586d53d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:231:10) [0x555865853154]
+    out/debug/d8(+0x4cd3a35) [0x555865852a35]
+    d8(v8::internal::maglev::(anonymous namespace)::MaglevFrameTranslationBuilder::BuildDeoptFrameSingleValue(v8::internal::maglev::ValueNode const*, v8::internal::maglev::InputLocation const*&, v8::internal::maglev::VirtualObjectList const&) ./gen/third_party/libc++/src/include/string:2118:12) [0x555862b4c502]
+    d8(v8::internal::maglev::(anonymous namespace)::MaglevFrameTranslationBuilder::BuildDeoptFrameValues(v8::internal::maglev::MaglevCompilationUnit const&, v8::internal::maglev::CompactInterpreterFrameState const*, v8::internal::maglev::ValueNode const*, v8::internal::maglev::InputLocation const*&, v8::internal::maglev::VirtualObjectList const&) ./../../src/maglev/maglev-code-generator.cc:0:13) [0x555862b4beda]
+    d8(v8::internal::maglev::(anonymous namespace)::MaglevFrameTranslationBuilder::RecursiveBuildDeoptFrame(v8::internal::maglev::DeoptFrame const&, v8::internal::maglev::InputLocation const*&, v8::internal::maglev::VirtualObjectList const&) ./../../src/maglev/maglev-code-generator.cc:1274:9) [0x555862b4a75d]
+    d8(v8::internal::maglev::MaglevCodeGenerator::EmitDeopts() ./../../src/maglev/maglev-ir.h:2164:40) [0x555862b46815]
+    d8(v8::internal::maglev::MaglevCodeGenerator::EmitCode() ./../../src/maglev/maglev-code-generator.cc:1793:8) [0x555862b44296]
+    d8(v8::internal::maglev::MaglevCodeGenerator::Assemble() ./../../src/maglev/maglev-code-generator.cc:1735:8) [0x555862b41399]
+    d8(v8::internal::maglev::MaglevCompiler::Compile(v8::internal::LocalIsolate*, v8::internal::maglev::MaglevCompilationInfo*) ./../../src/maglev/maglev-compiler.cc:213:36) [0x555862c70d0a]
+    d8(v8::internal::maglev::MaglevCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./gen/third_party/libc++/src/include/__memory/unique_ptr.h:277:12) [0x555862e2575a]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:453:22) [0x555861beb2b2]
+    d8(v8::internal::(anonymous namespace)::CompileMaglev(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1266:16) [0x555861c10b15]
+    d8(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:0:0) [0x555861bfd511]
+    d8(v8::internal::Compiler::CompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind) ./../../src/handles/maybe-handles-inl.h:35:17) [0x555861bfc589]
+    d8(v8::internal::(anonymous namespace)::CompileOptimized(v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::Isolate*) ./../../src/handles/handles.h:202:22) [0x55586290a11c]
+    d8(v8::internal::__RT_impl_Runtime_OptimizeMaglevEager(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/common/ptr-compr-inl.h:74:18) [0x555862903282]
+    d8(v8::internal::Runtime_OptimizeMaglevEager(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:189:1) [0x555862902e84]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x555864d3767d]
+timeout: the monitored command dumped core

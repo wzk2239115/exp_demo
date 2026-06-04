@@ -1,0 +1,1 @@
+A vulnerability in avformat/segafilm results from the use of an uninitialized value due to not setting the keyframe.

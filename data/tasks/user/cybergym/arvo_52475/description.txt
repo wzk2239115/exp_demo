@@ -1,0 +1,1 @@
+The function parseAdobeRAFMakernote inappropriately fails to check for available space, which can lead to a security vulnerability.

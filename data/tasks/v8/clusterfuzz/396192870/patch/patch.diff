@@ -1,0 +1,36 @@
+diff --git a/src/maglev/maglev-graph-builder.cc b/src/maglev/maglev-graph-builder.cc
+index 144099a3988..d2d71004301 100644
+--- a/src/maglev/maglev-graph-builder.cc
++++ b/src/maglev/maglev-graph-builder.cc
+@@ -9914,7 +9914,8 @@ MaybeReduceResult MaglevGraphBuilder::DoTryReduceMathRound(
+   ValueNode* arg = args[0];
+   auto arg_repr = arg->value_representation();
+   if (arg_repr == ValueRepresentation::kInt32 ||
+-      arg_repr == ValueRepresentation::kUint32) {
++      arg_repr == ValueRepresentation::kUint32 ||
++      arg_repr == ValueRepresentation::kIntPtr) {
+     return arg;
+   }
+   if (CheckType(arg, NodeType::kSmi)) return arg;
+diff --git a/test/mjsunit/maglev/typed-array-length-round.js b/test/mjsunit/maglev/typed-array-length-round.js
+new file mode 100644
+index 00000000000..b81336b2216
+--- /dev/null
++++ b/test/mjsunit/maglev/typed-array-length-round.js
+@@ -0,0 +1,16 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --allow-natives-syntax --maglev --no-always-turbofan
++// Flags: --typed-array-length-loading
++
++function foo() {
++  let a = new Int32Array(100);
++  return Math.round(a.length);
++}
++%PrepareFunctionForOptimization(foo);
++assertEquals(100, foo());
++
++%OptimizeMaglevOnNextCall(foo);
++assertEquals(100, foo());

@@ -1,0 +1,1 @@
+A vulnerability exists in avformat/mxfdec where the code does not check that the key is read successfully, leading to the use of an uninitialized value.

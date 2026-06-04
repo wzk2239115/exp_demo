@@ -1,0 +1,1 @@
+A vulnerability exists where, if the serialize() call fails to write the object, there is unsafe access to uninitialized memory when reading varstore_prime fields.

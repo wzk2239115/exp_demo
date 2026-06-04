@@ -1,0 +1,1 @@
+A use-after-free vulnerability exists in the handling of the indxf structure, where the code frees only the pair instead of properly managing memory, leading to potential access of freed memory.

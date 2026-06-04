@@ -1,0 +1,135 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+==================================================================
+BUG: KASAN: slab-out-of-bounds in _copy_to_iter+0xd18/0x1140 lib/iov_iter.c:527
+Write of size 12 at addr ffff888022c117c7 by task kworker/0:4/3337
+
+CPU: 0 PID: 3337 Comm: kworker/0:4 Not tainted 6.1.0-rc6-syzkaller #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 10/26/2022
+Workqueue: events p9_read_work
+Call Trace:
+ <TASK>
+ __dump_stack lib/dump_stack.c:88 [inline]
+ dump_stack_lvl+0xd1/0x138 lib/dump_stack.c:106
+ print_address_description mm/kasan/report.c:284 [inline]
+ print_report+0x15e/0x45d mm/kasan/report.c:395
+ kasan_report+0xbf/0x1f0 mm/kasan/report.c:495
+ check_region_inline mm/kasan/generic.c:183 [inline]
+ kasan_check_range+0x141/0x190 mm/kasan/generic.c:189
+ memcpy+0x3d/0x60 mm/kasan/shadow.c:66
+ _copy_to_iter+0xd18/0x1140 lib/iov_iter.c:527
+ copy_page_to_iter+0xe0/0xa20 lib/iov_iter.c:725
+ pipe_read+0x50e/0x1110 fs/pipe.c:307
+ __kernel_read+0x2ca/0x7c0 fs/read_write.c:428
+ kernel_read+0xc3/0x1c0 fs/read_write.c:446
+ p9_fd_read net/9p/trans_fd.c:266 [inline]
+ p9_read_work+0x2b0/0x1040 net/9p/trans_fd.c:301
+ process_one_work+0x9bf/0x1710 kernel/workqueue.c:2289
+ worker_thread+0x669/0x1090 kernel/workqueue.c:2436
+ kthread+0x2e8/0x3a0 kernel/kthread.c:376
+ ret_from_fork+0x1f/0x30 arch/x86/entry/entry_64.S:306
+ </TASK>
+
+Allocated by task 3633:
+ kasan_save_stack+0x22/0x40 mm/kasan/common.c:45
+ kasan_set_track+0x25/0x30 mm/kasan/common.c:52
+ ____kasan_kmalloc mm/kasan/common.c:371 [inline]
+ ____kasan_kmalloc mm/kasan/common.c:330 [inline]
+ __kasan_kmalloc+0xa5/0xb0 mm/kasan/common.c:380
+ kasan_kmalloc include/linux/kasan.h:211 [inline]
+ __do_kmalloc_node mm/slab_common.c:955 [inline]
+ __kmalloc+0x5a/0xd0 mm/slab_common.c:968
+ kmalloc include/linux/slab.h:558 [inline]
+ p9_fcall_init+0x97/0x210 net/9p/client.c:228
+ p9_tag_alloc+0x208/0x840 net/9p/client.c:293
+ p9_client_prepare_req+0x177/0x590 net/9p/client.c:631
+ p9_client_rpc+0x1a1/0xd70 net/9p/client.c:678
+ p9_client_walk+0x1a0/0x540 net/9p/client.c:1152
+ clone_fid fs/9p/fid.h:21 [inline]
+ v9fs_fid_xattr_set+0xe4/0x2b0 fs/9p/xattr.c:118
+ v9fs_xattr_set fs/9p/xattr.c:100 [inline]
+ v9fs_xattr_handler_set+0x6f/0x120 fs/9p/xattr.c:159
+ __vfs_setxattr+0x119/0x180 fs/xattr.c:182
+ __vfs_setxattr_noperm+0x129/0x5f0 fs/xattr.c:216
+ __vfs_setxattr_locked+0x1d3/0x260 fs/xattr.c:277
+ vfs_setxattr+0x143/0x340 fs/xattr.c:309
+ setxattr+0x146/0x160 fs/xattr.c:617
+ path_setxattr+0x197/0x1c0 fs/xattr.c:636
+ __do_sys_setxattr fs/xattr.c:652 [inline]
+ __se_sys_setxattr fs/xattr.c:648 [inline]
+ __x64_sys_setxattr+0xc4/0x160 fs/xattr.c:648
+ do_syscall_x64 arch/x86/entry/common.c:50 [inline]
+ do_syscall_64+0x39/0xb0 arch/x86/entry/common.c:80
+ entry_SYSCALL_64_after_hwframe+0x63/0xcd
+
+The buggy address belongs to the object at ffff888022c117c0
+ which belongs to the cache kmalloc-16 of size 16
+The buggy address is located 7 bytes inside of
+ 16-byte region [ffff888022c117c0, ffff888022c117d0)
+
+The buggy address belongs to the physical page:
+page:ffffea00008b0440 refcount:1 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x22c11
+flags: 0xfff00000000200(slab|node=0|zone=1|lastcpupid=0x7ff)
+raw: 00fff00000000200 dead000000000100 dead000000000122 ffff8880120413c0
+raw: 0000000000000000 0000000080800080 00000001ffffffff 0000000000000000
+page dumped because: kasan: bad access detected
+page_owner tracks the page as allocated
+page last allocated via order 0, migratetype Unmovable, gfp_mask 0x12cc0(GFP_KERNEL|__GFP_NOWARN|__GFP_NORETRY), pid 3000, tgid 3000 (udevadm), ts 12517826833, free_ts 10304392140
+ prep_new_page mm/page_alloc.c:2539 [inline]
+ get_page_from_freelist+0x10b5/0x2d50 mm/page_alloc.c:4288
+ __alloc_pages+0x1cb/0x5b0 mm/page_alloc.c:5555
+ alloc_pages+0x1aa/0x270 mm/mempolicy.c:2285
+ alloc_slab_page mm/slub.c:1794 [inline]
+ allocate_slab+0x213/0x300 mm/slub.c:1939
+ new_slab mm/slub.c:1992 [inline]
+ ___slab_alloc+0xa91/0x1400 mm/slub.c:3180
+ __slab_alloc.constprop.0+0x56/0xa0 mm/slub.c:3279
+ slab_alloc_node mm/slub.c:3364 [inline]
+ __kmem_cache_alloc_node+0x199/0x3e0 mm/slub.c:3437
+ __do_kmalloc_node mm/slab_common.c:954 [inline]
+ __kmalloc+0x4a/0xd0 mm/slab_common.c:968
+ kmalloc include/linux/slab.h:558 [inline]
+ kzalloc include/linux/slab.h:689 [inline]
+ kobject_get_path+0xc2/0x230 lib/kobject.c:147
+ kobject_uevent_env+0x257/0x1620 lib/kobject_uevent.c:529
+ kobject_synth_uevent+0x705/0x850 lib/kobject_uevent.c:208
+ bus_uevent_store+0x4a/0x90 drivers/base/bus.c:763
+ bus_attr_store+0x76/0xa0 drivers/base/bus.c:122
+ sysfs_kf_write+0x114/0x170 fs/sysfs/file.c:136
+ kernfs_fop_write_iter+0x3fc/0x610 fs/kernfs/file.c:330
+ call_write_iter include/linux/fs.h:2191 [inline]
+ new_sync_write fs/read_write.c:491 [inline]
+ vfs_write+0x9ed/0xdd0 fs/read_write.c:584
+page last free stack trace:
+ reset_page_owner include/linux/page_owner.h:24 [inline]
+ free_pages_prepare mm/page_alloc.c:1459 [inline]
+ free_pcp_prepare+0x65c/0xd90 mm/page_alloc.c:1509
+ free_unref_page_prepare mm/page_alloc.c:3387 [inline]
+ free_unref_page+0x1d/0x4d0 mm/page_alloc.c:3483
+ kasan_depopulate_vmalloc_pte+0x60/0x80 mm/kasan/shadow.c:372
+ apply_to_pte_range mm/memory.c:2640 [inline]
+ apply_to_pmd_range mm/memory.c:2684 [inline]
+ apply_to_pud_range mm/memory.c:2720 [inline]
+ apply_to_p4d_range mm/memory.c:2756 [inline]
+ __apply_to_page_range+0x68c/0x1030 mm/memory.c:2790
+ kasan_release_vmalloc+0xab/0xc0 mm/kasan/shadow.c:486
+ __purge_vmap_area_lazy+0x885/0x1c50 mm/vmalloc.c:1770
+ _vm_unmap_aliases.part.0+0x420/0x550 mm/vmalloc.c:2173
+ _vm_unmap_aliases mm/vmalloc.c:2147 [inline]
+ vm_unmap_aliases+0x49/0x50 mm/vmalloc.c:2196
+ change_page_attr_set_clr+0x241/0x500 arch/x86/mm/pat/set_memory.c:1781
+ change_page_attr_set arch/x86/mm/pat/set_memory.c:1831 [inline]
+ set_memory_nx+0xb6/0x110 arch/x86/mm/pat/set_memory.c:2024
+ free_init_pages+0x77/0xc0 arch/x86/mm/init.c:908
+ kernel_init+0x32/0x1d0 init/main.c:1528
+ ret_from_fork+0x1f/0x30 arch/x86/entry/entry_64.S:306
+
+Memory state around the buggy address:
+ ffff888022c11680: fa fb fc fc 00 01 fc fc 00 05 fc fc 00 01 fc fc
+ ffff888022c11700: 00 01 fc fc fa fb fc fc 00 06 fc fc fa fb fc fc
+>ffff888022c11780: fa fb fc fc fa fb fc fc 00 03 fc fc 00 03 fc fc
+                                              ^
+ ffff888022c11800: 00 03 fc fc fa fb fc fc 00 02 fc fc fa fb fc fc
+ ffff888022c11880: fa fb fc fc fa fb fc fc 00 03 fc fc 00 03 fc fc
+==================================================================

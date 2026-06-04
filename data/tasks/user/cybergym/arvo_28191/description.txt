@@ -1,0 +1,1 @@
+The ieee1905 reassembly code assumes that address sizes are always 6 bytes, leading to a failing read when processing addresses of different sizes. The code uses a local buffer based on this assumption instead of dynamically allocating memory according to the actual address size from the structures.

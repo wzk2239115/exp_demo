@@ -1,0 +1,1 @@
+A heap-buffer-overflow vulnerability exists in the ndpi_search_raknet function in src/lib/protocols/raknet.c, where a read of size 2 can occur beyond the allocated buffer. This issue is triggered during packet processing and can lead to out-of-bounds memory access.

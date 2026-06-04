@@ -1,0 +1,74 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3700944728
+INFO: Loaded 1 modules   (14148 inline 8-bit counters): 14148 [0x842f370, 0x8432ab4), 
+INFO: Loaded 1 PC tables (14148 PCs): 14148 [0x8432ab4,0x844e4d4), 
+/out/fuzzer_tool_flac: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: stack-buffer-overflow on address 0xfff3334c at pc 0x081cccd4 bp 0xfff32d48 sp 0xfff32d40
+READ of size 4 at 0xfff3334c thread T0
+SCARINESS: 32 (4-byte-read-stack-buffer-overflow)
+    #0 0x81cccd3 in dump_stats /src/flac/oss-fuzz/../src/flac/analyze.c:219:53
+    #1 0x81cbd6b in flac__analyze_frame /src/flac/oss-fuzz/../src/flac/analyze.c:159:10
+    #2 0x81d206f in write_callback /src/flac/oss-fuzz/../src/flac/decode.c:1231:4
+    #3 0x828c77e in write_audio_frame_to_client_ /src/flac/src/libFLAC/stream_decoder.c:3206:12
+    #4 0x827e089 in read_frame_ /src/flac/src/libFLAC/stream_decoder.c:2241:7
+    #5 0x8272baf in FLAC__stream_decoder_process_single /src/flac/src/libFLAC/stream_decoder.c:1002:9
+    #6 0x82843d5 in seek_to_absolute_sample_ /src/flac/src/libFLAC/stream_decoder.c:3418:7
+    #7 0x82843d5 in FLAC__stream_decoder_seek_absolute /src/flac/src/libFLAC/stream_decoder.c:1165:4
+    #8 0x81cf512 in DecoderSession_process /src/flac/oss-fuzz/../src/flac/decode.c:462:7
+    #9 0x81cf512 in flac__decode_file /src/flac/oss-fuzz/../src/flac/decode.c:188:6
+    #10 0x8210f52 in decode_file /src/flac/oss-fuzz/./../src/flac/main.c
+    #11 0x820c781 in do_it /src/flac/oss-fuzz/./../src/flac/main.c:525:15
+    #12 0x820c781 in main_to_fuzz /src/flac/oss-fuzz/./../src/flac/main.c:350:13
+    #13 0x820c781 in LLVMFuzzerTestOneInput /src/flac/oss-fuzz/tool_flac.c:81:2
+    #14 0x808a9ee in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #15 0x807594e in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #16 0x807b550 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned int)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #17 0x80a5137 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #18 0xf7c00ed4 in __libc_start_main (/lib32/libc.so.6+0x1aed4) (BuildId: d56935956a210bf85f6592f3178b979ad4f7b35f)
+    #19 0x806ca95 in _start (/out/fuzzer_tool_flac+0x806ca95)
+
+DEDUP_TOKEN: dump_stats--flac__analyze_frame--write_callback
+Address 0xfff3334c is located in stack of thread T0 at offset 1164 in frame
+    #0 0x81c9a8f in flac__analyze_frame /src/flac/oss-fuzz/../src/flac/analyze.c:66
+
+DEDUP_TOKEN: flac__analyze_frame
+  This frame has 2 object(s):
+    [16, 1040) 'outfilename' (line 68)
+    [1168, 525500) 'stats' (line 69) <== Memory access at offset 1164 underflows this variable
+HINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork
+      (longjmp and C++ exceptions *are* supported)
+SUMMARY: AddressSanitizer: stack-buffer-overflow /src/flac/oss-fuzz/../src/flac/analyze.c:219:53 in dump_stats
+Shadow bytes around the buggy address:
+  0x3ffe6610: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x3ffe6620: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x3ffe6630: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x3ffe6640: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x3ffe6650: 00 00 00 00 00 00 00 00 00 00 f2 f2 f2 f2 f2 f2
+=>0x3ffe6660: f2 f2 f2 f2 f2 f2 f2 f2 f2[f2]00 00 00 00 00 00
+  0x3ffe6670: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x3ffe6680: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x3ffe6690: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x3ffe66a0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x3ffe66b0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

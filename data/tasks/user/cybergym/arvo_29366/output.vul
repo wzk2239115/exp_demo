@@ -1,0 +1,49 @@
+INFO: found LLVMFuzzerCustomMutator (0x8580b0). Disabling -len_control by default.
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3123693222
+INFO: Loaded 1 modules   (56214 inline 8-bit counters): 56214 [0x1552430, 0x155ffc6), 
+INFO: Loaded 1 PC tables (56214 PCs): 56214 [0x155ffc8,0x163b928), 
+/out/cryptofuzz-openssl-api: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0xb7835a in wc_HmacFree /src/wolfssl-openssl-api/wolfcrypt/src/hmac.c:1058:38
+    #1 0x98e6ae in wolfSSL_HMAC_cleanup /src/wolfssl-openssl-api/src/ssl.c:33797:9
+    #2 0x88a951 in cryptofuzz::module::wolfCrypt_OpenSSL_detail::OpHMAC_HMAC(cryptofuzz::operation::HMAC&, fuzzing::datasource::Datasource&) /src/cryptofuzz-openssl-api/modules/wolfcrypt-openssl/module.cpp:221:9
+    #3 0x88b763 in cryptofuzz::module::wolfCrypt_OpenSSL::OpHMAC(cryptofuzz::operation::HMAC&) /src/cryptofuzz-openssl-api/modules/wolfcrypt-openssl/module.cpp:270:16
+    #4 0x54f6d1 in cryptofuzz::ExecutorBase<cryptofuzz::Buffer, cryptofuzz::operation::HMAC>::callModule(std::__1::shared_ptr<cryptofuzz::Module>, cryptofuzz::operation::HMAC&) const /src/cryptofuzz-openssl-api/executor.cpp:75:20
+    #5 0x54d4ff in cryptofuzz::ExecutorBase<cryptofuzz::Buffer, cryptofuzz::operation::HMAC>::Run(fuzzing::datasource::Datasource&, unsigned char const*, unsigned long) const /src/cryptofuzz-openssl-api/executor.cpp:1352:47
+    #6 0x529cab in cryptofuzz::Driver::Run(unsigned char const*, unsigned long) const /src/cryptofuzz-openssl-api/driver.cpp:68:30
+    #7 0x74facd in LLVMFuzzerTestOneInput /src/cryptofuzz-openssl-api/entry.cpp:323:13
+    #8 0x45cc21 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:599:15
+    #9 0x4469b2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #10 0x44ccf5 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9
+    #11 0x476ba2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #12 0x7f0c1c6db83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #13 0x4218c8 in _start (/out/cryptofuzz-openssl-api+0x4218c8)
+
+DEDUP_TOKEN: wc_HmacFree--wolfSSL_HMAC_cleanup--cryptofuzz::module::wolfCrypt_OpenSSL_detail::OpHMAC_HMAC(cryptofuzz::operation::HMAC&, fuzzing::datasource::Datasource&)
+  Uninitialized value was created by a heap allocation
+    #0 0x4d761d in malloc /src/llvm-project/compiler-rt/lib/msan/msan_interceptors.cpp:901:3
+    #1 0xc1b33e in wolfSSL_Malloc /src/wolfssl-openssl-api/wolfcrypt/src/memory.c:140:15
+    #2 0x98ca03 in wolfSSL_HMAC_CTX_new /src/wolfssl-openssl-api/src/ssl.c:33300:31
+    #3 0x88665f in cryptofuzz::module::CTX_Copier<WOLFSSL_HMAC_CTX>::newCTX() const /src/cryptofuzz-openssl-api/modules/wolfcrypt-openssl/./module_internal.h:219:72
+    #4 0x88b339 in cryptofuzz::module::CTX_Copier<WOLFSSL_HMAC_CTX>::CTX_Copier(fuzzing::datasource::Datasource&) /src/cryptofuzz-openssl-api/modules/wolfcrypt-openssl/./module_internal.h:43:19
+    #5 0x88a842 in cryptofuzz::module::wolfCrypt_OpenSSL_detail::OpHMAC_HMAC(cryptofuzz::operation::HMAC&, fuzzing::datasource::Datasource&) /src/cryptofuzz-openssl-api/modules/wolfcrypt-openssl/module.cpp:214:17
+    #6 0x88b763 in cryptofuzz::module::wolfCrypt_OpenSSL::OpHMAC(cryptofuzz::operation::HMAC&) /src/cryptofuzz-openssl-api/modules/wolfcrypt-openssl/module.cpp:270:16
+    #7 0x54f6d1 in cryptofuzz::ExecutorBase<cryptofuzz::Buffer, cryptofuzz::operation::HMAC>::callModule(std::__1::shared_ptr<cryptofuzz::Module>, cryptofuzz::operation::HMAC&) const /src/cryptofuzz-openssl-api/executor.cpp:75:20
+    #8 0x54d4ff in cryptofuzz::ExecutorBase<cryptofuzz::Buffer, cryptofuzz::operation::HMAC>::Run(fuzzing::datasource::Datasource&, unsigned char const*, unsigned long) const /src/cryptofuzz-openssl-api/executor.cpp:1352:47
+    #9 0x529cab in cryptofuzz::Driver::Run(unsigned char const*, unsigned long) const /src/cryptofuzz-openssl-api/driver.cpp:68:30
+    #10 0x74facd in LLVMFuzzerTestOneInput /src/cryptofuzz-openssl-api/entry.cpp:323:13
+    #11 0x45cc21 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:599:15
+    #12 0x4469b2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #13 0x44ccf5 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9
+    #14 0x476ba2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #15 0x7f0c1c6db83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: malloc--wolfSSL_Malloc--wolfSSL_HMAC_CTX_new
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /src/wolfssl-openssl-api/wolfcrypt/src/hmac.c:1058:38 in wc_HmacFree
+Unique heap origins: 216
+Stack depot allocated bytes: 30608
+Unique origin histories: 66
+History depot allocated bytes: 1584
+Exiting

@@ -1,0 +1,1 @@
+A vulnerability exists in _bfd_xcoff_slurp_armap in coff-rs6000.c and xcoff64_slurp_armap in coff64-rs6000.c where the check "count * 8 >= size" can overflow, leading to incorrect bounds checking of the symbol count against the section size. Additionally, there is a risk of strlen running off the end of the buffer due to insufficient allocation.

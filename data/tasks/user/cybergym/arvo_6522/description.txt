@@ -1,0 +1,1 @@
+A vulnerability exists when painting images using interpolation, as 16.16 fixpoint arithmetics limits the width and height of any image that can be painted to 32767. The absence of a size check allows large images to cause overflow and subsequent out-of-bounds accesses.

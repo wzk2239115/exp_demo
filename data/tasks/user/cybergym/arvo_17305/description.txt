@@ -1,0 +1,1 @@
+A vulnerability exists in the RRC code where a freed wmem_strbuf structure is used, which can lead to use-after-free issues.

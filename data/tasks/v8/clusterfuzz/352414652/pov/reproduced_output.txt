@@ -1,0 +1,25 @@
+
+
+#
+# Fatal error in ../../src/ast/scopes.cc, line 2696
+# Debug check failed: !is_hidden().
+#
+#
+#
+#FailureMessage Object: 0x7ffc2a0eb510
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x5636a6c2e373]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x5636a6c2d78d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x5636a6c12174]
+    out/debug/d8(+0x3c5bba5) [0x5636a6c11ba5]
+    d8(void v8::internal::Scope::AllocateScopeInfosRecursively<v8::internal::Isolate>(v8::internal::Isolate*, v8::internal::MaybeHandle<v8::internal::ScopeInfo>, std::__Cr::unordered_map<int, v8::internal::Handle<v8::internal::ScopeInfo>, std::__Cr::hash<int>, std::__Cr::equal_to<int>, std::__Cr::allocator<std::__Cr::pair<int const, v8::internal::Handle<v8::internal::ScopeInfo>>>>&) ./../../src/ast/scopes.cc:0:5) [0x5636a3a0f88f]
+    d8(void v8::internal::Scope::AllocateScopeInfosRecursively<v8::internal::Isolate>(v8::internal::Isolate*, v8::internal::MaybeHandle<v8::internal::ScopeInfo>, std::__Cr::unordered_map<int, v8::internal::Handle<v8::internal::ScopeInfo>, std::__Cr::hash<int>, std::__Cr::equal_to<int>, std::__Cr::allocator<std::__Cr::pair<int const, v8::internal::Handle<v8::internal::ScopeInfo>>>>&) ./../../src/ast/scopes.cc:2719:0) [0x5636a3a0f3d4]
+    d8(void v8::internal::DeclarationScope::AllocateScopeInfos<v8::internal::Isolate>(v8::internal::ParseInfo*, v8::internal::Handle<v8::internal::Script>, v8::internal::Isolate*) ./../../src/handles/handles.h:63:53) [0x5636a3a1081b]
+    d8(bool v8::internal::(anonymous namespace)::IterativelyExecuteAndFinalizeUnoptimizedCompilationJobs<v8::internal::Isolate>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Script>, v8::internal::ParseInfo*, v8::internal::AccountingAllocator*, v8::internal::IsCompiledScope*, std::__Cr::vector<v8::internal::FinalizeUnoptimizedCompilationData, std::__Cr::allocator<v8::internal::FinalizeUnoptimizedCompilationData>>*, std::__Cr::vector<v8::internal::DeferredFinalizationJobData, std::__Cr::allocator<v8::internal::DeferredFinalizationJobData>>*) ./../../third_party/libc++/src/include/vector:759:11) [0x5636a3ba19d9]
+    d8(v8::internal::Compiler::Compile(v8::internal::Isolate*, v8::internal::Handle<v8::internal::SharedFunctionInfo>, v8::internal::Compiler::ClearExceptionFlag, v8::internal::IsCompiledScope*, v8::internal::CreateSourcePositions) ./../../src/codegen/compiler.cc:2729:8) [0x5636a3ba0ecf]
+    d8(v8::internal::Compiler::Compile(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::Compiler::ClearExceptionFlag, v8::internal::IsCompiledScope*) ./../../src/codegen/compiler.cc:2782:7) [0x5636a3ba23b6]
+    d8(v8::internal::__RT_impl_Runtime_CompileLazy(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:64:7) [0x5636a4789431]
+    d8(v8::internal::Runtime_CompileLazy(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:45:1) [0x5636a4788f30]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x5636a63c587d]
+timeout: the monitored command dumped core

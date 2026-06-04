@@ -1,0 +1,76 @@
+======================= INFO =========================
+This binary is built for AFL-fuzz.
+To run the target function on individual input(s) execute this:
+  /out/LJpegDecompressorFuzzer < INPUT_FILE
+or
+  /out/LJpegDecompressorFuzzer INPUT_FILE1 [INPUT_FILE2 ... ]
+To fuzz with afl-fuzz execute this:
+  afl-fuzz [afl-flags] /out/LJpegDecompressorFuzzer [-N]
+afl-fuzz will run N iterations before re-spawning the process (default: 1000)
+======================================================
+Reading 115 bytes from /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: use-after-poison on address 0x7f5aedb64000 at pc 0x0000005602c0 bp 0x7ffd5a3f0750 sp 0x7ffd5a3f0748
+WRITE of size 2 at 0x7f5aedb64000 thread T0
+SCARINESS: 43 (2-byte-write-use-after-poison)
+    #0 0x5602bf in void rawspeed::LJpegDecompressor::decodeN<4>()::{lambda(int)#1}::operator()(int) const /src/librawspeed/src/librawspeed/decompressors/LJpegDecompressor.cpp:130:17
+    #1 0x5602bf in rawspeed::unroll_loop_t<void rawspeed::LJpegDecompressor::decodeN<4>()::{lambda(int)#1}, 1ul>::repeat({lambda(int)#1} const&) /src/librawspeed/src/librawspeed/common/Common.h:194
+    #2 0x5602bf in rawspeed::unroll_loop_t<void rawspeed::LJpegDecompressor::decodeN<4>()::{lambda(int)#1}, 2ul>::repeat({lambda(int)#1} const&) /src/librawspeed/src/librawspeed/common/Common.h:193
+    #3 0x5602bf in rawspeed::unroll_loop_t<void rawspeed::LJpegDecompressor::decodeN<4>()::{lambda(int)#1}, 3ul>::repeat({lambda(int)#1} const&) /src/librawspeed/src/librawspeed/common/Common.h:193
+    #4 0x55cd82 in rawspeed::unroll_loop_t<void rawspeed::LJpegDecompressor::decodeN<4>()::{lambda(int)#1}, 4ul>::repeat({lambda(int)#1} const&) /src/librawspeed/src/librawspeed/common/Common.h:193:5
+    #5 0x55cd82 in void rawspeed::unroll_loop<4ul, void rawspeed::LJpegDecompressor::decodeN<4>()::{lambda(int)#1}>(void rawspeed::LJpegDecompressor::decodeN<4>()::{lambda(int)#1} const&) /src/librawspeed/src/librawspeed/common/Common.h:208
+    #6 0x55cd82 in void rawspeed::LJpegDecompressor::decodeN<4>() /src/librawspeed/src/librawspeed/decompressors/LJpegDecompressor.cpp:129
+    #7 0x56181e in rawspeed::AbstractLJpegDecompressor::decode() /src/librawspeed/src/librawspeed/decompressors/AbstractLJpegDecompressor.cpp:81:7
+    #8 0x5464ca in LLVMFuzzerTestOneInput /src/librawspeed/fuzz/librawspeed/decompressors/LJpegDecompressor.cpp:50:7
+    #9 0x57bbaf in ExecuteFilesOnyByOne(int, char**) /src/libfuzzer/afl/afl_driver.cpp:271:5
+    #10 0x57c14f in main /src/libfuzzer/afl/afl_driver.cpp:308:12
+    #11 0x7f5af03ee83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #12 0x447d28 in _start (/out/LJpegDecompressorFuzzer+0x447d28)
+
+DEDUP_TOKEN: void rawspeed::LJpegDecompressor::decodeN<4>()::{lambda(int)#1}::operator()(int) const--rawspeed::unroll_loop_t<void rawspeed::LJpegDecompressor::decodeN<4>()::{lambda(int)#1}, 1ul>::repeat({lambda(int)#1} const&)--rawspeed::unroll_loop_t<void rawspeed::LJpegDecompressor::decodeN<4>()::{lambda(int)#1}, 2ul>::repeat({lambda(int)#1} const&)
+0x7f5aedb64000 is located 6144 bytes inside of 1689600-byte region [0x7f5aedb62800,0x7f5aedcff000)
+allocated by thread T0 here:
+    #0 0x50b680 in __interceptor_posix_memalign /src/llvm/projects/compiler-rt/lib/asan/asan_malloc_linux.cc:157
+    #1 0x560ebb in rawspeed::alignedMalloc(unsigned long, unsigned long) /src/librawspeed/src/librawspeed/common/Memory.cpp:62:12
+    #2 0x548cbb in unsigned char* rawspeed::alignedMalloc<unsigned char, 16ul>(unsigned long) /src/librawspeed/src/librawspeed/common/Memory.h:60:31
+    #3 0x548cbb in unsigned char* rawspeed::alignedMallocArray<unsigned char, 16ul, false>(unsigned long, unsigned long) /src/librawspeed/src/librawspeed/common/Memory.h:78
+    #4 0x548cbb in rawspeed::RawImageData::createData() /src/librawspeed/src/librawspeed/common/RawImage.cpp:100
+    #5 0x5464a7 in LLVMFuzzerTestOneInput /src/librawspeed/fuzz/librawspeed/decompressors/LJpegDecompressor.cpp:49:11
+    #6 0x57bbaf in ExecuteFilesOnyByOne(int, char**) /src/libfuzzer/afl/afl_driver.cpp:271:5
+    #7 0x57c14f in main /src/libfuzzer/afl/afl_driver.cpp:308:12
+    #8 0x7f5af03ee83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: __interceptor_posix_memalign--rawspeed::alignedMalloc(unsigned long, unsigned long)--unsigned char* rawspeed::alignedMalloc<unsigned char, 16ul>(unsigned long)
+SUMMARY: AddressSanitizer: use-after-poison /src/librawspeed/src/librawspeed/decompressors/LJpegDecompressor.cpp:130:17 in void rawspeed::LJpegDecompressor::decodeN<4>()::{lambda(int)#1}::operator()(int) const
+Shadow bytes around the buggy address:
+  0x0febddb647b0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0febddb647c0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0febddb647d0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0febddb647e0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0febddb647f0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0febddb64800:[f7]f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+  0x0febddb64810: f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+  0x0febddb64820: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0febddb64830: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0febddb64840: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0febddb64850: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

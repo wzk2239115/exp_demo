@@ -1,0 +1,55 @@
+diff --git a/src/ast/ast-function-literal-id-reindexer.cc b/src/ast/ast-function-literal-id-reindexer.cc
+index bd79b016f79..c38d79dfd57 100644
+--- a/src/ast/ast-function-literal-id-reindexer.cc
++++ b/src/ast/ast-function-literal-id-reindexer.cc
+@@ -57,10 +57,11 @@ void AstFunctionLiteralIdReindexer::VisitClassLiteral(ClassLiteral* expr) {
+   for (int i = 0; i < private_members->length(); ++i) {
+     ClassLiteralProperty* prop = private_members->at(i);
+ 
+-    // Private fields have their key and value present in
++    // Private fields and auto-accessors have their key and value present in
+     // instance_members_initializer_function, so they will
+     // already have been visited.
+-    if (prop->kind() == ClassLiteralProperty::Kind::FIELD) {
++    if (prop->kind() == ClassLiteralProperty::Kind::FIELD ||
++        prop->kind() == ClassLiteralProperty::Kind::AUTO_ACCESSOR) {
+       CheckVisited(prop->value());
+     } else {
+       Visit(prop->value());
+diff --git a/src/ast/ast-traversal-visitor.h b/src/ast/ast-traversal-visitor.h
+index 009779434c9..0d6034920be 100644
+--- a/src/ast/ast-traversal-visitor.h
++++ b/src/ast/ast-traversal-visitor.h
+@@ -514,6 +514,13 @@ void AstTraversalVisitor<Subclass>::VisitInitializeClassMembersStatement(
+       RECURSE(Visit(prop->key()));
+     }
+     RECURSE(Visit(prop->value()));
++    if (prop->is_auto_accessor()) {
++      // The generated getter and setter are created after the
++      // ClassLiteralProperty value is created, so we visit them in
++      // the same order.
++      RECURSE(Visit(prop->auto_accessor_info()->generated_getter()));
++      RECURSE(Visit(prop->auto_accessor_info()->generated_setter()));
++    }
+   }
+ }
+ 
+diff --git a/test/mjsunit/decorators/regress-451663010.js b/test/mjsunit/decorators/regress-451663010.js
+new file mode 100644
+index 00000000000..d7c82d02096
+--- /dev/null
++++ b/test/mjsunit/decorators/regress-451663010.js
+@@ -0,0 +1,13 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --js-decorators
++
++((arg = (function wrapper() {
++    class C {
++      accessor #a = function f() {};
++    }
++
++    return C;
++  })) => {})();

@@ -1,0 +1,27 @@
+
+
+#
+# Fatal error in ../../src/objects/objects.cc, line 253
+# Debug check failed: Object::FitsRepresentation(*object, representation).
+#
+#
+#
+#FailureMessage Object: 0x7ffce47261d0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x559e9f6a4cb3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x559e9f6a40cd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:204:10) [0x559e9f688b2d]
+    out/debug/d8(+0x3a5e575) [0x559e9f688575]
+    d8(v8::internal::Handle<v8::internal::Object> v8::internal::Object::WrapForRead<(v8::internal::AllocationType)0, v8::internal::Isolate>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Representation) ./../../src/objects/objects.cc:0:5) [0x559e9d0cf2a8]
+    d8(v8::internal::JSObject::FastPropertyAt(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSObject>, v8::internal::Representation, v8::internal::FieldIndex) ./../../src/objects/js-objects.cc:4544:1) [0x559e9cfb11a8]
+    d8(v8::internal::LookupIterator::FetchValue(v8::internal::AllocationPolicy) const ./../../src/objects/lookup.cc:0:12) [0x559e9d093c7c]
+    d8(v8::internal::Object::GetProperty(v8::internal::LookupIterator*, bool) ./../../src/objects/objects.cc:0:20) [0x559e9d104ebf]
+    d8(v8::internal::JSReceiver::GetOwnPropertyDescriptor(v8::internal::LookupIterator*, v8::internal::PropertyDescriptor*) ./../../src/handles/maybe-handles.h:60:19) [0x559e9cfa9906]
+    d8(v8::internal::JSReceiver::OrdinaryDefineOwnProperty(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSObject>, v8::internal::PropertyKey const&, v8::internal::PropertyDescriptor*, v8::Maybe<v8::internal::ShouldThrow>) ./../../src/objects/js-objects.cc:1395:3) [0x559e9cfa8f44]
+    d8(v8::internal::JSReceiver::OrdinaryDefineOwnProperty(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSObject>, v8::internal::Handle<v8::internal::Object>, v8::internal::PropertyDescriptor*, v8::Maybe<v8::internal::ShouldThrow>) ./../../src/objects/js-objects.cc:1165:1) [0x559e9cfa8dbf]
+    d8(v8::internal::JSReceiver::DefineProperty(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>) ./../../src/objects/js-objects.cc:1038:3) [0x559e9cfa8095]
+    d8(v8::internal::Builtin_Impl_ObjectDefineProperty(v8::internal::BuiltinArguments, v8::internal::Isolate*) ./../../src/builtins/builtins-object.cc:56:10) [0x559e9c6c03ed]
+    d8(v8::internal::Builtin_ObjectDefineProperty(int, unsigned long*, v8::internal::Isolate*) ./../../src/builtins/builtins-object.cc:49:1) [0x559e9c6c00ad]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc:0:0) [0x559e9ee418bd]
+timeout: the monitored command dumped core

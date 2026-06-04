@@ -1,0 +1,1 @@
+A heap-buffer-overflow occurs in the function ndpi_check_punycode_string in ndpi_utils.c at line 98, which is called by ndpi_match_host_subprotocol in ndpi_main.c at line 8652, and further in the HTTP protocol parsing flow in http.c. This vulnerability allows reading out-of-bounds memory when processing certain inputs.

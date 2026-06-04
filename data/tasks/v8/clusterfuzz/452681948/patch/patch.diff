@@ -1,0 +1,38 @@
+diff --git a/src/regexp/regexp-compiler.cc b/src/regexp/regexp-compiler.cc
+index 74585fac967..f872bed3d70 100644
+--- a/src/regexp/regexp-compiler.cc
++++ b/src/regexp/regexp-compiler.cc
+@@ -2595,6 +2595,7 @@ void TextNode::Emit(RegExpCompiler* compiler, Trace* trace) {
+   // If we advance backward, we may end up at the start.
+   successor_trace.AdvanceCurrentPositionInTrace(
+       read_backward() ? -Length() : Length(), compiler);
++  if (compiler->IsRegExpTooBig()) return;
+   successor_trace.set_at_start(read_backward() ? Trace::UNKNOWN
+                                                : Trace::FALSE_VALUE);
+   RecursionCheck rc(compiler);
+diff --git a/src/regexp/regexp-compiler.h b/src/regexp/regexp-compiler.h
+index 102525c00b4..2b9d32ca669 100644
+--- a/src/regexp/regexp-compiler.h
++++ b/src/regexp/regexp-compiler.h
+@@ -561,6 +561,7 @@ class RegExpCompiler {
+   inline void set_flags(RegExpFlags flags) { flags_ = flags; }
+ 
+   void SetRegExpTooBig() { reg_exp_too_big_ = true; }
++  bool IsRegExpTooBig() const { return reg_exp_too_big_; }
+ 
+   inline bool one_byte() { return one_byte_; }
+   inline bool optimize() { return optimize_; }
+diff --git a/test/mjsunit/regress/regress-452681948.js b/test/mjsunit/regress/regress-452681948.js
+new file mode 100644
+index 00000000000..18523ef5578
+--- /dev/null
++++ b/test/mjsunit/regress/regress-452681948.js
+@@ -0,0 +1,8 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++const __v_55 = /* NumberMutator: Replaced 32768 with 32767 */32767;
++const __v_56 = 'a'.repeat(__v_55);
++const __v_57 = new RegExp(`(?<=(?:${__v_56})*)b`);
++try { __v_57.exec(); } catch {}

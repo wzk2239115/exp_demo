@@ -1,0 +1,35 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3583948872
+INFO: Loaded 3 modules   (223344 inline 8-bit counters): 13672 [0x7f68ddf789e0, 0x7f68ddf7bf48), 959 [0x7f68ddfd9a40, 0x7f68ddfd9dff), 208713 [0x381c6b0, 0x384f5f9), 
+INFO: Loaded 3 PC tables (223344 PCs): 13672 [0x7f68ddf7bf48,0x7f68ddfb15c8), 959 [0x7f68ddfd9e00,0x7f68ddfdd9f0), 208713 [0x2a84e10,0x2db42a0), 
+/out/gs_device_pxlmono_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+gsapi_init_with_args: error -100
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x01019fff7fff (pc 0x000000f78649 bp 0x7ffeb3e2ed10 sp 0x7ffeb3e2ebe0 T0)
+==7==The signal is caused by a READ memory access.
+SCARINESS: 20 (wild-addr-read)
+    #0 0xf78649 in gc_trace /src/ghostpdl/./psi/igc.c:915:17
+    #1 0xf73fdc in gs_gc_reclaim /src/ghostpdl/./psi/igc.c:338:21
+    #2 0xea0430 in gs_vmreclaim /src/ghostpdl/./psi/ireclaim.c:165:9
+    #3 0xea0430 in ireclaim /src/ghostpdl/./psi/ireclaim.c:80:12
+    #4 0xe8a505 in interp_reclaim /src/ghostpdl/./psi/interp.c:452:12
+    #5 0x579035 in gs_main_finit /src/ghostpdl/./psi/imain.c:1281:20
+    #6 0x57aa82 in gs_to_exit_with_code /src/ghostpdl/./psi/imain.c:1434:12
+    #7 0x57aa82 in gs_to_exit /src/ghostpdl/./psi/imain.c:1439:12
+    #8 0xe78613 in psapi_exit /src/ghostpdl/./psi/psapi.c:517:5
+    #9 0x56effa in gsapi_exit /src/ghostpdl/./psi/iapi.c:440:12
+    #10 0x56dd9b in fuzz_gs_device(unsigned char const*, unsigned long, int, char const*, char const*, int) /src/gs_fuzzlib.h:144:8
+    #11 0x56e152 in LLVMFuzzerTestOneInput /src/gs_device_pxlmono_fuzzer.cc:18:2
+    #12 0x43f1c3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #13 0x42a922 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #14 0x4301cc in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #15 0x459702 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #16 0x7f68dd979082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #17 0x420aed in _start (/out/gs_device_pxlmono_fuzzer+0x420aed)
+
+DEDUP_TOKEN: gc_trace--gs_gc_reclaim--gs_vmreclaim
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/ghostpdl/./psi/igc.c:915:17 in gc_trace
+==7==ABORTING

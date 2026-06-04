@@ -1,0 +1,1 @@
+The RAR5 reader contains a vulnerability where the `window_mask` variable is not always updated correctly to stay in sync with the `window_size` variable. In one instance, `window_size` is modified without updating `window_mask`, which leads to incorrect memory access outside the current window buffer and can result in a SIGSEGV error.

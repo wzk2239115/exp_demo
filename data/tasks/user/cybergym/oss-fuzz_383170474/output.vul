@@ -1,0 +1,57 @@
+Accepting input from '/tmp/poc'
+Usage for fuzzing: honggfuzz -P [flags] -- /out/fuzz_globals
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x51700000037c at pc 0x555874aa573b bp 0x7ffeb4fd2c90 sp 0x7ffeb4fd2c88
+READ of size 1 at 0x51700000037c thread T0
+    #0 0x555874aa573a in dwarf_dnames_header /src/libdwarf/src/lib/libdwarf/dwarf_debugnames.c:852:17
+    #1 0x555874ad0251 in _dwarf_internal_get_debug_names_globals /src/libdwarf/src/lib/libdwarf/dwarf_global.c:306:15
+    #2 0x555874ad0251 in dwarf_globals_by_type /src/libdwarf/src/lib/libdwarf/dwarf_global.c:1210:15
+    #3 0x555874aa106c in get_globals_example /src/libdwarf/fuzz/fuzz_globals.c:80:9
+    #4 0x555874aa0dcc in LLVMFuzzerTestOneInput /src/libdwarf/fuzz/fuzz_globals.c:64:5
+    #5 0x555874a96ebf in main (/out/fuzz_globals+0x126ebf)
+    #6 0x7f1f35b6f082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+    #7 0x5558749c061d in _start (/out/fuzz_globals+0x5061d)
+
+0x51700000037c is located 0 bytes after 764-byte region [0x517000000080,0x51700000037c)
+allocated by thread T0 here:
+    #0 0x555874a5962f in malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:68:3
+    #1 0x555874b5bac0 in elf_load_nolibelf_section /src/libdwarf/src/lib/libdwarf/dwarf_elfread.c:230:26
+    #2 0x555874adeb4b in _dwarf_load_section /src/libdwarf/src/lib/libdwarf/dwarf_init_finish.c:1999:11
+    #3 0x555874acfa50 in dwarf_globals_by_type /src/libdwarf/src/lib/libdwarf/dwarf_global.c:1202:15
+    #4 0x555874aa106c in get_globals_example /src/libdwarf/fuzz/fuzz_globals.c:80:9
+    #5 0x555874aa0dcc in LLVMFuzzerTestOneInput /src/libdwarf/fuzz/fuzz_globals.c:64:5
+    #6 0x555874a96ebf in main (/out/fuzz_globals+0x126ebf)
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/libdwarf/src/lib/libdwarf/dwarf_debugnames.c:852:17 in dwarf_dnames_header
+Shadow bytes around the buggy address:
+  0x517000000080: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x517000000100: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x517000000180: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x517000000200: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x517000000280: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x517000000300: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00[04]
+  0x517000000380: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x517000000400: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x517000000480: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x517000000500: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x517000000580: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

@@ -1,0 +1,38 @@
+
+
+#
+# Fatal error in ../../src/d8/d8.cc, line 6874
+# d8: Received SIGTERM signal (likely due to a TIMEOUT)
+
+#
+#
+#
+#FailureMessage Object: 0x7ffe68e881a0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x55699c860f73]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55699c8600cd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55699c845de4]
+    d8(v8::(anonymous namespace)::d8_sigterm_handler(int, siginfo_t*, void*) ./../../src/d8/d8.cc:6876:5) [0x556998dd9743]
+    /lib/x86_64-linux-gnu/libc.so.6(+0x45330) [0x7f634aa2b330]
+    /lib/x86_64-linux-gnu/libc.so.6(syscall+0x1d) [0x7f634ab0d28d]
+    d8(absl::synchronization_internal::FutexImpl::WaitAbsoluteTimeout(std::__Cr::atomic<int>*, int, timespec const*) ./../../third_party/abseil-cpp/absl/synchronization/internal/futex.h:112:10) [0x55699a9a641b]
+    d8(absl::synchronization_internal::FutexImpl::Wait(std::__Cr::atomic<int>*, int) ./../../third_party/abseil-cpp/absl/synchronization/internal/futex.h:102:5) [0x55699a9a62ef]
+    d8(absl::synchronization_internal::FutexWaiter::WaitUntil(std::__Cr::atomic<int>*, int, absl::synchronization_internal::KernelTimeout) ./../../third_party/abseil-cpp/absl/synchronization/internal/futex_waiter.cc:45:5) [0x55699a9a6040]
+    d8(absl::synchronization_internal::FutexWaiter::Wait(absl::synchronization_internal::KernelTimeout) ./../../third_party/abseil-cpp/absl/synchronization/internal/futex_waiter.cc:74:15) [0x55699a9a615c]
+    d8(AbslInternalPerThreadSemWait ./../../third_party/abseil-cpp/absl/synchronization/internal/per_thread_sem.cc:93:7) [0x55699a9a6c66]
+    d8(absl::synchronization_internal::PerThreadSem::Wait(absl::synchronization_internal::KernelTimeout) ./../../third_party/abseil-cpp/absl/synchronization/internal/per_thread_sem.h:116:3) [0x55699a9ada3d]
+    d8(absl::Mutex::DecrementSynchSem(absl::Mutex*, absl::base_internal::PerThreadSynch*, absl::synchronization_internal::KernelTimeout) ./../../third_party/abseil-cpp/absl/synchronization/mutex.cc:598:8) [0x55699a9a73cf]
+    d8(absl::CondVar::WaitCommon(absl::Mutex*, absl::synchronization_internal::KernelTimeout) ./../../third_party/abseil-cpp/absl/synchronization/mutex.cc:2640:9) [0x55699a9abd1b]
+    d8(v8::base::ConditionVariable::Wait(v8::base::Mutex*) ./../../src/base/platform/mutex.h:84:5) [0x55699c85227c]
+    d8(v8::platform::DefaultJobHandle::Cancel() ./../../src/libplatform/default-job.cc:152:28) [0x55699c8620cb]
+    d8(v8::internal::maglev::MaglevConcurrentDispatcher::~MaglevConcurrentDispatcher() ./../../src/maglev/maglev-concurrent-dispatcher.cc:353:1) [0x55699a29a876]
+    d8(v8::internal::Isolate::Deinit() ./../../src/execution/isolate.cc:4633:3) [0x5569993089dd]
+    d8(v8::internal::Isolate::Deinitialize(v8::internal::Isolate*) ./gen/third_party/libc++/src/include/__atomic/support/c11.h:207:10) [0x556999308466]
+    d8(v8::internal::Isolate::Delete(v8::internal::Isolate*) ./../../src/execution/isolate.cc:4283:3) [0x55699930836e]
+    d8(v8::Shell::OnExit(v8::Isolate*, bool) ./../../src/d8/d8.cc:4876:31) [0x556998dbd03c]
+    d8(v8::Shell::Main(int, char**) ./../../src/d8/d8.cc:7308:7) [0x556998dcdb65]
+    /lib/x86_64-linux-gnu/libc.so.6(+0x2a1ca) [0x7f634aa101ca]
+    /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b) [0x7f634aa1028b]
+    out/debug/d8(_start+0x2a) [0x556998d8a02a]
+timeout: the monitored command dumped core

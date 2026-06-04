@@ -1,0 +1,32 @@
+
+
+#
+# Fatal error in ../../src/maglev/maglev-interpreter-frame-state.cc, line 805
+# Debug check failed: predecessors_so_far_ < predecessor_count_ (2 vs. 2).
+#
+#
+#
+#FailureMessage Object: 0x7ffc6b408d10
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:390:32) [0x5570acb98533]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x5570acb9769d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x5570acb7ddf4]
+    out/debug/d8(+0x46057e5) [0x5570acb7d7e5]
+    d8(v8::internal::maglev::MergePointInterpreterFrameState::Merge(v8::internal::maglev::MaglevGraphBuilder*, v8::internal::maglev::MaglevCompilationUnit&, v8::internal::maglev::InterpreterFrameState&, v8::internal::maglev::BasicBlock*) ./../../src/maglev/maglev-interpreter-frame-state.cc:0:3) [0x5570aa769e39]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitSingleBytecode() ./../../src/maglev/maglev-graph-builder.h:894:11) [0x5570aa49ec04]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildBody() ./../../src/interpreter/bytecode-array-iterator.h:82:16) [0x5570aa499c80]
+    d8(v8::internal::maglev::MaglevGraphBuilder::Build() ./../../src/maglev/maglev-graph-builder.h:277:3) [0x5570aa49554e]
+    d8(v8::internal::compiler::turboshaft::MaglevGraphBuildingPhase::Run(v8::internal::compiler::turboshaft::PipelineData*, v8::internal::Zone*, v8::internal::compiler::Linkage*) ./../../src/compiler/turboshaft/phase.h:329:51) [0x5570ab84071a]
+    d8(auto v8::internal::compiler::turboshaft::Pipeline::Run<v8::internal::compiler::turboshaft::MaglevGraphBuildingPhase, v8::internal::compiler::Linkage*&>(v8::internal::compiler::Linkage*&) ./../../src/compiler/turboshaft/pipelines.h:92:27) [0x5570ab2954b5]
+    d8(v8::internal::compiler::turboshaft::Pipeline::CreateGraphWithMaglev(v8::internal::compiler::Linkage*) ./../../src/compiler/turboshaft/pipelines.h:143:9) [0x5570ab28824f]
+    d8(v8::internal::compiler::PipelineCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/compiler/pipeline.cc:780:9) [0x5570ab288013]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:471:22) [0x5570a949c232]
+    d8(v8::internal::(anonymous namespace)::CompileTurbofan(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::DirectHandle<v8::internal::SharedFunctionInfo>, v8::internal::ConcurrencyMode, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1107:7) [0x5570a94beff2]
+    d8(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1420:12) [0x5570a94ac838]
+    d8(v8::internal::Compiler::CompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind) ./../../src/handles/maybe-handles-inl.h:40:17) [0x5570a94ae5b9]
+    d8(v8::internal::(anonymous namespace)::CompileOptimized(v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::Isolate*) ./../../src/handles/handles.h:202:22) [0x5570aa1980f5]
+    d8(v8::internal::__RT_impl_Runtime_OptimizeTurbofanEager(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/common/ptr-compr-inl.h:74:18) [0x5570aa1916b2]
+    d8(v8::internal::Runtime_OptimizeTurbofanEager(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:224:1) [0x5570aa1912a0]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x5570ac20a8fd]
+timeout: the monitored command dumped core

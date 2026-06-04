@@ -1,0 +1,1 @@
+A vulnerability exists in which signal handlers may leave signals such as SIGSEGV blocked when longjmp is used to exit from them, due to always saving the signal state with sigsetjmp in gdbsupport/gdb_setjmp.h and cp-support.c (specifically in gdb_demangle). This can result in signals remaining blocked unintentionally, potentially affecting program behavior and security.

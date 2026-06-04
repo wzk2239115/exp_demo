@@ -1,0 +1,1 @@
+A vulnerability exists in read_table_extents() where table_entries is not properly checked, potentially leading to security issues.

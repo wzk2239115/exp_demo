@@ -1,0 +1,75 @@
+model_list:
+  # Wildcard routes: any model under these providers is forwarded automatically.
+  # API keys are read from env vars (ANTHROPIC_API_KEY, OPENAI_API_KEY, etc.)
+  - model_name: anthropic/*
+    litellm_params:
+      model: anthropic/*
+  - model_name: openai/*
+    litellm_params:
+      model: openai/*
+  - model_name: gemini/*
+    litellm_params:
+      model: gemini/*
+  - model_name: gemini-3.1-pro-preview
+    litellm_params:
+      model: gemini/gemini-3.1-pro-preview
+      api_key: "os.environ/GEMINI_API_KEY"
+  - model_name: gemini-2.5-pro
+    litellm_params:
+      model: gemini/gemini-2.5-pro
+      api_key: "os.environ/GEMINI_API_KEY"
+  - model_name: gemini-2.5-flash
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      api_key: "os.environ/GEMINI_API_KEY"
+  - model_name: gemini-2.5-flash-lite
+    litellm_params:
+      model: gemini/gemini-2.5-flash-lite
+      api_key: "os.environ/GEMINI_API_KEY"
+  - model_name: gemini-3-flash-preview
+    litellm_params:
+      model: gemini/gemini-3-flash-preview
+      api_key: "os.environ/GEMINI_API_KEY"
+  - model_name: gemini-3-pro-preview
+    litellm_params:
+      model: gemini/gemini-3-pro-preview
+      api_key: "os.environ/GEMINI_API_KEY"
+
+  # https://github.com/BerriAI/litellm/issues/13059#issuecomment-3289551058
+  # https://docs.z.ai/guides/overview/pricing
+  - model_name: glm-5.1-ant
+    litellm_params:
+      model: anthropic/glm-5.1
+      api_base: "https://api.z.ai/api/anthropic"
+      # api_base: "https://open.bigmodel.cn/api/anthropic"
+      api_key: "os.environ/ZAI_API_KEY"
+      input_cost_per_token: 0.0000014 # $1.40/1M tokens
+      output_cost_per_token: 0.0000044  # $4.40/1 M tokens
+      cache_creation_input_token_cost: 0.0 # Free
+      cache_read_input_token_cost: 0.00000026 # $0.26/1M tokens
+      max_output_tokens: 32000
+
+  - model_name: glm-5-ant
+    litellm_params:
+      model: anthropic/glm-5
+      api_base: "https://api.z.ai/api/anthropic"
+      # api_base: "https://open.bigmodel.cn/api/anthropic"
+      api_key: "os.environ/ZAI_API_KEY"
+      input_cost_per_token: 0.000001 # $1/1M tokens
+      output_cost_per_token: 0.0000032  # $3.2/1 M tokens
+      cache_creation_input_token_cost: 0.0 # Free
+      cache_read_input_token_cost: 0.0000002 # $0.2/1M tokens
+      max_output_tokens: 32000
+
+  # Example: custom model alias with custom pricing
+  # Forwards to claude-sonnet-4-6 but at 5x the price
+  # - model_name: claude-sonnet-4-666
+  #   litellm_params:
+  #     model: anthropic/claude-sonnet-4-6
+  #     input_cost_per_token: 0.000015              # 5x $3/1M = $15/1M
+  #     output_cost_per_token: 0.000075             # 5x $15/1M = $75/1M
+  #     cache_creation_input_token_cost: 0.00001875 # 5x $3.75/1M = $18.75/1M
+  #     cache_read_input_token_cost: 0.0000015      # 5x $0.30/1M = $1.50/1M
+
+litellm_settings:
+  use_chat_completions_url_for_anthropic_messages: true

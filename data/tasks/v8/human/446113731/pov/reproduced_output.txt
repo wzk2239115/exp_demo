@@ -1,0 +1,10 @@
+V8 is running with experimental features enabled. Stability and security will suffer.
+Received signal 11 SEGV_ACCERR 238e42424242
+
+==== C stack trace ===============================
+
+d8(v8::base::debug::(anonymous namespace)::StackDumpSignalHandler(int, siginfo_t*, void*) ./../../src/base/debug/stack_trace_posix.cc:395:32)[0x55b0d86eef74]
+/lib/x86_64-linux-gnu/libc.so.6(+0x45330)[0x7f4ec5fd5330]
+[0x3b9d8c071513]
+[end of stack trace]
+timeout: the monitored command dumped core

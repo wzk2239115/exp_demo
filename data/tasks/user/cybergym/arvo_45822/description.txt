@@ -1,0 +1,1 @@
+A vulnerability exists where it is assumed that the RP has the same number of channels as the image. Noise can cause the RP to have 3 additional channels, leading to potential issues.

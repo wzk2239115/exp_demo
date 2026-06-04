@@ -1,0 +1,26 @@
+diff --git a/src/compiler/js-call-reducer.cc b/src/compiler/js-call-reducer.cc
+index c785c5989b2..d17942a75cc 100644
+--- a/src/compiler/js-call-reducer.cc
++++ b/src/compiler/js-call-reducer.cc
+@@ -4595,6 +4595,9 @@ Reduction JSCallReducer::ReduceJSCall(Node* node) {
+       // succeed.
+       FixedArrayRef bound_arguments = function.bound_arguments(broker());
+       const uint32_t bound_arguments_length = bound_arguments.length();
++      if (arity + bound_arguments_length > Code::kMaxArguments) {
++        return NoChange();
++      }
+       static constexpr int kInlineSize = 16;  // Arbitrary.
+       base::SmallVector<Node*, kInlineSize> args;
+       for (uint32_t i = 0; i < bound_arguments_length; ++i) {
+diff --git a/src/compiler/js-inlining.cc b/src/compiler/js-inlining.cc
+index 1cef8f1fbd0..9f24d6819b2 100644
+--- a/src/compiler/js-inlining.cc
++++ b/src/compiler/js-inlining.cc
+@@ -255,6 +255,7 @@ FrameState JSInliner::CreateArtificialFrameState(
+     Node* callee) {
+   const int argument_count_with_receiver =
+       argument_count + JSCallOrConstructNode::kReceiverOrNewTargetInputCount;
++  CHECK_LE(argument_count_with_receiver, kMaxUInt16);
+   IndirectHandle<BytecodeArray> bytecode_array_handle = {};
+   if (maybe_bytecode_array.has_value()) {
+     bytecode_array_handle = maybe_bytecode_array->object();

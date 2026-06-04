@@ -1,0 +1,28 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3599337844
+INFO: Loaded 1 modules   (7035 inline 8-bit counters): 7035 [0x8327290, 0x8328e0b), 
+INFO: Loaded 1 PC tables (7035 PCs): 7035 [0x8328e0c,0x83369e4), 
+/out/test_blkid_fuzz: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x265e06b2 (pc 0x0822cca8 bp 0xfffd5a88 sp 0xfffd5a50 T0)
+==7==The signal is caused by a READ memory access.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x822cca8 in probe_bcachefs_sb_fields /src/util-linux/libblkid/src/superblocks/bcache.c:191:10
+    #1 0x822cca8 in probe_bcachefs /src/util-linux/libblkid/src/superblocks/bcache.c:264:2
+    #2 0x81ebe1b in superblocks_probe /src/util-linux/libblkid/src/superblocks/superblocks.c:420:9
+    #3 0x81ecd29 in superblocks_safeprobe /src/util-linux/libblkid/src/superblocks/superblocks.c:482:15
+    #4 0x81d843d in blkid_do_safeprobe /src/util-linux/libblkid/src/probe.c:1595:8
+    #5 0x81c9cf3 in LLVMFuzzerTestOneInput /src/util-linux/libblkid/src/fuzz.c:24:9
+    #6 0x808ab6e in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #7 0x8075ace in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #8 0x807b6d0 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned int)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #9 0x80a52b7 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #10 0xf7c75ed4 in __libc_start_main (/lib32/libc.so.6+0x1aed4) (BuildId: d56935956a210bf85f6592f3178b979ad4f7b35f)
+    #11 0x806cc15 in _start (/out/test_blkid_fuzz+0x806cc15)
+
+DEDUP_TOKEN: probe_bcachefs_sb_fields--probe_bcachefs--superblocks_probe
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/util-linux/libblkid/src/superblocks/bcache.c:191:10 in probe_bcachefs_sb_fields
+==7==ABORTING

@@ -1,0 +1,1 @@
+A heap buffer overflow edge-case exists in the parse_msg() function, where a SIP message parsing error log can result in unsafe printing of a non-NULL terminated string. The OpenSIPS PKG memory allocator reduces the severity of this overflow due to its use of a pre-allocated, large chunk of heap memory. Severity is low.

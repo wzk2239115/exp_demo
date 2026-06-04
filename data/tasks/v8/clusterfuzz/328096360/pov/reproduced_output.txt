@@ -1,0 +1,14 @@
+=== stdout ===
+test/mjsunit/mjsunit.js:418: Failure: expected <true> found <false>
+
+Stack: MjsUnitAssertionError
+    at assertTrue test/mjsunit/mjsunit.js 565:5
+    at            test/mjsunit/maglev/alias-materialized-objects.js 23:1
+    throw new MjsUnitAssertionError(
+    ^
+MjsUnitAssertionError
+    at assertTrue test/mjsunit/mjsunit.js 565:5
+    at            test/mjsunit/maglev/alias-materialized-objects.js 23:1
+
+=== exit code ===
+1

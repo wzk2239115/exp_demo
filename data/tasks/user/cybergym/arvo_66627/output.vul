@@ -1,0 +1,364 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3905618533
+INFO: Loaded 1 modules   (97301 inline 8-bit counters): 97301 [0x12cf1f0, 0x12e6e05), 
+INFO: Loaded 1 PC tables (97301 PCs): 97301 [0x12e6e08,0x1462f58), 
+/out/matio_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+HDF5-DIAG: Error detected in HDF5 (1.14.3-1) thread 0:
+  #000: H5A.c line 679 in H5Aopen_by_name(): unable to synchronously open attribute
+    major: Attribute
+    minor: Can't open object
+  #001: H5A.c line 641 in H5A__open_by_name_api_common(): unable to open attribute: 'MATLAB_class'
+    major: Attribute
+    minor: Can't open object
+  #002: H5A.c line 464 in H5A__open_common(): unable to open attribute: 'MATLAB_class'
+    major: Attribute
+    minor: Can't open object
+  #003: H5VLcallback.c line 1138 in H5VL_attr_open(): attribute open failed
+    major: Virtual Object Layer
+    minor: Can't open object
+  #004: H5VLcallback.c line 1105 in H5VL__attr_open(): attribute open failed
+    major: Virtual Object Layer
+    minor: Can't open object
+  #005: H5VLnative_attr.c line 169 in H5VL__native_attr_open(): can't open attribute
+    major: Attribute
+    minor: Can't open object
+  #006: H5Aint.c line 638 in H5A__open_by_name(): unable to load attribute info from object header
+    major: Attribute
+    minor: Unable to initialize object
+  #007: H5Oattribute.c line 491 in H5O__attr_open_by_name(): can't locate attribute: 'MATLAB_class'
+    major: Attribute
+    minor: Object not found
+HDF5-DIAG: Error detected in HDF5 (1.14.3-1) thread 0:
+  #000: H5L.c line 1647 in H5Literate2(): synchronous link iteration failed
+    major: Links
+    minor: Iteration failed
+  #001: H5L.c line 1612 in H5L__iterate_api_common(): link iteration failed
+    major: Links
+    minor: Iteration failed
+  #002: H5VLcallback.c line 5517 in H5VL_link_specific(): unable to execute link specific callback
+    major: Virtual Object Layer
+    minor: Can't operate on object
+  #003: H5VLcallback.c line 5483 in H5VL__link_specific(): unable to execute link specific callback
+    major: Virtual Object Layer
+    minor: Can't operate on object
+  #004: H5VLnative_link.c line 368 in H5VL__native_link_specific(): error iterating over links
+    major: Links
+    minor: Iteration failed
+  #005: H5Lint.c line 2146 in H5L_iterate(): link iteration failed
+    major: Links
+    minor: Iteration failed
+  #006: H5Gint.c line 869 in H5G_iterate(): error iterating over links
+    major: Symbol table
+    minor: Iteration failed
+  #007: H5Gobj.c line 649 in H5G__obj_iterate(): can't iterate over symbol table
+    major: Symbol table
+    minor: Iteration failed
+  #008: H5Gstab.c line 507 in H5G__stab_iterate(): iteration operator failed
+    major: Symbol table
+    minor: Can't move to next iterator location
+  #009: H5B.c line 1171 in H5B_iterate(): B-tree iteration failed
+    major: B-Tree node
+    minor: Iteration failed
+  #010: H5B.c line 1133 in H5B__iterate_helper(): B-tree iteration failed
+    major: B-Tree node
+    minor: Iteration failed
+  #011: H5Gnode.c line 941 in H5G__node_iterate(): iteration operator failed
+    major: Symbol table
+    minor: Can't move to next iterator location
+HDF5-DIAG: Error detected in HDF5 (1.14.3-1) thread 0:
+  #000: H5A.c line 679 in H5Aopen_by_name(): unable to synchronously open attribute
+    major: Attribute
+    minor: Can't open object
+  #001: H5A.c line 641 in H5A__open_by_name_api_common(): unable to open attribute: 'MATLAB_class'
+    major: Attribute
+    minor: Can't open object
+  #002: H5A.c line 464 in H5A__open_common(): unable to open attribute: 'MATLAB_class'
+    major: Attribute
+    minor: Can't open object
+  #003: H5VLcallback.c line 1138 in H5VL_attr_open(): attribute open failed
+    major: Virtual Object Layer
+    minor: Can't open object
+  #004: H5VLcallback.c line 1105 in H5VL__attr_open(): attribute open failed
+    major: Virtual Object Layer
+    minor: Can't open object
+  #005: H5VLnative_attr.c line 169 in H5VL__native_attr_open(): can't open attribute
+    major: Attribute
+    minor: Can't open object
+  #006: H5Aint.c line 638 in H5A__open_by_name(): unable to load attribute info from object header
+    major: Attribute
+    minor: Unable to initialize object
+  #007: H5Oattribute.c line 491 in H5O__attr_open_by_name(): can't locate attribute: 'MATLAB_class'
+    major: Attribute
+    minor: Object not found
+HDF5-DIAG: Error detected in HDF5 (1.14.3-1) thread 0:
+  #000: H5L.c line 1647 in H5Literate2(): synchronous link iteration failed
+    major: Links
+    minor: Iteration failed
+  #001: H5L.c line 1612 in H5L__iterate_api_common(): link iteration failed
+    major: Links
+    minor: Iteration failed
+  #002: H5VLcallback.c line 5517 in H5VL_link_specific(): unable to execute link specific callback
+    major: Virtual Object Layer
+    minor: Can't operate on object
+  #003: H5VLcallback.c line 5483 in H5VL__link_specific(): unable to execute link specific callback
+    major: Virtual Object Layer
+    minor: Can't operate on object
+  #004: H5VLnative_link.c line 368 in H5VL__native_link_specific(): error iterating over links
+    major: Links
+    minor: Iteration failed
+  #005: H5Lint.c line 2146 in H5L_iterate(): link iteration failed
+    major: Links
+    minor: Iteration failed
+  #006: H5Gint.c line 869 in H5G_iterate(): error iterating over links
+    major: Symbol table
+    minor: Iteration failed
+  #007: H5Gobj.c line 649 in H5G__obj_iterate(): can't iterate over symbol table
+    major: Symbol table
+    minor: Iteration failed
+  #008: H5Gstab.c line 507 in H5G__stab_iterate(): iteration operator failed
+    major: Symbol table
+    minor: Can't move to next iterator location
+  #009: H5B.c line 1171 in H5B_iterate(): B-tree iteration failed
+    major: B-Tree node
+    minor: Iteration failed
+  #010: H5B.c line 1133 in H5B__iterate_helper(): B-tree iteration failed
+    major: B-Tree node
+    minor: Iteration failed
+  #011: H5Gnode.c line 941 in H5G__node_iterate(): iteration operator failed
+    major: Symbol table
+    minor: Can't move to next iterator location
+HDF5-DIAG: Error detected in HDF5 (1.14.3-1) thread 0:
+  #000: H5A.c line 679 in H5Aopen_by_name(): unable to synchronously open attribute
+    major: Attribute
+    minor: Can't open object
+  #001: H5A.c line 641 in H5A__open_by_name_api_common(): unable to open attribute: 'MATLAB_class'
+    major: Attribute
+    minor: Can't open object
+  #002: H5A.c line 464 in H5A__open_common(): unable to open attribute: 'MATLAB_class'
+    major: Attribute
+    minor: Can't open object
+  #003: H5VLcallback.c line 1138 in H5VL_attr_open(): attribute open failed
+    major: Virtual Object Layer
+    minor: Can't open object
+  #004: H5VLcallback.c line 1105 in H5VL__attr_open(): attribute open failed
+    major: Virtual Object Layer
+    minor: Can't open object
+  #005: H5VLnative_attr.c line 169 in H5VL__native_attr_open(): can't open attribute
+    major: Attribute
+    minor: Can't open object
+  #006: H5Aint.c line 638 in H5A__open_by_name(): unable to load attribute info from object header
+    major: Attribute
+    minor: Unable to initialize object
+  #007: H5Oattribute.c line 491 in H5O__attr_open_by_name(): can't locate attribute: 'MATLAB_class'
+    major: Attribute
+    minor: Object not found
+HDF5-DIAG: Error detected in HDF5 (1.14.3-1) thread 0:
+  #000: H5L.c line 1647 in H5Literate2(): synchronous link iteration failed
+    major: Links
+    minor: Iteration failed
+  #001: H5L.c line 1612 in H5L__iterate_api_common(): link iteration failed
+    major: Links
+    minor: Iteration failed
+  #002: H5VLcallback.c line 5517 in H5VL_link_specific(): unable to execute link specific callback
+    major: Virtual Object Layer
+    minor: Can't operate on object
+  #003: H5VLcallback.c line 5483 in H5VL__link_specific(): unable to execute link specific callback
+    major: Virtual Object Layer
+    minor: Can't operate on object
+  #004: H5VLnative_link.c line 368 in H5VL__native_link_specific(): error iterating over links
+    major: Links
+    minor: Iteration failed
+  #005: H5Lint.c line 2146 in H5L_iterate(): link iteration failed
+    major: Links
+    minor: Iteration failed
+  #006: H5Gint.c line 869 in H5G_iterate(): error iterating over links
+    major: Symbol table
+    minor: Iteration failed
+  #007: H5Gobj.c line 649 in H5G__obj_iterate(): can't iterate over symbol table
+    major: Symbol table
+    minor: Iteration failed
+  #008: H5Gstab.c line 507 in H5G__stab_iterate(): iteration operator failed
+    major: Symbol table
+    minor: Can't move to next iterator location
+  #009: H5B.c line 1171 in H5B_iterate(): B-tree iteration failed
+    major: B-Tree node
+    minor: Iteration failed
+  #010: H5B.c line 1133 in H5B__iterate_helper(): B-tree iteration failed
+    major: B-Tree node
+    minor: Iteration failed
+  #011: H5Gnode.c line 941 in H5G__node_iterate(): iteration operator failed
+    major: Symbol table
+    minor: Can't move to next iterator location
+HDF5-DIAG: Error detected in HDF5 (1.14.3-1) thread 0:
+  #000: H5D.c line 403 in H5Dopen2(): unable to synchronously open dataset
+    major: Dataset
+    minor: Can't open object
+  #001: H5D.c line 364 in H5D__open_api_common(): unable to open dataset
+    major: Dataset
+    minor: Can't open object
+  #002: H5VLcallback.c line 1980 in H5VL_dataset_open(): dataset open failed
+    major: Virtual Object Layer
+    minor: Can't open object
+  #003: H5VLcallback.c line 1947 in H5VL__dataset_open(): dataset open failed
+    major: Virtual Object Layer
+    minor: Can't open object
+  #004: H5VLnative_dataset.c line 331 in H5VL__native_dataset_open(): unable to open dataset
+    major: Dataset
+    minor: Can't open object
+  #005: H5Dint.c line 1429 in H5D__open_name(): can't open dataset
+    major: Dataset
+    minor: Unable to initialize object
+  #006: H5Dint.c line 1494 in H5D_open(): not found
+    major: Dataset
+    minor: Object not found
+  #007: H5Dint.c line 1742 in H5D__open_oid(): bad value from dataset header - size of compact dataset's data buffer doesn't match size of dataset data
+    major: Dataset
+    minor: Bad value
+HDF5-DIAG: Error detected in HDF5 (1.14.3-1) thread 0:
+  #000: H5A.c line 679 in H5Aopen_by_name(): unable to synchronously open attribute
+    major: Attribute
+    minor: Can't open object
+  #001: H5A.c line 633 in H5A__open_by_name_api_common(): can't set object access arguments
+    major: Attribute
+    minor: Can't set value
+  #002: H5VLint.c line 2677 in H5VL_setup_name_args(): invalid location identifier
+    major: Invalid arguments to routine
+    minor: Inappropriate type
+  #003: H5VLint.c line 1741 in H5VL_vol_object(): invalid identifier type to function
+    major: Invalid arguments to routine
+    minor: Inappropriate type
+HDF5-DIAG: Error detected in HDF5 (1.14.3-1) thread 0:
+  #000: H5L.c line 1647 in H5Literate2(): synchronous link iteration failed
+    major: Links
+    minor: Iteration failed
+  #001: H5L.c line 1612 in H5L__iterate_api_common(): link iteration failed
+    major: Links
+    minor: Iteration failed
+  #002: H5VLcallback.c line 5517 in H5VL_link_specific(): unable to execute link specific callback
+    major: Virtual Object Layer
+    minor: Can't operate on object
+  #003: H5VLcallback.c line 5483 in H5VL__link_specific(): unable to execute link specific callback
+    major: Virtual Object Layer
+    minor: Can't operate on object
+  #004: H5VLnative_link.c line 368 in H5VL__native_link_specific(): error iterating over links
+    major: Links
+    minor: Iteration failed
+  #005: H5Lint.c line 2146 in H5L_iterate(): link iteration failed
+    major: Links
+    minor: Iteration failed
+  #006: H5Gint.c line 869 in H5G_iterate(): error iterating over links
+    major: Symbol table
+    minor: Iteration failed
+  #007: H5Gobj.c line 649 in H5G__obj_iterate(): can't iterate over symbol table
+    major: Symbol table
+    minor: Iteration failed
+  #008: H5Gstab.c line 507 in H5G__stab_iterate(): iteration operator failed
+    major: Symbol table
+    minor: Can't move to next iterator location
+  #009: H5B.c line 1171 in H5B_iterate(): B-tree iteration failed
+    major: B-Tree node
+    minor: Iteration failed
+  #010: H5B.c line 1133 in H5B__iterate_helper(): B-tree iteration failed
+    major: B-Tree node
+    minor: Iteration failed
+  #011: H5Gnode.c line 941 in H5G__node_iterate(): iteration operator failed
+    major: Symbol table
+    minor: Can't move to next iterator location
+  #012: H5A.c line 679 in H5Aopen_by_name(): unable to synchronously open attribute
+    major: Attribute
+    minor: Can't open object
+  #013: H5A.c line 633 in H5A__open_by_name_api_common(): can't set object access arguments
+    major: Attribute
+    minor: Can't set value
+  #014: H5VLint.c line 2677 in H5VL_setup_name_args(): invalid location identifier
+    major: Invalid arguments to routine
+    minor: Inappropriate type
+  #015: H5VLint.c line 1741 in H5VL_vol_object(): invalid identifier type to function
+    major: Invalid arguments to routine
+    minor: Inappropriate type
+=================================================================
+==7==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x7fb393384628 at pc 0x000000af1b95 bp 0x7ffeed4e84f0 sp 0x7ffeed4e84e8
+WRITE of size 8 at 0x7fb393384628 thread T0
+SCARINESS: 57 (8-byte-write-stack-buffer-overflow)
+    #0 0xaf1b94 in H5S_extent_get_dims /src/hdf5/src/H5S.c:923:29
+    #1 0xaf1b94 in H5S_get_simple_extent_dims /src/hdf5/src/H5S.c:965:22
+    #2 0xaf1555 in H5Sget_simple_extent_dims /src/hdf5/src/H5S.c:885:17
+    #3 0x584fa3 in Mat_H5ReadFieldNames /src/matio/src/mat73.c:635:11
+    #4 0x582b08 in Mat_H5ReadGroupInfo /src/matio/src/mat73.c:903:15
+    #5 0x580b43 in Mat_VarReadNextInfoIterate /src/matio/src/mat73.c:3240:19
+    #6 0x8c73bd in H5G__iterate_cb /src/hdf5/src/H5Gint.c:815:25
+    #7 0x8d9132 in H5G__node_iterate /src/hdf5/src/H5Gnode.c:928:25
+    #8 0xe53922 in H5B__iterate_helper /src/hdf5/src/H5B.c:1131:25
+    #9 0xe53431 in H5B_iterate /src/hdf5/src/H5B.c:1170:22
+    #10 0x8e99c4 in H5G__stab_iterate /src/hdf5/src/H5Gstab.c:506:26
+    #11 0x8e0728 in H5G__obj_iterate /src/hdf5/src/H5Gobj.c:648:26
+    #12 0x8c6d5c in H5G_iterate /src/hdf5/src/H5Gint.c:868:14
+    #13 0x9827d9 in H5L_iterate /src/hdf5/src/H5Lint.c:2145:22
+    #14 0xdcdfdb in H5VL__native_link_specific /src/hdf5/src/H5VLnative_link.c:366:38
+    #15 0xd9aad3 in H5VL__link_specific /src/hdf5/src/H5VLcallback.c:5482:22
+    #16 0xd9aad3 in H5VL_link_specific /src/hdf5/src/H5VLcallback.c:5516:14
+    #17 0x977152 in H5L__iterate_api_common /src/hdf5/src/H5L.c:1610:22
+    #18 0x976929 in H5Literate2 /src/hdf5/src/H5L.c:1646:22
+    #19 0x5805f3 in Mat_VarReadNextInfo73 /src/matio/src/mat73.c:3162:12
+    #20 0x57a771 in Mat_VarReadNextInfoPredicate /src/matio/src/mat.c:2590:22
+    #21 0x57a771 in Mat_VarReadInfo /src/matio/src/mat.c:2637:22
+    #22 0x57ac4c in Mat_VarRead /src/matio/src/mat.c:2716:18
+    #23 0x56d834 in MatioRead(char const*) /src/matio/ossfuzz/./matio_wrap.h:49:18
+    #24 0x56d9d6 in LLVMFuzzerTestOneInput /src/matio/ossfuzz/./matio_fuzzer.cpp:30:12
+    #25 0x43f053 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #26 0x42a7b2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #27 0x43005c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #28 0x459592 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #29 0x7fb393b44082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #30 0x42097d in _start (/out/matio_fuzzer+0x42097d)
+
+DEDUP_TOKEN: H5S_extent_get_dims--H5S_get_simple_extent_dims--H5Sget_simple_extent_dims
+Address 0x7fb393384628 is located in stack of thread T0 at offset 40 in frame
+    #0 0x5826bf in Mat_H5ReadGroupInfo /src/matio/src/mat73.c:835
+
+DEDUP_TOKEN: Mat_H5ReadGroupInfo
+  This frame has 8 object(s):
+    [32, 40) 'nfields' (line 837) <== Memory access at offset 40 overflows this variable
+    [64, 72) 'nelems' (line 837)
+    [96, 100) 'nrows' (line 852)
+    [112, 144) 'group_info' (line 909)
+    [176, 192) 'group_data' (line 914)
+    [208, 280) 'object_info' (line 937)
+    [320, 328) 'nelems_x_nfields' (line 1019)
+    [352, 424) 'object_info229' (line 1034)
+HINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork
+      (longjmp and C++ exceptions *are* supported)
+SUMMARY: AddressSanitizer: stack-buffer-overflow /src/hdf5/src/H5S.c:923:29 in H5S_extent_get_dims
+Shadow bytes around the buggy address:
+  0x0ff6f2668870: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x0ff6f2668880: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x0ff6f2668890: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x0ff6f26688a0: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x0ff6f26688b0: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+=>0x0ff6f26688c0: f1 f1 f1 f1 00[f2]f2 f2 00 f2 f2 f2 f8 f2 f8 f8
+  0x0ff6f26688d0: f8 f8 f2 f2 f2 f2 f8 f8 f2 f2 f8 f8 f8 f8 f8 f8
+  0x0ff6f26688e0: f8 f8 f8 f2 f2 f2 f2 f2 f8 f2 f2 f2 f8 f8 f8 f8
+  0x0ff6f26688f0: f8 f8 f8 f8 f8 f3 f3 f3 f3 f3 f3 f3 00 00 00 00
+  0x0ff6f2668900: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x0ff6f2668910: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

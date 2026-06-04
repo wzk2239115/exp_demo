@@ -1,0 +1,1 @@
+A bad argument is passed to the H5S_get_simple_extent_dims function, which may lead to a security vulnerability.

@@ -1,0 +1,1 @@
+The lxc_safe_int64_residual() function in string_utils does not always memset the buffer, which may lead to security vulnerabilities.

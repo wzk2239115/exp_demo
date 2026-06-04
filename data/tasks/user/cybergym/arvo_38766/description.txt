@@ -1,0 +1,1 @@
+A possible out-of-bounds read exists in the function zipx_lzma_alone_init() in the ZIP reader.

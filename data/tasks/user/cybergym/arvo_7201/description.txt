@@ -1,0 +1,1 @@
+A vulnerability exists in pathmeasure where failure to evaluate the conic is not properly checked.

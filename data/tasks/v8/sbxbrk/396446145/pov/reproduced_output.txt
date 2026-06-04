@@ -1,0 +1,77 @@
+v14_addr: 0x496a0
+c: 0x30
+SyntaxError: Bad Unicode escape in JSON at position 4 (line 1 column 5)
+SyntaxError: Bad Unicode escape in JSON at position 4 (line 1 column 5)
+SyntaxError: Bad Unicode escape in JSON at position 4 (line 1 column 5)
+SyntaxError: Bad Unicode escape in JSON at position 4 (line 1 column 5)
+
+Sandbox testing mode is enabled. Only sandbox violations will be reported, all other crashes will be ignored.
+=================================================================
+==12474==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x7b1a3a9705a3 at pc 0x5582a4d1cd14 bp 0x7ffcb5af8650 sp 0x7ffcb5af8648
+WRITE of size 4 at 0x7b1a3a9705a3 thread T0
+    #0 0x5582a4d1cd13 in void v8::internal::JsonParser<unsigned char>::DecodeString<unsigned short>(unsigned short*, unsigned int, unsigned int) src/json/json-parser.cc:2206:19
+    #1 0x5582a4d14b21 in v8::internal::JsonParser<unsigned char>::MakeString(v8::internal::JsonString const&, v8::internal::Handle<v8::internal::String>) src/json/json-parser.cc:2123:7
+    #2 0x5582a4d139a3 in ParseJsonValueRecursive src/json/json-parser.cc:1447:14
+    #3 0x5582a4d139a3 in v8::internal::JsonParser<unsigned char>::ParseJson(v8::internal::DirectHandle<v8::internal::Object>) src/json/json-parser.cc:540:5
+    #4 0x5582a4d13361 in v8::internal::JsonParser<unsigned char>::Parse(v8::internal::Isolate*, v8::internal::Handle<v8::internal::String>, v8::internal::Handle<v8::internal::Object>) src/json/json-parser.h:173:7
+    #5 0x5582a441c250 in v8::internal::Builtin_Impl_JsonParse(v8::internal::BuiltinArguments, v8::internal::Isolate*) src/builtins/builtins-json.cc:25:3
+    #6 0x5582a894d135 in Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc
+    #7 0x5582a88a5c74 in Builtins_InterpreterEntryTrampoline setup-isolate-deserialize.cc
+    #8 0x5582a88a375b in Builtins_JSEntryTrampoline setup-isolate-deserialize.cc
+    #9 0x5582a88a34aa in Builtins_JSEntry setup-isolate-deserialize.cc
+    #10 0x5582a4759354 in Call src/execution/simulator.h:191:12
+    #11 0x5582a4759354 in v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) src/execution/execution.cc:437:22
+    #12 0x5582a475a8f8 in v8::internal::Execution::CallScript(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::DirectHandle<v8::internal::Object>, v8::internal::DirectHandle<v8::internal::Object>) src/execution/execution.cc:537:10
+    #13 0x5582a42fcab7 in v8::Script::Run(v8::Local<v8::Context>, v8::Local<v8::Data>) src/api/api.cc:2146:7
+    #14 0x5582a3f55b77 in v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::String>, v8::Shell::ReportExceptions, v8::Global<v8::Value>*) src/d8/d8.cc:1018:44
+    #15 0x5582a3f81be3 in v8::SourceGroup::Execute(v8::Isolate*) src/d8/d8.cc:4999:10
+    #16 0x5582a3f8cabe in v8::Shell::RunMainIsolate(v8::Isolate*, bool) src/d8/d8.cc:5953:37
+    #17 0x5582a3f8c196 in v8::Shell::RunMain(v8::Isolate*, bool) src/d8/d8.cc:5861:18
+    #18 0x5582a3f8f188 in v8::Shell::Main(int, char**) src/d8/d8.cc:6719:18
+    #19 0x7f1a3cdbc1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 8e9fd827446c24067541ac5390e6f527fb5947bb)
+    #20 0x7f1a3cdbc28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 8e9fd827446c24067541ac5390e6f527fb5947bb)
+    #21 0x5582a3e4f029 in _start (/build/v8/out/release/d8+0x1147029) (BuildId: a4feb6da9b5716ea)
+
+Address 0x7b1a3a9705a3 is located in stack of thread T0 at offset 35 in frame
+    #0 0x5582a4d1480f in v8::internal::JsonParser<unsigned char>::MakeString(v8::internal::JsonString const&, v8::internal::Handle<v8::internal::String>) src/json/json-parser.cc:2116
+
+  This frame has 1 object(s):
+    [32, 34) 'first_char' (line 2119) <== Memory access at offset 35 overflows this variable
+HINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork
+      (longjmp and C++ exceptions *are* supported)
+SUMMARY: AddressSanitizer: stack-buffer-overflow src/json/json-parser.cc:2206:19 in void v8::internal::JsonParser<unsigned char>::DecodeString<unsigned short>(unsigned short*, unsigned int, unsigned int)
+Shadow bytes around the buggy address:
+  0x7b1a3a970300: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x7b1a3a970380: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x7b1a3a970400: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x7b1a3a970480: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x7b1a3a970500: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+=>0x7b1a3a970580: f1 f1 f1 f1[02]f3 f3 f3 f5 f5 f5 f5 f5 f5 f5 f5
+  0x7b1a3a970600: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x7b1a3a970680: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x7b1a3a970700: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x7b1a3a970780: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x7b1a3a970800: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==12474==ABORTING
+
+## V8 sandbox violation detected!
+

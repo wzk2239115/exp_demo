@@ -1,0 +1,1 @@
+A vulnerability exists in i386-dis.c where SIB (Scale-Index-Base) information is used without verifying its presence. The struct instr_info lacks a has_sib field, leading to potential misuse of SIB data. Functions such as get_sib, OP_E_memory, and OP_VEX access or rely on SIB information without checking if it is valid, which can result in incorrect behavior or security issues.

@@ -1,0 +1,31 @@
+INFO: Seed: 3155869060
+INFO: Loaded 1 modules   (118254 inline 8-bit counters): 118254 [0x1c54290, 0x1c7107e), 
+INFO: Loaded 1 PC tables (118254 PCs): 118254 [0x1c71080,0x1e3ef60), 
+/out/php-fuzz-execute: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+MemorySanitizer:DEADLYSIGNAL
+==7==ERROR: MemorySanitizer: SEGV on unknown address 0x7fed658fb000 (pc 0x000001088507 bp 0x7fff976a79f0 sp 0x7fff976a79c0 T7)
+==7==The signal is caused by a READ memory access.
+    #0 0x1088507 in zend_gc_delref /src/php-src/Zend/zend_types.h:1164:2
+    #1 0x10883f6 in i_zval_ptr_dtor /src/php-src/Zend/zend_variables.h:43:8
+    #2 0x1074ff9 in zend_unclean_zval_ptr_dtor /src/php-src/Zend/zend_execute_API.c:213:2
+    #3 0x1134a5c in _zend_hash_del_el_ex /src/php-src/Zend/zend_hash.c:1330:3
+    #4 0x11334f8 in _zend_hash_del_el /src/php-src/Zend/zend_hash.c:1353:2
+    #5 0x113b945 in zend_hash_graceful_reverse_destroy /src/php-src/Zend/zend_hash.c:1807:3
+    #6 0x107563f in shutdown_executor /src/php-src/Zend/zend_execute_API.c:278:3
+    #7 0x10d5e6d in zend_deactivate /src/php-src/Zend/zend.c:1229:2
+    #8 0xe65cd8 in php_request_shutdown /src/php-src/main/main.c:1813:2
+    #9 0x147acc5 in fuzzer_request_shutdown /src/php-src/sapi/fuzzer/fuzzer-sapi.c:192:2
+    #10 0x147b700 in fuzzer_do_request_from_buffer /src/php-src/sapi/fuzzer/fuzzer-sapi.c:263:2
+    #11 0x147a6b3 in LLVMFuzzerTestOneInput /src/php-src/sapi/fuzzer/fuzzer-execute.c:57:2
+    #12 0x47f821 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:559:15
+    #13 0x46afc2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:301:6
+    #14 0x470f5d in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:801:9
+    #15 0x498842 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #16 0x7fed731f783f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #17 0x445768 in _start (/out/php-fuzz-execute+0x445768)
+
+DEDUP_TOKEN: zend_gc_delref--i_zval_ptr_dtor--zend_unclean_zval_ptr_dtor
+MemorySanitizer can not provide additional info.
+SUMMARY: MemorySanitizer: SEGV /src/php-src/Zend/zend_types.h:1164:2 in zend_gc_delref
+==7==ABORTING

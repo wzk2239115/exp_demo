@@ -1,0 +1,1 @@
+A crash occurs when validating a corrupt list array in the C++ implementation, leading to a security vulnerability.

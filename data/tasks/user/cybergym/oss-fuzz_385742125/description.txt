@@ -1,0 +1,1 @@
+A mistake in 2021 introduces an error by adding to an end-section pointer in .debug_abbrev within src/lib/libdwarf/dwarf_util.c. This bug is exposed by heavily fuzzed test objects, allowing -fsanitize to detect the issue.

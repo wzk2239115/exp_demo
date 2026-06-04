@@ -1,0 +1,124 @@
+=== stdout ===
+77816
+77816
+77816
+77816
+77835
+
+=== stderr ===
+Sandbox testing mode is enabled. Only sandbox violations will be reported, all other crashes will be ignored.
+=================================================================
+==11971==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x7e6351b4d1f8 at pc 0x55945c65b4cb bp 0x7ffe91a31170 sp 0x7ffe91a30930
+READ of size 128 at 0x7e6351b4d1f8 thread T0
+    #0 0x55945c65b4ca in __asan_memcpy /b/s/w/ir/cache/builder/src/third_party/llvm/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:63:3
+    #1 0x55945f164f01 in CopyAndZeroExtend src/bigint/mul-fft.cc:483:3
+    #2 0x55945f164f01 in v8::bigint::(anonymous namespace)::FFTContainer::Start(v8::bigint::Digits, int, int, int) src/bigint/mul-fft.cc:538:3
+    #3 0x55945f164a45 in v8::bigint::ProcessorImpl::MultiplyFFT(v8::bigint::RWDigits, v8::bigint::Digits, v8::bigint::Digits) src/bigint/mul-fft.cc:779:7
+    #4 0x55945f13525d in v8::bigint::ProcessorImpl::Multiply(v8::bigint::RWDigits, v8::bigint::Digits, v8::bigint::Digits) src/bigint/bigint-internal.cc:48:10
+    #5 0x55945f15f855 in v8::bigint::ProcessorImpl::DivideBarrett(v8::bigint::RWDigits, v8::bigint::RWDigits, v8::bigint::Digits, v8::bigint::Digits, v8::bigint::Digits, v8::bigint::RWDigits) src/bigint/div-barrett.cc:236:3
+    #6 0x55945f157f04 in v8::bigint::(anonymous namespace)::ToStringFormatter::ProcessLevel(v8::bigint::(anonymous namespace)::RecursionLevel*, v8::bigint::Digits, char*, bool) src/bigint/tostring.cc:521:17
+    #7 0x55945f157a9a in v8::bigint::(anonymous namespace)::ToStringFormatter::ProcessLevel(v8::bigint::(anonymous namespace)::RecursionLevel*, v8::bigint::Digits, char*, bool) src/bigint/tostring.cc:486:13
+    #8 0x55945f15548a in Fast src/bigint/tostring.cc:425:10
+    #9 0x55945f15548a in v8::bigint::ProcessorImpl::ToStringImpl(char*, unsigned int*, v8::bigint::Digits, int, bool, bool) src/bigint/tostring.cc:567:15
+    #10 0x55945f156c9e in ToString src/bigint/tostring.cc:552:3
+    #11 0x55945f156c9e in v8::bigint::Processor::ToString(char*, unsigned int*, v8::bigint::Digits, int, bool) src/bigint/tostring.cc:584:9
+    #12 0x55945d605327 in v8::internal::BigInt::ToString(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::BigInt>, int, v8::internal::ShouldThrow) src/objects/bigint.cc:898:58
+    #13 0x55945df87541 in ToString<v8::internal::Object, v8::internal::DirectHandle> src/objects/objects-inl.h:873:10
+    #14 0x55945df87541 in __RT_impl_Runtime_ToString src/runtime/runtime-object.cc:1275:3
+    #15 0x55945df87541 in v8::internal::Runtime_ToString(int, unsigned long*, v8::internal::Isolate*) src/runtime/runtime-object.cc:1271:1
+    #16 0x559460fd5975 in Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc
+    #17 0x559461027e3b in Builtins_StringAddConvertRight setup-isolate-deserialize.cc
+    #18 0x5594610cc529 in Builtins_AddHandler setup-isolate-deserialize.cc
+    #19 0x559460f2ec74 in Builtins_InterpreterEntryTrampoline setup-isolate-deserialize.cc
+    #20 0x559460f2c75b in Builtins_JSEntryTrampoline setup-isolate-deserialize.cc
+    #21 0x559460f2c4aa in Builtins_JSEntry setup-isolate-deserialize.cc
+    #22 0x55945ce98784 in Call src/execution/simulator.h:191:12
+    #23 0x55945ce98784 in v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) src/execution/execution.cc:437:22
+    #24 0x55945ce964ce in v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::Object>, v8::internal::DirectHandle<v8::internal::Object>, v8::base::Vector<v8::internal::DirectHandle<v8::internal::Object> const>) src/execution/execution.cc:527:10
+    #25 0x55945caa2758 in v8::Function::Call(v8::Isolate*, v8::Local<v8::Context>, v8::Local<v8::Value>, int, v8::Local<v8::Value>*) src/api/api.cc:5605:7
+    #26 0x55945c719367 in v8::OnMessageFromWorkerTask::Run() src/d8/d8.cc:3356:49
+    #27 0x55945ca34ae9 in v8::platform::DefaultPlatform::PumpMessageLoop(v8::Isolate*, v8::platform::MessageLoopBehavior) src/libplatform/default-platform.cc:173:9
+    #28 0x55945c6fb5bc in v8::(anonymous namespace)::ProcessMessages(v8::Isolate*, std::__Cr::function<v8::platform::MessageLoopBehavior ()> const&) src/d8/d8.cc:5940:9
+    #29 0x55945c6efe50 in CompleteMessageLoop src/d8/d8.cc:5996:10
+    #30 0x55945c6efe50 in v8::Shell::FinishExecuting(v8::Isolate*, v8::Global<v8::Context> const&) src/d8/d8.cc:6000:8
+    #31 0x55945c6fb041 in v8::Shell::RunMainIsolate(v8::Isolate*, bool) src/d8/d8.cc:5907:8
+    #32 0x55945c6fa6d6 in v8::Shell::RunMain(v8::Isolate*, bool) src/d8/d8.cc:5812:18
+    #33 0x55945c6fd768 in v8::Shell::Main(int, char**) src/d8/d8.cc:6668:18
+    #34 0x7fd3526091c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 8e9fd827446c24067541ac5390e6f527fb5947bb)
+    #35 0x7fd35260928a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 8e9fd827446c24067541ac5390e6f527fb5947bb)
+    #36 0x55945c5be029 in _start (/build/v8/out/debug/d8+0x10de029) (BuildId: 763f9e85de290f7d)
+
+0x7e6351b4d1f8 is located 8 bytes before 16168-byte region [0x7e6351b4d200,0x7e6351b51128)
+allocated by thread T0 here:
+    #0 0x55945c6973cd in operator new[](unsigned long) /b/s/w/ir/cache/builder/src/third_party/llvm/compiler-rt/lib/asan/asan_new_delete.cpp:89:3
+    #1 0x55945f1585ff in Storage src/bigint/bigint-internal.h:134:38
+    #2 0x55945f1585ff in v8::bigint::(anonymous namespace)::RecursionLevel::ComputeInverse(v8::bigint::ProcessorImpl*, int) src/bigint/tostring.cc:405:30
+    #3 0x55945f155a42 in CreateLevels src/bigint/tostring.cc:386:11
+    #4 0x55945f155a42 in Fast src/bigint/tostring.cc:422:52
+    #5 0x55945f155a42 in v8::bigint::ProcessorImpl::ToStringImpl(char*, unsigned int*, v8::bigint::Digits, int, bool, bool) src/bigint/tostring.cc:567:15
+    #6 0x55945f156c9e in ToString src/bigint/tostring.cc:552:3
+    #7 0x55945f156c9e in v8::bigint::Processor::ToString(char*, unsigned int*, v8::bigint::Digits, int, bool) src/bigint/tostring.cc:584:9
+    #8 0x55945d605327 in v8::internal::BigInt::ToString(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::BigInt>, int, v8::internal::ShouldThrow) src/objects/bigint.cc:898:58
+    #9 0x55945df87541 in ToString<v8::internal::Object, v8::internal::DirectHandle> src/objects/objects-inl.h:873:10
+    #10 0x55945df87541 in __RT_impl_Runtime_ToString src/runtime/runtime-object.cc:1275:3
+    #11 0x55945df87541 in v8::internal::Runtime_ToString(int, unsigned long*, v8::internal::Isolate*) src/runtime/runtime-object.cc:1271:1
+    #12 0x559460fd5975 in Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc
+    #13 0x559461027e3b in Builtins_StringAddConvertRight setup-isolate-deserialize.cc
+    #14 0x5594610cc529 in Builtins_AddHandler setup-isolate-deserialize.cc
+    #15 0x559460f2ec74 in Builtins_InterpreterEntryTrampoline setup-isolate-deserialize.cc
+    #16 0x559460f2c75b in Builtins_JSEntryTrampoline setup-isolate-deserialize.cc
+    #17 0x559460f2c4aa in Builtins_JSEntry setup-isolate-deserialize.cc
+    #18 0x55945ce98784 in Call src/execution/simulator.h:191:12
+    #19 0x55945ce98784 in v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) src/execution/execution.cc:437:22
+    #20 0x55945ce964ce in v8::internal::Execution::Call(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::Object>, v8::internal::DirectHandle<v8::internal::Object>, v8::base::Vector<v8::internal::DirectHandle<v8::internal::Object> const>) src/execution/execution.cc:527:10
+    #21 0x55945caa2758 in v8::Function::Call(v8::Isolate*, v8::Local<v8::Context>, v8::Local<v8::Value>, int, v8::Local<v8::Value>*) src/api/api.cc:5605:7
+    #22 0x55945c719367 in v8::OnMessageFromWorkerTask::Run() src/d8/d8.cc:3356:49
+    #23 0x55945ca34ae9 in v8::platform::DefaultPlatform::PumpMessageLoop(v8::Isolate*, v8::platform::MessageLoopBehavior) src/libplatform/default-platform.cc:173:9
+    #24 0x55945c6fb5bc in v8::(anonymous namespace)::ProcessMessages(v8::Isolate*, std::__Cr::function<v8::platform::MessageLoopBehavior ()> const&) src/d8/d8.cc:5940:9
+    #25 0x55945c6efe50 in CompleteMessageLoop src/d8/d8.cc:5996:10
+    #26 0x55945c6efe50 in v8::Shell::FinishExecuting(v8::Isolate*, v8::Global<v8::Context> const&) src/d8/d8.cc:6000:8
+    #27 0x55945c6fb041 in v8::Shell::RunMainIsolate(v8::Isolate*, bool) src/d8/d8.cc:5907:8
+    #28 0x55945c6fa6d6 in v8::Shell::RunMain(v8::Isolate*, bool) src/d8/d8.cc:5812:18
+    #29 0x55945c6fd768 in v8::Shell::Main(int, char**) src/d8/d8.cc:6668:18
+    #30 0x7fd3526091c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 8e9fd827446c24067541ac5390e6f527fb5947bb)
+    #31 0x7fd35260928a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 8e9fd827446c24067541ac5390e6f527fb5947bb)
+    #32 0x55945c5be029 in _start (/build/v8/out/debug/d8+0x10de029) (BuildId: 763f9e85de290f7d)
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow src/bigint/mul-fft.cc:483:3 in CopyAndZeroExtend
+Shadow bytes around the buggy address:
+  0x7e6351b4cf00: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x7e6351b4cf80: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x7e6351b4d000: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x7e6351b4d080: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x7e6351b4d100: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+=>0x7e6351b4d180: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa[fa]
+  0x7e6351b4d200: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x7e6351b4d280: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x7e6351b4d300: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x7e6351b4d380: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x7e6351b4d400: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==11971==ABORTING
+
+## V8 sandbox violation detected!
+
+=== exit code ===
+1

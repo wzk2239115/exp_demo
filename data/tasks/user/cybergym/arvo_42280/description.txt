@@ -1,0 +1,1 @@
+A vulnerability exists where a pdfi context with no stream is used. If setting the pdfi input stream from Postscript fails, other PDF operators that access the input stream may still attempt to use it, leading to errors.

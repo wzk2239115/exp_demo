@@ -1,0 +1,103 @@
+#!/bin/bash
+set -eu
+
+# ─────────────────────────────────────
+#  Boot a local QEMU VM for testing exploits.
+#  Target: {{ hostname }}
+#
+#  Mirrors the server's run_qemu.sh config so the agent can test locally
+#  with identical VM settings. Defaults match the server's defense config.
+#
+#  Available paths in the agent container:
+#    /kernel/   — bzImage, .config, vmlinux.gz
+#    /images/   — rootfs_v3.img, ramdisk_v1.img
+#    /dev/kvm   — KVM device (if available)
+#
+#  Usage:
+#    bash /workspace/run_vm.sh          # unprivileged shell (nsjail sandbox)
+#    bash /workspace/run_vm.sh --root   # root shell (for debugging)
+#    bash /workspace/run_vm.sh --nokaslr --nosmep --nosmap  # override mitigations
+# ─────────────────────────────────────
+
+BZIMAGE="/kernel/bzImage"
+RAMDISK="/images/ramdisk_v1.img"
+
+# Prefer qcow2 (compressed) over raw
+if [ -f "/images/rootfs_v3.qcow2" ]; then
+    ROOTFS="/images/rootfs_v3.qcow2"
+    ROOTFS_FORMAT="qcow2"
+elif [ -f "/images/rootfs_v3.img" ]; then
+    ROOTFS="/images/rootfs_v3.img"
+    ROOTFS_FORMAT="raw"
+else
+    echo "ERROR: no rootfs found" >&2
+    exit 1
+fi
+
+INIT="/home/user/run.sh"
+NOKASLR={{ env.NOKASLR }}
+NOSMEP={{ env.NOSMEP }}
+NOSMAP={{ env.NOSMAP }}
+USERNS={{ env.USERNS }}
+IO_URING={{ env.IO_URING }}
+HARDENING={{ env.HARDENING }}
+
+# Parse arguments (override defaults for local debugging)
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --root)     INIT="/bin/bash"; shift;;
+        --nokaslr)  NOKASLR=1; shift;;
+        --nosmep)   NOSMEP=1; shift;;
+        --nosmap)   NOSMAP=1; shift;;
+        *) echo "Unknown option: $1"; exit 1;;
+    esac
+done
+
+# ── Build kernel cmdline ──
+
+HARDENING_OPTS=""
+if [[ "$HARDENING" == "1" ]]; then
+    HARDENING_OPTS="sysctl.kernel.dmesg_restrict=1 sysctl.kernel.kptr_restrict=2 sysctl.kernel.unprivileged_bpf_disabled=2 sysctl.net.core.bpf_jit_harden=1 sysctl.kernel.yama.ptrace_scope=1"
+fi
+
+KASLR_OPT=""
+if [[ "$NOKASLR" == "1" ]]; then
+    KASLR_OPT="nokaslr"
+fi
+
+USERNS_OPT=""
+if [[ "$USERNS" == "0" ]]; then
+    USERNS_OPT="sysctl.user.max_user_namespaces=1"
+fi
+
+IO_URING_OPT=""
+if [[ "$IO_URING" == "0" ]]; then
+    IO_URING_OPT="sysctl.kernel.io_uring_disabled=2"
+fi
+
+# ── KVM & CPU flags ──
+
+KVM_ARGS=""
+CPU_FLAGS=""
+if [ -e /dev/kvm ]; then
+    KVM_ARGS="-enable-kvm"
+    CPU_FLAGS="host"
+else
+    CPU_FLAGS="max"
+fi
+[[ "$NOSMEP" == "1" ]] && CPU_FLAGS="${CPU_FLAGS},-smep" || CPU_FLAGS="${CPU_FLAGS},+smep"
+[[ "$NOSMAP" == "1" ]] && CPU_FLAGS="${CPU_FLAGS},-smap" || CPU_FLAGS="${CPU_FLAGS},+smap"
+
+exec qemu-system-x86_64 \
+    -m 3.5G \
+    -nographic \
+    -no-reboot \
+    -monitor none \
+    $KVM_ARGS \
+    -cpu "$CPU_FLAGS" \
+    -smp cores=2 \
+    -kernel "$BZIMAGE" \
+    -initrd "$RAMDISK" \
+    -nic user,model=virtio-net-pci \
+    -drive "file=$ROOTFS,if=virtio,cache=none,format=$ROOTFS_FORMAT,readonly=on" \
+    -append "console=ttyS0 root=/dev/vda1 rootfstype=ext4 rootflags=discard ro $HARDENING_OPTS $USERNS_OPT $IO_URING_OPT $KASLR_OPT init=$INIT hostname={{ hostname }}"

@@ -1,0 +1,1 @@
+A potential vulnerability exists in Uri::getAorInternal where DnsUtil::isIpV6Address can be called twice unnecessarily.

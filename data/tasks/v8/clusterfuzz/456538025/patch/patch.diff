@@ -1,0 +1,52 @@
+diff --git a/src/ast/ast-function-literal-id-reindexer.cc b/src/ast/ast-function-literal-id-reindexer.cc
+index c38d79dfd57..6b5f9b013d7 100644
+--- a/src/ast/ast-function-literal-id-reindexer.cc
++++ b/src/ast/ast-function-literal-id-reindexer.cc
+@@ -87,10 +87,6 @@ void AstFunctionLiteralIdReindexer::VisitClassLiteral(ClassLiteral* expr) {
+       }
+       Visit(prop->value());
+     }
+-    if (prop->kind() == ClassLiteralProperty::Kind::AUTO_ACCESSOR) {
+-      Visit(prop->auto_accessor_info()->generated_getter());
+-      Visit(prop->auto_accessor_info()->generated_setter());
+-    }
+   }
+ }
+ 
+diff --git a/src/ast/ast-traversal-visitor.h b/src/ast/ast-traversal-visitor.h
+index 0d6034920be..4611a80867d 100644
+--- a/src/ast/ast-traversal-visitor.h
++++ b/src/ast/ast-traversal-visitor.h
+@@ -538,6 +538,13 @@ void AstTraversalVisitor<Subclass>::VisitInitializeClassStaticElementsStatement(
+           RECURSE(Visit(prop->key()));
+         }
+         RECURSE(Visit(prop->value()));
++        if (prop->is_auto_accessor()) {
++          // The generated getter and setter are created after the
++          // ClassLiteralProperty value is created, so we visit them in
++          // the same order.
++          RECURSE(Visit(prop->auto_accessor_info()->generated_getter()));
++          RECURSE(Visit(prop->auto_accessor_info()->generated_setter()));
++        }
+         break;
+       }
+       case ClassLiteral::StaticElement::STATIC_BLOCK:
+diff --git a/test/mjsunit/decorators/regress-456538025.js b/test/mjsunit/decorators/regress-456538025.js
+new file mode 100644
+index 00000000000..f82c5f21e23
+--- /dev/null
++++ b/test/mjsunit/decorators/regress-456538025.js
+@@ -0,0 +1,13 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --js-decorators
++
++// Flags: --js-decorators
++((arg = (function wrapper() {
++    class C {
++      accessor[Symbol.for('computed')] = function f() {};
++    }
++    return C;
++  })()) => {})();

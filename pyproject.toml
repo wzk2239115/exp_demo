@@ -1,0 +1,76 @@
+[project]
+name = "cybergym"
+version = "0.1.0"
+description = "A Python project for cyber security evaluation"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.12,<3.14"
+authors = [
+    { name = "Zhun Wang", email = "zhun.wang@berkeley.edu" },
+]
+
+dependencies = [
+    "pydantic>=2.12.5",
+    "docker>=7.1.0",
+    "fastapi>=0.115.0",
+    "uvicorn>=0.33.0",
+    "capstone>=5.0.6",
+    "pydantic-settings>=2.0.0",
+    "httpx>=0.28.1",
+    "tqdm>=4.67.1",
+    "jinja2>=3.1.0",
+    "datasets>=4.8.4",
+]
+
+[project.scripts]
+claude-stream-render = "cybergym.evaluation.agents.claude_stream_renderer:main"
+codex-stream-render = "cybergym.evaluation.agents.codex_stream_renderer:main"
+gemini-stream-render = "cybergym.evaluation.agents.gemini_stream_renderer:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "ruff==0.15.8",
+    "httpx>=0.28.1",
+    "pre-commit>=4.5.1",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "ty>=0.0.31",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/sunblaze-ucb/cybergym-exploit"
+"Bug Tracker" = "https://github.com/sunblaze-ucb/cybergym-exploit/issues"
+
+[project.optional-dependencies]
+proxy = [
+    "litellm[proxy]>=1.83.11",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cybergym"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/cybergym",
+    "README.md",
+    "LICENSE",
+    "DATA_LICENSE.md",
+]
+
+[tool.ruff]
+# Enable flake8-bugbear (`B`) rules.
+# select = ["E", "F", "B", "I", "N", "UP", "S", "A", "C4", "DTZ", "T10", "ISC"]
+line-length = 88
+
+lint.select = ["I", "F"]
+lint.ignore = ["E501"]
+
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]
+"test_*.py" = ["S101"]

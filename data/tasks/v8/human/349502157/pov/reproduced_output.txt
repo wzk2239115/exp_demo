@@ -1,0 +1,19 @@
+=== stderr ===
+Sandbox testing mode is enabled. Write to the page starting at 0x3e6858883000 (available from JavaScript as `Sandbox.targetPage`) to demonstrate a sandbox bypass.
+# Ignoring debug check failure in ../../src/objects/fixed-array-inl.h, line 133: IsInBounds(index)
+
+## V8 sandbox violation detected!
+
+Received signal 11 SEGV_ACCERR 3e6858883000
+
+==== C stack trace ===============================
+
+ [0x7f3ea43bb753]
+ [0x7f3ea43bb6a2]
+ [0x7f3ea3c62330]
+ [0x0bbb47bf9a0f]
+[end of stack trace]
+timeout: the monitored command dumped core
+
+=== exit code ===
+139

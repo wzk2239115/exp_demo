@@ -1,0 +1,1 @@
+--allow-natives-syntax --maglev --maglev-inlining --maglev-escape-analysis 

@@ -1,0 +1,113 @@
+======================= INFO =========================
+This binary is built for AFL-fuzz.
+To run the target function on individual input(s) execute this:
+  /out/fuzzshark_ip_proto-udp < INPUT_FILE
+or
+  /out/fuzzshark_ip_proto-udp INPUT_FILE1 [INPUT_FILE2 ... ]
+To fuzz with afl-fuzz execute this:
+  afl-fuzz [afl-flags] /out/fuzzshark_ip_proto-udp [-N]
+afl-fuzz will run N iterations before re-spawning the process (default: 1000)
+======================================================
+oss-fuzzshark: disabling: ip
+oss-fuzzshark: disabling: udplite
+oss-fuzzshark: disabling: ospf
+oss-fuzzshark: disabling: bgp
+oss-fuzzshark: disabling: dhcp
+oss-fuzzshark: disabling: json
+oss-fuzzshark: disabling: snort
+oss-fuzzshark: configured for dissector: udp in table: ip.proto
+Reading 279 bytes from /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x612000000a57 at pc 0x0000006fd7df bp 0x7ffcf3a5ede0 sp 0x7ffcf3a5edd8
+READ of size 1 at 0x612000000a57 thread T0
+SCARINESS: 12 (1-byte-read-heap-buffer-overflow)
+    #0 0x6fd7de in bytes_to_hexstr_punct /src/wireshark/epan/to_str.c:168:26
+    #1 0x6fd7de in bytestring_to_str /src/wireshark/epan/to_str.c:206:12
+    #2 0x10e61f4 in dissect_1722_acf_lin /src/wireshark/epan/dissectors/packet-ieee1722.c:2836:44
+    #3 0x63c810 in call_dissector_through_handle /src/wireshark/epan/packet.c:706:9
+    #4 0x63c810 in call_dissector_work /src/wireshark/epan/packet.c:799:9
+    #5 0x63cde4 in dissector_try_uint_new /src/wireshark/epan/packet.c:1399:8
+    #6 0x63cde4 in dissector_try_uint /src/wireshark/epan/packet.c:1423:9
+    #7 0x10eb1ae in dissect_1722_acf /src/wireshark/epan/dissectors/packet-ieee1722.c:2356:10
+    #8 0x63c810 in call_dissector_through_handle /src/wireshark/epan/packet.c:706:9
+    #9 0x63c810 in call_dissector_work /src/wireshark/epan/packet.c:799:9
+    #10 0x63924b in call_dissector_only /src/wireshark/epan/packet.c:3183:8
+    #11 0x63924b in call_dissector_with_data /src/wireshark/epan/packet.c:3196:8
+    #12 0x10ea2f8 in dissect_1722_ntscf /src/wireshark/epan/dissectors/packet-ieee1722.c:2043:13
+    #13 0x63c810 in call_dissector_through_handle /src/wireshark/epan/packet.c:706:9
+    #14 0x63c810 in call_dissector_work /src/wireshark/epan/packet.c:799:9
+    #15 0x63cde4 in dissector_try_uint_new /src/wireshark/epan/packet.c:1399:8
+    #16 0x63cde4 in dissector_try_uint /src/wireshark/epan/packet.c:1423:9
+    #17 0x10e7982 in dissect_1722 /src/wireshark/epan/dissectors/packet-ieee1722.c:878:22
+    #18 0x63c810 in call_dissector_through_handle /src/wireshark/epan/packet.c:706:9
+    #19 0x63c810 in call_dissector_work /src/wireshark/epan/packet.c:799:9
+    #20 0x63cde4 in dissector_try_uint_new /src/wireshark/epan/packet.c:1399:8
+    #21 0x63cde4 in dissector_try_uint /src/wireshark/epan/packet.c:1423:9
+    #22 0x1acc9a0 in decode_udp_ports /src/wireshark/epan/dissectors/packet-udp.c:690:7
+    #23 0x1aca909 in dissect /src/wireshark/epan/dissectors/packet-udp.c:1222:5
+    #24 0x1aceaf1 in dissect_udp /src/wireshark/epan/dissectors/packet-udp.c:1228:3
+    #25 0x63c810 in call_dissector_through_handle /src/wireshark/epan/packet.c:706:9
+    #26 0x63c810 in call_dissector_work /src/wireshark/epan/packet.c:799:9
+    #27 0x6457e1 in call_dissector_only /src/wireshark/epan/packet.c:3183:8
+    #28 0x6457e1 in call_all_postdissectors /src/wireshark/epan/packet.c:3558:3
+    #29 0xf11a7c in dissect_frame /src/wireshark/epan/dissectors/packet-frame.c:730:5
+    #30 0x63c810 in call_dissector_through_handle /src/wireshark/epan/packet.c:706:9
+    #31 0x63c810 in call_dissector_work /src/wireshark/epan/packet.c:799:9
+    #32 0x63924b in call_dissector_only /src/wireshark/epan/packet.c:3183:8
+    #33 0x63924b in call_dissector_with_data /src/wireshark/epan/packet.c:3196:8
+    #34 0x638a1b in dissect_record /src/wireshark/epan/packet.c:580:3
+    #35 0x629f97 in epan_dissect_run /src/wireshark/epan/epan.c:564:2
+    #36 0x4cbffe in LLVMFuzzerTestOneInput /src/wireshark/fuzz/fuzzshark.c:381:2
+    #37 0x272599e in ExecuteFilesOnyByOne /src/libfuzzer/afl/afl_driver.cpp:216:5
+    #38 0x272599e in main /src/libfuzzer/afl/afl_driver.cpp:253:12
+    #39 0x7f79adb8383f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #40 0x420478 in _start (/out/fuzzshark_ip_proto-udp+0x420478)
+
+DEDUP_TOKEN: bytes_to_hexstr_punct--bytestring_to_str--dissect_1722_acf_lin
+0x612000000a57 is located 0 bytes to the right of 279-byte region [0x612000000940,0x612000000a57)
+allocated by thread T0 here:
+    #0 0x4c7f6d in operator new(unsigned long) /src/llvm/projects/compiler-rt/lib/asan/asan_new_delete.cpp:99:3
+    #1 0x2725937 in __libcpp_allocate /usr/local/bin/../include/c++/v1/new:253:10
+    #2 0x2725937 in allocate /usr/local/bin/../include/c++/v1/memory:1813:37
+    #3 0x2725937 in allocate /usr/local/bin/../include/c++/v1/memory:1546:21
+    #4 0x2725937 in __vallocate /usr/local/bin/../include/c++/v1/vector:990:37
+    #5 0x2725937 in vector /usr/local/bin/../include/c++/v1/vector:1121:9
+    #6 0x2725937 in ExecuteFilesOnyByOne /src/libfuzzer/afl/afl_driver.cpp:213:23
+    #7 0x2725937 in main /src/libfuzzer/afl/afl_driver.cpp:253:12
+    #8 0x7f79adb8383f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: operator new(unsigned long)--__libcpp_allocate--allocate
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/wireshark/epan/to_str.c:168:26 in bytes_to_hexstr_punct
+Shadow bytes around the buggy address:
+  0x0c247fff80f0: fa fa fa fa fa fa fa fa 00 00 00 00 00 00 00 00
+  0x0c247fff8100: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c247fff8110: 00 00 00 00 00 00 00 00 00 00 00 00 fa fa fa fa
+  0x0c247fff8120: fa fa fa fa fa fa fa fa 00 00 00 00 00 00 00 00
+  0x0c247fff8130: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0c247fff8140: 00 00 00 00 00 00 00 00 00 00[07]fa fa fa fa fa
+  0x0c247fff8150: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c247fff8160: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c247fff8170: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c247fff8180: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c247fff8190: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==7==ABORTING

@@ -1,0 +1,1 @@
+A vulnerability exists in the cmap splay trees where the one-to-many state is not maintained when splitting nodes, potentially leading to incorrect tree structure and behavior.

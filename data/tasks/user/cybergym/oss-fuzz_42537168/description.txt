@@ -1,0 +1,1 @@
+A vulnerability exists where the nesting depth is not checked before pushing a clip mark, which might allow the nesting depth to step outside the layer/clip stack.

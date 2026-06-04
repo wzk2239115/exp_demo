@@ -1,0 +1,1 @@
+A security vulnerability exists in the face builder of the [subset] component, where a failure in memory allocation for table sorting does not cause the reference blob to fail, potentially leading to undefined behavior.

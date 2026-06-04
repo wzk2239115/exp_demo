@@ -1,0 +1,26 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3120438160
+INFO: Loaded 1 modules   (59487 inline 8-bit counters): 59487 [0xd44ec0, 0xd5371f), 
+INFO: Loaded 1 PC tables (59487 PCs): 59487 [0xd53720,0xe3bd10), 
+/out/FuzzJs: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+/src/serenity/Libraries/LibJS/Runtime/Object.cpp:93:60: runtime error: downcast of address 0x00001ab50030 which does not point to an object of type 'JS::GlobalObject'
+0x00001ab50030: note: object is of type 'JS::Object'
+ 00 00 00 00  c0 50 bb 00 00 00 00 00  00 01 01 01 00 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00
+              ^~~~~~~~~~~~~~~~~~~~~~~
+              vptr for 'JS::Object'
+    #0 0x69e064 in JS::Object::Object(JS::Object::GlobalObjectTag) /src/serenity/Libraries/LibJS/Runtime/Object.cpp:93:60
+    #1 0x6d6168 in JS::ScopeObject::ScopeObject(JS::Object::GlobalObjectTag) /src/serenity/Libraries/LibJS/Runtime/ScopeObject.cpp:39:7
+    #2 0x65067b in JS::GlobalObject::GlobalObject() /src/serenity/Libraries/LibJS/Runtime/GlobalObject.cpp:76:7
+    #3 0x5874af in JS::GlobalObject* JS::Heap::allocate_without_global_object<JS::GlobalObject>() /src/serenity/Meta/Lagom/build/../../../Libraries/LibJS/Heap/Heap.h:55:22
+    #4 0x584649 in AK::NonnullOwnPtr<JS::Interpreter> JS::Interpreter::create<JS::GlobalObject>(JS::VM&) /src/serenity/Meta/Lagom/build/../../../Libraries/LibJS/Interpreter.h:55:93
+    #5 0x584033 in LLVMFuzzerTestOneInput /src/serenity/Meta/Lagom/build/../Fuzzers/FuzzJs.cpp:43:28
+    #6 0x513831 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:599:15
+    #7 0x4fd5c2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #8 0x503905 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9
+    #9 0x52d7b2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #10 0x7f2dd3d2a83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #11 0x4d84d8 in _start (/out/FuzzJs+0x4d84d8)
+
+DEDUP_TOKEN: JS::Object::Object(JS::Object::GlobalObjectTag)--JS::ScopeObject::ScopeObject(JS::Object::GlobalObjectTag)--JS::GlobalObject::GlobalObject()
+SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior /src/serenity/Libraries/LibJS/Runtime/Object.cpp:93:60 in 

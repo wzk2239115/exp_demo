@@ -1,0 +1,49 @@
+diff --git a/src/regexp/regexp.cc b/src/regexp/regexp.cc
+index 8cd456bea69..036f4e38673 100644
+--- a/src/regexp/regexp.cc
++++ b/src/regexp/regexp.cc
+@@ -1351,8 +1351,14 @@ bool RegExpResultsCache_MatchGlobalAtom::TryGet(Isolate* isolate,
+   // Here we are looking for a subject slice that 1. starts at the same point
+   // and 2. is of equal length or longer than the cached subject slice.
+   Tagged<SlicedString> sliced_subject = Cast<SlicedString>(subject);
+-  Tagged<SlicedString> cached_subject =
+-      Cast<SlicedString>(cache->get(kSubjectIndex));
++  Tagged<Object> cached_subject_object = cache->get(kSubjectIndex);
++  if (!Is<SlicedString>(cached_subject_object)) {
++    // Note while we insert only sliced strings, they may be converted into
++    // other kinds, e.g. during GC or internalization.
++    Clear(isolate->heap());
++    return false;
++  }
++  auto cached_subject = Cast<SlicedString>(cached_subject_object);
+   if (cached_subject->parent() != sliced_subject->parent()) return false;
+   if (cached_subject->offset() != sliced_subject->offset()) return false;
+   if (cached_subject->length() > sliced_subject->length()) return false;
+diff --git a/test/mjsunit/regress/regress-372819446.js b/test/mjsunit/regress/regress-372819446.js
+new file mode 100644
+index 00000000000..028f64800d9
+--- /dev/null
++++ b/test/mjsunit/regress/regress-372819446.js
+@@ -0,0 +1,22 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++function f0() {
++    const v1 = /2/dvg;
++    class C2 {
++    }
++    const v7 = C2.toString();
++    v7.match(v1);
++    return v7;
++}
++function F16() {
++}
++const v19 = new F16();
++class C20 {
++}
++const v21 = new C20();
++const v22 = delete v21.c;
++const v23 = [];
++v23.toString = f0;
++v19[v23] ^= v22;

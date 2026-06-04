@@ -1,0 +1,18 @@
+=== stderr ===
+Sandbox testing mode is enabled. Write to the page starting at 0x7fef74f9a000 (available from JavaScript as `Sandbox.targetPage`) to demonstrate a sandbox bypass.
+
+## V8 sandbox violation detected!
+
+Received signal 11 SEGV_ACCERR 7fef74f9a000
+
+==== C stack trace ===============================
+
+ [0x7fef75432493]
+ [0x7fef754323e2]
+ [0x7fef74cda330]
+ [0x7fef74f9a000]
+[end of stack trace]
+timeout: the monitored command dumped core
+
+=== exit code ===
+139

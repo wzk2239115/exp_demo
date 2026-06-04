@@ -1,0 +1,28 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3861576922
+INFO: Loaded 1 modules   (314706 inline 8-bit counters): 314706 [0x1497628, 0x14e437a), 
+INFO: Loaded 1 PC tables (314706 PCs): 314706 [0x14e4380,0x19b18a0), 
+/out/fuzz_probe_analyze: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+[31m[HEVC] Error parsing NAL unit type 3
+[0m[31m[Core] corrupted exp-golomb code, 32 leading zeros, max 31 allowed !
+[0mmedia_tools/av_parsers.c:7086:18: runtime error: index 16 out of bounds for type 's32[16]' (aka 'int[16]')
+    #0 0xc7edba in hevc_parse_short_term_ref_pic_set /src/gpac/src/media_tools/av_parsers.c:7086:18
+    #1 0xc59ea3 in gf_hevc_read_sps_bs_internal /src/gpac/src/media_tools/av_parsers.c:8439:14
+    #2 0xc5c3ab in gf_hevc_parse_nalu_bs /src/gpac/src/media_tools/av_parsers.c:8769:30
+    #3 0x70c381 in naludmx_check_dur /src/gpac/src/filters/reframe_nalu.c:576:10
+    #4 0x70fe42 in naludmx_check_pid /src/gpac/src/filters/reframe_nalu.c:1826:3
+    #5 0x7090ce in naludmx_process /src/gpac/src/filters/reframe_nalu.c:3375:4
+    #6 0x4e52b8 in gf_filter_process_task /src/gpac/src/filter_core/filter.c:2971:7
+    #7 0x4cd8e7 in gf_fs_thread_proc /src/gpac/src/filter_core/filter_session.c:2105:3
+    #8 0x4cbe08 in gf_fs_run /src/gpac/src/filter_core/filter_session.c:2405:3
+    #9 0x4c3fde in LLVMFuzzerTestOneInput /src/testsuite/oss-fuzzers/fuzz_probe_analyze.c:21:5
+    #10 0x429e73 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #11 0x4155d2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #12 0x41ae7c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #13 0x4443b2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #14 0x7fa8e5bf0082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #15 0x40b79d in _start (/out/fuzz_probe_analyze+0x40b79d)
+
+DEDUP_TOKEN: hevc_parse_short_term_ref_pic_set--gf_hevc_read_sps_bs_internal--gf_hevc_parse_nalu_bs
+SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior media_tools/av_parsers.c:7086:18 in 

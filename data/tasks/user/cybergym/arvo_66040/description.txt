@@ -1,0 +1,1 @@
+A possible heap overflow occurs with broken m3u8 parsing.

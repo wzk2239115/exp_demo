@@ -1,0 +1,39 @@
+DebugPrint: 0x36f00000fffd: [WasmNull] in ReadOnlySpace
+ - map: 0x36f000002035 <Map(WASM_NULL_TYPE)>
+0x36f000002035: [Map] in ReadOnlySpace
+ - map: 0x36f0000004cd <MetaMap (0x36f000000085 <null>)>
+ - type: WASM_NULL_TYPE
+ - instance size: variable
+ - elements kind: HOLEY_ELEMENTS
+ - enum length: invalid
+ - stable_map
+ - back pointer: 0x36f000000069 <undefined>
+ - prototype_validity cell: 0
+ - instance descriptors (own) #0: 0x36f0000007a9 <DescriptorArray[0]>
+ - prototype: 0x36f000000085 <null>
+ - constructor: 0x36f000000085 <null>
+ - dependent code: 0x36f000000785 <Other heap object (WEAK_ARRAY_LIST_TYPE)>
+ - construction counter: 0
+
+
+
+
+#
+# Fatal error in ../../src/objects/lookup-inl.h, line 62
+# Debug check failed: Handle<To> v8::internal::Cast(Handle<From>, const v8::SourceLocation &) [To = v8::internal::Union<v8::internal::Smi, v8::internal::HeapNumber, v8::internal::BigInt, v8::internal::String, v8::internal::Symbol, v8::internal::Boolean, v8::internal::Null, v8::internal::Undefined, v8::internal::JSReceiver>, From = v8::internal::Object].
+#
+#
+#
+#FailureMessage Object: 0x7fff5cd247b0
+==== C stack trace ===============================
+
+    /build/v8/out/debug/libv8_libbase.so(v8::base::debug::StackTrace::StackTrace()+0x13) [0x7f4306a9cbb3]
+    /build/v8/out/debug/libv8_libplatform.so(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x7f4306a49b4d]
+    /build/v8/out/debug/libv8_libbase.so(V8_Fatal(char const*, int, char const*, ...)+0x194) [0x7f4306a7e244]
+    /build/v8/out/debug/libv8_libbase.so(+0x27c55) [0x7f4306a7dc55]
+    /build/v8/out/debug/libv8.so(v8::internal::Handle<v8::internal::Union<v8::internal::Smi, v8::internal::HeapNumber, v8::internal::BigInt, v8::internal::String, v8::internal::Symbol, v8::internal::Boolean, v8::internal::Null, v8::internal::Undefined, v8::internal::JSReceiver>> v8::internal::Cast<v8::internal::Union<v8::internal::Smi, v8::internal::HeapNumber, v8::internal::BigInt, v8::internal::String, v8::internal::Symbol, v8::internal::Boolean, v8::internal::Null, v8::internal::Undefined, v8::internal::JSReceiver>, v8::internal::Object>(v8::internal::Handle<v8::internal::Object>, v8::SourceLocation const&) ./../../src/handles/handles-inl.h:0:3) [0x7f430813c43e]
+    /build/v8/out/debug/libv8.so(v8::internal::LoadIC::Load(v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Name>, bool, v8::internal::Handle<v8::internal::Object>) ./../../src/objects/lookup-inl.h:62:31) [0x7f430894055f]
+    /build/v8/out/debug/libv8.so(v8::internal::__RT_impl_Runtime_LoadNoFeedbackIC_Miss(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/ic/ic.cc:2799:3) [0x7f4308951960]
+    /build/v8/out/debug/libv8.so(v8::internal::Runtime_LoadNoFeedbackIC_Miss(int, unsigned long*, v8::internal::Isolate*) ./../../src/ic/ic.cc:2784:1) [0x7f4308951460]
+    /build/v8/out/debug/libv8.so(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x7f430797e3fd]
+timeout: the monitored command dumped core

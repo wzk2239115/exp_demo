@@ -1,0 +1,19 @@
+
+
+#
+# Fatal error in ../../src/objects/string-inl.h, line 326
+# Debug check failed: string->IsFlat().
+#
+#
+#
+#FailureMessage Object: 0x7ffe0090cce0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x564f17374b13]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x564f17373efd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x564f17358854]
+    out/debug/d8(+0x3ea5275) [0x564f17358275]
+    d8(v8::internal::IrregexpInterpreter::Match(v8::internal::Isolate*, v8::internal::Tagged<v8::internal::IrRegExpData>, v8::internal::Tagged<v8::internal::String>, int*, int, int, v8::internal::RegExp::CallOrigin) ./../../src/objects/string-inl.h:0:5) [0x564f14d50833]
+    d8(v8::internal::IrregexpInterpreter::MatchForCallFromJs(unsigned long, int, unsigned long, unsigned long, int*, int, v8::internal::RegExp::CallOrigin, v8::internal::Isolate*, unsigned long) ./../../src/regexp/regexp-interpreter.cc:1203:10) [0x564f14d67d06]
+    d8(Builtins_RegExpReplace setup-isolate-deserialize.cc:0:0) [0x564f16e79877]
+timeout: the monitored command dumped core

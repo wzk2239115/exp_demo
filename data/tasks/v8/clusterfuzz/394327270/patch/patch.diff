@@ -1,0 +1,990 @@
+diff --git a/src/codegen/machine-type.cc b/src/codegen/machine-type.cc
+index ca5d63fa4a4..30a4aeb7f0c 100644
+--- a/src/codegen/machine-type.cc
++++ b/src/codegen/machine-type.cc
+@@ -41,6 +41,8 @@ const char* MachineReprToString(MachineRepresentation rep) {
+       return "kRepWord64";
+     case MachineRepresentation::kFloat16:
+       return "kRepFloat16";
++    case MachineRepresentation::kFloat16RawBits:
++      return "kRepFloat16RawBits";
+     case MachineRepresentation::kFloat32:
+       return "kRepFloat32";
+     case MachineRepresentation::kFloat64:
+diff --git a/src/codegen/machine-type.h b/src/codegen/machine-type.h
+index 04dd19afd2c..e5ad8f72e21 100644
+--- a/src/codegen/machine-type.h
++++ b/src/codegen/machine-type.h
+@@ -47,6 +47,10 @@ enum class MachineRepresentation : uint8_t {
+   // A 64-bit pointer encoded in a way (e.g. as offset) that guarantees it will
+   // point into the sandbox.
+   kSandboxedPointer,
++  // kFloat16RawBits is not a real FP representation! It's representation of a
++  // float16 bitcast to a word16, and is used for conversions to and from
++  // Float16Array elements. It is not used after machine lowering.
++  kFloat16RawBits,
+   // FP and SIMD representations must be last, and in order of increasing size.
+   kFloat16,
+   kFloat32,
+diff --git a/src/compiler/access-builder.cc b/src/compiler/access-builder.cc
+index 1cfef4538d0..cb94b3b57c8 100644
+--- a/src/compiler/access-builder.cc
++++ b/src/compiler/access-builder.cc
+@@ -1298,6 +1298,10 @@ ElementAccess AccessBuilder::ForTypedArrayElement(ExternalArrayType type,
+       return access;
+     }
+     case kExternalFloat16Array: {
++      // Accesses to Float16Array use float16 raw bits because spotty native
++      // fp16 support across architectures. See
++      // MachineRepresentation::kFloat16RawBits, which is used during simplified
++      // lowering to insert the correct conversions.
+       ElementAccess access = {taggedness, header_size, Type::Number(),
+                               MachineType::Uint16(), kNoWriteBarrier};
+       return access;
+diff --git a/src/compiler/backend/arm/instruction-selector-arm.cc b/src/compiler/backend/arm/instruction-selector-arm.cc
+index 50cc69c1e64..13b6502073e 100644
+--- a/src/compiler/backend/arm/instruction-selector-arm.cc
++++ b/src/compiler/backend/arm/instruction-selector-arm.cc
+@@ -1007,6 +1007,7 @@ void InstructionSelectorT<Adapter>::VisitLoad(node_t node) {
+     case MachineRepresentation::kSandboxedPointer:   // Fall through.
+     case MachineRepresentation::kWord64:             // Fall through.
+     case MachineRepresentation::kMapWord:            // Fall through.
++    case MachineRepresentation::kFloat16RawBits:     // Fall through.
+     case MachineRepresentation::kNone:
+       UNREACHABLE();
+   }
+@@ -1051,6 +1052,7 @@ ArchOpcode GetStoreOpcode(MachineRepresentation rep) {
+     case MachineRepresentation::kSandboxedPointer:   // Fall through.
+     case MachineRepresentation::kWord64:             // Fall through.
+     case MachineRepresentation::kMapWord:            // Fall through.
++    case MachineRepresentation::kFloat16RawBits:     // Fall through.
+     case MachineRepresentation::kNone:
+       UNREACHABLE();
+   }
+diff --git a/src/compiler/backend/arm64/instruction-selector-arm64.cc b/src/compiler/backend/arm64/instruction-selector-arm64.cc
+index fe8c0a92df0..37ea027d74a 100644
+--- a/src/compiler/backend/arm64/instruction-selector-arm64.cc
++++ b/src/compiler/backend/arm64/instruction-selector-arm64.cc
+@@ -1332,6 +1332,7 @@ std::tuple<InstructionCode, ImmediateMode> GetStoreOpcodeAndImmediate(
+     case MachineRepresentation::kMapWord:
+     case MachineRepresentation::kProtectedPointer:
+       // We never store directly to protected pointers from generated code.
++    case MachineRepresentation::kFloat16RawBits:
+     case MachineRepresentation::kNone:
+       UNREACHABLE();
+   }
+@@ -1897,6 +1898,7 @@ std::tuple<InstructionCode, ImmediateMode> GetLoadOpcodeAndImmediate(
+     case MachineRepresentation::kSimd256:  // Fall through.
+     case MachineRepresentation::kMapWord:  // Fall through.
+     case MachineRepresentation::kIndirectPointer:  // Fall through.
++    case MachineRepresentation::kFloat16RawBits:   // Fall through.
+     case MachineRepresentation::kNone:
+       UNREACHABLE();
+   }
+diff --git a/src/compiler/backend/ia32/instruction-selector-ia32.cc b/src/compiler/backend/ia32/instruction-selector-ia32.cc
+index 9b68525ca9b..d6b06c2db6d 100644
+--- a/src/compiler/backend/ia32/instruction-selector-ia32.cc
++++ b/src/compiler/backend/ia32/instruction-selector-ia32.cc
+@@ -647,6 +647,7 @@ ArchOpcode GetLoadOpcode(LoadRepresentation load_rep) {
+     case MachineRepresentation::kSandboxedPointer:   // Fall through.
+     case MachineRepresentation::kWord64:             // Fall through.
+     case MachineRepresentation::kMapWord:            // Fall through.
++    case MachineRepresentation::kFloat16RawBits:     // Fall through.
+     case MachineRepresentation::kNone:
+       UNREACHABLE();
+   }
+@@ -1142,6 +1143,7 @@ ArchOpcode GetStoreOpcode(MachineRepresentation rep) {
+     case MachineRepresentation::kSandboxedPointer:   // Fall through.
+     case MachineRepresentation::kWord64:             // Fall through.
+     case MachineRepresentation::kMapWord:            // Fall through.
++    case MachineRepresentation::kFloat16RawBits:     // Fall through.
+     case MachineRepresentation::kNone:
+       UNREACHABLE();
+   }
+diff --git a/src/compiler/backend/instruction.cc b/src/compiler/backend/instruction.cc
+index 5345aaf9b6f..534fb12b7b1 100644
+--- a/src/compiler/backend/instruction.cc
++++ b/src/compiler/backend/instruction.cc
+@@ -302,6 +302,7 @@ std::ostream& operator<<(std::ostream& os, const InstructionOperand& op) {
+           os << "|sb";
+           break;
+         case MachineRepresentation::kMapWord:
++        case MachineRepresentation::kFloat16RawBits:
+           UNREACHABLE();
+       }
+       return os << "]";
+@@ -1061,6 +1062,7 @@ static MachineRepresentation FilterRepresentation(MachineRepresentation rep) {
+     case MachineRepresentation::kNone:
+     case MachineRepresentation::kMapWord:
+     case MachineRepresentation::kIndirectPointer:
++    case MachineRepresentation::kFloat16RawBits:
+       UNREACHABLE();
+   }
+ }
+diff --git a/src/compiler/backend/instruction.h b/src/compiler/backend/instruction.h
+index c42a4e5a6dc..99d9369bc34 100644
+--- a/src/compiler/backend/instruction.h
++++ b/src/compiler/backend/instruction.h
+@@ -588,6 +588,7 @@ class LocationOperand : public InstructionOperand {
+         return false;
+       case MachineRepresentation::kMapWord:
+       case MachineRepresentation::kIndirectPointer:
++      case MachineRepresentation::kFloat16RawBits:
+         UNREACHABLE();
+     }
+   }
+diff --git a/src/compiler/backend/loong64/instruction-selector-loong64.cc b/src/compiler/backend/loong64/instruction-selector-loong64.cc
+index 7bac76233c2..b1c49825179 100644
+--- a/src/compiler/backend/loong64/instruction-selector-loong64.cc
++++ b/src/compiler/backend/loong64/instruction-selector-loong64.cc
+@@ -838,6 +838,7 @@ ArchOpcode GetLoadOpcode(LoadRepresentation load_rep) {
+     case MachineRepresentation::kNone:             // Fall through.
+     case MachineRepresentation::kSimd128:          // Fall through.
+     case MachineRepresentation::kSimd256:
++    case MachineRepresentation::kFloat16RawBits:  // Fall through.
+       UNREACHABLE();
+   }
+ }
+@@ -922,6 +923,7 @@ ArchOpcode GetStoreOpcode(MachineRepresentation rep) {
+     case MachineRepresentation::kSimd256:
+     case MachineRepresentation::kProtectedPointer:
+       // We never store directly to protected pointers from generated code.
++    case MachineRepresentation::kFloat16RawBits:
+       UNREACHABLE();
+   }
+ }
+diff --git a/src/compiler/backend/mips64/instruction-selector-mips64.cc b/src/compiler/backend/mips64/instruction-selector-mips64.cc
+index d6f6607d4b9..226355c97e5 100644
+--- a/src/compiler/backend/mips64/instruction-selector-mips64.cc
++++ b/src/compiler/backend/mips64/instruction-selector-mips64.cc
+@@ -774,6 +774,7 @@ void InstructionSelectorT<Adapter>::VisitLoad(node_t node) {
+     case MachineRepresentation::kCompressed:         // Fall through.
+     case MachineRepresentation::kMapWord:            // Fall through.
+     case MachineRepresentation::kIndirectPointer:    // Fall through.
++    case MachineRepresentation::kFloat16RawBits:     // Fall through.
+     case MachineRepresentation::kNone:
+       UNREACHABLE();
+   }
+@@ -862,6 +863,7 @@ void InstructionSelectorT<Adapter>::VisitStore(typename Adapter::node_t node) {
+       case MachineRepresentation::kSandboxedPointer:   // Fall through.
+       case MachineRepresentation::kMapWord:            // Fall through.
+       case MachineRepresentation::kIndirectPointer:    // Fall through.
++      case MachineRepresentation::kFloat16RawBits:     // Fall through.
+       case MachineRepresentation::kNone:
+         UNREACHABLE();
+     }
+@@ -2650,6 +2652,7 @@ void InstructionSelectorT<Adapter>::VisitUnalignedLoad(node_t node) {
+     case MachineRepresentation::kSandboxedPointer:   // Fall through.
+     case MachineRepresentation::kMapWord:            // Fall through.
+     case MachineRepresentation::kIndirectPointer:    // Fall through.
++    case MachineRepresentation::kFloat16RawBits:     // Fall through.
+     case MachineRepresentation::kNone:
+       UNREACHABLE();
+   }
+@@ -2704,6 +2707,7 @@ void InstructionSelectorT<Adapter>::VisitUnalignedStore(node_t node) {
+     case MachineRepresentation::kSandboxedPointer:   // Fall through.
+     case MachineRepresentation::kMapWord:            // Fall through.
+     case MachineRepresentation::kIndirectPointer:    // Fall through.
++    case MachineRepresentation::kFloat16RawBits:     // Fall through.
+     case MachineRepresentation::kNone:
+       UNREACHABLE();
+   }
+diff --git a/src/compiler/backend/ppc/instruction-selector-ppc.cc b/src/compiler/backend/ppc/instruction-selector-ppc.cc
+index 7beb73baaeb..d6b1a1b0177 100644
+--- a/src/compiler/backend/ppc/instruction-selector-ppc.cc
++++ b/src/compiler/backend/ppc/instruction-selector-ppc.cc
+@@ -343,6 +343,7 @@ ArchOpcode SelectLoadOpcode(LoadRepresentation load_rep, ImmediateMode* mode) {
+       case MachineRepresentation::kProtectedPointer:  // Fall through.
+       case MachineRepresentation::kSimd256:  // Fall through.
+       case MachineRepresentation::kMapWord:  // Fall through.
++      case MachineRepresentation::kFloat16RawBits:  // Fall through.
+       case MachineRepresentation::kNone:
+         UNREACHABLE();
+   }
+@@ -737,6 +738,7 @@ void VisitStoreCommon(InstructionSelectorT<TurbofanAdapter>* selector,
+       case MachineRepresentation::kProtectedPointer:  // Fall through.
+       case MachineRepresentation::kSimd256:  // Fall through.
+       case MachineRepresentation::kMapWord:  // Fall through.
++      case MachineRepresentation::kFloat16RawBits:  // Fall through.
+       case MachineRepresentation::kNone:
+         UNREACHABLE();
+     }
+diff --git a/src/compiler/backend/register-allocation.h b/src/compiler/backend/register-allocation.h
+index b88d22189a7..52e2083199a 100644
+--- a/src/compiler/backend/register-allocation.h
++++ b/src/compiler/backend/register-allocation.h
+@@ -78,6 +78,7 @@ inline int ByteWidthForStackSlot(MachineRepresentation rep) {
+     case MachineRepresentation::kNone:
+     case MachineRepresentation::kMapWord:
+     case MachineRepresentation::kIndirectPointer:
++    case MachineRepresentation::kFloat16RawBits:
+       UNREACHABLE();
+   }
+ }
+diff --git a/src/compiler/backend/riscv/instruction-selector-riscv32.cc b/src/compiler/backend/riscv/instruction-selector-riscv32.cc
+index 3e69aba334b..63bff6b0f16 100644
+--- a/src/compiler/backend/riscv/instruction-selector-riscv32.cc
++++ b/src/compiler/backend/riscv/instruction-selector-riscv32.cc
+@@ -332,6 +332,7 @@ void InstructionSelectorT<Adapter>::VisitLoad(node_t node) {
+     case MachineRepresentation::kProtectedPointer:  // Fall through.
+     case MachineRepresentation::kIndirectPointer:
+     case MachineRepresentation::kFloat16:
++    case MachineRepresentation::kFloat16RawBits:
+       UNREACHABLE();
+     }
+ 
+@@ -418,6 +419,7 @@ void InstructionSelectorT<TurboshaftAdapter>::VisitStore(node_t node) {
+       case MachineRepresentation::kProtectedPointer:  // Fall through.
+       case MachineRepresentation::kIndirectPointer:
+       case MachineRepresentation::kFloat16:
++      case MachineRepresentation::kFloat16RawBits:
+         UNREACHABLE();
+     }
+ 
+@@ -526,6 +528,7 @@ void InstructionSelectorT<TurbofanAdapter>::VisitStore(Node* node) {
+       case MachineRepresentation::kProtectedPointer:  // Fall through.
+       case MachineRepresentation::kIndirectPointer:
+       case MachineRepresentation::kFloat16:
++      case MachineRepresentation::kFloat16RawBits:
+         UNREACHABLE();
+     }
+ 
+@@ -965,6 +968,7 @@ void InstructionSelectorT<Adapter>::VisitUnalignedLoad(node_t node) {
+       case MachineRepresentation::kNone:
+       case MachineRepresentation::kIndirectPointer:
+       case MachineRepresentation::kFloat16:
++      case MachineRepresentation::kFloat16RawBits:
+         UNREACHABLE();
+     }
+ 
+@@ -1029,6 +1033,7 @@ void InstructionSelectorT<Adapter>::VisitUnalignedStore(node_t node) {
+       case MachineRepresentation::kWord64:
+       case MachineRepresentation::kIndirectPointer:
+       case MachineRepresentation::kFloat16:
++      case MachineRepresentation::kFloat16RawBits:
+         UNREACHABLE();
+     }
+ 
+diff --git a/src/compiler/backend/riscv/instruction-selector-riscv64.cc b/src/compiler/backend/riscv/instruction-selector-riscv64.cc
+index 8b03fa9a272..cc59a27de04 100644
+--- a/src/compiler/backend/riscv/instruction-selector-riscv64.cc
++++ b/src/compiler/backend/riscv/instruction-selector-riscv64.cc
+@@ -548,6 +548,7 @@ ArchOpcode GetLoadOpcode(LoadRepresentation load_rep) {
+       case MachineRepresentation::kMapWord:  // Fall through.
+       case MachineRepresentation::kIndirectPointer:  // Fall through.
+       case MachineRepresentation::kFloat16:          // Fall through.
++      case MachineRepresentation::kFloat16RawBits:
+       case MachineRepresentation::kNone:
+         UNREACHABLE();
+     }
+@@ -634,6 +635,7 @@ ArchOpcode GetStoreOpcode(MachineRepresentation rep) {
+     case MachineRepresentation::kNone:
+     case MachineRepresentation::kProtectedPointer:
+     case MachineRepresentation::kFloat16:
++    case MachineRepresentation::kFloat16RawBits:
+       UNREACHABLE();
+   }
+ }
+@@ -2069,6 +2071,7 @@ void InstructionSelectorT<Adapter>::VisitUnalignedLoad(node_t node) {
+       case MachineRepresentation::kIndirectPointer:    // Fall through.
+       case MachineRepresentation::kProtectedPointer:   // Fall through.
+       case MachineRepresentation::kFloat16:            // Fall through.
++      case MachineRepresentation::kFloat16RawBits:     // Fall through.
+       case MachineRepresentation::kNone:
+         UNREACHABLE();
+     }
+@@ -2141,7 +2144,8 @@ void InstructionSelectorT<Adapter>::VisitUnalignedStore(node_t node) {
+       case MachineRepresentation::kMapWord:            // Fall through.
+       case MachineRepresentation::kIndirectPointer:    // Fall through.
+       case MachineRepresentation::kProtectedPointer:   // Fall through.
+-      case MachineRepresentation::kFloat16:
++      case MachineRepresentation::kFloat16:            // Fall through.
++      case MachineRepresentation::kFloat16RawBits:     // Fall through.
+       case MachineRepresentation::kNone:
+         UNREACHABLE();
+     }
+diff --git a/src/compiler/backend/s390/instruction-selector-s390.cc b/src/compiler/backend/s390/instruction-selector-s390.cc
+index 3df825d5a79..089affa2a7d 100644
+--- a/src/compiler/backend/s390/instruction-selector-s390.cc
++++ b/src/compiler/backend/s390/instruction-selector-s390.cc
+@@ -550,6 +550,7 @@ ArchOpcode SelectLoadOpcode(LoadRepresentation load_rep) {
+     case MachineRepresentation::kProtectedPointer:  // Fall through.
+     case MachineRepresentation::kSimd256:  // Fall through.
+     case MachineRepresentation::kMapWord:  // Fall through.
++    case MachineRepresentation::kFloat16RawBits:  // Fall through.
+     case MachineRepresentation::kNone:
+     default:
+       UNREACHABLE();
+@@ -1353,6 +1354,7 @@ static void VisitGeneralStore(
+       case MachineRepresentation::kProtectedPointer:  // Fall through.
+       case MachineRepresentation::kSimd256:  // Fall through.
+       case MachineRepresentation::kMapWord:  // Fall through.
++      case MachineRepresentation::kFloat16RawBits:  // Fall through.
+       case MachineRepresentation::kNone:
+         UNREACHABLE();
+     }
+diff --git a/src/compiler/backend/x64/instruction-selector-x64.cc b/src/compiler/backend/x64/instruction-selector-x64.cc
+index 8d81fb465c8..6d0c313dacc 100644
+--- a/src/compiler/backend/x64/instruction-selector-x64.cc
++++ b/src/compiler/backend/x64/instruction-selector-x64.cc
+@@ -966,6 +966,7 @@ ArchOpcode GetLoadOpcode(LoadRepresentation load_rep) {
+     case MachineRepresentation::kNone:     // Fall through.
+     case MachineRepresentation::kMapWord:  // Fall through.
+     case MachineRepresentation::kIndirectPointer:  // Fall through.
++    case MachineRepresentation::kFloat16RawBits:
+       UNREACHABLE();
+   }
+   return opcode;
+diff --git a/src/compiler/js-call-reducer.cc b/src/compiler/js-call-reducer.cc
+index 15aa4924c67..3cde3946162 100644
+--- a/src/compiler/js-call-reducer.cc
++++ b/src/compiler/js-call-reducer.cc
+@@ -8492,9 +8492,6 @@ Reduction JSCallReducer::ReduceDataViewAccess(Node* node, DataViewAccess access,
+           simplified()->SpeculativeToNumber(
+               NumberOperationHint::kNumberOrOddball, p.feedback()),
+           value, effect, control);
+-      if (element_type == kExternalFloat16Array) {
+-        value = graph()->NewNode(simplified()->NumberToFloat16RawBits(), value);
+-      }
+     }
+   }
+ 
+diff --git a/src/compiler/js-native-context-specialization.cc b/src/compiler/js-native-context-specialization.cc
+index f7b357afa67..373d63978a9 100644
+--- a/src/compiler/js-native-context-specialization.cc
++++ b/src/compiler/js-native-context-specialization.cc
+@@ -3285,6 +3285,7 @@ JSNativeContextSpecialization::BuildPropertyStore(
+       case MachineRepresentation::kSimd128:
+       case MachineRepresentation::kSimd256:
+       case MachineRepresentation::kMapWord:
++      case MachineRepresentation::kFloat16RawBits:
+         UNREACHABLE();
+     }
+     // Check if we need to perform a transitioning store.
+@@ -3998,8 +3999,6 @@ JSNativeContextSpecialization::
+       // might want to change that at some point.
+       if (external_array_type == kExternalUint8ClampedArray) {
+         value = graph()->NewNode(simplified()->NumberToUint8Clamped(), value);
+-      } else if (external_array_type == kExternalFloat16Array) {
+-        value = graph()->NewNode(simplified()->NumberToFloat16RawBits(), value);
+       }
+ 
+       if (situation == kHandleOOB_SmiAndRangeCheckComputed) {
+diff --git a/src/compiler/load-elimination.cc b/src/compiler/load-elimination.cc
+index c63cef681a6..d4f9dd095f6 100644
+--- a/src/compiler/load-elimination.cc
++++ b/src/compiler/load-elimination.cc
+@@ -1141,6 +1141,7 @@ Reduction LoadElimination::ReduceLoadElement(Node* node) {
+     case MachineRepresentation::kWord16:
+     case MachineRepresentation::kWord32:
+     case MachineRepresentation::kWord64:
++    case MachineRepresentation::kFloat16RawBits:
+     case MachineRepresentation::kFloat16:
+     case MachineRepresentation::kFloat32:
+     case MachineRepresentation::kCompressedPointer:
+@@ -1202,6 +1203,7 @@ Reduction LoadElimination::ReduceStoreElement(Node* node) {
+     case MachineRepresentation::kWord16:
+     case MachineRepresentation::kWord32:
+     case MachineRepresentation::kWord64:
++    case MachineRepresentation::kFloat16RawBits:
+     case MachineRepresentation::kFloat16:
+     case MachineRepresentation::kFloat32:
+     case MachineRepresentation::kCompressedPointer:
+@@ -1520,6 +1522,7 @@ LoadElimination::IndexRange LoadElimination::FieldIndexOf(
+     case MachineRepresentation::kBit:
+     case MachineRepresentation::kSimd128:
+     case MachineRepresentation::kSimd256:
++    case MachineRepresentation::kFloat16RawBits:
+       UNREACHABLE();
+     case MachineRepresentation::kWord8:
+     case MachineRepresentation::kWord16:
+diff --git a/src/compiler/machine-graph-verifier.cc b/src/compiler/machine-graph-verifier.cc
+index 3657a92427e..8ca8b858b5e 100644
+--- a/src/compiler/machine-graph-verifier.cc
++++ b/src/compiler/machine-graph-verifier.cc
+@@ -1042,6 +1042,7 @@ class MachineRepresentationChecker {
+       case MachineRepresentation::kProtectedPointer:
+       case MachineRepresentation::kIndirectPointer:
+       case MachineRepresentation::kSandboxedPointer:
++      case MachineRepresentation::kFloat16RawBits:
+       case MachineRepresentation::kFloat16:
+       case MachineRepresentation::kFloat32:
+       case MachineRepresentation::kFloat64:
+diff --git a/src/compiler/machine-operator.cc b/src/compiler/machine-operator.cc
+index e871b51c726..2b7607485a3 100644
+--- a/src/compiler/machine-operator.cc
++++ b/src/compiler/machine-operator.cc
+@@ -1870,6 +1870,7 @@ const Operator* MachineOperatorBuilder::UnalignedStore(
+     case MachineRepresentation::kProtectedPointer:
+     case MachineRepresentation::kIndirectPointer:
+     case MachineRepresentation::kNone:
++    case MachineRepresentation::kFloat16RawBits:
+       UNREACHABLE();
+   }
+ }
+@@ -2153,6 +2154,7 @@ const Operator* MachineOperatorBuilder::Store(StoreRepresentation store_rep) {
+     case MachineRepresentation::kProtectedPointer:
+     case MachineRepresentation::kIndirectPointer:
+     case MachineRepresentation::kNone:
++    case MachineRepresentation::kFloat16RawBits:
+       UNREACHABLE();
+   }
+ }
+@@ -2201,6 +2203,7 @@ const Operator* MachineOperatorBuilder::ProtectedStore(
+     case MachineRepresentation::kProtectedPointer:
+     case MachineRepresentation::kIndirectPointer:
+     case MachineRepresentation::kNone:
++    case MachineRepresentation::kFloat16RawBits:
+       UNREACHABLE();
+   }
+ }
+@@ -2221,6 +2224,7 @@ const Operator* MachineOperatorBuilder::StoreTrapOnNull(
+     case MachineRepresentation::kProtectedPointer:
+     case MachineRepresentation::kIndirectPointer:
+     case MachineRepresentation::kNone:
++    case MachineRepresentation::kFloat16RawBits:
+       UNREACHABLE();
+   }
+ }
+diff --git a/src/compiler/opcodes.h b/src/compiler/opcodes.h
+index c2e22586397..95fe57778da 100644
+--- a/src/compiler/opcodes.h
++++ b/src/compiler/opcodes.h
+@@ -422,7 +422,6 @@
+   V(NumberToString)                    \
+   V(NumberToUint32)                    \
+   V(NumberToUint8Clamped)              \
+-  V(NumberToFloat16RawBits)            \
+   V(Integral32OrMinusZeroToBigInt)     \
+   V(NumberSilenceNaN)
+ 
+diff --git a/src/compiler/operation-typer.cc b/src/compiler/operation-typer.cc
+index 49371c348ff..e27920aa784 100644
+--- a/src/compiler/operation-typer.cc
++++ b/src/compiler/operation-typer.cc
+@@ -582,13 +582,6 @@ Type OperationTyper::NumberToUint8Clamped(Type type) {
+   return cache_->kUint8;
+ }
+ 
+-Type OperationTyper::NumberToFloat16RawBits(Type type) {
+-  DCHECK(type.Is(Type::Number()));
+-
+-  if (type.Is(cache_->kUint16)) return type;
+-  return cache_->kUint16;
+-}
+-
+ Type OperationTyper::Integral32OrMinusZeroToBigInt(Type type) {
+   DCHECK(type.Is(Type::Number()));
+ 
+diff --git a/src/compiler/representation-change.cc b/src/compiler/representation-change.cc
+index 9b39a85bd23..055bc8b2d24 100644
+--- a/src/compiler/representation-change.cc
++++ b/src/compiler/representation-change.cc
+@@ -141,11 +141,12 @@ bool TypeCheckIsBigInt(TypeCheckKind type_check) {
+          type_check == TypeCheckKind::kBigInt64;
+ }
+ 
+-bool IsLoadFloat16ArrayElement(Node* node) {
+-  Operator::Opcode opcode = node->op()->opcode();
+-  return (opcode == IrOpcode::kLoadTypedElement ||
+-          opcode == IrOpcode::kLoadDataViewElement) &&
+-         ExternalArrayTypeOf(node->op()) == kExternalFloat16Array;
++constexpr bool SupportsFpParamsInCLinkage() {
++#ifdef V8_ENABLE_FP_PARAMS_IN_C_LINKAGE
++  return Is64();
++#else
++  return false;
++#endif
+ }
+ 
+ }  // namespace
+@@ -188,12 +189,10 @@ Node* RepresentationChanger::GetRepresentationFor(
+           InsertConversion(node, simplified()->ChangeInt64ToBigInt(), use_node);
+     }
+     output_rep = MachineRepresentation::kTaggedPointer;
+-  } else if (IsLoadFloat16ArrayElement(node) &&
+-             use_node->op()->opcode() != IrOpcode::kNumberToFloat16RawBits) {
++  } else if (output_rep == MachineRepresentation::kFloat16RawBits) {
+     // Float16Array elements are loaded as raw bits in a word16 then converted
+     // to float64, since architectures have spotty support for fp16.
+     DCHECK(output_type.Is(Type::Number()));
+-    DCHECK_EQ(MachineRepresentation::kWord16, output_rep);
+     if (machine()->ChangeFloat16RawBitsToFloat64().IsSupported()) {
+       node = jsgraph()->graph()->NewNode(
+           machine()->ChangeFloat16RawBitsToFloat64().op(), node);
+@@ -240,6 +239,10 @@ Node* RepresentationChanger::GetRepresentationFor(
+       DCHECK_EQ(TypeCheckKind::kNone, use_info.type_check());
+       return GetTaggedRepresentationFor(node, output_rep, output_type,
+                                         use_info.truncation());
++    case MachineRepresentation::kFloat16RawBits:
++      DCHECK_EQ(TypeCheckKind::kNone, use_info.type_check());
++      return GetFloat16RawBitsRepresentationFor(node, output_rep, output_type,
++                                                use_node, use_info);
+     case MachineRepresentation::kFloat32:
+       DCHECK_EQ(TypeCheckKind::kNone, use_info.type_check());
+       return GetFloat32RepresentationFor(node, output_rep, output_type,
+@@ -662,6 +665,43 @@ Node* RepresentationChanger::GetTaggedRepresentationFor(
+   return jsgraph()->graph()->NewNode(op, node);
+ }
+ 
++Node* RepresentationChanger::GetFloat16RawBitsRepresentationFor(
++    Node* node, MachineRepresentation output_rep, Type output_type,
++    Node* use_node, UseInfo use_info) {
++  if (output_rep != MachineRepresentation::kFloat64) {
++    node = GetFloat64RepresentationFor(node, output_rep, output_type, use_node,
++                                       use_info);
++  }
++
++  // Eagerly fold representation changes for constants.
++  switch (node->opcode()) {
++    case IrOpcode::kFloat64Constant:
++      return jsgraph()->Uint32Constant(
++          DoubleToFloat16(OpParameter<double>(node->op())));
++    case IrOpcode::kNumberConstant:
++    case IrOpcode::kInt32Constant:
++    case IrOpcode::kFloat32Constant:
++      UNREACHABLE();
++    default:
++      break;
++  }
++
++  // This is an impossible value; it should not be used at runtime.
++  if (output_type.Is(Type::None())) {
++    return jsgraph()->graph()->NewNode(
++        jsgraph()->common()->DeadValue(MachineRepresentation::kFloat16RawBits),
++        node);
++  }
++
++  // Insert a float64 -> float16 node.
++  if (machine()->TruncateFloat64ToFloat16RawBits().IsSupported()) {
++    return jsgraph()->graph()->NewNode(
++        machine()->TruncateFloat64ToFloat16RawBits().op(), node);
++  } else {
++    return InsertTruncateFloat64ToFloat16RawBitsFallback(node);
++  }
++}
++
+ Node* RepresentationChanger::GetFloat32RepresentationFor(
+     Node* node, MachineRepresentation output_rep, Type output_type,
+     Truncation truncation) {
+@@ -1707,6 +1747,20 @@ Node* RepresentationChanger::Ieee754Fp16RawBitsToFp32RawBitsCode() {
+   return ieee754_fp16_raw_bits_to_fp32_raw_bits_code_.get();
+ }
+ 
++Node* RepresentationChanger::Ieee754Fp64ToFp16RawBitsCode() {
++  if (!ieee754_fp64_to_fp16_raw_bits_code_.is_set()) {
++    if constexpr (SupportsFpParamsInCLinkage()) {
++      ieee754_fp64_to_fp16_raw_bits_code_.set(jsgraph()->ExternalConstant(
++          ExternalReference::ieee754_fp64_to_fp16_raw_bits()));
++    } else {
++      ieee754_fp64_to_fp16_raw_bits_code_.set(jsgraph()->ExternalConstant(
++          ExternalReference::
++              ieee754_fp64_raw_bits_to_fp16_raw_bits_for_32bit_arch()));
++    }
++  }
++  return ieee754_fp64_to_fp16_raw_bits_code_.get();
++}
++
+ Operator const*
+ RepresentationChanger::Ieee754Fp16RawBitsToFp32RawBitsOperator() {
+   if (!ieee754_fp16_raw_bits_to_fp32_raw_bits_operator_.is_set()) {
+@@ -1722,6 +1776,30 @@ RepresentationChanger::Ieee754Fp16RawBitsToFp32RawBitsOperator() {
+   return ieee754_fp16_raw_bits_to_fp32_raw_bits_operator_.get();
+ }
+ 
++Operator const* RepresentationChanger::Ieee754Fp64ToFp16RawBitsOperator() {
++  if (!ieee754_fp64_to_fp16_raw_bits_operator_.is_set()) {
++    Zone* graph_zone = jsgraph()->zone();
++    CallDescriptor* desc;
++    if constexpr (SupportsFpParamsInCLinkage()) {
++      MachineSignature::Builder builder(graph_zone, 1, 1);
++      builder.AddReturn(MachineType::Uint32());
++      builder.AddParam(MachineType::Float64());
++      desc = Linkage::GetSimplifiedCDescriptor(
++          graph_zone, builder.Get(), CallDescriptor::kNoFlags, Operator::kPure);
++    } else {
++      MachineSignature::Builder builder(graph_zone, 1, 2);
++      builder.AddReturn(MachineType::Uint32());
++      builder.AddParam(MachineType::Uint32());
++      builder.AddParam(MachineType::Uint32());
++      desc = Linkage::GetSimplifiedCDescriptor(
++          graph_zone, builder.Get(), CallDescriptor::kNoFlags, Operator::kPure);
++    }
++    ieee754_fp64_to_fp16_raw_bits_operator_.set(
++        jsgraph()->common()->Call(desc));
++  }
++  return ieee754_fp64_to_fp16_raw_bits_operator_.get();
++}
++
+ Node* RepresentationChanger::InsertChangeFloat16RawBitsToFloat64Fallback(
+     Node* node) {
+   // Replace the op directly if the underlying architecture has support.
+@@ -1737,6 +1815,26 @@ Node* RepresentationChanger::InsertChangeFloat16RawBitsToFloat64Fallback(
+       machine()->BitcastInt32ToFloat32(), float32_raw_bits));
+ }
+ 
++Node* RepresentationChanger::InsertTruncateFloat64ToFloat16RawBitsFallback(
++    Node* node) {
++  // Use the op directly if the underlying architecture has support.
++  DCHECK(!machine()->TruncateFloat64ToFloat16RawBits().IsSupported());
++  DCHECK_EQ(0, Ieee754Fp64ToFp16RawBitsOperator()->ControlInputCount());
++  // On architectures that don't have fp16 support, the input to be stored in
++  // Float16Array elements are converted from float64 to float16 in software.
++  if constexpr (SupportsFpParamsInCLinkage()) {
++    return jsgraph()->graph()->NewNode(Ieee754Fp64ToFp16RawBitsOperator(),
++                                       Ieee754Fp64ToFp16RawBitsCode(), node);
++  } else {
++    Node* hi = jsgraph()->graph()->NewNode(
++        machine()->Float64ExtractHighWord32(), node);
++    Node* lo =
++        jsgraph()->graph()->NewNode(machine()->Float64ExtractLowWord32(), node);
++    return jsgraph()->graph()->NewNode(Ieee754Fp64ToFp16RawBitsOperator(),
++                                       Ieee754Fp64ToFp16RawBitsCode(), hi, lo);
++  }
++}
++
+ Node* RepresentationChanger::InsertTypeOverrideForVerifier(const Type& type,
+                                                            Node* node) {
+   if (verification_enabled()) {
+diff --git a/src/compiler/representation-change.h b/src/compiler/representation-change.h
+index 1b0f9f6a69d..127ff9d07e8 100644
+--- a/src/compiler/representation-change.h
++++ b/src/compiler/representation-change.h
+@@ -67,8 +67,10 @@ class V8_EXPORT_PRIVATE RepresentationChanger final {
+   bool type_error_;           // Set when a type error is detected.
+ 
+   SetOncePointer<Node> ieee754_fp16_raw_bits_to_fp32_raw_bits_code_;
++  SetOncePointer<Node> ieee754_fp64_to_fp16_raw_bits_code_;
+   SetOncePointer<Operator const>
+       ieee754_fp16_raw_bits_to_fp32_raw_bits_operator_;
++  SetOncePointer<Operator const> ieee754_fp64_to_fp16_raw_bits_operator_;
+ 
+   Node* GetTaggedSignedRepresentationFor(Node* node,
+                                          MachineRepresentation output_rep,
+@@ -80,6 +82,10 @@ class V8_EXPORT_PRIVATE RepresentationChanger final {
+                                           UseInfo use_info);
+   Node* GetTaggedRepresentationFor(Node* node, MachineRepresentation output_rep,
+                                    Type output_type, Truncation truncation);
++  Node* GetFloat16RawBitsRepresentationFor(Node* node,
++                                           MachineRepresentation output_rep,
++                                           Type output_type, Node* use_node,
++                                           UseInfo use_info);
+   Node* GetFloat32RepresentationFor(Node* node,
+                                     MachineRepresentation output_rep,
+                                     Type output_type, Truncation truncation);
+@@ -110,6 +116,7 @@ class V8_EXPORT_PRIVATE RepresentationChanger final {
+                                     const FeedbackSource& feedback,
+                                     Node* use_node);
+   Node* InsertChangeFloat16RawBitsToFloat64Fallback(Node* node);
++  Node* InsertTruncateFloat64ToFloat16RawBitsFallback(Node* node);
+   Node* InsertConversion(Node* node, const Operator* op, Node* use_node);
+   Node* InsertTruncateInt64ToInt32(Node* node);
+   Node* InsertUnconditionalDeopt(Node* node, DeoptimizeReason reason,
+@@ -117,7 +124,9 @@ class V8_EXPORT_PRIVATE RepresentationChanger final {
+   Node* InsertTypeOverrideForVerifier(const Type& type, Node* node);
+ 
+   Node* Ieee754Fp16RawBitsToFp32RawBitsCode();
++  Node* Ieee754Fp64ToFp16RawBitsCode();
+   Operator const* Ieee754Fp16RawBitsToFp32RawBitsOperator();
++  Operator const* Ieee754Fp64ToFp16RawBitsOperator();
+ 
+   JSGraph* jsgraph() const { return jsgraph_; }
+   Isolate* isolate() const;
+diff --git a/src/compiler/simplified-lowering.cc b/src/compiler/simplified-lowering.cc
+index 22fcef93474..386079baa6b 100644
+--- a/src/compiler/simplified-lowering.cc
++++ b/src/compiler/simplified-lowering.cc
+@@ -91,6 +91,8 @@ MachineRepresentation MachineRepresentationFromArrayType(
+     case kExternalUint32Array:
+     case kExternalInt32Array:
+       return MachineRepresentation::kWord32;
++    case kExternalFloat16Array:
++      return MachineRepresentation::kFloat16RawBits;
+     case kExternalFloat32Array:
+       return MachineRepresentation::kFloat32;
+     case kExternalFloat64Array:
+@@ -98,8 +100,6 @@ MachineRepresentation MachineRepresentationFromArrayType(
+     case kExternalBigInt64Array:
+     case kExternalBigUint64Array:
+       return MachineRepresentation::kWord64;
+-    case kExternalFloat16Array:
+-      return MachineRepresentation::kWord16;
+   }
+   UNREACHABLE();
+ }
+@@ -153,9 +153,10 @@ UseInfo TruncatingUseInfoFromRepresentation(MachineRepresentation rep) {
+       return UseInfo::AnyTagged();
+     case MachineRepresentation::kFloat64:
+       return UseInfo::TruncatingFloat64();
+-    case MachineRepresentation::kFloat16:
+     case MachineRepresentation::kFloat32:
+       return UseInfo::Float32();
++    case MachineRepresentation::kFloat16RawBits:
++      return UseInfo::Float16RawBits();
+     case MachineRepresentation::kWord8:
+     case MachineRepresentation::kWord16:
+     case MachineRepresentation::kWord32:
+@@ -168,6 +169,7 @@ UseInfo TruncatingUseInfoFromRepresentation(MachineRepresentation rep) {
+     case MachineRepresentation::kCompressed:
+     case MachineRepresentation::kProtectedPointer:
+     case MachineRepresentation::kSandboxedPointer:
++    case MachineRepresentation::kFloat16:
+     case MachineRepresentation::kSimd128:
+     case MachineRepresentation::kSimd256:
+     case MachineRepresentation::kNone:
+@@ -257,14 +259,6 @@ bool IsLoadFloat16ArrayElement(Node* node) {
+          ExternalArrayTypeOf(node->op()) == kExternalFloat16Array;
+ }
+ 
+-constexpr bool SupportsFpParamsInCLinkage() {
+-#ifdef V8_ENABLE_FP_PARAMS_IN_C_LINKAGE
+-  return Is64();
+-#else
+-  return false;
+-#endif
+-}
+-
+ }  // namespace
+ 
+ #ifdef DEBUG
+@@ -3500,20 +3494,6 @@ class RepresentationSelector {
+         }
+         return;
+       }
+-      case IrOpcode::kNumberToFloat16RawBits: {
+-        if (IsLoadFloat16ArrayElement(node->InputAt(0))) {
+-          // Fold away float16 raw bits -> float64 -> float16 raw bits
+-          // sequences.
+-          VisitUnop<T>(node, UseInfo::TruncatingWord32(),
+-                       MachineRepresentation::kWord16);
+-          if (lower<T>()) DeferReplacement(node, node->InputAt(0));
+-        } else {
+-          VisitUnop<T>(node, UseInfo::TruncatingFloat64(),
+-                       MachineRepresentation::kWord16);
+-          if (lower<T>()) lowering->DoNumberToFloat16RawBits(node);
+-        }
+-        return;
+-      }
+       case IrOpcode::kIntegral32OrMinusZeroToBigInt: {
+         VisitUnop<T>(node, UseInfo::Word64(kIdentifyZeros),
+                      MachineRepresentation::kWord64);
+@@ -5713,26 +5693,6 @@ void SimplifiedLowering::DoIntegerToUint8Clamped(Node* node) {
+   ChangeOp(node, common()->Select(MachineRepresentation::kFloat64));
+ }
+ 
+-void SimplifiedLowering::DoNumberToFloat16RawBits(Node* node) {
+-  if (machine()->TruncateFloat64ToFloat16RawBits().IsSupported()) {
+-    ChangeOp(node, machine()->TruncateFloat64ToFloat16RawBits().op());
+-  } else {
+-    Node* value = node->InputAt(0);
+-    node->ReplaceInput(0, Ieee754Fp64ToFp16RawBitsCode());
+-    if constexpr (SupportsFpParamsInCLinkage()) {
+-      node->AppendInput(graph()->zone(), value);
+-    } else {
+-      node->AppendInput(
+-          graph()->zone(),
+-          graph()->NewNode(machine()->Float64ExtractHighWord32(), value));
+-      node->AppendInput(
+-          graph()->zone(),
+-          graph()->NewNode(machine()->Float64ExtractLowWord32(), value));
+-    }
+-    ChangeOp(node, Ieee754Fp64ToFp16RawBitsOperator());
+-  }
+-}
+-
+ void SimplifiedLowering::DoNumberToUint8Clamped(Node* node) {
+   Node* const input = node->InputAt(0);
+   Node* const min = jsgraph()->Float64Constant(0.0);
+@@ -5803,20 +5763,6 @@ Node* SimplifiedLowering::ToNumericCode() {
+   return to_numeric_code_.get();
+ }
+ 
+-Node* SimplifiedLowering::Ieee754Fp64ToFp16RawBitsCode() {
+-  if (!ieee754_fp64_to_fp16_raw_bits_code_.is_set()) {
+-    if constexpr (SupportsFpParamsInCLinkage()) {
+-      ieee754_fp64_to_fp16_raw_bits_code_.set(jsgraph()->ExternalConstant(
+-          ExternalReference::ieee754_fp64_to_fp16_raw_bits()));
+-    } else {
+-      ieee754_fp64_to_fp16_raw_bits_code_.set(jsgraph()->ExternalConstant(
+-          ExternalReference::
+-              ieee754_fp64_raw_bits_to_fp16_raw_bits_for_32bit_arch()));
+-    }
+-  }
+-  return ieee754_fp64_to_fp16_raw_bits_code_.get();
+-}
+-
+ Operator const* SimplifiedLowering::ToNumberOperator() {
+   if (!to_number_operator_.is_set()) {
+     Callable callable = Builtins::CallableFor(isolate(), Builtin::kToNumber);
+@@ -5857,29 +5803,6 @@ Operator const* SimplifiedLowering::ToNumericOperator() {
+   return to_numeric_operator_.get();
+ }
+ 
+-Operator const* SimplifiedLowering::Ieee754Fp64ToFp16RawBitsOperator() {
+-  if (!ieee754_fp64_to_fp16_raw_bits_operator_.is_set()) {
+-    Zone* graph_zone = graph()->zone();
+-    CallDescriptor* desc;
+-    if constexpr (SupportsFpParamsInCLinkage()) {
+-      MachineSignature::Builder builder(graph_zone, 1, 1);
+-      builder.AddReturn(MachineType::Uint32());
+-      builder.AddParam(MachineType::Float64());
+-      desc = Linkage::GetSimplifiedCDescriptor(
+-          graph_zone, builder.Get(), CallDescriptor::kNoFlags, Operator::kPure);
+-    } else {
+-      MachineSignature::Builder builder(graph_zone, 1, 2);
+-      builder.AddReturn(MachineType::Uint32());
+-      builder.AddParam(MachineType::Uint32());
+-      builder.AddParam(MachineType::Uint32());
+-      desc = Linkage::GetSimplifiedCDescriptor(
+-          graph_zone, builder.Get(), CallDescriptor::kNoFlags, Operator::kPure);
+-    }
+-    ieee754_fp64_to_fp16_raw_bits_operator_.set(common()->Call(desc));
+-  }
+-  return ieee754_fp64_to_fp16_raw_bits_operator_.get();
+-}
+-
+ void SimplifiedLowering::ChangeOp(Node* node, const Operator* new_op) {
+   compiler::NodeProperties::ChangeOp(node, new_op);
+ 
+diff --git a/src/compiler/simplified-lowering.h b/src/compiler/simplified-lowering.h
+index fab117f815c..90d946a9f5b 100644
+--- a/src/compiler/simplified-lowering.h
++++ b/src/compiler/simplified-lowering.h
+@@ -50,8 +50,6 @@ class V8_EXPORT_PRIVATE SimplifiedLowering final {
+   void DoNumberToUint8Clamped(Node* node);
+   void DoSigned32ToUint8Clamped(Node* node);
+   void DoUnsigned32ToUint8Clamped(Node* node);
+-  void DoNumberToFloat16RawBits(Node* node);
+-  void DoFloat16RawBitsToNumber(Node* node);
+ 
+  private:
+   // The purpose of this nested class is to hide method
+@@ -72,11 +70,9 @@ class V8_EXPORT_PRIVATE SimplifiedLowering final {
+   SetOncePointer<Node> to_number_code_;
+   SetOncePointer<Node> to_number_convert_big_int_code_;
+   SetOncePointer<Node> to_numeric_code_;
+-  SetOncePointer<Node> ieee754_fp64_to_fp16_raw_bits_code_;
+   SetOncePointer<Operator const> to_number_operator_;
+   SetOncePointer<Operator const> to_number_convert_big_int_operator_;
+   SetOncePointer<Operator const> to_numeric_operator_;
+-  SetOncePointer<Operator const> ieee754_fp64_to_fp16_raw_bits_operator_;
+ 
+   // TODO(danno): SimplifiedLowering shouldn't know anything about the source
+   // positions table, but must for now since there currently is no other way to
+@@ -105,12 +101,10 @@ class V8_EXPORT_PRIVATE SimplifiedLowering final {
+   Node* ToNumberConvertBigIntCode();
+   Node* ToNumericCode();
+   Node* Ieee754Fp64ToFp16RawBitsCode();
+-  Node* Ieee754Fp16RawBitsToFp64Code();
+   Operator const* ToNumberOperator();
+   Operator const* ToNumberConvertBigIntOperator();
+   Operator const* ToNumericOperator();
+   Operator const* Ieee754Fp64ToFp16RawBitsOperator();
+-  Operator const* Ieee754Fp16RawBitsToFp64Operator();
+ 
+   friend class RepresentationSelector;
+ 
+diff --git a/src/compiler/simplified-operator.cc b/src/compiler/simplified-operator.cc
+index 375e8b17187..dbe9a48aa4c 100644
+--- a/src/compiler/simplified-operator.cc
++++ b/src/compiler/simplified-operator.cc
+@@ -842,7 +842,6 @@ bool operator==(AssertNotNullParameters const& lhs,
+   V(NumberToInt32, Operator::kNoProperties, 1, 0)                 \
+   V(NumberToString, Operator::kNoProperties, 1, 0)                \
+   V(NumberToUint32, Operator::kNoProperties, 1, 0)                \
+-  V(NumberToFloat16RawBits, Operator::kNoProperties, 1, 0)        \
+   V(NumberToUint8Clamped, Operator::kNoProperties, 1, 0)          \
+   V(Integral32OrMinusZeroToBigInt, Operator::kNoProperties, 1, 0) \
+   V(NumberSilenceNaN, Operator::kNoProperties, 1, 0)              \
+diff --git a/src/compiler/simplified-operator.h b/src/compiler/simplified-operator.h
+index dd6cfe62450..cbb91af22e6 100644
+--- a/src/compiler/simplified-operator.h
++++ b/src/compiler/simplified-operator.h
+@@ -876,7 +876,6 @@ class V8_EXPORT_PRIVATE SimplifiedOperatorBuilder final
+   const Operator* NumberToString();
+   const Operator* NumberToUint32();
+   const Operator* NumberToUint8Clamped();
+-  const Operator* NumberToFloat16RawBits();
+   const Operator* Integral32OrMinusZeroToBigInt();
+ 
+   const Operator* NumberSilenceNaN();
+diff --git a/src/compiler/turboshaft/representations.h b/src/compiler/turboshaft/representations.h
+index 53446896044..499503a9c73 100644
+--- a/src/compiler/turboshaft/representations.h
++++ b/src/compiler/turboshaft/representations.h
+@@ -306,6 +306,7 @@ class RegisterRepresentation : public MaybeRegisterRepresentation {
+         // indirection, we have a Tagged pointer.
+         return WordPtr();
+       case MachineRepresentation::kNone:
++      case MachineRepresentation::kFloat16RawBits:
+         UNREACHABLE();
+     }
+   }
+@@ -843,6 +844,7 @@ class MemoryRepresentation {
+       case MachineRepresentation::kBit:
+       case MachineRepresentation::kCompressedPointer:
+       case MachineRepresentation::kCompressed:
++      case MachineRepresentation::kFloat16RawBits:
+         UNREACHABLE();
+     }
+   }
+@@ -883,6 +885,7 @@ class MemoryRepresentation {
+       case MachineRepresentation::kCompressed:
+       case MachineRepresentation::kProtectedPointer:
+       case MachineRepresentation::kIndirectPointer:
++      case MachineRepresentation::kFloat16RawBits:
+         UNREACHABLE();
+     }
+   }
+diff --git a/src/compiler/use-info.h b/src/compiler/use-info.h
+index a42fa20fe4e..8e2fb58da97 100644
+--- a/src/compiler/use-info.h
++++ b/src/compiler/use-info.h
+@@ -226,6 +226,9 @@ class UseInfo {
+   static UseInfo Float32() {
+     return UseInfo(MachineRepresentation::kFloat32, Truncation::Any());
+   }
++  static UseInfo Float16RawBits() {
++    return UseInfo(MachineRepresentation::kFloat16RawBits, Truncation::Any());
++  }
+   static UseInfo Float64() {
+     return UseInfo(MachineRepresentation::kFloat64, Truncation::Any());
+   }
+diff --git a/src/compiler/verifier.cc b/src/compiler/verifier.cc
+index 95d7e939dfc..2f005afe043 100644
+--- a/src/compiler/verifier.cc
++++ b/src/compiler/verifier.cc
+@@ -1171,10 +1171,6 @@ void Verifier::Visitor::Check(Node* node, const AllNodes& all) {
+       CheckValueInputIs(node, 0, Type::Number());
+       CheckTypeIs(node, Type::Unsigned32());
+       break;
+-    case IrOpcode::kNumberToFloat16RawBits:
+-      CheckValueInputIs(node, 0, Type::Number());
+-      CheckTypeIs(node, Type::Number());
+-      break;
+     case IrOpcode::kIntegral32OrMinusZeroToBigInt:
+       CheckValueInputIs(node, 0, Type::Integral32OrMinusZero());
+       CheckTypeIs(node, Type::BigInt());
+diff --git a/test/mjsunit/compiler/regress-394327270.js b/test/mjsunit/compiler/regress-394327270.js
+new file mode 100644
+index 00000000000..57b425546d3
+--- /dev/null
++++ b/test/mjsunit/compiler/regress-394327270.js
+@@ -0,0 +1,17 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --no-always-turbofan --turbofan --js-staging
++// Flags: --allow-natives-syntax
++
++function storeAndLoadConstant() {
++  let v = new Float16Array(1);
++  v[0] = 1;
++  return v[0];
++}
++
++%PrepareFunctionForOptimization(storeAndLoadConstant);
++const x = storeAndLoadConstant();
++%OptimizeFunctionOnNextCall(storeAndLoadConstant);
++assertEquals(x, storeAndLoadConstant());

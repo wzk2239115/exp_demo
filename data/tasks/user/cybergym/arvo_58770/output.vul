@@ -1,0 +1,33 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3708825085
+INFO: Loaded 1 modules   (222475 inline 8-bit counters): 222475 [0x1627ba0, 0x165e0ab), 
+INFO: Loaded 1 PC tables (222475 PCs): 222475 [0x165e0b0,0x19c3160), 
+/out/assimp_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+Info,  T0: Load $$$___magic___$$$.
+Info,  T0: File extension not known, trying signature-based detection
+Info,  T0: Found a matching importer for this file format: Nendo Mesh Importer.
+Info,  T0: Import root directory is './'
+Warn,  T0: Unrecognized nendo file format version, continuing happily ... :ÿÿÿ
+UndefinedBehaviorSanitizer:DEADLYSIGNAL
+==7==ERROR: UndefinedBehaviorSanitizer: SEGV on unknown address 0x000113fcc932 (pc 0x7fdc604e194b bp 0x7fff6aa47d40 sp 0x7fff6aa47bc8 T7)
+==7==The signal is caused by a READ memory access.
+    #0 0x7fdc604e194b  (/lib/x86_64-linux-gnu/libc.so.6+0x19094b) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #1 0xe4072f in std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::__init(char const*, unsigned long) (/out/assimp_fuzzer+0xe4072f)
+    #2 0x74e688 in basic_string /usr/local/bin/../include/c++/v1/string:1882:5
+    #3 0x74e688 in Assimp::NDOImporter::InternReadFile(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, aiScene*, Assimp::IOSystem*) /src/assimp/code/AssetLib/NDO/NDOLoader.cpp:165:20
+    #4 0x4e654a in Assimp::BaseImporter::ReadFile(Assimp::Importer*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, Assimp::IOSystem*) /src/assimp/code/Common/BaseImporter.cpp:110:9
+    #5 0x505763 in Assimp::Importer::ReadFile(char const*, unsigned int) /src/assimp/code/Common/Importer.cpp:723:30
+    #6 0x503b7a in Assimp::Importer::ReadFileFromMemory(void const*, unsigned long, unsigned int, char const*) /src/assimp/code/Common/Importer.cpp:507:9
+    #7 0x4c2480 in LLVMFuzzerTestOneInput /src/assimp/fuzz/assimp_fuzzer.cc:53:34
+    #8 0x428363 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #9 0x413ac2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #10 0x41936c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #11 0x4428a2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #12 0x7fdc60375082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #13 0x409c8d in _start (/out/assimp_fuzzer+0x409c8d)
+
+DEDUP_TOKEN: std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::__init(char const*, unsigned long)--basic_string
+UndefinedBehaviorSanitizer can not provide additional info.
+SUMMARY: UndefinedBehaviorSanitizer: SEGV (/lib/x86_64-linux-gnu/libc.so.6+0x19094b) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce) 
+==7==ABORTING

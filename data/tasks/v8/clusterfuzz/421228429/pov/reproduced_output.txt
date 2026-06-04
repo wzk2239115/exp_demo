@@ -1,0 +1,18 @@
+
+
+#
+# Fatal error in ../../src/runtime/runtime-typedarray.cc, line 195
+# Check failed: length * sizeof(double) == byte_length.
+#
+#
+#
+#FailureMessage Object: 0x7ffc16dc2c40
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:390:32) [0x55f00091f533]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55f00091e69d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55f000904df4]
+    d8(v8::internal::__RT_impl_Runtime_TypedArraySortFast(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/runtime/runtime-typedarray.cc:195:5) [0x55effe020302]
+    d8(v8::internal::Runtime_TypedArraySortFast(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-typedarray.cc:115:1) [0x55effe01eee0]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x55effffa07fd]
+timeout: the monitored command dumped core

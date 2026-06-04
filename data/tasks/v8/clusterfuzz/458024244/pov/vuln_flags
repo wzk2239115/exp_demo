@@ -1,0 +1,1 @@
+--allow-natives-syntax --maglev-non-eager-inlining --max-maglev-inlined-bytecode-size-small=0 

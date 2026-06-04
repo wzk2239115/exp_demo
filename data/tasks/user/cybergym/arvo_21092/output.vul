@@ -1,0 +1,74 @@
+======================= INFO =========================
+This binary is built for AFL-fuzz.
+To run the target function on individual input(s) execute this:
+  /out/hb-draw-fuzzer < INPUT_FILE
+or
+  /out/hb-draw-fuzzer INPUT_FILE1 [INPUT_FILE2 ... ]
+To fuzz with afl-fuzz execute this:
+  afl-fuzz [afl-flags] /out/hb-draw-fuzzer [-N]
+afl-fuzz will run N iterations before re-spawning the process (default: 1000)
+======================================================
+Reading 4448 bytes from /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x621000004e62 at pc 0x0000004da8cd bp 0x7ffe7b532930 sp 0x7ffe7b532928
+READ of size 2 at 0x621000004e62 thread T0
+SCARINESS: 14 (2-byte-read-heap-buffer-overflow)
+    #0 0x4da8cc in BEInt<short, 2>::operator short() const /src/harfbuzz/src/./hb.hh:541:59
+    #1 0x4da81a in OT::IntType<short, 2u>::operator int() const /src/harfbuzz/src/./hb-open-type.hh:63:40
+    #2 0x53687f in OT::SegmentMaps::map(int, unsigned int, unsigned int) const /src/harfbuzz/src/./hb-ot-var-avar-table.hh:86:18
+    #3 0x534bb1 in OT::avar::unmap_coords(int*, unsigned int) const /src/harfbuzz/src/./hb-ot-var-avar-table.hh:149:24
+    #4 0x5340b8 in hb_font_set_var_coords_normalized /src/harfbuzz/src/hb-font.cc:2009:27
+    #5 0x4c9485 in LLVMFuzzerTestOneInput /src/harfbuzz/./test/fuzzing/hb-draw-fuzzer.cc:98:3
+    #6 0x4ca3de in ExecuteFilesOnyByOne /src/libfuzzer/afl/afl_driver.cpp:216:5
+    #7 0x4ca3de in main /src/libfuzzer/afl/afl_driver.cpp:253:12
+    #8 0x7f89da73783f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #9 0x41df08 in _start (/out/hb-draw-fuzzer+0x41df08)
+
+DEDUP_TOKEN: BEInt<short, 2>::operator short() const--OT::IntType<short, 2u>::operator int() const--OT::SegmentMaps::map(int, unsigned int, unsigned int) const
+0x621000004e62 is located 2 bytes to the right of 4448-byte region [0x621000003d00,0x621000004e60)
+allocated by thread T0 here:
+    #0 0x4c691d in operator new(unsigned long) /src/llvm-project/compiler-rt/lib/asan/asan_new_delete.cpp:99:3
+    #1 0x4ca377 in __libcpp_allocate /usr/local/bin/../include/c++/v1/new:253:10
+    #2 0x4ca377 in allocate /usr/local/bin/../include/c++/v1/memory:1853:37
+    #3 0x4ca377 in allocate /usr/local/bin/../include/c++/v1/memory:1570:21
+    #4 0x4ca377 in __vallocate /usr/local/bin/../include/c++/v1/vector:994:37
+    #5 0x4ca377 in vector /usr/local/bin/../include/c++/v1/vector:1125:9
+    #6 0x4ca377 in ExecuteFilesOnyByOne /src/libfuzzer/afl/afl_driver.cpp:213:23
+    #7 0x4ca377 in main /src/libfuzzer/afl/afl_driver.cpp:253:12
+    #8 0x7f89da73783f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: operator new(unsigned long)--__libcpp_allocate--allocate
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/harfbuzz/src/./hb.hh:541:59 in BEInt<short, 2>::operator short() const
+Shadow bytes around the buggy address:
+  0x0c427fff8970: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c427fff8980: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c427fff8990: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c427fff89a0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c427fff89b0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0c427fff89c0: 00 00 00 00 00 00 00 00 00 00 00 00[fa]fa fa fa
+  0x0c427fff89d0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c427fff89e0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c427fff89f0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c427fff8a00: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c427fff8a10: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==7==ABORTING

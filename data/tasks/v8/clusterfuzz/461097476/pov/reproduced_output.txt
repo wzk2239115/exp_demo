@@ -1,0 +1,11 @@
+=== stderr ===
+Sandbox testing mode is enabled. Only sandbox violations will be reported, all other crashes will be ignored.
+Sandbox bounds: [0x1cbd00000000,0x1dbd00000000)
+
+## V8 sandbox violation detected!
+
+The sandbox violation was a *read* access which is technically not a sandbox violation. This requires manual investigation.
+timeout: the monitored command dumped core
+
+=== exit code ===
+139

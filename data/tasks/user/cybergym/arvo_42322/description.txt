@@ -1,0 +1,1 @@
+A vulnerability exists in the CFF code where the number of various blue values is not validated before writing to fixed size arrays in the relevant functions and files. This can lead to potential buffer overflows.

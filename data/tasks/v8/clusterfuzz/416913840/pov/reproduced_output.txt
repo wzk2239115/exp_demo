@@ -1,0 +1,27 @@
+
+
+#
+# Fatal error in ../../src/json/json-parser.cc, line 1501
+# Debug check failed: InstanceTypeChecker::IsOneByteString(map).
+#
+#
+#
+#FailureMessage Object: 0x7ffea57d5500
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:390:32) [0x55ba18db9533]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55ba18db869d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55ba18d9edf4]
+    out/debug/d8(+0x44997e5) [0x55ba18d9e7e5]
+    d8(v8::internal::(anonymous namespace)::GetFastKeyChars(v8::internal::Isolate*, v8::internal::Tagged<v8::internal::String>, v8::internal::Tagged<v8::internal::Map>, v8::internal::PerThreadAssertScope<false, (v8::internal::PerThreadAssertType)1, (v8::internal::PerThreadAssertType)2> const&) ./../../src/common/ptr-compr-inl.h:74:18) [0x55ba15ec42ac]
+    d8(bool v8::internal::JsonParser<unsigned short>::ParseJsonObjectProperties<(v8::internal::DescriptorArray::FastIterableState)0>(v8::internal::JsonParser<unsigned short>::JsonContinuation*, v8::internal::MessageTemplate, v8::internal::Handle<v8::internal::DescriptorArray>) ./../../src/objects/string-inl.h:131:42) [0x55ba15eb8919]
+    d8(v8::internal::JsonParser<unsigned short>::ParseJsonObject(v8::internal::Handle<v8::internal::Map>) ./../../src/json/json-parser.cc:1708:7) [0x55ba15eb5847]
+    d8(v8::internal::JsonParser<unsigned short>::ParseJsonArray() ./../../src/handles/maybe-handles.h:63:19) [0x55ba15eb66a1]
+    d8(v8::internal::JsonParser<unsigned short>::ParseJsonObject(v8::internal::Handle<v8::internal::Map>) ./../../src/handles/maybe-handles.h:63:19) [0x55ba15eb56d6]
+    d8(v8::internal::JsonParser<unsigned short>::ParseJson(v8::internal::DirectHandle<v8::internal::Object>) ./../../src/handles/maybe-handles.h:63:19) [0x55ba15eaffec]
+    d8(v8::internal::JsonParser<unsigned short>::Parse(v8::internal::Isolate*, v8::internal::Handle<v8::internal::String>, v8::internal::Handle<v8::internal::Object>) ./../../src/handles/maybe-handles.h:63:19) [0x55ba15eafdf9]
+    d8(v8::internal::Builtin_Impl_JsonParse(v8::internal::BuiltinArguments, v8::internal::Isolate*) ./../../src/builtins/builtins-json.cc:0:3) [0x55ba1576747e]
+    d8(v8::internal::Builtin_JsonParse(int, unsigned long*, v8::internal::Isolate*) ./../../src/builtins/builtins-json.cc:17:1) [0x55ba1576700d]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc:0:0) [0x55ba1848a73d]
+timeout: the monitored command dumped core
+

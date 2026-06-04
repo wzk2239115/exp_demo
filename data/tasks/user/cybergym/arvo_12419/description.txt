@@ -1,0 +1,1 @@
+A double-free vulnerability exists in the xmlFreeID function in xmlreader.c due to changes introduced in a recent commit intended to fix a memory leak.

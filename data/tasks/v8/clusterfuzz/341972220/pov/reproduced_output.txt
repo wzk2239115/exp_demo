@@ -1,0 +1,25 @@
+
+
+#
+# Fatal error in ../../src/objects/map-inl.h, line 61
+# Debug check failed: IsNull(value) || IsJSProxy(value) || IsWasmObject(value) || (IsJSObject(value) && (InWritableSharedSpace(value) || value->map()->is_prototype_map())).
+#
+#
+#
+#FailureMessage Object: 0x7fff7681f570
+==== C stack trace ===============================
+
+    out/debug/d8(+0x3a61ca3) [0x55ef7bcb0ca3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55ef7bcb00bd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:204:10) [0x55ef7bc94b2d]
+    out/debug/d8(+0x3a45575) [0x55ef7bc94575]
+    d8(v8::internal::Map::set_prototype(v8::internal::Tagged<v8::internal::HeapObject>, v8::internal::WriteBarrierMode) ./../../src/objects/map-inl.h:57:1) [0x55ef79290c58]
+    d8(v8::internal::Map::Normalize(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Map>, v8::internal::ElementsKind, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::PropertyNormalizationMode, bool, char const*) ./../../src/objects/map.cc:1326:9) [0x55ef796c45af]
+    d8(v8::internal::MapUpdater::FindRootMap() ./../../src/objects/map-updater.cc:446:15) [0x55ef796b34c7]
+    d8(v8::internal::MapUpdater::UpdateImpl() ./../../src/objects/map-updater.cc:288:21) [0x55ef796b5571]
+    d8(v8::internal::MapUpdater::ApplyPrototypeTransition(v8::internal::Handle<v8::internal::HeapObject>) ./../../src/objects/map-updater.cc:280:10) [0x55ef796b53e9]
+    d8(v8::internal::JSObject::SetPrototype(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSObject>, v8::internal::Handle<v8::internal::Object>, bool, v8::internal::ShouldThrow) ./../../src/objects/js-objects.cc:5248:12) [0x55ef795cbb9f]
+    d8(v8::internal::Builtin_Impl_ObjectPrototypeSetProto(v8::internal::BuiltinArguments, v8::internal::Isolate*) ./../../src/execution/isolate-data.h:201:44) [0x55ef78ce5dd0]
+    d8(v8::internal::Builtin_ObjectPrototypeSetProto(int, unsigned long*, v8::internal::Isolate*) ./../../src/builtins/builtins-object.cc:242:1) [0x55ef78ce57dd]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc:0:0) [0x55ef7b44f0bd]
+timeout: the monitored command dumped core

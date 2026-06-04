@@ -1,0 +1,1 @@
+A security vulnerability exists in the optimal parser in the opt module, where improper handling of input can lead to unexpected behavior.

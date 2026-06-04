@@ -1,0 +1,50 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 4033331513
+INFO: Loaded 3 modules   (226632 inline 8-bit counters): 14221 [0x7f68e78fd2a0, 0x7f68e7900a2d), 958 [0x7f68e799e778, 0x7f68e799eb36), 211453 [0x559cf6523bc0, 0x559cf65575bd), 
+INFO: Loaded 3 PC tables (226632 PCs): 14221 [0x7f68e7900a30,0x7f68e7938300), 958 [0x7f68e799eb38,0x7f68e79a2718), 211453 [0x559cf65575c0,0x559cf6891590), 
+/out/gs_device_psdcmyk_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x7fba81c9aeb0 (pc 0x559cf3a007cb bp 0x7fff3717b990 sp 0x7fff3717b8c0 T0)
+==7==The signal is caused by a WRITE memory access.
+    #0 0x559cf3a007cb in clist_fill_rectangle_hl_color /src/ghostpdl/./base/gxclrect.c:411:33
+    #1 0x559cf3f637db in clip_fill_rectangle_hl_color_s0 /src/ghostpdl/./base/gxclip.c:809:12
+    #2 0x559cf3f89bf8 in gx_dc_devn_fill_rectangle /src/ghostpdl/./base/gxdcolor.c:463:12
+    #3 0x559cf3f8a17d in gx_dc_devn_fill_masked /src/ghostpdl/./base/gxdcolor.c:532:20
+    #4 0x559cf3fc9a2b in copy_portrait /src/ghostpdl/./base/gxifast.c:567:16
+    #5 0x559cf3fc7277 in image_render_simple /src/ghostpdl/./base/gxifast.c:678:20
+    #6 0x559cf3fc2ede in gx_image1_plane_data /src/ghostpdl/./base/gxidata.c:252:20
+    #7 0x559cf3dcea97 in gs_image_next_planes /src/ghostpdl/./base/gsimage.c:666:20
+    #8 0x559cf4369ad5 in pdfi_render_image /src/ghostpdl/./pdf/pdf_image.c:873:16
+    #9 0x559cf435f864 in pdfi_do_image /src/ghostpdl/./pdf/pdf_image.c:2136:12
+    #10 0x559cf435b1a9 in pdfi_ID /src/ghostpdl/./pdf/pdf_image.c:2222:12
+    #11 0x559cf4315ad1 in pdfi_interpret_stream_operator /src/ghostpdl/./pdf/pdf_int.c:1525:24
+    #12 0x559cf43142de in pdfi_interpret_content_stream /src/ghostpdl/./pdf/pdf_int.c:2124:24
+    #13 0x559cf437150f in pdfi_process_page_contents /src/ghostpdl/./pdf/pdf_page.c:132:20
+    #14 0x559cf437150f in pdfi_process_one_page /src/ghostpdl/./pdf/pdf_page.c:156:12
+    #15 0x559cf437150f in pdfi_page_render /src/ghostpdl/./pdf/pdf_page.c:1031:12
+    #16 0x559cf42d35aa in zPDFdrawpage /src/ghostpdl/./psi/zpdfops.c:959:24
+    #17 0x559cf4168775 in do_call_operator /src/ghostpdl/./psi/interp.c:91:12
+    #18 0x559cf41625a4 in interp /src/ghostpdl/./psi/interp.c:1768:40
+    #19 0x559cf41625a4 in gs_call_interp /src/ghostpdl/./psi/interp.c:531:12
+    #20 0x559cf41625a4 in gs_interpret /src/ghostpdl/./psi/interp.c:488:12
+    #21 0x559cf38e4407 in gs_main_interpret /src/ghostpdl/./psi/imain.c:257:12
+    #22 0x559cf38e4407 in gs_main_run_string_end /src/ghostpdl/./psi/imain.c:945:12
+    #23 0x559cf38e4407 in gs_main_run_string_with_length /src/ghostpdl/./psi/imain.c:889:12
+    #24 0x559cf4461800 in run_string /src/ghostpdl/./psi/imainarg.c:1170:12
+    #25 0x559cf445e1d0 in swproc /src/ghostpdl/./psi/imainarg.c:368:20
+    #26 0x559cf445b352 in gs_main_init_with_args01 /src/ghostpdl/./psi/imainarg.c:224:24
+    #27 0x559cf4461588 in gs_main_init_with_args /src/ghostpdl/./psi/imainarg.c:290:16
+    #28 0x559cf38dbfbe in fuzz_gs_device(unsigned char const*, unsigned long, int, char const*, char const*, int) /src/gs_fuzzlib.h:139:8
+    #29 0x559cf38dc335 in LLVMFuzzerTestOneInput /src/gs_device_psdcmyk_fuzzer.cc:18:2
+    #30 0x559cf37906d0 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #31 0x559cf377b945 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #32 0x559cf37813df in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #33 0x559cf37ac682 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #34 0x7f68e7323082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+    #35 0x559cf3773b2d in _start (/out/gs_device_psdcmyk_fuzzer+0x742b2d)
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/ghostpdl/./base/gxclrect.c:411:33 in clist_fill_rectangle_hl_color
+==7==ABORTING

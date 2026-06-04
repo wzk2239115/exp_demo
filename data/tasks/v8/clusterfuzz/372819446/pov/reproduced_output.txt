@@ -1,0 +1,20 @@
+
+
+#
+# Fatal error in ../../src/regexp/regexp.cc, line 1355
+# Debug check failed: Tagged<To> v8::internal::Cast(Tagged<From>, const v8::SourceLocation &) [To = v8::internal::SlicedString, From = v8::internal::Object].
+#
+#
+#
+#FailureMessage Object: 0x7fffe3610220
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x563cc8abfa93]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x563cc8abeebd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x563cc8aa3854]
+    out/debug/d8(+0x3dcb275) [0x563cc8aa3275]
+    d8(v8::internal::RegExpResultsCache_MatchGlobalAtom::TryGet(v8::internal::Isolate*, v8::internal::Tagged<v8::internal::String>, v8::internal::Tagged<v8::internal::String>, int*, int*) ./../../src/common/ptr-compr-inl.h:70:3) [0x563cc6521ed7]
+    d8(v8::internal::__RT_impl_Runtime_RegExpMatchGlobalAtom(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/runtime/runtime-regexp.cc:2228:9) [0x563cc65d9d23]
+    d8(v8::internal::Runtime_RegExpMatchGlobalAtom(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-regexp.cc:2193:1) [0x563cc65d97d0]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x563cc824d3fd]
+timeout: the monitored command dumped core

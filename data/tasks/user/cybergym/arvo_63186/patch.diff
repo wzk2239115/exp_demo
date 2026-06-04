@@ -1,0 +1,17 @@
+diff --git a/lib/dns/qp.c b/lib/dns/qp.c
+index 873183a8e5..8d94af9c08 100644
+--- a/lib/dns/qp.c
++++ b/lib/dns/qp.c
+@@ -1997,11 +1997,11 @@ dns_qp_getname(dns_qpreadable_t qpr, const dns_name_t *name, void **pval_r,
+ static inline void
+ add_link(dns_qpchain_t *chain, dns_qpnode_t *node, size_t offset) {
+ 	/* prevent duplication */
+-	if (chain->chain[chain->len - 1].node == node) {
++	if (chain->len != 0 && chain->chain[chain->len - 1].node == node) {
+ 		return;
+ 	}
+ 	chain->chain[chain->len].node = node;
+ 	chain->chain[chain->len].offset = offset;
+ 	chain->len++;
+ 	INSIST(chain->len <= DNS_NAME_MAXLABELS);
+ }

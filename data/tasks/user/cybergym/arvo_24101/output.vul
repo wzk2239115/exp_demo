@@ -1,0 +1,51 @@
+======================= INFO =========================
+This binary is built for AFL-fuzz.
+To run the target function on individual input(s) execute this:
+  /out/arrow-ipc-stream-fuzz < INPUT_FILE
+or
+  /out/arrow-ipc-stream-fuzz INPUT_FILE1 [INPUT_FILE2 ... ]
+To fuzz with afl-fuzz execute this:
+  afl-fuzz [afl-flags] /out/arrow-ipc-stream-fuzz [-N]
+afl-fuzz will run N iterations before re-spawning the process (default: 1000)
+======================================================
+Reading 1140 bytes from /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: negative-size-param: (size=-30)
+SCARINESS: 10 (negative-size-param)
+    #0 0x58c964 in __asan_memcpy /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3
+    #1 0x7ae630 in arrow::ConcatenateBuffers(std::__1::vector<std::__1::shared_ptr<arrow::Buffer>, std::__1::allocator<std::__1::shared_ptr<arrow::Buffer> > > const&, arrow::MemoryPool*) /src/arrow/cpp/src/arrow/buffer.cc:261:5
+    #2 0x7336ae in arrow::ConcatenateImpl::Visit(arrow::BinaryType const&) /src/arrow/cpp/src/arrow/array/concatenate.cc:199:12
+    #3 0x731b2b in arrow::Status arrow::VisitTypeInline<arrow::ConcatenateImpl>(arrow::DataType const&, arrow::ConcatenateImpl*) /src/arrow/cpp/src/arrow/visitor_inline.h:88:5
+    #4 0x72cf1b in arrow::ConcatenateImpl::Concatenate(std::__1::shared_ptr<arrow::ArrayData>*) && /src/arrow/cpp/src/arrow/array/concatenate.cc:179:5
+    #5 0x736c64 in arrow::ConcatenateImpl::Visit(arrow::FixedSizeListType const&) /src/arrow/cpp/src/arrow/array/concatenate.cc:226:49
+    #6 0x731aa1 in arrow::Status arrow::VisitTypeInline<arrow::ConcatenateImpl>(arrow::DataType const&, arrow::ConcatenateImpl*) /src/arrow/cpp/src/arrow/visitor_inline.h:88:5
+    #7 0x72cf1b in arrow::ConcatenateImpl::Concatenate(std::__1::shared_ptr<arrow::ArrayData>*) && /src/arrow/cpp/src/arrow/array/concatenate.cc:179:5
+    #8 0x728e5e in arrow::Concatenate(std::__1::vector<std::__1::shared_ptr<arrow::Array>, std::__1::allocator<std::__1::shared_ptr<arrow::Array> > > const&, arrow::MemoryPool*) /src/arrow/cpp/src/arrow/array/concatenate.cc:388:3
+    #9 0x15bd6fb in arrow::ipc::DictionaryMemo::AddDictionaryDelta(long, std::__1::shared_ptr<arrow::Array> const&, arrow::MemoryPool*) /src/arrow/cpp/src/arrow/ipc/dictionary.cc:152:3
+    #10 0x5e784c in arrow::ipc::ReadDictionary(arrow::Buffer const&, arrow::ipc::DictionaryMemo*, arrow::ipc::IpcReadOptions const&, arrow::io::RandomAccessFile*) /src/arrow/cpp/src/arrow/ipc/reader.cc:688:29
+    #11 0x5eb00f in arrow::ipc::ParseDictionary(arrow::ipc::Message const&, arrow::ipc::DictionaryMemo*, arrow::ipc::IpcReadOptions const&) /src/arrow/cpp/src/arrow/ipc/reader.cc:699:10
+    #12 0x6b3163 in arrow::ipc::RecordBatchStreamReaderImpl::ReadInitialDictionaries() /src/arrow/cpp/src/arrow/ipc/reader.cc:795:7
+    #13 0x6adcfd in arrow::ipc::RecordBatchStreamReaderImpl::ReadNext(std::__1::shared_ptr<arrow::RecordBatch>*) /src/arrow/cpp/src/arrow/ipc/reader.cc:730:7
+    #14 0x6410ed in arrow::ipc::internal::FuzzIpcStream(unsigned char const*, long) /src/arrow/cpp/src/arrow/ipc/reader.cc:1615:5
+    #15 0x5c16d9 in LLVMFuzzerTestOneInput /src/arrow/cpp/src/arrow/ipc/stream_fuzz.cc:25:17
+    #16 0x5bfd6e in ExecuteFilesOnyByOne /src/libfuzzer/afl/afl_driver.cpp:217:5
+    #17 0x5bfd6e in main /src/libfuzzer/afl/afl_driver.cpp:254:12
+    #18 0x7f5e842ea83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #19 0x515258 in _start (/out/arrow-ipc-stream-fuzz+0x515258)
+
+DEDUP_TOKEN: __asan_memcpy--arrow::ConcatenateBuffers(std::__1::vector<std::__1::shared_ptr<arrow::Buffer>, std::__1::allocator<std::__1::shared_ptr<arrow::Buffer> > > const&, arrow::MemoryPool*)--arrow::ConcatenateImpl::Visit(arrow::BinaryType const&)
+0x61900000042a is located 938 bytes inside of 1140-byte region [0x619000000080,0x6190000004f4)
+allocated by thread T0 here:
+    #0 0x5bd07d in operator new(unsigned long) /src/llvm-project/compiler-rt/lib/asan/asan_new_delete.cpp:99:3
+    #1 0x5bfd07 in __libcpp_allocate /usr/local/bin/../include/c++/v1/new:253:10
+    #2 0x5bfd07 in allocate /usr/local/bin/../include/c++/v1/memory:1789:34
+    #3 0x5bfd07 in allocate /usr/local/bin/../include/c++/v1/memory:1525:21
+    #4 0x5bfd07 in __vallocate /usr/local/bin/../include/c++/v1/vector:996:37
+    #5 0x5bfd07 in vector /usr/local/bin/../include/c++/v1/vector:1129:9
+    #6 0x5bfd07 in ExecuteFilesOnyByOne /src/libfuzzer/afl/afl_driver.cpp:214:23
+    #7 0x5bfd07 in main /src/libfuzzer/afl/afl_driver.cpp:254:12
+    #8 0x7f5e842ea83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: operator new(unsigned long)--__libcpp_allocate--allocate
+SUMMARY: AddressSanitizer: negative-size-param /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3 in __asan_memcpy
+==7==ABORTING

@@ -1,0 +1,1 @@
+A heap-overflow by 1 occurs in the decode_r11 function.

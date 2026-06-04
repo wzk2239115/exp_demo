@@ -1,0 +1,1 @@
+--allow-natives-syntax --nolazy-feedback-allocation --stress-concurrent-inlining 

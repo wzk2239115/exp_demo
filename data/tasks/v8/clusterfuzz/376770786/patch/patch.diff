@@ -1,0 +1,55 @@
+diff --git a/src/compiler/turboshaft/maglev-graph-building-phase.cc b/src/compiler/turboshaft/maglev-graph-building-phase.cc
+index 8c239db2a26..3d3389d0786 100644
+--- a/src/compiler/turboshaft/maglev-graph-building-phase.cc
++++ b/src/compiler/turboshaft/maglev-graph-building-phase.cc
+@@ -2612,8 +2612,7 @@ class GraphBuildingNodeProcessor {
+     }
+ 
+     BIND(done);
+-
+-    SetMap(node, __ StringConcat(Map(node->lhs()), Map(node->rhs())));
++    SetMap(node, __ StringConcat(left, right));
+     return maglev::ProcessResult::kContinue;
+   }
+   maglev::ProcessResult Process(maglev::StringConcat* node,
+@@ -2635,14 +2634,15 @@ class GraphBuildingNodeProcessor {
+       left = V<String>::Cast(left_string_or_wrapper);
+     } ELSE {
+       left = V<String>::Cast(__ LoadTaggedField(
+-          V<JSPrimitiveWrapper>::Cast(left), JSPrimitiveWrapper::kValueOffset));
++          V<JSPrimitiveWrapper>::Cast(left_string_or_wrapper),
++          JSPrimitiveWrapper::kValueOffset));
+     }
+     IF (__ ObjectIsString(right_string_or_wrapper)) {
+       right = V<String>::Cast(right_string_or_wrapper);
+     } ELSE {
+-      right =
+-          V<String>::Cast(__ LoadTaggedField(V<JSPrimitiveWrapper>::Cast(right),
+-                                             JSPrimitiveWrapper::kValueOffset));
++      right = V<String>::Cast(__ LoadTaggedField(
++          V<JSPrimitiveWrapper>::Cast(right_string_or_wrapper),
++          JSPrimitiveWrapper::kValueOffset));
+     }
+ 
+     return StringConcatHelper(node, left, right);
+diff --git a/test/mjsunit/regress/regress-376770786.js b/test/mjsunit/regress/regress-376770786.js
+new file mode 100644
+index 00000000000..71e3c6b3426
+--- /dev/null
++++ b/test/mjsunit/regress/regress-376770786.js
+@@ -0,0 +1,15 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax --turboshaft --turboshaft-from-maglev
++
++function __f_0(__v_2, __v_3) {
++  return __v_2 + __v_3;
++}
++%PrepareFunctionForOptimization(__f_0);
++const __v_0 = 'first';
++const __v_1 = new String();
++__f_0(__v_0, __v_1);
++%OptimizeFunctionOnNextCall(__f_0);
++__f_0();

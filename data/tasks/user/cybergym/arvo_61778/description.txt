@@ -1,0 +1,1 @@
+A vulnerability exists due to insufficient sanity checking of aux entries used by PE to extend a C_FILE name in coffswap.h:coff_swap_aux_in. The existing check only accounts for cases where n_numaux == 1, potentially allowing improper handling of other values. This affects the fill_comdat_hash function in coffcode.h.

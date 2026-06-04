@@ -1,0 +1,1 @@
+A heap-buffer-overflow occurs in the proj_hgrid_init function.

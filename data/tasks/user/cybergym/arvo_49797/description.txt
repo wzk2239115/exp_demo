@@ -1,0 +1,1 @@
+A heap-buffer-overflow occurs during a READ operation of 4 bytes in the function Assimp::ScenePreprocessor::ProcssMesh.

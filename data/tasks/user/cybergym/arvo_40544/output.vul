@@ -1,0 +1,66 @@
+Accepting input from '/tmp/poc'
+Usage for fuzzing: honggfuzz -P [flags] -- /out/fuzz_objcopy
+/tmp/libfuzzer.7: /tmp/libfuzzer.7(0x7000000-0x3000010): Unable to recognise the format of file: file format not recognized
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x625000002100 at pc 0x000000437eee bp 0x7ffee7f87910 sp 0x7ffee7f870d8
+WRITE of size 65280 at 0x625000002100 thread T0
+SCARINESS: 45 (multi-byte-write-heap-buffer-overflow)
+    #0 0x437eed in fread /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors.inc:1043:16
+    #1 0x10e781e in cache_bread_1 /src/binutils-gdb/bfd/cache.c:319:11
+    #2 0x10e781e in cache_bread /src/binutils-gdb/bfd/cache.c:358:21
+    #3 0x54d38c in bfd_bread /src/binutils-gdb/bfd/bfdio.c:255:11
+    #4 0x4e9bec in copy_unknown_object /src/binutils-gdb/binutils/./fuzz_objcopy.h:1934:11
+    #5 0x4e9bec in copy_archive /src/binutils-gdb/binutils/./fuzz_objcopy.h:3661:11
+    #6 0x4e9bec in copy_file /src/binutils-gdb/binutils/./fuzz_objcopy.h:3847:7
+    #7 0x4e642a in copy_main /src/binutils-gdb/binutils/./fuzz_objcopy.h:5949:3
+    #8 0x4e7c9e in LLVMFuzzerTestOneInput /src/binutils-gdb/binutils/fuzz_objcopy.c:54:3
+    #9 0x4d718b in main (/out/fuzz_objcopy+0x4d718b)
+    #10 0x7f2bc18e5082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)
+    #11 0x41d71d in _start (/out/fuzz_objcopy+0x41d71d)
+
+DEDUP_TOKEN: fread--cache_bread_1--cache_bread
+0x625000002100 is located 0 bytes to the right of 8192-byte region [0x625000000100,0x625000002100)
+allocated by thread T0 here:
+    #0 0x49df0d in __interceptor_malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:129:3
+    #1 0x11dd919 in xmalloc /src/binutils-gdb/libiberty/./xmalloc.c:147:12
+    #2 0x4e9b97 in copy_unknown_object /src/binutils-gdb/binutils/./fuzz_objcopy.h:1926:19
+    #3 0x4e9b97 in copy_archive /src/binutils-gdb/binutils/./fuzz_objcopy.h:3661:11
+    #4 0x4e9b97 in copy_file /src/binutils-gdb/binutils/./fuzz_objcopy.h:3847:7
+    #5 0x4e642a in copy_main /src/binutils-gdb/binutils/./fuzz_objcopy.h:5949:3
+    #6 0x4e7c9e in LLVMFuzzerTestOneInput /src/binutils-gdb/binutils/fuzz_objcopy.c:54:3
+    #7 0x4d718b in main (/out/fuzz_objcopy+0x4d718b)
+
+DEDUP_TOKEN: __interceptor_malloc--xmalloc--copy_unknown_object
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors.inc:1043:16 in fread
+Shadow bytes around the buggy address:
+  0x0c4a7fff83d0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c4a7fff83e0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c4a7fff83f0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c4a7fff8400: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c4a7fff8410: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0c4a7fff8420:[fa]fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c4a7fff8430: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c4a7fff8440: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c4a7fff8450: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c4a7fff8460: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c4a7fff8470: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

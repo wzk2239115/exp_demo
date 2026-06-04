@@ -1,0 +1,1 @@
+A buffer overflow occurs in ecoff.c within the _bfd_ecoff_slurp_symbolic_info function due to string sections not being zero terminated.

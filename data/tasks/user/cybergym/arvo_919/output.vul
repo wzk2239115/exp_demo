@@ -1,0 +1,90 @@
+INFO: Seed: 3963256038
+INFO: Loaded 1 modules (8269 guards): [0x9c0a10, 0x9c8b44), 
+/out/ots-fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-use-after-free on address 0x607000000114 at pc 0x000000587a95 bp 0x7ffd79e43e50 sp 0x7ffd79e43e48
+READ of size 4 at 0x607000000114 thread T0
+SCARINESS: 45 (4-byte-read-heap-use-after-free)
+    #0 0x587a94 in ots::OTSStream::Write(void const*, unsigned long) /src/ots/./include/opentype-sanitiser.h:70:7
+    #1 0x5c8d25 in ots::OpenTypeCMAP::Serialize(ots::OTSStream*) /src/ots/src/cmap.cc:874:15
+    #2 0x59164c in (anonymous namespace)::ProcessGeneric(ots::FontFile*, ots::Font*, unsigned int, ots::OTSStream*, unsigned char const*, unsigned long, std::__1::vector<ots::TableEntry, std::__1::allocator<ots::TableEntry> > const&, ots::Buffer&) /src/ots/src/ots.cc:735:21
+    #3 0x58c379 in (anonymous namespace)::ProcessWOFF(ots::FontFile*, ots::Font*, ots::OTSStream*, unsigned char const*, unsigned long) /src/ots/src/ots.cc:453:10
+    #4 0x58a4e5 in ots::OTSContext::Process(ots::OTSStream*, unsigned char const*, unsigned long, unsigned int) /src/ots/src/ots.cc:969:14
+    #5 0x5868c0 in LLVMFuzzerTestOneInput /src/ots/util/ots-fuzzer.cc:21:21
+    #6 0x539d98 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:451:13
+    #7 0x53a5bc in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:408:3
+    #8 0x513f91 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:268:6
+    #9 0x51c395 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:585:9
+    #10 0x513578 in main /src/libfuzzer/FuzzerMain.cpp:20:10
+    #11 0x7efdf0e7e83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #12 0x41cb18 in _start (/out/ots-fuzzer+0x41cb18)
+
+DEDUP_TOKEN: ots::OTSStream::Write(void const*, unsigned long)--ots::OpenTypeCMAP::Serialize(ots::OTSStream*)--(anonymous namespace)::ProcessGeneric(ots::FontFile*, ots::Font*, unsigned int, ots::OTSStream*, unsigned char const*, unsigned long, std::__1::vector<ots::TableEntry, std::__1::allocator<ots::TableEntry> > const&, ots::Buffer&)
+0x607000000114 is located 20 bytes inside of 68-byte region [0x607000000100,0x607000000144)
+freed by thread T0 here:
+    #0 0x510030 in operator delete[](void*) /src/llvm/projects/compiler-rt/lib/asan/asan_new_delete.cc:130
+    #1 0x589563 in (anonymous namespace)::Arena::~Arena() /src/ots/src/ots.cc:74:7
+    #2 0x588a70 in ots::Font::ParseTable(ots::TableEntry const&, unsigned char const*) /src/ots/src/ots.cc:880:3
+    #3 0x58fe85 in (anonymous namespace)::ProcessGeneric(ots::FontFile*, ots::Font*, unsigned int, ots::OTSStream*, unsigned char const*, unsigned long, std::__1::vector<ots::TableEntry, std::__1::allocator<ots::TableEntry> > const&, ots::Buffer&) /src/ots/src/ots.cc:643:18
+    #4 0x58c379 in (anonymous namespace)::ProcessWOFF(ots::FontFile*, ots::Font*, ots::OTSStream*, unsigned char const*, unsigned long) /src/ots/src/ots.cc:453:10
+    #5 0x58a4e5 in ots::OTSContext::Process(ots::OTSStream*, unsigned char const*, unsigned long, unsigned int) /src/ots/src/ots.cc:969:14
+    #6 0x5868c0 in LLVMFuzzerTestOneInput /src/ots/util/ots-fuzzer.cc:21:21
+    #7 0x539d98 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:451:13
+    #8 0x53a5bc in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:408:3
+    #9 0x513f91 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:268:6
+    #10 0x51c395 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:585:9
+    #11 0x513578 in main /src/libfuzzer/FuzzerMain.cpp:20:10
+    #12 0x7efdf0e7e83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: operator delete[](void*)--(anonymous namespace)::Arena::~Arena()--ots::Font::ParseTable(ots::TableEntry const&, unsigned char const*)
+previously allocated by thread T0 here:
+    #0 0x50f2f0 in operator new[](unsigned long) /src/llvm/projects/compiler-rt/lib/asan/asan_new_delete.cc:84
+    #1 0x58f1df in (anonymous namespace)::Arena::Allocate(unsigned long) /src/ots/src/ots.cc:79:18
+    #2 0x589298 in (anonymous namespace)::GetTableData(unsigned char const*, ots::TableEntry const&, (anonymous namespace)::Arena*, unsigned long*, unsigned char const**) /src/ots/src/ots.cc:514:28
+    #3 0x5888c9 in ots::Font::ParseTable(ots::TableEntry const&, unsigned char const*) /src/ots/src/ots.cc:868:9
+    #4 0x58fe85 in (anonymous namespace)::ProcessGeneric(ots::FontFile*, ots::Font*, unsigned int, ots::OTSStream*, unsigned char const*, unsigned long, std::__1::vector<ots::TableEntry, std::__1::allocator<ots::TableEntry> > const&, ots::Buffer&) /src/ots/src/ots.cc:643:18
+    #5 0x58c379 in (anonymous namespace)::ProcessWOFF(ots::FontFile*, ots::Font*, ots::OTSStream*, unsigned char const*, unsigned long) /src/ots/src/ots.cc:453:10
+    #6 0x58a4e5 in ots::OTSContext::Process(ots::OTSStream*, unsigned char const*, unsigned long, unsigned int) /src/ots/src/ots.cc:969:14
+    #7 0x5868c0 in LLVMFuzzerTestOneInput /src/ots/util/ots-fuzzer.cc:21:21
+    #8 0x539d98 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:451:13
+    #9 0x53a5bc in fuzzer::Fuzzer::RunOne(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:408:3
+    #10 0x513f91 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:268:6
+    #11 0x51c395 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:585:9
+    #12 0x513578 in main /src/libfuzzer/FuzzerMain.cpp:20:10
+    #13 0x7efdf0e7e83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: operator new[](unsigned long)--(anonymous namespace)::Arena::Allocate(unsigned long)--(anonymous namespace)::GetTableData(unsigned char const*, ots::TableEntry const&, (anonymous namespace)::Arena*, unsigned long*, unsigned char const**)
+SUMMARY: AddressSanitizer: heap-use-after-free /src/ots/./include/opentype-sanitiser.h:70:7 in ots::OTSStream::Write(void const*, unsigned long)
+Shadow bytes around the buggy address:
+  0x0c0e7fff7fd0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c0e7fff7fe0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c0e7fff7ff0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c0e7fff8000: fa fa fa fa fd fd fd fd fd fd fd fd fd fd fa fa
+  0x0c0e7fff8010: fa fa 00 00 00 00 00 00 00 00 00 fa fa fa fa fa
+=>0x0c0e7fff8020: fd fd[fd]fd fd fd fd fd fd fa fa fa fa fa 00 00
+  0x0c0e7fff8030: 00 00 00 00 00 00 00 00 fa fa fa fa 00 00 00 00
+  0x0c0e7fff8040: 00 00 00 00 00 00 fa fa fa fa fa fa fa fa fa fa
+  0x0c0e7fff8050: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c0e7fff8060: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c0e7fff8070: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

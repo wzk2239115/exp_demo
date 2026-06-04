@@ -1,0 +1,195 @@
+diff --git a/src/maglev/maglev-code-generator.cc b/src/maglev/maglev-code-generator.cc
+index 419a2d40dfb..0ecd25434b7 100644
+--- a/src/maglev/maglev-code-generator.cc
++++ b/src/maglev/maglev-code-generator.cc
+@@ -1201,6 +1201,7 @@ class MaglevFrameTranslationBuilder {
+         deopt_info->top_frame().GetVirtualObjects();
+     RecursiveBuildDeoptFrame(deopt_info->top_frame(), current_input_location,
+                              virtual_objects);
++    CHECK_EQ(current_input_location, deopt_info->input_locations_end());
+   }
+ 
+   void BuildLazyDeopt(LazyDeoptInfo* deopt_info) {
+@@ -1233,6 +1234,7 @@ class MaglevFrameTranslationBuilder {
+         return BuildSingleDeoptFrame(top_frame.as_builtin_continuation(),
+                                      current_input_location, virtual_objects);
+     }
++    CHECK_EQ(current_input_location, deopt_info->input_locations_end());
+   }
+ 
+  private:
+@@ -1513,6 +1515,9 @@ class MaglevFrameTranslationBuilder {
+                         const InputLocation*& input_location,
+                         const VirtualObjectList& virtual_objects) {
+     const Opcode opcode = value->opcode();
++    // Identity nodes must have been unwrapped earlier using
++    // VirtualObject::UnwrapIdentities.
++    DCHECK_NE(opcode, Opcode::kIdentity);
+     if (IsConstantNode(opcode)) {
+       if (opcode == Opcode::kFloat64Constant) {
+         Float64 value_as_float = value->Cast<Float64Constant>()->value();
+diff --git a/src/maglev/maglev-ir.cc b/src/maglev/maglev-ir.cc
+index 21db505e7c9..fa084e6a50b 100644
+--- a/src/maglev/maglev-ir.cc
++++ b/src/maglev/maglev-ir.cc
+@@ -386,9 +386,7 @@ void DeoptInfo::InitializeInputLocations(Zone* zone, size_t count) {
+   for (size_t i = 0; i < count; ++i) {
+     new (&input_locations_[i]) InputLocation();
+   }
+-#ifdef DEBUG
+   input_location_count_ = count;
+-#endif  // DEBUG
+ }
+ 
+ bool RootConstant::ToBoolean(LocalIsolate* local_isolate) const {
+diff --git a/src/maglev/maglev-ir.h b/src/maglev/maglev-ir.h
+index 8e409cff227..d6a8c096236 100644
+--- a/src/maglev/maglev-ir.h
++++ b/src/maglev/maglev-ir.h
+@@ -2159,6 +2159,10 @@ class DeoptInfo {
+     DCHECK_NOT_NULL(input_locations_);
+     return input_locations_;
+   }
++  size_t input_location_count() const { return input_location_count_; }
++  const InputLocation* input_locations_end() const {
++    return input_locations_ + input_location_count_;
++  }
+   void InitializeInputLocations(Zone* zone, size_t count);
+ 
+   Label* deopt_entry_label() { return &deopt_entry_label_; }
+@@ -2166,17 +2170,11 @@ class DeoptInfo {
+   int translation_index() const { return translation_index_; }
+   void set_translation_index(int index) { translation_index_ = index; }
+ 
+-#ifdef DEBUG
+-  size_t input_location_count() { return input_location_count_; }
+-#endif  // DEBUG
+-
+  private:
+   DeoptFrame* top_frame_;
+   const compiler::FeedbackSource feedback_to_update_;
+   InputLocation* input_locations_ = nullptr;
+-#ifdef DEBUG
+   size_t input_location_count_ = 0;
+-#endif  // DEBUG
+   Label deopt_entry_label_;
+   int translation_index_ = -1;
+ };
+@@ -6828,11 +6826,48 @@ inline void VirtualObject::ForEachNestedRuntimeInput(
+ }
+ 
+ template <typename Function>
+-void VirtualObject::ForEachNestedRuntimeInput(VirtualObjectList virtual_objects,
+-                                              Function&& f,
+-                                              ForEachSlotIterationMode mode) {
+-  static_cast<const VirtualObject*>(this)->ForEachNestedRuntimeInput(
+-      virtual_objects, f, mode);
++inline void VirtualObject::ForEachNestedRuntimeInput(
++    VirtualObjectList virtual_objects, Function&& f,
++    ForEachSlotIterationMode mode) {
++  ForEachSlot(
++      [&](ValueNode*& value, const vobj::Field& desc) {
++        // Subtle: this modifies the location of the caller's `value` in-place.
++        // TODO(jgruber): Change the behavior of all related ForEach functions
++        // such that they don't do anything besides iteration.
++        value = value->UnwrapIdentities();
++        if (IsConstantNode(value->opcode())) {
++          // No location assigned to constants.
++          return;
++        }
++        // Special nodes.
++        switch (value->opcode()) {
++          case Opcode::kArgumentsElements:
++          case Opcode::kArgumentsLength:
++          case Opcode::kRestLength:
++            // No location assigned to these opcodes.
++            break;
++          case Opcode::kVirtualObject:
++            UNREACHABLE();
++          case Opcode::kInlinedAllocation: {
++            InlinedAllocation* alloc = value->Cast<InlinedAllocation>();
++            VirtualObject* inner_vobject =
++                virtual_objects.FindAllocatedWith(alloc);
++            // Check if it has escaped.
++            if (inner_vobject &&
++                (!alloc->HasBeenAnalysed() || alloc->HasBeenElided())) {
++              inner_vobject->ForEachNestedRuntimeInput(virtual_objects, f,
++                                                       mode);
++            } else {
++              f(value);
++            }
++            break;
++          }
++          default:
++            f(value);
++            break;
++        }
++      },
++      mode);
+ }
+ 
+ class AllocationBlock : public FixedInputValueNodeT<0, AllocationBlock> {
+diff --git a/src/maglev/maglev-pre-regalloc-codegen-processors.h b/src/maglev/maglev-pre-regalloc-codegen-processors.h
+index 4fbe7f6dcad..cddcac36182 100644
+--- a/src/maglev/maglev-pre-regalloc-codegen-processors.h
++++ b/src/maglev/maglev-pre-regalloc-codegen-processors.h
+@@ -395,6 +395,7 @@ class LiveRangeAndNextUseProcessor {
+       MarkUse(node, use_id, input, loop_used_nodes);
+       input++;
+     });
++    CHECK_EQ(input, deopt_info->input_locations_end());
+   }
+ 
+   Zone* zone() { return compilation_info_->zone(); }
+diff --git a/src/maglev/maglev-regalloc.cc b/src/maglev/maglev-regalloc.cc
+index d33326c514a..b24b25acde8 100644
+--- a/src/maglev/maglev-regalloc.cc
++++ b/src/maglev/maglev-regalloc.cc
+@@ -702,6 +702,7 @@ void StraightForwardRegisterAllocator::AllocateEagerDeopt(
+     UpdateUse(node, input);
+     input++;
+   });
++  CHECK_EQ(input, deopt_info.input_locations_end());
+ }
+ 
+ void StraightForwardRegisterAllocator::AllocateLazyDeopt(
+@@ -716,6 +717,7 @@ void StraightForwardRegisterAllocator::AllocateLazyDeopt(
+     UpdateUse(node, input);
+     input++;
+   });
++  CHECK_EQ(input, deopt_info.input_locations_end());
+ }
+ 
+ #ifdef DEBUG
+@@ -1695,6 +1697,7 @@ void StraightForwardRegisterAllocator::SaveRegisterSnapshot(NodeBase* node) {
+       }
+       input++;
+     });
++    CHECK_EQ(input, node->eager_deopt_info()->input_locations_end());
+   }
+   node->set_register_snapshot(snapshot);
+ }
+diff --git a/test/mjsunit/regress/regress-458024244.js b/test/mjsunit/regress/regress-458024244.js
+new file mode 100644
+index 00000000000..fac724975b1
+--- /dev/null
++++ b/test/mjsunit/regress/regress-458024244.js
+@@ -0,0 +1,18 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --allow-natives-syntax --maglev-non-eager-inlining
++// Flags: --max-maglev-inlined-bytecode-size-small=0
++
++function f6() {}
++%PrepareFunctionForOptimization(f6);
++
++function f0() {
++  const v8 = Array(f6());
++  try { v8.map(); } catch (e) {}
++}
++%PrepareFunctionForOptimization(f0);
++f0();
++%OptimizeMaglevOnNextCall(f0);
++f0();

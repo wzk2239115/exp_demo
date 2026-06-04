@@ -1,0 +1,45 @@
+diff --git a/src/maglev/maglev-ir.h b/src/maglev/maglev-ir.h
+index 796b8da5a83..61acf720eff 100644
+--- a/src/maglev/maglev-ir.h
++++ b/src/maglev/maglev-ir.h
+@@ -7710,7 +7710,7 @@ class StoreScriptContextSlotWithWriteBarrier
+ 
+ #ifdef V8_COMPRESS_POINTERS
+   void MarkTaggedInputsAsDecompressing() {
+-    new_value_input().node()->SetTaggedResultNeedsDecompress();
++    context_input().node()->SetTaggedResultNeedsDecompress();
+     // Don't need to decompress value to store it.
+   }
+ #endif
+diff --git a/test/mjsunit/regress-378836886.js b/test/mjsunit/regress-378836886.js
+new file mode 100644
+index 00000000000..6eddd081106
+--- /dev/null
++++ b/test/mjsunit/regress-378836886.js
+@@ -0,0 +1,26 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --single-threaded
++
++let v2 = new Int32Array(4096);
++function F4( a7, a8) {
++  if (!new.target) { throw 'must be called with new'; }
++  function f9() {
++      return a7;
++  }
++  function f10(a11) {
++    for (const v12 of v2) {
++        ({"g":v2,} = a11);
++    }
++    class C14 extends C13 {}
++    return C14(- -1059503957, -1059503957, a8);
++  }
++  Object.defineProperty(this, "e", { configurable: true, get: f9, set: f10 });
++  this.e = -1059503957;
++}
++try {
++  new F4(-1059503957, -10595039571059503957);
++}
++catch {}

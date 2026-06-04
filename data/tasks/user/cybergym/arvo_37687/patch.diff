@@ -1,0 +1,49 @@
+diff --git a/src/gd.c b/src/gd.c
+index 574368cc..0be8aadf 100644
+--- a/src/gd.c
++++ b/src/gd.c
+@@ -889,41 +889,43 @@ BGD_DECLARE(void) gdImageColorDeallocate (gdImagePtr im, int color)
+ /**
+  * Function: gdImageColorTransparent
+  *
+  * Sets the transparent color of the image
+  *
+  * Parameter:
+  *   im    - The image.
+  *   color - The color.
+  *
+  * See also:
+  *   - <gdImageGetTransparent>
+  */
+ BGD_DECLARE(void) gdImageColorTransparent (gdImagePtr im, int color)
+ {
+ 	// Reset ::transparent
+ 	if (color == -1) {
+ 		im->transparent = -1;
+ 		return;
+ 	}
+ 
+ 	if (color < -1) {
+ 		return;
+ 	}
+ 
+ 	if (im->trueColor) {
+ 		im->transparent = color;
+ 		return;
+ 	}
+ 
+ 	// Palette Image
+ 	if (color >= gdMaxColors) {
+ 		return;
+ 	}
+-	im->alpha[im->transparent] = gdAlphaOpaque;
++	if (im->transparent != -1) {
++		im->alpha[im->transparent] = gdAlphaOpaque;
++	}
+ 	im->alpha[color] = gdAlphaTransparent;
+ 	im->transparent = color;
+ }
+ 
+ /*
+ 	Function: gdImagePaletteCopy
+ */

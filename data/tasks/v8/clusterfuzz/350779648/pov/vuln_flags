@@ -1,0 +1,1 @@
+--invoke-weak-callbacks --stress-background-compile --parallel-compile-tasks-for-lazy 

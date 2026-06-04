@@ -1,0 +1,82 @@
+Accepting input from '/tmp/poc'
+Usage for fuzzing: honggfuzz -P [flags] -- /out/fuzz_pkcs15_crypt
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x603000000240 at pc 0x0000004a0751 bp 0x7ffe46e021a0 sp 0x7ffe46e01970
+READ of size 32 at 0x603000000240 thread T0
+SCARINESS: 26 (multi-byte-read-heap-buffer-overflow)
+    #0 0x4a0750 in __asan_memcpy /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3
+    #1 0x8c0eda in iasecc_parse_get_tlv /src/opensc/src/libopensc/iasecc-sdo.c:433:2
+    #2 0x8c1269 in iasecc_parse_docp /src/opensc/src/libopensc/iasecc-sdo.c:589:8
+    #3 0x8b42d8 in iasecc_sdo_parse_data /src/opensc/src/libopensc/iasecc-sdo.c:661:8
+    #4 0x8b3605 in iasecc_sdo_parse /src/opensc/src/libopensc/iasecc-sdo.c:769:8
+    #5 0x88b33c in iasecc_sdo_get_tagged_data /src/opensc/src/libopensc/card-iasecc.c:2943:7
+    #6 0x8892df in iasecc_sdo_get_data /src/opensc/src/libopensc/card-iasecc.c:2960:7
+    #7 0x8a973b in iasecc_pin_get_policy /src/opensc/src/libopensc/card-iasecc.c:2162:7
+    #8 0x8a3b64 in iasecc_pin_get_info /src/opensc/src/libopensc/card-iasecc.c:2234:7
+    #9 0x87f600 in iasecc_pin_cmd /src/opensc/src/libopensc/card-iasecc.c:2555:8
+    #10 0xb4471c in sc_pin_cmd /src/opensc/src/libopensc/sec.c:212:7
+    #11 0xa1a5e2 in sc_pkcs15emu_din_66291_init /src/opensc/src/libopensc/pkcs15-din-66291.c:71:23
+    #12 0xa199fc in sc_pkcs15emu_din_66291_init_ex /src/opensc/src/libopensc/pkcs15-din-66291.c:255:23
+    #13 0x5c39a5 in sc_pkcs15_bind_synthetic /src/opensc/src/libopensc/pkcs15-syn.c:141:8
+    #14 0x55a01d in sc_pkcs15_bind /src/opensc/src/libopensc/pkcs15.c:1351:8
+    #15 0x4dd071 in _main /src/opensc/src/tests/fuzzing/../../../src/tools/pkcs15-crypt.c:508:7
+    #16 0x4e0a0e in LLVMFuzzerTestOneInput /src/opensc/src/tests/fuzzing/fuzz_pkcs15_crypt.c:134:3
+    #17 0x4eb49b in main (/out/fuzz_pkcs15_crypt+0x4eb49b)
+    #18 0x7fea61db5082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #19 0x41ff8d in _start (/out/fuzz_pkcs15_crypt+0x41ff8d)
+
+DEDUP_TOKEN: __asan_memcpy--iasecc_parse_get_tlv--iasecc_parse_docp
+0x603000000240 is located 0 bytes to the right of 32-byte region [0x603000000220,0x603000000240)
+allocated by thread T0 here:
+    #0 0x4a159e in __interceptor_calloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:77:3
+    #1 0x8c0c83 in iasecc_parse_get_tlv /src/opensc/src/libopensc/iasecc-sdo.c:430:15
+    #2 0x8b3ee4 in iasecc_sdo_parse_data /src/opensc/src/libopensc/iasecc-sdo.c:653:13
+    #3 0x8b3605 in iasecc_sdo_parse /src/opensc/src/libopensc/iasecc-sdo.c:769:8
+    #4 0x88b33c in iasecc_sdo_get_tagged_data /src/opensc/src/libopensc/card-iasecc.c:2943:7
+    #5 0x8892df in iasecc_sdo_get_data /src/opensc/src/libopensc/card-iasecc.c:2960:7
+    #6 0x8a973b in iasecc_pin_get_policy /src/opensc/src/libopensc/card-iasecc.c:2162:7
+    #7 0x8a3b64 in iasecc_pin_get_info /src/opensc/src/libopensc/card-iasecc.c:2234:7
+    #8 0x87f600 in iasecc_pin_cmd /src/opensc/src/libopensc/card-iasecc.c:2555:8
+    #9 0xb4471c in sc_pin_cmd /src/opensc/src/libopensc/sec.c:212:7
+    #10 0xa1a5e2 in sc_pkcs15emu_din_66291_init /src/opensc/src/libopensc/pkcs15-din-66291.c:71:23
+    #11 0xa199fc in sc_pkcs15emu_din_66291_init_ex /src/opensc/src/libopensc/pkcs15-din-66291.c:255:23
+    #12 0x5c39a5 in sc_pkcs15_bind_synthetic /src/opensc/src/libopensc/pkcs15-syn.c:141:8
+    #13 0x55a01d in sc_pkcs15_bind /src/opensc/src/libopensc/pkcs15.c:1351:8
+    #14 0x4dd071 in _main /src/opensc/src/tests/fuzzing/../../../src/tools/pkcs15-crypt.c:508:7
+    #15 0x4e0a0e in LLVMFuzzerTestOneInput /src/opensc/src/tests/fuzzing/fuzz_pkcs15_crypt.c:134:3
+    #16 0x4eb49b in main (/out/fuzz_pkcs15_crypt+0x4eb49b)
+
+DEDUP_TOKEN: __interceptor_calloc--iasecc_parse_get_tlv--iasecc_sdo_parse_data
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3 in __asan_memcpy
+Shadow bytes around the buggy address:
+  0x0c067fff7ff0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c067fff8000: fa fa 00 00 01 fa fa fa 00 00 04 fa fa fa 00 00
+  0x0c067fff8010: 00 fa fa fa 00 00 04 fa fa fa 00 00 07 fa fa fa
+  0x0c067fff8020: 00 00 00 fa fa fa 00 00 00 fa fa fa fd fd fd fd
+  0x0c067fff8030: fa fa fd fd fd fd fa fa fd fd fd fa fa fa 00 00
+=>0x0c067fff8040: 00 fa fa fa 00 00 00 00[fa]fa 00 00 00 00 fa fa
+  0x0c067fff8050: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c067fff8060: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c067fff8070: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c067fff8080: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c067fff8090: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

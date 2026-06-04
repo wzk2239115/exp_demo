@@ -1,0 +1,36 @@
+
+
+#
+# Fatal error in ../../src/objects/instance-type-inl.h, line 416
+# Debug check failed: IsString(instance_type).
+#
+#
+#
+#FailureMessage Object: 0x7fff719bb450
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:390:32) [0x55de1d479913]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55de1d478cbd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55de1d45fec4]
+    out/debug/d8(+0x431c8b5) [0x55de1d45f8b5]
+    d8(v8::internal::compiler::MapRef::IsTwoByteStringMap() const ./../../src/objects/instance-type-inl.h:0:3) [0x55de1bb149d2]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildNewConsStringMap(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*)::$_0::operator()(v8::internal::maglev::ValueNode*) const ./../../src/maglev/maglev-graph-builder.cc:2602:12) [0x55de1affa1a5]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildNewConsStringMap(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*) ./../../src/maglev/maglev-graph-builder.cc:2628:21) [0x55de1aff9f88]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryBuildNewConsString(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::AllocationType)::$_2::operator()() const::'lambda0'()::operator()() const ./../../src/maglev/maglev-graph-builder.cc:0:26) [0x55de1b08f5cb]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryBuildNewConsString(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::AllocationType)::$_2::operator()() const ./../../src/maglev/maglev-graph-builder.cc:837:25) [0x55de1b08f412]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryBuildNewConsString(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::AllocationType) ./../../src/maglev/maglev-graph-builder.cc:829:12) [0x55de1affaeb6]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildStringConcat(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*) ./../../src/maglev/maglev-graph-builder.cc:2830:3) [0x55de1affba32]
+    d8(v8::internal::maglev::ReduceResult v8::internal::maglev::MaglevGraphBuilder::VisitBinaryOperation<(Operation)0>() ./../../src/maglev/maglev-graph-builder.cc:0:0) [0x55de1b022a93]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitSingleBytecode() ./../../src/maglev/maglev-graph-builder.h:0:7) [0x55de1aef1b29]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildBody() ./../../src/interpreter/bytecode-array-iterator.h:82:16) [0x55de1aeeced0]
+    d8(v8::internal::maglev::MaglevGraphBuilder::Build() ./../../src/maglev/maglev-graph-builder.h:276:3) [0x55de1aee87fe]
+    d8(v8::internal::maglev::MaglevCompiler::Compile(v8::internal::LocalIsolate*, v8::internal::maglev::MaglevCompilationInfo*) ./../../src/maglev/maglev-compiler.cc:109:30) [0x55de1aee6a15]
+    d8(v8::internal::maglev::MaglevCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../third_party/libc++/src/include/__memory/unique_ptr.h:274:12) [0x55de1afe9d2a]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:470:22) [0x55de19f7560d]
+    d8(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1320:16) [0x55de19f85228]
+    d8(v8::internal::Compiler::CompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind) ./../../src/handles/maybe-handles-inl.h:40:17) [0x55de19f8771c]
+    d8(v8::internal::(anonymous namespace)::CompileOptimized(v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::Isolate*) ./../../src/handles/handles.h:201:22) [0x55de1ac52499]
+    d8(v8::internal::__RT_impl_Runtime_OptimizeMaglevEager(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/common/ptr-compr-inl.h:72:18) [0x55de1ac4b1e2]
+    d8(v8::internal::Runtime_OptimizeMaglevEager(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:212:1) [0x55de1ac4add0]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x55de1cad9bbd]
+timeout: the monitored command dumped core

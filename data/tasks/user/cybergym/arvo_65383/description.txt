@@ -1,0 +1,1 @@
+The cram_encode_aux function in cram_encode_aux does not properly check the length of B aux tags, requiring at least eight bytes but only verifying seven, which can lead to a single byte out-of-bounds read.

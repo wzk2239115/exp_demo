@@ -1,0 +1,19 @@
+
+
+#
+# Fatal error in ../../src/ic/ic.cc, line 3887
+# Debug check failed: source_map->map()->native_context() == *isolate->native_context() (0x2db10009a941 <NativeContext[301]> vs. 0x2db100081a85 <NativeContext[301]>).
+#
+#
+#
+#FailureMessage Object: 0x7fff593840d0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x55c83d0803b3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55c83d07f7cd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55c83d064044]
+    out/debug/d8(+0x3e10a75) [0x55c83d063a75]
+    d8(v8::internal::__RT_impl_Runtime_ObjectAssignTryFastcase(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../third_party/libc++/src/include/string:1875:12) [0x55c83a3c08f8]
+    d8(v8::internal::Runtime_ObjectAssignTryFastcase(int, unsigned long*, v8::internal::Isolate*) ./../../src/ic/ic.cc:3869:1) [0x55c83a3bfc90]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x55c83c80e8bd]
+timeout: the monitored command dumped core

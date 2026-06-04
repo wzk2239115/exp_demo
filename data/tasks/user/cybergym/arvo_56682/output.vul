@@ -1,0 +1,108 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3631700626
+INFO: Loaded 1 modules   (860535 inline 8-bit counters): 860535 [0x5e975f0, 0x5f69767), 
+INFO: Loaded 1 PC tables (860535 PCs): 860535 [0x5f69768,0x6c8aed8), 
+/out/parse_fuzz_test: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: container-overflow on address 0x62700000a900 at pc 0x00000057af21 bp 0x7ffdbe6aedf0 sp 0x7ffdbe6ae5c0
+READ of size 16 at 0x62700000a900 thread T0
+SCARINESS: 26 (multi-byte-read-container-overflow)
+    #0 0x57af20 in __asan_memcpy /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3
+    #1 0x483d696 in construct<duckdb_tdigest::Centroid, const duckdb_tdigest::Centroid &> /usr/local/bin/../include/c++/v1/__memory/allocator.h:151:28
+    #2 0x483d696 in construct<duckdb_tdigest::Centroid, const duckdb_tdigest::Centroid &, void> /usr/local/bin/../include/c++/v1/__memory/allocator_traits.h:290:13
+    #3 0x483d696 in __construct_one_at_end<const duckdb_tdigest::Centroid &> /usr/local/bin/../include/c++/v1/vector:787:5
+    #4 0x483d696 in push_back /usr/local/bin/../include/c++/v1/vector:1540:9
+    #5 0x483d696 in duckdb_tdigest::TDigest::process() /src/duckdb/third_party/tdigest/t_digest.hpp:547:14
+    #6 0x4861d55 in compress /src/duckdb/third_party/tdigest/t_digest.hpp:392:3
+    #7 0x4861d55 in void duckdb::ApproxQuantileScalarOperation::Finalize<double, duckdb::ApproxQuantileState>(duckdb::Vector&, duckdb::AggregateInputData&, duckdb::ApproxQuantileState*, double*, duckdb::ValidityMask&, unsigned long) /src/duckdb/src/function/aggregate/holistic/approximate_quantile.cpp:118:13
+    #8 0x3c41510 in duckdb::PhysicalUngroupedAggregate::GetData(duckdb::ExecutionContext&, duckdb::DataChunk&, duckdb::GlobalSourceState&, duckdb::LocalSourceState&) const /src/duckdb/src/execution/operator/aggregate/physical_ungrouped_aggregate.cpp:564:3
+    #9 0xcc7156 in duckdb::PipelineExecutor::FetchFromSource(duckdb::DataChunk&) /src/duckdb/src/parallel/pipeline_executor.cpp:312:19
+    #10 0xce578f in Execute /src/duckdb/src/parallel/pipeline_executor.cpp:47:3
+    #11 0xce578f in duckdb::PipelineTask::ExecuteTask(duckdb::TaskExecutionMode) /src/duckdb/src/parallel/pipeline.cpp:37:39
+    #12 0xcaac23 in duckdb::ExecutorTask::Execute(duckdb::TaskExecutionMode) /src/duckdb/src/parallel/executor_task.cpp:17:10
+    #13 0xcb790f in duckdb::Executor::ExecuteTask() /src/duckdb/src/parallel/executor.cpp:396:24
+    #14 0xa8248e in duckdb::ClientContext::ExecuteTaskInternal(duckdb::ClientContextLock&, duckdb::PendingQueryResult&) /src/duckdb/src/main/client_context.cpp:438:41
+    #15 0xa8bc5e in ExecuteTaskInternal /src/duckdb/src/main/pending_query_result.cpp:53:18
+    #16 0xa8bc5e in duckdb::PendingQueryResult::ExecuteInternal(duckdb::ClientContextLock&) /src/duckdb/src/main/pending_query_result.cpp:58:9
+    #17 0xa94da8 in ExecutePendingQueryInternal /src/duckdb/src/main/client_context.cpp:902:15
+    #18 0xa94da8 in duckdb::ClientContext::Query(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, bool) /src/duckdb/src/main/client_context.cpp:828:21
+    #19 0xaa9a19 in duckdb::Connection::Query(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&) /src/duckdb/src/main/connection.cpp:75:25
+    #20 0x5b966c in LLVMFuzzerTestOneInput /src/duckdb/./test/ossfuzz/parse_fuzz_test.cpp:15:21
+    #21 0x48aa03 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #22 0x476162 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #23 0x47ba0c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #24 0x4a4f42 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #25 0x7f6716061082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #26 0x46c32d in _start (/out/parse_fuzz_test+0x46c32d)
+
+DEDUP_TOKEN: __asan_memcpy--construct<duckdb_tdigest::Centroid, const duckdb_tdigest::Centroid &>--construct<duckdb_tdigest::Centroid, const duckdb_tdigest::Centroid &, void>
+0x62700000a900 is located 0 bytes inside of 12816-byte region [0x62700000a900,0x62700000db10)
+allocated by thread T0 here:
+    #0 0x5b69dd in operator new(unsigned long) /src/llvm-project/compiler-rt/lib/asan/asan_new_delete.cpp:95:3
+    #1 0x483c4b2 in __libcpp_operator_new<unsigned long> /usr/local/bin/../include/c++/v1/new:245:10
+    #2 0x483c4b2 in __libcpp_allocate /usr/local/bin/../include/c++/v1/new:271:10
+    #3 0x483c4b2 in allocate /usr/local/bin/../include/c++/v1/__memory/allocator.h:105:38
+    #4 0x483c4b2 in allocate /usr/local/bin/../include/c++/v1/__memory/allocator_traits.h:262:20
+    #5 0x483c4b2 in __split_buffer /usr/local/bin/../include/c++/v1/__split_buffer:306:29
+    #6 0x483c4b2 in std::__1::vector<duckdb_tdigest::Centroid, std::__1::allocator<duckdb_tdigest::Centroid> >::reserve(unsigned long) /usr/local/bin/../include/c++/v1/vector:1489:53
+    #7 0x483bfba in TDigest /src/duckdb/third_party/tdigest/t_digest.hpp:132:16
+    #8 0x483bfba in duckdb_tdigest::TDigest::TDigest(double, unsigned long) /src/duckdb/third_party/tdigest/t_digest.hpp:125:49
+    #9 0x483968f in TDigest /src/duckdb/third_party/tdigest/t_digest.hpp:122:40
+    #10 0x483968f in Combine<duckdb::ApproxQuantileState, duckdb::ApproxQuantileScalarOperation> /src/duckdb/src/function/aggregate/holistic/approximate_quantile.cpp:88:20
+    #11 0x483968f in Combine<duckdb::ApproxQuantileState, duckdb::ApproxQuantileScalarOperation> /src/duckdb/src/include/duckdb/common/vector_operations/aggregate_executor.hpp:317:4
+    #12 0x483968f in void duckdb::AggregateFunction::StateCombine<duckdb::ApproxQuantileState, duckdb::ApproxQuantileScalarOperation>(duckdb::Vector&, duckdb::Vector&, duckdb::AggregateInputData&, unsigned long) /src/duckdb/src/include/duckdb/function/aggregate_function.hpp:266:3
+    #13 0x3c3fa88 in duckdb::PhysicalUngroupedAggregate::Combine(duckdb::ExecutionContext&, duckdb::GlobalSinkState&, duckdb::LocalSinkState&) const /src/duckdb/src/execution/operator/aggregate/physical_ungrouped_aggregate.cpp:324:3
+    #14 0xcc7cc9 in duckdb::PipelineExecutor::PushFinalize() /src/duckdb/src/parallel/pipeline_executor.cpp:161:17
+    #15 0xce59f6 in duckdb::PipelineTask::ExecuteTask(duckdb::TaskExecutionMode) /src/duckdb/src/parallel/pipeline.cpp
+    #16 0xcaac23 in duckdb::ExecutorTask::Execute(duckdb::TaskExecutionMode) /src/duckdb/src/parallel/executor_task.cpp:17:10
+    #17 0xcb790f in duckdb::Executor::ExecuteTask() /src/duckdb/src/parallel/executor.cpp:396:24
+    #18 0xa8248e in duckdb::ClientContext::ExecuteTaskInternal(duckdb::ClientContextLock&, duckdb::PendingQueryResult&) /src/duckdb/src/main/client_context.cpp:438:41
+    #19 0xa8bc5e in ExecuteTaskInternal /src/duckdb/src/main/pending_query_result.cpp:53:18
+    #20 0xa8bc5e in duckdb::PendingQueryResult::ExecuteInternal(duckdb::ClientContextLock&) /src/duckdb/src/main/pending_query_result.cpp:58:9
+    #21 0xa94da8 in ExecutePendingQueryInternal /src/duckdb/src/main/client_context.cpp:902:15
+    #22 0xa94da8 in duckdb::ClientContext::Query(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, bool) /src/duckdb/src/main/client_context.cpp:828:21
+    #23 0xaa9a19 in duckdb::Connection::Query(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&) /src/duckdb/src/main/connection.cpp:75:25
+    #24 0x5b966c in LLVMFuzzerTestOneInput /src/duckdb/./test/ossfuzz/parse_fuzz_test.cpp:15:21
+    #25 0x48aa03 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #26 0x476162 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #27 0x47ba0c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #28 0x4a4f42 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #29 0x7f6716061082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+
+DEDUP_TOKEN: operator new(unsigned long)--__libcpp_operator_new<unsigned long>--__libcpp_allocate
+HINT: if you don't care about these errors you may set ASAN_OPTIONS=detect_container_overflow=0.
+If you suspect a false positive see also: https://github.com/google/sanitizers/wiki/AddressSanitizerContainerOverflow.
+SUMMARY: AddressSanitizer: container-overflow /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3 in __asan_memcpy
+Shadow bytes around the buggy address:
+  0x0c4e7fff94d0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c4e7fff94e0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c4e7fff94f0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c4e7fff9500: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c4e7fff9510: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+=>0x0c4e7fff9520:[fc]fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+  0x0c4e7fff9530: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+  0x0c4e7fff9540: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+  0x0c4e7fff9550: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+  0x0c4e7fff9560: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+  0x0c4e7fff9570: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

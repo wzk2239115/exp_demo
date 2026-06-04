@@ -1,0 +1,1 @@
+A vulnerability exists when writing profiles if tables have different node count values in the code. Each table may have a different node count number, which can lead to errors during profile writing.

@@ -1,0 +1,161 @@
+From f89ea63f1c65d3e93b255f14f9d9e05df87955fa Mon Sep 17 00:00:00 2001
+From: David Howells <dhowells@redhat.com>
+Date: Fri, 24 May 2024 15:26:11 +0100
+Subject: netfs, 9p: Fix race between umount and async request completion
+
+There's a problem in 9p's interaction with netfslib whereby a crash occurs
+because the 9p_fid structs get forcibly destroyed during client teardown
+(without paying attention to their refcounts) before netfslib has finished
+with them.  However, it's not a simple case of deferring the clunking that
+p9_fid_put() does as that requires the p9_client record to still be
+present.
+
+The problem is that netfslib has to unlock pages and clear the IN_PROGRESS
+flag before destroying the objects involved - including the fid - and, in
+any case, nothing checks to see if writeback completed barring looking at
+the page flags.
+
+Fix this by keeping a count of outstanding I/O requests (of any type) and
+waiting for it to quiesce during inode eviction.
+
+Reported-by: syzbot+df038d463cca332e8414@syzkaller.appspotmail.com
+Link: https://lore.kernel.org/all/0000000000005be0aa061846f8d6@google.com/
+Reported-by: syzbot+d7c7a495a5e466c031b6@syzkaller.appspotmail.com
+Link: https://lore.kernel.org/all/000000000000b86c5e06130da9c6@google.com/
+Reported-by: syzbot+1527696d41a634cc1819@syzkaller.appspotmail.com
+Link: https://lore.kernel.org/all/000000000000041f960618206d7e@google.com/
+Signed-off-by: David Howells <dhowells@redhat.com>
+Link: https://lore.kernel.org/r/755891.1716560771@warthog.procyon.org.uk
+Tested-by: syzbot+d7c7a495a5e466c031b6@syzkaller.appspotmail.com
+Reviewed-by: Dominique Martinet <asmadeus@codewreck.org>
+cc: Eric Van Hensbergen <ericvh@kernel.org>
+cc: Latchesar Ionkov <lucho@ionkov.net>
+cc: Christian Schoenebeck <linux_oss@crudebyte.com>
+cc: Jeff Layton <jlayton@kernel.org>
+cc: Steve French <sfrench@samba.org>
+cc: Hillf Danton <hdanton@sina.com>
+cc: v9fs@lists.linux.dev
+cc: linux-afs@lists.infradead.org
+cc: linux-cifs@vger.kernel.org
+cc: netfs@lists.linux.dev
+cc: linux-fsdevel@vger.kernel.org
+Reported-and-tested-by: syzbot+d7c7a495a5e466c031b6@syzkaller.appspotmail.com
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+---
+ fs/9p/vfs_inode.c      |  1 +
+ fs/afs/inode.c         |  1 +
+ fs/netfs/objects.c     |  5 +++++
+ fs/smb/client/cifsfs.c |  1 +
+ include/linux/netfs.h  | 18 ++++++++++++++++++
+ 5 files changed, 26 insertions(+)
+
+diff --git a/fs/9p/vfs_inode.c b/fs/9p/vfs_inode.c
+index 7a3308d776060..fd72fc38c8f5b 100644
+--- a/fs/9p/vfs_inode.c
++++ b/fs/9p/vfs_inode.c
+@@ -348,6 +348,7 @@ void v9fs_evict_inode(struct inode *inode)
+ 	__le32 __maybe_unused version;
+ 
+ 	if (!is_bad_inode(inode)) {
++		netfs_wait_for_outstanding_io(inode);
+ 		truncate_inode_pages_final(&inode->i_data);
+ 
+ 		version = cpu_to_le32(v9inode->qid.version);
+diff --git a/fs/afs/inode.c b/fs/afs/inode.c
+index 94fc049aff584..15bb7989c387a 100644
+--- a/fs/afs/inode.c
++++ b/fs/afs/inode.c
+@@ -648,6 +648,7 @@ void afs_evict_inode(struct inode *inode)
+ 
+ 	ASSERTCMP(inode->i_ino, ==, vnode->fid.vnode);
+ 
++	netfs_wait_for_outstanding_io(inode);
+ 	truncate_inode_pages_final(&inode->i_data);
+ 
+ 	afs_set_cache_aux(vnode, &aux);
+diff --git a/fs/netfs/objects.c b/fs/netfs/objects.c
+index c90d482b16505..f4a6427274792 100644
+--- a/fs/netfs/objects.c
++++ b/fs/netfs/objects.c
+@@ -72,6 +72,7 @@ struct netfs_io_request *netfs_alloc_request(struct address_space *mapping,
+ 		}
+ 	}
+ 
++	atomic_inc(&ctx->io_count);
+ 	trace_netfs_rreq_ref(rreq->debug_id, 1, netfs_rreq_trace_new);
+ 	netfs_proc_add_rreq(rreq);
+ 	netfs_stat(&netfs_n_rh_rreq);
+@@ -124,6 +125,7 @@ static void netfs_free_request(struct work_struct *work)
+ {
+ 	struct netfs_io_request *rreq =
+ 		container_of(work, struct netfs_io_request, work);
++	struct netfs_inode *ictx = netfs_inode(rreq->inode);
+ 	unsigned int i;
+ 
+ 	trace_netfs_rreq(rreq, netfs_rreq_trace_free);
+@@ -142,6 +144,9 @@ static void netfs_free_request(struct work_struct *work)
+ 		}
+ 		kvfree(rreq->direct_bv);
+ 	}
++
++	if (atomic_dec_and_test(&ictx->io_count))
++		wake_up_var(&ictx->io_count);
+ 	call_rcu(&rreq->rcu, netfs_free_request_rcu);
+ }
+ 
+diff --git a/fs/smb/client/cifsfs.c b/fs/smb/client/cifsfs.c
+index ec5b639f421a2..14810ffd15c89 100644
+--- a/fs/smb/client/cifsfs.c
++++ b/fs/smb/client/cifsfs.c
+@@ -431,6 +431,7 @@ cifs_free_inode(struct inode *inode)
+ static void
+ cifs_evict_inode(struct inode *inode)
+ {
++	netfs_wait_for_outstanding_io(inode);
+ 	truncate_inode_pages_final(&inode->i_data);
+ 	if (inode->i_state & I_PINNING_NETFS_WB)
+ 		cifs_fscache_unuse_inode_cookie(inode, true);
+diff --git a/include/linux/netfs.h b/include/linux/netfs.h
+index ca56a4428043d..3b22ce0d064cc 100644
+--- a/include/linux/netfs.h
++++ b/include/linux/netfs.h
+@@ -68,6 +68,7 @@ struct netfs_inode {
+ 	loff_t			remote_i_size;	/* Size of the remote file */
+ 	loff_t			zero_point;	/* Size after which we assume there's no data
+ 						 * on the server */
++	atomic_t		io_count;	/* Number of outstanding reqs */
+ 	unsigned long		flags;
+ #define NETFS_ICTX_ODIRECT	0		/* The file has DIO in progress */
+ #define NETFS_ICTX_UNBUFFERED	1		/* I/O should not use the pagecache */
+@@ -472,6 +473,7 @@ static inline void netfs_inode_init(struct netfs_inode *ctx,
+ 	ctx->remote_i_size = i_size_read(&ctx->inode);
+ 	ctx->zero_point = LLONG_MAX;
+ 	ctx->flags = 0;
++	atomic_set(&ctx->io_count, 0);
+ #if IS_ENABLED(CONFIG_FSCACHE)
+ 	ctx->cache = NULL;
+ #endif
+@@ -515,4 +517,20 @@ static inline struct fscache_cookie *netfs_i_cookie(struct netfs_inode *ctx)
+ #endif
+ }
+ 
++/**
++ * netfs_wait_for_outstanding_io - Wait for outstanding I/O to complete
++ * @ctx: The netfs inode to wait on
++ *
++ * Wait for outstanding I/O requests of any type to complete.  This is intended
++ * to be called from inode eviction routines.  This makes sure that any
++ * resources held by those requests are cleaned up before we let the inode get
++ * cleaned up.
++ */
++static inline void netfs_wait_for_outstanding_io(struct inode *inode)
++{
++	struct netfs_inode *ictx = netfs_inode(inode);
++
++	wait_var_event(&ictx->io_count, atomic_read(&ictx->io_count) == 0);
++}
++
+ #endif /* _LINUX_NETFS_H */
+-- 
+cgit 1.3-korg
+

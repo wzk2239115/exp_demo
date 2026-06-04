@@ -1,0 +1,35 @@
+
+
+#
+# Fatal error in ../../src/maglev/maglev-graph-builder.cc, line 9928
+# Debug check failed: arg_repr == ValueRepresentation::kTagged (Word64 (5) vs. Tagged (0)).
+#
+#
+#
+#FailureMessage Object: 0x7ffc2128be40
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:390:32) [0x5584793f48c3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x5584793f3c6d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x5584793daa64]
+    out/debug/d8(+0x4301455) [0x5584793da455]
+    d8(v8::internal::maglev::MaglevGraphBuilder::DoTryReduceMathRound(v8::internal::maglev::CallArguments&, v8::internal::maglev::Float64Round::Kind) ./../../third_party/libc++/src/include/string:2034:12) [0x558476f9144a]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryReduceBuiltin(v8::internal::compiler::JSFunctionRef, v8::internal::compiler::SharedFunctionInfoRef, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-graph-builder.cc:10030:5) [0x558476f94654]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryReduceCallForConstant(v8::internal::compiler::JSFunctionRef, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-graph-builder.h:85:39) [0x558476f6a070]
+    d8(v8::internal::maglev::MaglevGraphBuilder::ReduceCall(v8::internal::maglev::ValueNode*, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-graph-builder.h:85:39) [0x558476f87b02]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildCallWithFeedback(v8::internal::maglev::ValueNode*, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-graph-builder.cc:10677:3) [0x558476f96d0c]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildCallFromRegisters(int, v8::internal::ConvertReceiverMode) ./../../src/base/small-vector.h:272:39) [0x558476f98d19]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitSingleBytecode() ./../../src/maglev/maglev-graph-builder.h:0:7) [0x558476db89c4]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildBody() ./../../src/interpreter/bytecode-array-iterator.h:82:16) [0x558476db4260]
+    d8(v8::internal::maglev::MaglevGraphBuilder::Build() ./../../src/maglev/maglev-graph-builder.h:261:3) [0x558476dafc0d]
+    d8(v8::internal::maglev::MaglevCompiler::Compile(v8::internal::LocalIsolate*, v8::internal::maglev::MaglevCompilationInfo*) ./../../src/maglev/maglev-compiler.cc:109:30) [0x558476dadfde]
+    d8(v8::internal::maglev::MaglevCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/maglev/maglev-concurrent-dispatcher.cc:138:8) [0x558476f48306]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:470:22) [0x558475e0620d]
+    d8(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1318:16) [0x558475e14b84]
+    d8(v8::internal::Compiler::CompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind) ./../../src/handles/maybe-handles-inl.h:38:17) [0x558475e172ec]
+    d8(v8::internal::(anonymous namespace)::CompileOptimized(v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::Isolate*) ./../../src/handles/handles.h:198:22) [0x558476b1bccb]
+    d8(v8::internal::__RT_impl_Runtime_OptimizeMaglevEager(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/execution/isolate-data.h:318:44) [0x558476b14a92]
+    d8(v8::internal::Runtime_OptimizeMaglevEager(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:212:1) [0x558476b146b0]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x558478aa2cbd]
+timeout: the monitored command dumped core
+

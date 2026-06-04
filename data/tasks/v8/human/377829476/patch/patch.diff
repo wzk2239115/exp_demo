@@ -1,0 +1,419 @@
+diff --git a/src/builtins/builtins-regexp-gen.cc b/src/builtins/builtins-regexp-gen.cc
+index 5d31832948d..723d08ae50c 100644
+--- a/src/builtins/builtins-regexp-gen.cc
++++ b/src/builtins/builtins-regexp-gen.cc
+@@ -639,7 +639,14 @@ TNode<UintPtrT> RegExpBuiltinsAssembler::RegExpExecInternal(
+ 
+   GotoIf(UintPtrGreaterThan(int_last_index, int_string_length), &out);
+ 
+-  // Unpack the string if possible.
++  // Unpack the string. Note that due to SlicedString unpacking (which extracts
++  // the parent string and offset), it's not valid to replace `string` with the
++  // result of ToDirect here. Instead, we rely on in-place flattening done by
++  // String::Flatten.
++  // TODO(jgruber): Consider changing ToDirectStringAssembler behavior here
++  // since this aspect is surprising. The result of `ToDirect` could always
++  // equal the input in length and contents. SlicedString unpacking could
++  // happen in `TryToSequential`.
+   to_direct.ToDirect();
+ 
+   // Since the RegExp has been compiled, data contains a RegExpData object.
+diff --git a/src/flags/flag-definitions.h b/src/flags/flag-definitions.h
+index d5cb02ccb37..ae310fff519 100644
+--- a/src/flags/flag-definitions.h
++++ b/src/flags/flag-definitions.h
+@@ -1032,9 +1032,10 @@ DEFINE_WEAK_IMPLICATION(trace_baseline, trace_baseline_batch_compilation)
+ DEFINE_BOOL(shared_string_table, false, "internalize strings into shared table")
+ DEFINE_IMPLICATION(harmony_struct, shared_string_table)
+ DEFINE_IMPLICATION(shared_string_table, shared_heap)
+-DEFINE_EXPERIMENTAL_FEATURE(
+-    always_use_string_forwarding_table,
+-    "use string forwarding table instead of thin strings for all strings")
++DEFINE_BOOL_READONLY(always_use_string_forwarding_table, false,
++                     "use string forwarding table instead of thin strings for "
++                     "all strings (experimental)")
++DEFINE_IMPLICATION(always_use_string_forwarding_table, experimental)
+ // With --always-use-string-forwarding-table, we can have young generation
+ // string entries in the forwarding table, requiring table updates when these
+ // strings get promoted to old space. Parallel GCs in client isolates
+diff --git a/src/objects/string-inl.h b/src/objects/string-inl.h
+index a1a2f071a08..124dae09dd7 100644
+--- a/src/objects/string-inl.h
++++ b/src/objects/string-inl.h
+@@ -630,6 +630,96 @@ const Char* String::GetDirectStringChars(
+                    no_gc, access_guard);
+ }
+ 
++// static
++Handle<String> String::SlowFlatten(Isolate* isolate, Handle<ConsString> cons,
++                                   AllocationType allocation) {
++  DCHECK(!cons->IsFlat());
++  DCHECK_NE(cons->second()->length(), 0);  // Equivalent to !IsFlat.
++  DCHECK(!HeapLayout::InAnySharedSpace(*cons));
++
++  bool is_one_byte_representation;
++  uint32_t length;
++
++  {
++    DisallowGarbageCollection no_gc;
++    Tagged<ConsString> raw_cons = *cons;
++
++    // TurboFan can create cons strings with empty first parts. Canonicalize the
++    // cons shape here. Note this case is very rare in practice.
++    if (V8_UNLIKELY(raw_cons->first()->length() == 0)) {
++      Tagged<String> second = raw_cons->second();
++      raw_cons->set_first(second);
++      raw_cons->set_second(ReadOnlyRoots(isolate).empty_string());
++      DCHECK(raw_cons->IsFlat());
++      if (StringShape{second}.IsSequential()) {
++        return handle(second, isolate);
++      }
++      // Note that the remaining subtree may still be non-flat and we thus
++      // need to continue below.
++    }
++
++    if (V8_LIKELY(allocation != AllocationType::kSharedOld)) {
++      if (!HeapLayout::InYoungGeneration(raw_cons)) {
++        allocation = AllocationType::kOld;
++      }
++    }
++    length = raw_cons->length();
++    is_one_byte_representation = cons->IsOneByteRepresentation();
++  }
++
++  DCHECK_EQ(length, cons->length());
++  DCHECK_EQ(is_one_byte_representation, cons->IsOneByteRepresentation());
++  DCHECK(AllowGarbageCollection::IsAllowed());
++
++  Handle<SeqString> result;
++  if (is_one_byte_representation) {
++    Handle<SeqOneByteString> flat =
++        isolate->factory()
++            ->NewRawOneByteString(length, allocation)
++            .ToHandleChecked();
++    // When the ConsString had a forwarding index, it is possible that it was
++    // transitioned to a ThinString (and eventually shortcutted to
++    // InternalizedString) during GC.
++    if constexpr (v8_flags.always_use_string_forwarding_table.value()) {
++      if (!IsConsString(*cons)) {
++        DCHECK(IsInternalizedString(*cons) || IsThinString(*cons));
++        return String::Flatten(isolate, cons, allocation);
++      }
++    }
++    DisallowGarbageCollection no_gc;
++    Tagged<ConsString> raw_cons = *cons;
++    WriteToFlat(raw_cons, flat->GetChars(no_gc), 0, length);
++    raw_cons->set_first(*flat);
++    raw_cons->set_second(ReadOnlyRoots(isolate).empty_string());
++    result = flat;
++  } else {
++    Handle<SeqTwoByteString> flat =
++        isolate->factory()
++            ->NewRawTwoByteString(length, allocation)
++            .ToHandleChecked();
++    // When the ConsString had a forwarding index, it is possible that it was
++    // transitioned to a ThinString (and eventually shortcutted to
++    // InternalizedString) during GC.
++    if constexpr (v8_flags.always_use_string_forwarding_table.value()) {
++      if (!IsConsString(*cons)) {
++        DCHECK(IsInternalizedString(*cons) || IsThinString(*cons));
++        return String::Flatten(isolate, cons, allocation);
++      }
++    }
++    DisallowGarbageCollection no_gc;
++    Tagged<ConsString> raw_cons = *cons;
++    WriteToFlat(raw_cons, flat->GetChars(no_gc), 0, length);
++    raw_cons->set_first(*flat);
++    raw_cons->set_second(ReadOnlyRoots(isolate).empty_string());
++    result = flat;
++  }
++  DCHECK(result->IsFlat());
++  DCHECK(cons->IsFlat());
++  return result;
++}
++
++// Note that RegExpExecInternal currently relies on this to in-place flatten
++// the input `string`.
+ // static
+ Handle<String> String::Flatten(Isolate* isolate, Handle<String> string,
+                                AllocationType allocation) {
+@@ -645,7 +735,12 @@ Handle<String> String::Flatten(Isolate* isolate, Handle<String> string,
+     Tagged<ConsString> cons = Cast<ConsString>(s);
+     if (!cons->IsFlat()) {
+       AllowGarbageCollection yes_gc;
+-      return SlowFlatten(isolate, handle(cons, isolate), allocation);
++      DCHECK_EQ(*string, s);
++      Handle<String> result =
++          SlowFlatten(isolate, Cast<ConsString>(string), allocation);
++      DCHECK(result->IsFlat());
++      DCHECK(string->IsFlat());  // In-place flattened.
++      return result;
+     }
+     s = cons->first();
+     shape = StringShape(s);
+@@ -656,6 +751,8 @@ Handle<String> String::Flatten(Isolate* isolate, Handle<String> string,
+     DCHECK(!IsConsString(s));
+   }
+ 
++  DCHECK(s->IsFlat());
++  DCHECK(string->IsFlat());  // In-place flattened.
+   return handle(s, isolate);
+ }
+ 
+diff --git a/src/objects/string.cc b/src/objects/string.cc
+index 1967683d8ca..44622a66ede 100644
+--- a/src/objects/string.cc
++++ b/src/objects/string.cc
+@@ -33,74 +33,6 @@
+ namespace v8 {
+ namespace internal {
+ 
+-Handle<String> String::SlowFlatten(Isolate* isolate, Handle<ConsString> cons,
+-                                   AllocationType allocation) {
+-  DCHECK_NE(cons->second()->length(), 0);
+-  DCHECK(!HeapLayout::InAnySharedSpace(*cons));
+-
+-  // TurboFan can create cons strings with empty first parts.
+-  while (cons->first()->length() == 0) {
+-    // We do not want to call this function recursively. Therefore we call
+-    // String::Flatten only in those cases where String::SlowFlatten is not
+-    // called again.
+-    if (IsConsString(cons->second()) && !cons->second()->IsFlat()) {
+-      cons = handle(Cast<ConsString>(cons->second()), isolate);
+-    } else {
+-      return String::Flatten(isolate, handle(cons->second(), isolate),
+-                             allocation);
+-    }
+-  }
+-
+-  DCHECK(AllowGarbageCollection::IsAllowed());
+-  uint32_t length = cons->length();
+-  if (allocation != AllocationType::kSharedOld) {
+-    allocation = HeapLayout::InYoungGeneration(*cons) ? allocation
+-                                                      : AllocationType::kOld;
+-  }
+-  Handle<SeqString> result;
+-  if (cons->IsOneByteRepresentation()) {
+-    Handle<SeqOneByteString> flat =
+-        isolate->factory()
+-            ->NewRawOneByteString(length, allocation)
+-            .ToHandleChecked();
+-    // When the ConsString had a forwarding index, it is possible that it was
+-    // transitioned to a ThinString (and eventually shortcutted to
+-    // InternalizedString) during GC.
+-    if (V8_UNLIKELY(v8_flags.always_use_string_forwarding_table &&
+-                    !IsConsString(*cons))) {
+-      DCHECK(IsInternalizedString(*cons) || IsThinString(*cons));
+-      return String::Flatten(isolate, cons, allocation);
+-    }
+-    DisallowGarbageCollection no_gc;
+-    WriteToFlat(*cons, flat->GetChars(no_gc), 0, length);
+-    result = flat;
+-  } else {
+-    Handle<SeqTwoByteString> flat =
+-        isolate->factory()
+-            ->NewRawTwoByteString(length, allocation)
+-            .ToHandleChecked();
+-    // When the ConsString had a forwarding index, it is possible that it was
+-    // transitioned to a ThinString (and eventually shortcutted to
+-    // InternalizedString) during GC.
+-    if (V8_UNLIKELY(v8_flags.always_use_string_forwarding_table &&
+-                    !IsConsString(*cons))) {
+-      DCHECK(IsInternalizedString(*cons) || IsThinString(*cons));
+-      return String::Flatten(isolate, cons, allocation);
+-    }
+-    DisallowGarbageCollection no_gc;
+-    WriteToFlat(*cons, flat->GetChars(no_gc), 0, length);
+-    result = flat;
+-  }
+-  {
+-    DisallowGarbageCollection no_gc;
+-    Tagged<ConsString> raw_cons = *cons;
+-    raw_cons->set_first(*result);
+-    raw_cons->set_second(ReadOnlyRoots(isolate).empty_string());
+-  }
+-  DCHECK(result->IsFlat());
+-  return result;
+-}
+-
+ Handle<String> String::SlowShare(Isolate* isolate, Handle<String> source) {
+   DCHECK(v8_flags.shared_string_table);
+   Handle<String> flat = Flatten(isolate, source, AllocationType::kSharedOld);
+diff --git a/src/objects/string.h b/src/objects/string.h
+index dbe0a6d20d4..d943223fbcf 100644
+--- a/src/objects/string.h
++++ b/src/objects/string.h
+@@ -259,14 +259,18 @@ V8_OBJECT class String : public Name {
+   static Handle<Number> ToNumber(Isolate* isolate, Handle<String> subject);
+ 
+   // Flattens the string.  Checks first inline to see if it is
+-  // necessary.  Does nothing if the string is not a cons string.
+-  // Flattening allocates a sequential string with the same data as
+-  // the given string and mutates the cons string to a degenerate
+-  // form, where the first component is the new sequential string and
+-  // the second component is the empty string.  If allocation fails,
+-  // this function returns a failure.  If flattening succeeds, this
+-  // function returns the sequential string that is now the first
+-  // component of the cons string.
++  // necessary. The given `string` is in-place flattened, i.e. both
++  //
++  //   `t = String::Flatten(s); s->IsFlat()` and
++  //   `t = String::Flatten(s); t->IsFlat()`
++  //
++  // hold. `t` may be an unwrapped but semantically equivalent component of `s`.
++  //
++  // Non-flat ConsStrings are physically flattened by allocating a sequential
++  // string with the same data as the given string. The input `string` is
++  // mutated to a degenerate form, where the first component is the new
++  // sequential string and the second component is the empty string.  This form
++  // is considered flat, i.e. the string is in-place flattened.
+   //
+   // Degenerate cons strings are handled specially by the garbage
+   // collector (see IsShortcutCandidate).
+@@ -650,7 +654,7 @@ V8_OBJECT class String : public Name {
+       Tagged<ConsString> string, base::Vector<const Char> str,
+       const SharedStringAccessGuardIfNeeded& access_guard);
+ 
+-  V8_EXPORT_PRIVATE static Handle<String> SlowFlatten(
++  V8_EXPORT_PRIVATE inline static Handle<String> SlowFlatten(
+       Isolate* isolate, Handle<ConsString> cons, AllocationType allocation);
+ 
+   V8_EXPORT_PRIVATE V8_INLINE static std::optional<FlatContent>
+diff --git a/test/mjsunit/mjsunit.status b/test/mjsunit/mjsunit.status
+index d1d552be0a5..3bdabd76a3b 100644
+--- a/test/mjsunit/mjsunit.status
++++ b/test/mjsunit/mjsunit.status
+@@ -237,6 +237,9 @@
+ 
+   # TODO(v8:12783): Turboshaft instruction selection not ported to these platforms yet.
+   'wasm/turboshaft/instruction-selection': [PASS, ['arch in [riscv32]', SKIP]],
++
++  # Disabled since v8_flags.always_use_string_forwarding_table is now READONLY.
++  'string-forwarding-table': [SKIP],
+ }],  # ALWAYS
+ 
+ ################################################################################
+diff --git a/test/mjsunit/regexp-cons-empty-first.js b/test/mjsunit/regexp-cons-empty-first.js
+new file mode 100644
+index 00000000000..02cefdeeb07
+--- /dev/null
++++ b/test/mjsunit/regexp-cons-empty-first.js
+@@ -0,0 +1,12 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --allow-natives-syntax --regexp-interpret-all
++
++// TF-style cons strings (with an empty `first`) are flattened:
++let s = "foo";
++s.replace(/x.z/g, "");  // Prime the regexp.
++s = %ConstructConsString("aaaaaaaaaaaaaa", "bbbbbbbbbbbbbbc");
++s = %ConstructConsString("", s);
++s = s.replace(/x.z/g, "");
+diff --git a/test/mjsunit/regexp.js b/test/mjsunit/regexp.js
+index df748db2eb4..1b2d44a438d 100644
+--- a/test/mjsunit/regexp.js
++++ b/test/mjsunit/regexp.js
+@@ -841,3 +841,10 @@ assertEquals("\\u2029", new RegExp("\\\u2029").source);
+   const pattern = "\\n";
+   assertTrue(%ReferenceEqual(pattern, new RegExp(pattern).source));
+ }
++
++// Cons strings are flattened:
++{
++  let s = %ConstructConsString("aaaaaaaaaaaaaa", "bbbbbbbbbbbbbb");
++  s = s.replace(/x.z/g, "");  // Prime the regexp.
++  s = s.replace(/x.z/g, "");
++}
+diff --git a/test/mjsunit/regress/regress-377829476.js b/test/mjsunit/regress/regress-377829476.js
+new file mode 100644
+index 00000000000..f7bf72acb78
+--- /dev/null
++++ b/test/mjsunit/regress/regress-377829476.js
+@@ -0,0 +1,25 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --allow-natives-syntax --regexp-interpret-all
++
++function f0() {
++  return 'aaaaaaaaaaaaaa';
++}
++function f1() {
++  return 'bbbbbbbbbbbbbb';
++}
++function f2() {
++  return f0() + f1();
++}
++function f3(arg) {
++  return arg + f2();
++}
++%PrepareFunctionForOptimization(f3);
++f3("");
++f3("");
++%OptimizeFunctionOnNextCall(f3);
++var foo = f3("");
++foo.replace(/[\u1234]/g, "");
++foo.replace(/[\u1234]/g, "");
+diff --git a/test/mjsunit/regress/regress-378014586.js b/test/mjsunit/regress/regress-378014586.js
+new file mode 100644
+index 00000000000..3e7fa33af1a
+--- /dev/null
++++ b/test/mjsunit/regress/regress-378014586.js
+@@ -0,0 +1,24 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --allow-natives-syntax
++
++function __f_3() {
++  return 'aaaaaaaaaaaaaa';
++}
++function __f_4() {
++  return 'bbbbbbbbbbbbbb';
++}
++function __f_5() {
++  return __f_3() + __f_4();
++}
++function __f_6(__v_9) {
++  return __v_9 + __f_5();
++}
++%PrepareFunctionForOptimization(__f_6);
++__f_6("");
++%OptimizeFunctionOnNextCall(__f_6);
++var __v_8 = __f_6("");
++__v_8.replace(/d1/g);
++__v_8.replace(/d1/g);
+diff --git a/test/mjsunit/regress/regress-378102651.js b/test/mjsunit/regress/regress-378102651.js
+new file mode 100644
+index 00000000000..32387186351
+--- /dev/null
++++ b/test/mjsunit/regress/regress-378102651.js
+@@ -0,0 +1,24 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --allow-natives-syntax
++function __f_1() {
++  return 'aaaaaaaaaaaaaa';
++}
++function __f_2() {
++  return 'bbbbbbbbbbbbbb';
++}
++function __f_3() {
++  return __f_1() + (
++  _temp = __f_2(), _temp);
++}
++function __f_4(__v_5) {
++  return __v_5 + __f_3();
++}
++%PrepareFunctionForOptimization(__f_4);
++__f_4("");
++%OptimizeFunctionOnNextCall(__f_4);
++var __v_4 = __f_4("");
++__v_4.split(/a/);
++__v_4.split(/a/);

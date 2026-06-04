@@ -1,0 +1,3 @@
+<?for(;;parse_ini_string(<<<INI
+N=""
+INI,TRUE,INI_SCANNER_TYPED))?>

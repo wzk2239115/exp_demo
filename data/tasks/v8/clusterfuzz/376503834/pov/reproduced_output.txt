@@ -1,0 +1,40 @@
+
+
+#
+# Fatal error in ../../src/compiler/access-info.cc, line 730
+# Check failed: name.IsUniqueName().
+#
+#
+#
+#FailureMessage Object: 0x7fff61417f80
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x557e270efb13]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x557e270eeefd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x557e270d3854]
+    d8(v8::internal::compiler::AccessInfoFactory::ComputePropertyAccessInfo(v8::internal::compiler::MapRef, v8::internal::compiler::NameRef, v8::internal::compiler::AccessMode) const ./../../src/heap/parked-scope-inl.h:48:3) [0x557e257d6abc]
+    d8(v8::internal::compiler::JSHeapBroker::GetPropertyAccessInfo(v8::internal::compiler::MapRef, v8::internal::compiler::NameRef, v8::internal::compiler::AccessMode) ./../../src/compiler/js-heap-broker.cc:0:15) [0x557e259fb320]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildGetKeyedProperty(v8::internal::maglev::ValueNode*, v8::internal::compiler::FeedbackSource const&, v8::internal::compiler::ProcessedFeedback const&) ./../../src/zone/zone-containers.h:394:9) [0x557e24ebcf63]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitGetKeyedProperty() ./../../src/maglev/maglev-graph-builder.cc:6724:1) [0x557e24ebe6be]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitSingleBytecode() ./../../src/maglev/maglev-graph-builder.h:861:7) [0x557e24dc5103]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildBody() ./../../src/interpreter/bytecode-array-iterator.h:82:16) [0x557e24dc04a0]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildInlined(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::maglev::CallArguments const&) ./../../src/maglev/maglev-graph-builder.cc:7366:8) [0x557e24ec998a]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryBuildInlinedCall(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::compiler::SharedFunctionInfoRef, v8::internal::compiler::OptionalRef<v8::internal::compiler::FeedbackVectorRef>, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-graph-builder.cc:7535:27) [0x557e24ecb223]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryBuildCallKnownJSFunction(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::compiler::SharedFunctionInfoRef, v8::internal::compiler::OptionalRef<v8::internal::compiler::FeedbackVectorRef>, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-graph-builder.cc:9442:5) [0x557e24edadf0]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryBuildCallKnownJSFunction(v8::internal::compiler::JSFunctionRef, v8::internal::maglev::ValueNode*, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-graph-builder.cc:9429:11) [0x557e24edacdc]
+    d8(v8::internal::maglev::MaglevGraphBuilder::ReduceCallForConstant(v8::internal::compiler::JSFunctionRef, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-graph-builder.cc:9589:5) [0x557e24eb0bf1]
+    d8(v8::internal::maglev::MaglevGraphBuilder::ReduceCall(v8::internal::maglev::ValueNode*, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-graph-builder.cc:9908:7) [0x557e24ecd174]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildCallWithFeedback(v8::internal::maglev::ValueNode*, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-graph-builder.cc:9759:3) [0x557e24edbdcc]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildCallFromRegisters(int, v8::internal::ConvertReceiverMode) ./../../src/base/small-vector.h:262:39) [0x557e24eddc5e]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitSingleBytecode() ./../../src/maglev/maglev-graph-builder.h:0:7) [0x557e24dc4a76]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildBody() ./../../src/interpreter/bytecode-array-iterator.h:82:16) [0x557e24dc04a0]
+    d8(v8::internal::maglev::MaglevGraphBuilder::Build() ./../../src/maglev/maglev-graph-builder.h:239:3) [0x557e24dbc06d]
+    d8(v8::internal::maglev::MaglevCompiler::Compile(v8::internal::LocalIsolate*, v8::internal::maglev::MaglevCompilationInfo*) ./../../src/maglev/maglev-compiler.cc:100:11) [0x557e24dba7e1]
+    d8(v8::internal::maglev::MaglevCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/maglev/maglev-concurrent-dispatcher.cc:137:8) [0x557e24e93156]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:486:22) [0x557e23e6f51d]
+    d8(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1297:16) [0x557e23e7e46f]
+    d8(v8::internal::Compiler::CompileOptimized(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind) ./../../src/handles/maybe-handles.h:60:19) [0x557e23e8054a]
+    d8(v8::internal::__RT_impl_Runtime_CompileOptimized(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/handles/handles.h:190:22) [0x557e24b3055f]
+    d8(v8::internal::Runtime_CompileOptimized(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:128:1) [0x557e24b30080]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x557e2685097d]
+timeout: the monitored command dumped core

@@ -1,0 +1,20 @@
+
+
+#
+# Fatal error in ../../src/wasm/wasm-objects-inl.h, line 335
+# Debug check failed: index < length() (2 vs. 1).
+#
+#
+#
+#FailureMessage Object: 0x7ffd53ba7b20
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x55b783a8d963]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55b783a8cdad]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:204:10) [0x55b783a7187e]
+    out/debug/d8(+0x37472d5) [0x55b783a712d5]
+    d8(v8::internal::WasmDispatchTable::ref(int) const ./../../third_party/libc++/src/include/string:1793:12) [0x55b780f43e44]
+    d8(v8::internal::__RT_impl_Runtime_TierUpWasmToJSWrapper(v8::internal::RuntimeArgumentsWithoutHandles, v8::internal::Isolate*) ./../../src/runtime/runtime-wasm.cc:0:18) [0x55b781eaae6b]
+    d8(v8::internal::Runtime_TierUpWasmToJSWrapper(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-wasm.cc:549:1) [0x55b781eaa200]
+    d8(Builtins_WasmCEntry setup-isolate-deserialize.cc:0:0) [0x55b78322432e]
+timeout: the monitored command dumped core

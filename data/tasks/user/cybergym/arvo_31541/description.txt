@@ -1,0 +1,1 @@
+A security vulnerability exists where tail calls are not handled by 'luaD_precall' in the same way as regular calls, leading to code duplication and potential inconsistencies in call handling.

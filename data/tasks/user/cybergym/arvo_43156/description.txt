@@ -1,0 +1,1 @@
+The graphics library uses a hard coded limit for the size of the prefix and key values in CMap. There is a vulnerability where prefix and key values are not checked to ensure they fit within these limits before writing, which can lead to buffer overflows.

@@ -1,0 +1,14 @@
+diff --git a/src/maglev/maglev-concurrent-dispatcher.cc b/src/maglev/maglev-concurrent-dispatcher.cc
+index 7583178626c..4c6e8148f6b 100644
+--- a/src/maglev/maglev-concurrent-dispatcher.cc
++++ b/src/maglev/maglev-concurrent-dispatcher.cc
+@@ -288,6 +288,9 @@ class MaglevConcurrentDispatcher::JobTask final : public v8::JobTask {
+         if (status == CompilationJob::SUCCEEDED) {
+           outgoing_queue()->Enqueue(std::move(job));
+           isolate()->stack_guard()->RequestInstallMaglevCode();
++        } else {
++          UnparkedScope unparked_scope(&local_isolate);
++          job.reset();
+         }
+       } else if (destruction_queue()->Dequeue(&job)) {
+         // Maglev jobs aren't cheap to destruct, so destroy them here in the

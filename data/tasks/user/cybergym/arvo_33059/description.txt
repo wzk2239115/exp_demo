@@ -1,0 +1,1 @@
+A segmentation fault occurs on an unknown address in `dwg_free_summaryinfo` due to `dwg.summaryinfo.props[0].value` being an uninitialized pointer. This happens when `dwg_read_dxf` fails and creates a partially initialized summary info object.

@@ -1,0 +1,1 @@
+A heap buffer overflow occurs in svcdec when the decoder display dimensions do not match the subset sequence dimensions.

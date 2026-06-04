@@ -1,0 +1,71 @@
+======================= INFO =========================
+This binary is built for AFL-fuzz.
+To run the target function on individual input(s) execute this:
+  /out/fuzz_bfd < INPUT_FILE
+or
+  /out/fuzz_bfd INPUT_FILE1 [INPUT_FILE2 ... ]
+To fuzz with afl-fuzz execute this:
+  afl-fuzz [afl-flags] /out/fuzz_bfd [-N]
+afl-fuzz will run N iterations before re-spawning the process (default: 1000)
+======================================================
+Reading 248 bytes from /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x6210000060e0 at pc 0x0000006d1a22 bp 0x7ffc56434c50 sp 0x7ffc56434c48
+WRITE of size 8 at 0x6210000060e0 thread T0
+SCARINESS: 42 (8-byte-write-heap-buffer-overflow)
+    #0 0x6d1a21 in xcoff64_slurp_armap /src/binutils-gdb/bfd/coff64-rs6000.c:1962:24
+    #1 0x6ce975 in xcoff64_archive_p /src/binutils-gdb/bfd/coff64-rs6000.c:2045:9
+    #2 0x4cbcaf in bfd_check_format_matches /src/binutils-gdb/bfd/format.c:322:14
+    #3 0x4c9817 in LLVMFuzzerTestOneInput /src/binutils-gdb/fuzz/fuzz_bfd.c:49:5
+    #4 0x4c9dce in ExecuteFilesOnyByOne /src/libfuzzer/afl/afl_driver.cpp:216:5
+    #5 0x4c9dce in main /src/libfuzzer/afl/afl_driver.cpp:253:12
+    #6 0x7fe6775cd83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #7 0x41e458 in _start (/out/fuzz_bfd+0x41e458)
+
+DEDUP_TOKEN: xcoff64_slurp_armap--xcoff64_archive_p--bfd_check_format_matches
+0x6210000060e0 is located 0 bytes to the right of 4064-byte region [0x621000005100,0x6210000060e0)
+allocated by thread T0 here:
+    #0 0x49703d in malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:145:3
+    #1 0xf2eb00 in objalloc_create /src/binutils-gdb/libiberty/./objalloc.c:95:23
+    #2 0x4d20c3 in _bfd_new_bfd /src/binutils-gdb/bfd/opncls.c:74:18
+    #3 0x4d24c8 in bfd_fopen /src/binutils-gdb/bfd/opncls.c:200:10
+    #4 0x4c97f8 in LLVMFuzzerTestOneInput /src/binutils-gdb/fuzz/fuzz_bfd.c:44:17
+    #5 0x4c9dce in ExecuteFilesOnyByOne /src/libfuzzer/afl/afl_driver.cpp:216:5
+    #6 0x4c9dce in main /src/libfuzzer/afl/afl_driver.cpp:253:12
+    #7 0x7fe6775cd83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: malloc--objalloc_create--_bfd_new_bfd
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/binutils-gdb/bfd/coff64-rs6000.c:1962:24 in xcoff64_slurp_armap
+Shadow bytes around the buggy address:
+  0x0c427fff8bc0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c427fff8bd0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c427fff8be0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c427fff8bf0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c427fff8c00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0c427fff8c10: 00 00 00 00 00 00 00 00 00 00 00 00[fa]fa fa fa
+  0x0c427fff8c20: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c427fff8c30: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c427fff8c40: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c427fff8c50: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c427fff8c60: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==7==ABORTING

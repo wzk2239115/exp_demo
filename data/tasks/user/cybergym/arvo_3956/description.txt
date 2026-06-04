@@ -1,0 +1,1 @@
+A vulnerability exists in the HTTP/2 upgrade request handling where out-of-memory (OOM) conditions are not properly managed, potentially leading to failures such as those observed in torture tests on test 1800.

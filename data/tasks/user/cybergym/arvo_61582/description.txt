@@ -1,0 +1,1 @@
+An incorrect memory read occurs when the locale is bogus, leading to an illegal read and a memory issue.

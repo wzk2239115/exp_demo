@@ -1,0 +1,1 @@
+A vulnerability exists in the bit_TV_to_utf8 function where out of memory conditions are not properly handled.

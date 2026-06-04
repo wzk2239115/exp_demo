@@ -1,0 +1,33 @@
+diff --git a/src/ast/scopes.cc b/src/ast/scopes.cc
+index 52c567983d8..dfcc717c19c 100644
+--- a/src/ast/scopes.cc
++++ b/src/ast/scopes.cc
+@@ -724,6 +724,7 @@ bool DeclarationScope::Analyze(ParseInfo* info) {
+   if (scope->is_eval_scope() && is_sloppy(scope->language_mode())) {
+     AstNodeFactory factory(info->ast_value_factory(), info->zone());
+     scope->HoistSloppyBlockFunctions(&factory);
++    scope->RemoveDynamic();
+   }
+ 
+   // We are compiling one of four cases:
+diff --git a/test/mjsunit/regress/regress-418478214.js b/test/mjsunit/regress/regress-418478214.js
+new file mode 100644
+index 00000000000..d65d18b1e55
+--- /dev/null
++++ b/test/mjsunit/regress/regress-418478214.js
+@@ -0,0 +1,15 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++const v5 = `
++  (function () {
++    foo();
++  })();
++  {
++    function foo(a11) {
++        return i7;
++    }
++  }
++`;
++assertThrows(()=>(0,eval)(v5));

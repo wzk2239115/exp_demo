@@ -1,0 +1,1 @@
+LibCrypto contains insufficient bound checks when reading bitmaps, which only affects malformed RSA keys. The code accepts and continues with potentially broken pointers, leading to possible crashes, especially under ASAN. Bitmaps are not properly validated, allowing malformed data to be processed during parsing.

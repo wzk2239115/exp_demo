@@ -1,0 +1,1 @@
+A vulnerability exists in pdfwrite where the code attempts to restore the viewer state without first checking that the viewer depth is at least 1. The restore operation does not perform its own depth check before using the value, which can lead to incorrect behavior or potential security issues.

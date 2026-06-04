@@ -1,0 +1,1 @@
+A buffer overflow vulnerability exists in objcopy.c within the copy_unknown_object function. The variable "tocopy" is an int, and when the size to be copied exceeds MAXINT, "tocopy" becomes negative. This negative value is less than BUFSIZE, but when converted to bfd_size_type, it becomes extremely large, leading to a potential overflow.

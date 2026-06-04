@@ -1,0 +1,54 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3356011175
+INFO: Loaded 3 modules   (182523 inline 8-bit counters): 13708 [0x7f011c6459e0, 0x7f011c648f6c), 959 [0x7f011c6a6a40, 0x7f011c6a6dff), 167856 [0x2d97c90, 0x2dc0c40), 
+INFO: Loaded 3 PC tables (182523 PCs): 13708 [0x7f011c648f70,0x7f011c67e830), 959 [0x7f011c6a6e00,0x7f011c6aa9f0), 167856 [0x24c5430,0x2754f30), 
+/out/gstoraster_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x000000009b98 (pc 0x000000ebe923 bp 0x7ffd6cf31cb0 sp 0x7ffd6cf31be0 T0)
+==7==The signal is caused by a READ memory access.
+SCARINESS: 20 (wild-addr-read)
+    #0 0xebe923 in pdfi_array_fetch /src/ghostpdl/./pdf/pdf_array.c:138:14
+    #1 0xebe923 in pdfi_array_get /src/ghostpdl/./pdf/pdf_array.c:164:12
+    #2 0xebf333 in pdfi_array_get_type /src/ghostpdl/./pdf/pdf_array.c:207:12
+    #3 0xef9741 in pdfi_create_colorspace_by_array /src/ghostpdl/./pdf/pdf_colour.c:2249:12
+    #4 0xf015a3 in pdfi_create_DeviceN /src/ghostpdl/./pdf/pdf_colour.c:1780:20
+    #5 0xefac30 in pdfi_create_colorspace_by_array /src/ghostpdl/./pdf/pdf_colour.c:2294:16
+    #6 0xef8950 in pdfi_create_colorspace /src/ghostpdl/./pdf/pdf_colour.c:2437:20
+    #7 0xef9413 in pdfi_create_colorspace_by_name /src/ghostpdl/./pdf/pdf_colour.c:2372:16
+    #8 0xefb6dd in pdfi_create_colorspace /src/ghostpdl/./pdf/pdf_colour.c:2434:16
+    #9 0xefb6dd in pdfi_setcolorspace /src/ghostpdl/./pdf/pdf_colour.c:2452:12
+    #10 0xefb6dd in pdfi_setfillcolor_space /src/ghostpdl/./pdf/pdf_colour.c:2486:12
+    #11 0xedb12e in pdfi_interpret_stream_operator /src/ghostpdl/./pdf/pdf_int.c:1440:24
+    #12 0xeda008 in pdfi_interpret_content_stream /src/ghostpdl/./pdf/pdf_int.c:2103:32
+    #13 0xf34d7f in pdfi_process_page_contents /src/ghostpdl/./pdf/pdf_page.c:126:20
+    #14 0xf34d7f in pdfi_process_one_page /src/ghostpdl/./pdf/pdf_page.c:151:12
+    #15 0xf34d7f in pdfi_page_render /src/ghostpdl/./pdf/pdf_page.c:895:12
+    #16 0xe9c845 in zPDFdrawpage /src/ghostpdl/./psi/zpdfops.c:910:12
+    #17 0xcffd1b in interp /src/ghostpdl/./psi/interp.c:1725:40
+    #18 0xcffd1b in gs_call_interp /src/ghostpdl/./psi/interp.c:522:12
+    #19 0xcffd1b in gs_interpret /src/ghostpdl/./psi/interp.c:479:12
+    #20 0x56912a in gs_main_interpret /src/ghostpdl/./psi/imain.c:257:12
+    #21 0x56912a in gs_main_run_string_end /src/ghostpdl/./psi/imain.c:945:12
+    #22 0x56912a in gs_main_run_string_with_length /src/ghostpdl/./psi/imain.c:889:12
+    #23 0x5645d2 in gs_main_run_string /src/ghostpdl/./psi/imain.c:870:12
+    #24 0x101dad1 in run_string /src/ghostpdl/./psi/imainarg.c:1166:12
+    #25 0x1019b09 in swproc /src/ghostpdl/./psi/imainarg.c:367:20
+    #26 0x10169ee in gs_main_init_with_args01 /src/ghostpdl/./psi/imainarg.c:224:24
+    #27 0x101d859 in gs_main_init_with_args /src/ghostpdl/./psi/imainarg.c:289:16
+    #28 0xce8394 in psapi_init_with_args /src/ghostpdl/./psi/psapi.c:281:12
+    #29 0x560ae0 in gsapi_init_with_args /src/ghostpdl/./psi/iapi.c:247:12
+    #30 0x55fcb0 in gs_to_raster_fuzz /src/gstoraster_fuzzer.cc:97:8
+    #31 0x55fcb0 in LLVMFuzzerTestOneInput /src/gstoraster_fuzzer.cc:114:2
+    #32 0x457fb3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) cxa_noexception.cpp
+    #33 0x443802 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #34 0x44937c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) cxa_noexception.cpp
+    #35 0x4723b2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #36 0x7f011c03f082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)
+    #37 0x4209fd in _start (/out/gstoraster_fuzzer+0x4209fd)
+
+DEDUP_TOKEN: pdfi_array_fetch--pdfi_array_get--pdfi_array_get_type
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/ghostpdl/./pdf/pdf_array.c:138:14 in pdfi_array_fetch
+==7==ABORTING

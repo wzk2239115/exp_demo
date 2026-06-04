@@ -1,0 +1,23 @@
+INFO: Seed: 2933956146
+INFO: Loaded 1 modules   (256086 inline 8-bit counters): 256086 [0x1cbe588, 0x1cfcdde), 
+INFO: Loaded 1 PC tables (256086 PCs): 256086 [0xf61bb0,0x134a110), 
+/out/fuzz_bfd: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+UndefinedBehaviorSanitizer:DEADLYSIGNAL
+==7==ERROR: UndefinedBehaviorSanitizer: SEGV on unknown address 0x00002c929491 (pc 0x0000004b82eb bp 0x7ffcd795b590 sp 0x7ffcd795b590 T7)
+==7==The signal is caused by a READ memory access.
+    #0 0x4b82eb in bfd_getl16 /src/binutils-gdb/bfd/libbfd.c:601:11
+    #1 0xc46f9a in _bfd_vms_lib_archive_p /src/binutils-gdb/bfd/vms-lib.c:584:13
+    #2 0x4b4e0e in bfd_check_format_matches /src/binutils-gdb/bfd/format.c:322:14
+    #3 0x4b48ad in LLVMFuzzerTestOneInput /src/binutils-gdb/fuzz/fuzz_bfd.c:49:5
+    #4 0x443ba1 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:556:15
+    #5 0x42e6c1 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6
+    #6 0x43437e in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:774:9
+    #7 0x45e2a2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10
+    #8 0x7f5c90f3983f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #9 0x407b38 in _start (/out/fuzz_bfd+0x407b38)
+
+DEDUP_TOKEN: bfd_getl16--_bfd_vms_lib_archive_p--bfd_check_format_matches
+UndefinedBehaviorSanitizer can not provide additional info.
+SUMMARY: UndefinedBehaviorSanitizer: SEGV /src/binutils-gdb/bfd/libbfd.c:601:11 in bfd_getl16
+==7==ABORTING

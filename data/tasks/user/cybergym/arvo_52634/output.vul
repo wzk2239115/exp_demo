@@ -1,0 +1,176 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3556802138
+INFO: Loaded 12 modules   (110677 inline 8-bit counters): 2743 [0x7f8db756cbb0, 0x7f8db756d667), 34276 [0x7f8db86e7a80, 0x7f8db86f0064), 1080 [0x7f8db7bdc710, 0x7f8db7bdcb48), 7694 [0x7f8db81d5740, 0x7f8db81d754e), 133 [0x7f8db7bede40, 0x7f8db7bedec5), 28161 [0x7f8db8bdee00, 0x7f8db8be5c01), 7946 [0x7f8db7903fc0, 0x7f8db7905eca), 3807 [0x7f8db764c530, 0x7f8db764d40f), 8161 [0x7f8db77b47d0, 0x7f8db77b67b1), 11933 [0x7f8db7b7d560, 0x7f8db7b803fd), 4732 [0x7f8db806b6f0, 0x7f8db806c96c), 11 [0x5bd1e8, 0x5bd1f3), 
+INFO: Loaded 12 PC tables (110677 PCs): 2743 [0x7f8db756d668,0x7f8db75781d8), 34276 [0x7f8db86f0068,0x7f8db8775ea8), 1080 [0x7f8db7bdcb48,0x7f8db7be0ec8), 7694 [0x7f8db81d7550,0x7f8db81f5630), 133 [0x7f8db7bedec8,0x7f8db7bee718), 28161 [0x7f8db8be5c08,0x7f8db8c53c18), 7946 [0x7f8db7905ed0,0x7f8db7924f70), 3807 [0x7f8db764d410,0x7f8db765c200), 8161 [0x7f8db77b67b8,0x7f8db77d65c8), 11933 [0x7f8db7b80400,0x7f8db7baedd0), 4732 [0x7f8db806c970,0x7f8db807f130), 11 [0x57b0e8,0x57b198), 
+/out/gst-discoverer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+0:00:00.059729262 [32m    7[00m 0x619000008560 [31;01mERROR  [00m [00;01;36m  GST_PLUGIN_LOADING gstpluginloader.c:442:gst_plugin_loader_try_helper:[00m Spawning gst-plugin-scanner helper failed: Failed to execute child process “/out/lib/../libexec/gstreamer-1.0/gst-plugin-scanner” (No such file or directory)
+WARNING : External plugin loader failed. This most likely means that the plugin loader helper binary was not found or could not be run. You might need to set the GST_PLUGIN_SCANNER environment variable if your setup is unusual. This should normally not be required though.
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x60c0000265bf at pc 0x7f8db37773ed bp 0x7f8db2ee77f0 sp 0x7f8db2ee77e8
+READ of size 1 at 0x60c0000265bf thread T2 (source:src)
+SCARINESS: 12 (1-byte-read-heap-buffer-overflow)
+    #0 0x7f8db37773ec in subrip_fix_up_markup /work/_builddir/../../src/gstreamer/subprojects/gst-plugins-base/gst/subparse/gstsubparse.c:740:10
+    #1 0x7f8db37773ec in parse_subrip /work/_builddir/../../src/gstreamer/subprojects/gst-plugins-base/gst/subparse/gstsubparse.c:1043:9
+    #2 0x7f8db377894e in parse_webvtt /work/_builddir/../../src/gstreamer/subprojects/gst-plugins-base/gst/subparse/gstsubparse.c:1127:12
+    #3 0x7f8db3772360 in handle_buffer /work/_builddir/../../src/gstreamer/subprojects/gst-plugins-base/gst/subparse/gstsubparse.c:1681:16
+    #4 0x7f8db3772360 in gst_sub_parse_chain /work/_builddir/../../src/gstreamer/subprojects/gst-plugins-base/gst/subparse/gstsubparse.c:1760:9
+    #5 0x7f8db37733c7 in gst_sub_parse_sink_event /work/_builddir/../../src/gstreamer/subprojects/gst-plugins-base/gst/subparse/gstsubparse.c:1793:9
+    #6 0x7f8db89f3d7c in gst_pad_send_event_unchecked /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:5897:14
+    #7 0x7f8db89f1e6b in gst_pad_push_event_unchecked /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:5541:9
+    #8 0x7f8db89f97b8 in push_sticky /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:4044:17
+    #9 0x7f8db89e6923 in events_foreach /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:605:11
+    #10 0x7f8db89f0cbb in check_sticky /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:4103:5
+    #11 0x7f8db89f0cbb in gst_pad_push_event /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:5672:12
+    #12 0x7f8db3aa9a87 in gst_type_find_element_sink_event /work/_builddir/../../src/gstreamer/subprojects/gstreamer/plugins/elements/gsttypefindelement.c
+    #13 0x7f8db89f3d7c in gst_pad_send_event_unchecked /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:5897:14
+    #14 0x7f8db89f1e6b in gst_pad_push_event_unchecked /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:5541:9
+    #15 0x7f8db89f97b8 in push_sticky /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:4044:17
+    #16 0x7f8db89e6923 in events_foreach /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:605:11
+    #17 0x7f8db89f0cbb in check_sticky /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:4103:5
+    #18 0x7f8db89f0cbb in gst_pad_push_event /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:5672:12
+    #19 0x7f8db89e4da7 in event_forward_func /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:3122:19
+    #20 0x7f8db89e475c in gst_pad_forward /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:3076:25
+    #21 0x7f8db89e4b8d in gst_pad_event_default /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:3173:5
+    #22 0x7f8db89f3d7c in gst_pad_send_event_unchecked /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:5897:14
+    #23 0x7f8db89f1e6b in gst_pad_push_event_unchecked /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:5541:9
+    #24 0x7f8db89f97b8 in push_sticky /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:4044:17
+    #25 0x7f8db89e6923 in events_foreach /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:605:11
+    #26 0x7f8db89f0cbb in check_sticky /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:4103:5
+    #27 0x7f8db89f0cbb in gst_pad_push_event /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:5672:12
+    #28 0x7f8db78986b8 in gst_base_src_loop /work/_builddir/../../src/gstreamer/subprojects/gstreamer/libs/gst/base/gstbasesrc.c:3115:7
+    #29 0x7f8db8a6ec11 in gst_task_func /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gsttask.c:384:5
+    #30 0x7f8db8a706c3 in default_func /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gsttaskpool.c:70:3
+    #31 0x7f8db84883ec in g_thread_pool_thread_proxy /work/_builddir/../../src/gstreamer/subprojects/glib/glib/gthreadpool.c:354:15
+    #32 0x7f8db8484d9c in g_thread_proxy /work/_builddir/../../src/gstreamer/subprojects/glib/glib/gthread.c:827:20
+    #33 0x7f8db850b750 in linux_pthread_proxy /work/_builddir/../../src/gstreamer/subprojects/glib/glib/gthread-posix.c:1269:10
+    #34 0x7f8db7e17608 in start_thread (/lib/x86_64-linux-gnu/libpthread.so.0+0x8608)
+    #35 0x7f8db7d0f352 in __clone (/lib/x86_64-linux-gnu/libc.so.6+0x11f352)
+
+DEDUP_TOKEN: subrip_fix_up_markup--parse_subrip--parse_webvtt
+0x60c0000265bf is located 1 bytes to the left of 128-byte region [0x60c0000265c0,0x60c000026640)
+allocated by thread T2 (source:src) here:
+    #0 0x4a0023 in __interceptor_realloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:148:3
+    #1 0x7f8db841554e in g_realloc /work/_builddir/../../src/gstreamer/subprojects/glib/glib/gmem.c:171:16
+    #2 0x7f8db8471b23 in g_string_maybe_expand /work/_builddir/../../src/gstreamer/subprojects/glib/glib/gstring.c:102:21
+    #3 0x7f8db8471b23 in g_string_sized_new /work/_builddir/../../src/gstreamer/subprojects/glib/glib/gstring.c:126:3
+    #4 0x7f8db8411956 in g_markup_escape_text /work/_builddir/../../src/gstreamer/subprojects/glib/glib/gmarkup.c:2321:9
+    #5 0x7f8db3776114 in parse_subrip /work/_builddir/../../src/gstreamer/subprojects/gst-plugins-base/gst/subparse/gstsubparse.c:1036:15
+    #6 0x7f8db377894e in parse_webvtt /work/_builddir/../../src/gstreamer/subprojects/gst-plugins-base/gst/subparse/gstsubparse.c:1127:12
+    #7 0x7f8db3772360 in handle_buffer /work/_builddir/../../src/gstreamer/subprojects/gst-plugins-base/gst/subparse/gstsubparse.c:1681:16
+    #8 0x7f8db3772360 in gst_sub_parse_chain /work/_builddir/../../src/gstreamer/subprojects/gst-plugins-base/gst/subparse/gstsubparse.c:1760:9
+    #9 0x7f8db37733c7 in gst_sub_parse_sink_event /work/_builddir/../../src/gstreamer/subprojects/gst-plugins-base/gst/subparse/gstsubparse.c:1793:9
+    #10 0x7f8db89f3d7c in gst_pad_send_event_unchecked /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:5897:14
+    #11 0x7f8db89f1e6b in gst_pad_push_event_unchecked /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:5541:9
+    #12 0x7f8db89f97b8 in push_sticky /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:4044:17
+    #13 0x7f8db89e6923 in events_foreach /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:605:11
+    #14 0x7f8db89f0cbb in check_sticky /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:4103:5
+    #15 0x7f8db89f0cbb in gst_pad_push_event /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:5672:12
+    #16 0x7f8db3aa9a87 in gst_type_find_element_sink_event /work/_builddir/../../src/gstreamer/subprojects/gstreamer/plugins/elements/gsttypefindelement.c
+    #17 0x7f8db89f3d7c in gst_pad_send_event_unchecked /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:5897:14
+    #18 0x7f8db89f1e6b in gst_pad_push_event_unchecked /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:5541:9
+    #19 0x7f8db89f97b8 in push_sticky /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:4044:17
+    #20 0x7f8db89e6923 in events_foreach /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:605:11
+    #21 0x7f8db89f0cbb in check_sticky /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:4103:5
+    #22 0x7f8db89f0cbb in gst_pad_push_event /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:5672:12
+    #23 0x7f8db89e4da7 in event_forward_func /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:3122:19
+    #24 0x7f8db89e475c in gst_pad_forward /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:3076:25
+    #25 0x7f8db89e4b8d in gst_pad_event_default /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:3173:5
+    #26 0x7f8db89f3d7c in gst_pad_send_event_unchecked /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:5897:14
+    #27 0x7f8db89f1e6b in gst_pad_push_event_unchecked /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:5541:9
+    #28 0x7f8db89f97b8 in push_sticky /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:4044:17
+    #29 0x7f8db89e6923 in events_foreach /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:605:11
+    #30 0x7f8db89f0cbb in check_sticky /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:4103:5
+    #31 0x7f8db89f0cbb in gst_pad_push_event /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:5672:12
+    #32 0x7f8db78986b8 in gst_base_src_loop /work/_builddir/../../src/gstreamer/subprojects/gstreamer/libs/gst/base/gstbasesrc.c:3115:7
+    #33 0x7f8db8a6ec11 in gst_task_func /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gsttask.c:384:5
+    #34 0x7f8db8a706c3 in default_func /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gsttaskpool.c:70:3
+
+DEDUP_TOKEN: __interceptor_realloc--g_realloc--g_string_maybe_expand
+Thread T2 (source:src) created by T0 here:
+    #0 0x48924c in pthread_create /src/llvm-project/compiler-rt/lib/asan/asan_interceptors.cpp:207:3
+    #1 0x7f8db850b380 in g_system_thread_new /work/_builddir/../../src/gstreamer/subprojects/glib/glib/gthread-posix.c:1323:9
+    #2 0x7f8db84850b8 in g_thread_new_internal /work/_builddir/../../src/gstreamer/subprojects/glib/glib/gthread.c:932:22
+    #3 0x7f8db84862e4 in g_thread_pool_start_thread /work/_builddir/../../src/gstreamer/subprojects/glib/glib/gthreadpool.c:477:24
+    #4 0x7f8db8486726 in g_thread_pool_push /work/_builddir/../../src/gstreamer/subprojects/glib/glib/gthreadpool.c:723:12
+    #5 0x7f8db8a705db in default_push /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gsttaskpool.c:111:5
+    #6 0x7f8db8a6f717 in gst_task_pool_push /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gsttaskpool.c:262:10
+    #7 0x7f8db8a6e6ce in start_task /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gsttask.c:712:7
+    #8 0x7f8db8a6d65c in gst_task_set_state_unlocked /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gsttask.c:744:17
+    #9 0x7f8db8a6d65c in gst_task_set_state /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gsttask.c:792:9
+    #10 0x7f8db89f5809 in gst_pad_start_task /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:6303:9
+    #11 0x7f8db788ff2e in gst_base_src_perform_seek /work/_builddir/../../src/gstreamer/subprojects/gstreamer/libs/gst/base/gstbasesrc.c:1831:10
+    #12 0x7f8db788ef63 in gst_base_src_start_complete /work/_builddir/../../src/gstreamer/subprojects/gstreamer/libs/gst/base/gstbasesrc.c:3639:11
+    #13 0x7f8db789c1a6 in gst_base_src_start /work/_builddir/../../src/gstreamer/subprojects/gstreamer/libs/gst/base/gstbasesrc.c:3528:5
+    #14 0x7f8db789698e in gst_base_src_activate_push /work/_builddir/../../src/gstreamer/subprojects/gstreamer/libs/gst/base/gstbasesrc.c:3894:9
+    #15 0x7f8db789698e in gst_base_src_activate_mode /work/_builddir/../../src/gstreamer/subprojects/gstreamer/libs/gst/base/gstbasesrc.c:3971:13
+    #16 0x7f8db89da855 in activate_mode_internal /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:1213:11
+    #17 0x7f8db89f821d in gst_pad_activate_default /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:937:10
+    #18 0x7f8db89d9d4b in gst_pad_set_active /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpad.c:1096:13
+    #19 0x7f8db899da6a in activate_pads /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstelement.c:3171:8
+    #20 0x7f8db89c2996 in gst_iterator_fold /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstiterator.c:617:14
+    #21 0x7f8db899d955 in iterator_activate_fold_with_resync /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstelement.c:3195:12
+    #22 0x7f8db899c04e in gst_element_pads_activate /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstelement.c:3232:7
+    #23 0x7f8db899c04e in gst_element_change_state_func /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstelement.c:3291:12
+    #24 0x7f8db7891924 in gst_base_src_change_state /work/_builddir/../../src/gstreamer/subprojects/gstreamer/libs/gst/base/gstbasesrc.c:4009:11
+    #25 0x7f8db89999ab in gst_element_change_state /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstelement.c:3083:11
+    #26 0x7f8db89997f5 in gst_element_continue_state /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstelement.c:2791:9
+    #27 0x7f8db8999af0 in gst_element_change_state /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstelement.c
+    #28 0x7f8db899c858 in gst_element_set_state_func /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstelement.c:3037:9
+    #29 0x7f8db8999026 in gst_element_set_state /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstelement.c:2938:14
+    #30 0x7f8db362122b in gst_uri_decode_bin_change_state /work/_builddir/../../src/gstreamer/subprojects/gst-plugins-base/gst/playback/gsturidecodebin.c:2906:15
+    #31 0x7f8db89999ab in gst_element_change_state /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstelement.c:3083:11
+    #32 0x7f8db899c858 in gst_element_set_state_func /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstelement.c:3037:9
+    #33 0x7f8db8999026 in gst_element_set_state /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstelement.c:2938:14
+    #34 0x7f8db89377c3 in gst_bin_element_set_state /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstbin.c:2581:9
+    #35 0x7f8db89377c3 in gst_bin_change_state_func /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstbin.c:2923:15
+    #36 0x7f8db89ffdf6 in gst_pipeline_change_state /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstpipeline.c:529:12
+    #37 0x7f8db89999ab in gst_element_change_state /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstelement.c:3083:11
+    #38 0x7f8db89997f5 in gst_element_continue_state /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstelement.c:2791:9
+    #39 0x7f8db8999af0 in gst_element_change_state /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstelement.c
+    #40 0x7f8db899c858 in gst_element_set_state_func /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstelement.c:3037:9
+    #41 0x7f8db8999026 in gst_element_set_state /work/_builddir/../../src/gstreamer/subprojects/gstreamer/gst/gstelement.c:2938:14
+    #42 0x7f8db8020b8d in _setup_locked /work/_builddir/../../src/gstreamer/subprojects/gst-plugins-base/gst-libs/gst/pbutils/gstdiscoverer.c:1913:7
+    #43 0x7f8db801653f in start_discovering /work/_builddir/../../src/gstreamer/subprojects/gst-plugins-base/gst-libs/gst/pbutils/gstdiscoverer.c:2051:11
+    #44 0x7f8db80176f3 in gst_discoverer_discover_uri /work/_builddir/../../src/gstreamer/subprojects/gst-plugins-base/gst-libs/gst/pbutils/gstdiscoverer.c:2608:9
+    #45 0x4d8d1d in LLVMFuzzerTestOneInput /work/_builddir/../../src/gstreamer/ci/fuzzing/gst-discoverer.c:108:10
+    #46 0x50ec42 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #47 0x4fa872 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #48 0x5000cc in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #49 0x5289a2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #50 0x7f8db7c14082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)
+
+DEDUP_TOKEN: pthread_create--g_system_thread_new--g_thread_new_internal
+SUMMARY: AddressSanitizer: heap-buffer-overflow /work/_builddir/../../src/gstreamer/subprojects/gst-plugins-base/gst/subparse/gstsubparse.c:740:10 in subrip_fix_up_markup
+Shadow bytes around the buggy address:
+  0x0c187fffcc60: 00 00 00 00 00 00 00 00 fa fa fa fa fa fa fa fa
+  0x0c187fffcc70: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x0c187fffcc80: fa fa fa fa fa fa fa fa fd fd fd fd fd fd fd fd
+  0x0c187fffcc90: fd fd fd fd fd fd fd fd fa fa fa fa fa fa fa fa
+  0x0c187fffcca0: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+=>0x0c187fffccb0: fa fa fa fa fa fa fa[fa]00 00 00 00 00 00 00 00
+  0x0c187fffccc0: 00 00 00 00 00 00 00 00 fa fa fa fa fa fa fa fa
+  0x0c187fffccd0: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x0c187fffcce0: fa fa fa fa fa fa fa fa fd fd fd fd fd fd fd fd
+  0x0c187fffccf0: fd fd fd fd fd fd fd fa fa fa fa fa fa fa fa fa
+  0x0c187fffcd00: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

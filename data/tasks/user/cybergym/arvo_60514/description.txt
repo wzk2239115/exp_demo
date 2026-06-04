@@ -1,0 +1,1 @@
+There is an issue in the type object validation where a type object is received for an aggregated or enumerated type with no members or elements. This affects the validation process for such types in the relevant code.

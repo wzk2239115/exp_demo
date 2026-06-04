@@ -1,0 +1,95 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3417410264
+INFO: Loaded 3 modules   (182523 inline 8-bit counters): 13708 [0x7f7baa6a39e0, 0x7f7baa6a6f6c), 959 [0x7f7baa704a40, 0x7f7baa704dff), 167856 [0x2d97c90, 0x2dc0c40), 
+INFO: Loaded 3 PC tables (182523 PCs): 13708 [0x7f7baa6a6f70,0x7f7baa6dc830), 959 [0x7f7baa704e00,0x7f7baa7089f0), 167856 [0x24c5430,0x2754f30), 
+/out/gstoraster_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x7f7ba9466040 at pc 0x0000004bf0a4 bp 0x7ffe29fe8470 sp 0x7ffe29fe7c30
+READ of size 72 at 0x7f7ba9466040 thread T0
+SCARINESS: 41 (multi-byte-read-stack-buffer-overflow)
+    #0 0x4bf0a3 in __interceptor_memcpy /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors.inc:827:5
+    #1 0xff4cad in pdf_compute_encryption_key_preR5 /src/ghostpdl/./pdf/pdf_sec.c:129:13
+    #2 0xff4cad in check_user_password_preR5 /src/ghostpdl/./pdf/pdf_sec.c:442:12
+    #3 0xff1d02 in check_password_preR5 /src/ghostpdl/./pdf/pdf_sec.c:1227:12
+    #4 0xff1d02 in pdfi_initialise_Decryption /src/ghostpdl/./pdf/pdf_sec.c:1374:20
+    #5 0xeac1b9 in pdfi_init_file /src/ghostpdl/./pdf/ghostpdf.c:1071:20
+    #6 0xeac1b9 in pdfi_set_input_stream /src/ghostpdl/./pdf/ghostpdf.c:1314:12
+    #7 0xe98974 in zPDFstream /src/ghostpdl/./psi/zpdfops.c:521:12
+    #8 0xcffd1b in interp /src/ghostpdl/./psi/interp.c:1725:40
+    #9 0xcffd1b in gs_call_interp /src/ghostpdl/./psi/interp.c:522:12
+    #10 0xcffd1b in gs_interpret /src/ghostpdl/./psi/interp.c:479:12
+    #11 0x56912a in gs_main_interpret /src/ghostpdl/./psi/imain.c:257:12
+    #12 0x56912a in gs_main_run_string_end /src/ghostpdl/./psi/imain.c:945:12
+    #13 0x56912a in gs_main_run_string_with_length /src/ghostpdl/./psi/imain.c:889:12
+    #14 0x5645d2 in gs_main_run_string /src/ghostpdl/./psi/imain.c:870:12
+    #15 0x101dad1 in run_string /src/ghostpdl/./psi/imainarg.c:1166:12
+    #16 0x1019b09 in swproc /src/ghostpdl/./psi/imainarg.c:367:20
+    #17 0x10169ee in gs_main_init_with_args01 /src/ghostpdl/./psi/imainarg.c:224:24
+    #18 0x101d859 in gs_main_init_with_args /src/ghostpdl/./psi/imainarg.c:289:16
+    #19 0xce8394 in psapi_init_with_args /src/ghostpdl/./psi/psapi.c:281:12
+    #20 0x560ae0 in gsapi_init_with_args /src/ghostpdl/./psi/iapi.c:247:12
+    #21 0x55fcb0 in gs_to_raster_fuzz /src/gstoraster_fuzzer.cc:97:8
+    #22 0x55fcb0 in LLVMFuzzerTestOneInput /src/gstoraster_fuzzer.cc:114:2
+    #23 0x457fb3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) cxa_noexception.cpp
+    #24 0x443802 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #25 0x44937c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) cxa_noexception.cpp
+    #26 0x4723b2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #27 0x7f7baa09d082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)
+    #28 0x4209fd in _start (/out/gstoraster_fuzzer+0x4209fd)
+
+DEDUP_TOKEN: __interceptor_memcpy--pdf_compute_encryption_key_preR5--check_user_password_preR5
+Address 0x7f7ba9466040 is located in stack of thread T0 at offset 64 in frame
+    #0 0xff44cf in check_user_password_preR5 /src/ghostpdl/./pdf/pdf_sec.c:424
+
+DEDUP_TOKEN: check_user_password_preR5
+  This frame has 14 object(s):
+    [32, 64) 'Key.i' (line 54)
+    [96, 100) 'P.i' (line 56) <== Memory access at offset 64 partially underflows this variable
+    [112, 200) 'md5.i' (line 57) <== Memory access at offset 64 partially underflows this variable
+    [240, 248) 'a.i' (line 58)
+    [272, 280) 's.i' (line 59)
+    [304, 312) 'Key' (line 425)
+    [336, 344) 'XORKey' (line 425)
+    [368, 376) 'stream' (line 427)
+    [400, 408) 'arc4_stream' (line 427)
+    [432, 464) 'Buffer' (line 428)
+    [496, 512) 'Hash' (line 429)
+    [528, 616) 'md5' (line 430)
+    [656, 664) 's' (line 431)
+    [688, 696) 'a' (line 432)
+HINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork
+      (longjmp and C++ exceptions *are* supported)
+SUMMARY: AddressSanitizer: stack-buffer-overflow /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors.inc:827:5 in __interceptor_memcpy
+Shadow bytes around the buggy address:
+  0x0feff5284bb0: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x0feff5284bc0: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x0feff5284bd0: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x0feff5284be0: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x0feff5284bf0: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+=>0x0feff5284c00: f1 f1 f1 f1 00 00 00 00[f2]f2 f2 f2 04 f2 00 00
+  0x0feff5284c10: 00 00 00 00 00 00 00 00 00 f2 f2 f2 f2 f2 00 f2
+  0x0feff5284c20: f2 f2 00 f2 f2 f2 00 f2 f2 f2 00 f2 f2 f2 00 f2
+  0x0feff5284c30: f2 f2 00 f2 f2 f2 00 00 00 00 f2 f2 f2 f2 00 00
+  0x0feff5284c40: f2 f2 00 00 00 00 00 00 00 00 00 00 00 f2 f2 f2
+  0x0feff5284c50: f2 f2 00 f2 f2 f2 00 f3 f3 f3 f3 f3 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

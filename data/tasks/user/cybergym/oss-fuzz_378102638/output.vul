@@ -1,0 +1,40 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3982451506
+INFO: Loaded 1 modules   (18935 inline 8-bit counters): 18935 [0x5559c94b7818, 0x5559c94bc20f), 
+INFO: Loaded 1 PC tables (18935 PCs): 18935 [0x5559c94bc210,0x5559c9506180), 
+/out/ffmpeg_SWS_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+1 x 2057 bayer_rggb16be -> 3 x 686 nv16
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x5559c917e84a in hScale16To15_c /src/ffmpeg/libswscale/swscale.c:119:18
+    #1 0x5559c93935d4 in lum_h_scale /src/ffmpeg/libswscale/hscale.c:57:13
+    #2 0x5559c9172f70 in ff_swscale /src/ffmpeg/libswscale/swscale.c:474:17
+    #3 0x5559c917b89a in scale_internal /src/ffmpeg/libswscale/swscale.c:1080:15
+    #4 0x5559c917ee70 in scale_cascaded /src/ffmpeg/libswscale/swscale.c:905:11
+    #5 0x5559c917a108 in scale_internal /src/ffmpeg/libswscale/swscale.c:970:16
+    #6 0x5559c917d00e in sws_scale /src/ffmpeg/libswscale/swscale.c:1258:12
+    #7 0x5559c917023b in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_sws_fuzzer.c:194:5
+    #8 0x5559c9065160 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #9 0x5559c90503d5 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #10 0x5559c9055e6f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #11 0x5559c9081112 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #12 0x7f7c222fd082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+    #13 0x5559c90485bd in _start (/out/ffmpeg_SWS_fuzzer+0xcd5bd)
+
+  Uninitialized value was created by a heap allocation
+    #0 0x5559c91086e3 in posix_memalign /src/llvm-project/compiler-rt/lib/msan/msan_interceptors.cpp:162:3
+    #1 0x5559c93b4be7 in av_malloc /src/ffmpeg/libavutil/mem.c:107:9
+    #2 0x5559c9314861 in alloc_lines /src/ffmpeg/libswscale/slice.c:63:35
+    #3 0x5559c9312445 in ff_init_filters /src/ffmpeg/libswscale/slice.c:309:15
+    #4 0x5559c90364e9 in sws_init_single_context /src/ffmpeg/libswscale/utils.c:1994:12
+    #5 0x5559c9183d5d in sws_getContext /src/ffmpeg/libswscale/utils.c:2128:9
+    #6 0x5559c90325e4 in sws_init_single_context /src/ffmpeg/libswscale/utils.c:1695:38
+    #7 0x5559c91701e0 in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_sws_fuzzer.c:189:11
+    #8 0x5559c9065160 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #9 0x5559c90503d5 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #10 0x5559c9055e6f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #11 0x5559c9081112 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #12 0x7f7c222fd082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /src/ffmpeg/libswscale/swscale.c:119:18 in hScale16To15_c
+Exiting

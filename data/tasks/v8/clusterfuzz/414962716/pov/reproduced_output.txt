@@ -1,0 +1,24 @@
+
+
+#
+# Fatal error in ../../src/json/json-parser.cc, line 1554
+# Debug check failed: Tagged<To> v8::internal::Cast(Tagged<From>, const v8::SourceLocation &) [To = v8::internal::String, From = v8::internal::Name].
+#
+#
+#
+#FailureMessage Object: 0x7ffd1f974700
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:390:32) [0x5639e8b43ca3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x5639e8b42e0d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x5639e8b29da4]
+    out/debug/d8(+0x43d7795) [0x5639e8b29795]
+    d8(bool v8::internal::JsonParser<unsigned char>::ParseJsonObjectProperties<(v8::internal::DescriptorArray::FastIterableState)3>(v8::internal::JsonParser<unsigned char>::JsonContinuation*, v8::internal::MessageTemplate, v8::internal::Handle<v8::internal::DescriptorArray>) ./../../src/objects/casting.h:0:3) [0x5639e5ca7aab]
+    d8(v8::internal::JsonParser<unsigned char>::ParseJsonObject(v8::internal::Handle<v8::internal::Map>) ./../../src/json/json-parser.cc:1663:7) [0x5639e5ca3b22]
+    d8(v8::internal::JsonParser<unsigned char>::ParseJsonArray() ./../../src/handles/maybe-handles.h:63:19) [0x5639e5ca48a1]
+    d8(v8::internal::JsonParser<unsigned char>::ParseJson(v8::internal::DirectHandle<v8::internal::Object>) ./../../src/handles/maybe-handles.h:63:19) [0x5639e5c9de9c]
+    d8(v8::internal::JsonParser<unsigned char>::Parse(v8::internal::Isolate*, v8::internal::Handle<v8::internal::String>, v8::internal::Handle<v8::internal::Object>) ./../../src/handles/maybe-handles.h:63:19) [0x5639e5c9dca9]
+    d8(v8::internal::Builtin_Impl_JsonParse(v8::internal::BuiltinArguments, v8::internal::Isolate*) ./../../src/builtins/builtins-json.cc:25:3) [0x5639e54e3a3c]
+    d8(v8::internal::Builtin_JsonParse(int, unsigned long*, v8::internal::Isolate*) ./../../src/builtins/builtins-json.cc:17:1) [0x5639e54e358d]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc:0:0) [0x5639e82210bd]
+timeout: the monitored command dumped core

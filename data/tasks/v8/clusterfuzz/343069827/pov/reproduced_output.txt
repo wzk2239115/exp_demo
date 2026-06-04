@@ -1,0 +1,45 @@
+=== stderr ===
+abort: Unexpected value
+
+==== JS stack trace =========================================
+
+    0: ExitFrame [pc: 0x7f62877a093d]
+    1: foo [0x336400298bb5] [test/mjsunit/maglev/maglev-343069827.js:~7] [pc=0x7f62e000386e](this=0x3364002816c9 <JSGlobalProxy>#0#)
+    2: /* anonymous */ [0x336400298b3d] [test/mjsunit/maglev/maglev-343069827.js:20] [bytecode=0x392b00040021 offset=47](this=0x3364002816c9 <JSGlobalProxy>#0#)
+    3: InternalFrame [pc: 0x7f6287408c5c]
+    4: EntryFrame [pc: 0x7f628740899f]
+
+==== Details ================================================
+
+[0]: ExitFrame [pc: 0x7f62877a093d]
+[1]: foo [0x336400298bb5] [test/mjsunit/maglev/maglev-343069827.js:~7] [pc=0x7f62e000386e](this=0x3364002816c9 <JSGlobalProxy>#0#) {
+// optimized frame
+--------- s o u r c e   c o d e ---------
+function foo() {\x0a  for (let v1 = 0; v1 < 5; v1++) {\x0a      const v3 = [1];\x0a      for (const v4 of v3) {\x0a          v3[2033] = 1;\x0a      }\x0a  }\x0a}
+-----------------------------------------
+}
+[2]: /* anonymous */ [0x336400298b3d] [test/mjsunit/maglev/maglev-343069827.js:20] [bytecode=0x392b00040021 offset=47](this=0x3364002816c9 <JSGlobalProxy>#0#) {
+  // expression stack (top to bottom)
+  [03] : 0x3364002816c9 <JSGlobalProxy>#0#
+  [02] : 0x336400298b3d <JSFunction (sfi = 0x336400298a79)>#1#
+  [01] : 0x336400298bb5 <JSFunction foo (sfi = 0x336400298ad9)>#2#
+  [00] : 0x336400000069 <undefined>
+--------- s o u r c e   c o d e ---------
+// Copyright 2024 the V8 project authors. All rights reserved.\x0a// Use of this source code is governed by a BSD-style license that can be\x0a// found in the LICENSE file.\x0a//\x0a// Flags: --allow-natives-syntax --no-lazy-feedback-allocation\x0a\x0afunction foo() {\x0a  for (let v1 = 0; v1 < 5; v1++) {\x0a      const v3...
+
+-----------------------------------------
+}
+
+[3]: InternalFrame [pc: 0x7f6287408c5c]
+[4]: EntryFrame [pc: 0x7f628740899f]
+-- ObjectCacheKey --
+
+ #0# 0x3364002816c9: 0x3364002816c9 <JSGlobalProxy>
+ #1# 0x336400298b3d: 0x336400298b3d <JSFunction (sfi = 0x336400298a79)>
+ #2# 0x336400298bb5: 0x336400298bb5 <JSFunction foo (sfi = 0x336400298ad9)>
+=====================
+
+timeout: the monitored command dumped core
+
+=== exit code ===
+133

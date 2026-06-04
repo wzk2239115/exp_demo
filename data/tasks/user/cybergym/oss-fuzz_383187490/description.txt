@@ -1,0 +1,1 @@
+The elf_lookup function in elf.cpp does not defend against a bad chain in the hash table, which can lead to a security vulnerability.

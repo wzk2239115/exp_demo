@@ -1,0 +1,1 @@
+A heap overrun exists in the dotnet module due to insufficient validation of blob_offset and blob_result.length values in calls to set_sized_string. The values are not properly checked to ensure they are within the boundaries of the buffer containing the PE file, as validation occurs before adding blob_result.length to blob_offset.

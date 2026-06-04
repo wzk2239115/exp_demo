@@ -1,0 +1,1 @@
+A potential heap-buffer-overflow exists in the ndpi_search_openvpn function.

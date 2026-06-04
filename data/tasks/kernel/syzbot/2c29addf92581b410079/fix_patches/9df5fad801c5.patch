@@ -1,0 +1,50 @@
+From 9df5fad801c5c568ee5f5dacd8b53565d88e4f02 Mon Sep 17 00:00:00 2001
+From: Deepanshu Kartikey <kartikey406@gmail.com>
+Date: Wed, 7 Jan 2026 07:40:37 +0530
+Subject: bpf: Reject BPF_MAP_TYPE_INSN_ARRAY in check_reg_const_str()
+
+BPF_MAP_TYPE_INSN_ARRAY maps store instruction pointers in their
+ips array, not string data. The map_direct_value_addr callback for
+this map type returns the address of the ips array, which is not
+suitable for use as a constant string argument.
+
+When a BPF program passes a pointer to an insn_array map value as
+ARG_PTR_TO_CONST_STR (e.g., to bpf_snprintf), the verifier's
+null-termination check in check_reg_const_str() operates on the
+wrong memory region, and at runtime bpf_bprintf_prepare() can read
+out of bounds searching for a null terminator.
+
+Reject BPF_MAP_TYPE_INSN_ARRAY in check_reg_const_str() since this
+map type is not designed to hold string data.
+
+Reported-by: syzbot+2c29addf92581b410079@syzkaller.appspotmail.com
+Closes: https://syzkaller.appspot.com/bug?extid=2c29addf92581b410079
+Tested-by: syzbot+2c29addf92581b410079@syzkaller.appspotmail.com
+Fixes: 493d9e0d6083 ("bpf, x86: add support for indirect jumps")
+Signed-off-by: Deepanshu Kartikey <kartikey406@gmail.com>
+Acked-by: Anton Protopopov <a.s.protopopov@gmail.com>
+Link: https://lore.kernel.org/r/20260107021037.289644-1-kartikey406@gmail.com
+Signed-off-by: Alexei Starovoitov <ast@kernel.org>
+---
+ kernel/bpf/verifier.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/kernel/bpf/verifier.c b/kernel/bpf/verifier.c
+index f0ca69f888fac..3135643d56955 100644
+--- a/kernel/bpf/verifier.c
++++ b/kernel/bpf/verifier.c
+@@ -9609,6 +9609,11 @@ static int check_reg_const_str(struct bpf_verifier_env *env,
+ 	if (reg->type != PTR_TO_MAP_VALUE)
+ 		return -EINVAL;
+ 
++	if (map->map_type == BPF_MAP_TYPE_INSN_ARRAY) {
++		verbose(env, "R%d points to insn_array map which cannot be used as const string\n", regno);
++		return -EACCES;
++	}
++
+ 	if (!bpf_map_is_rdonly(map)) {
+ 		verbose(env, "R%d does not point to a readonly map'\n", regno);
+ 		return -EACCES;
+-- 
+cgit 1.3-korg
+

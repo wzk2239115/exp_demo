@@ -1,0 +1,54 @@
+diff --git a/src/objects/intl-objects.cc b/src/objects/intl-objects.cc
+index 63b2835317b..fd818d8e131 100644
+--- a/src/objects/intl-objects.cc
++++ b/src/objects/intl-objects.cc
+@@ -2445,7 +2445,7 @@ std::map<std::string, std::string> LookupAndValidateUnicodeExtensions(
+   if (U_FAILURE(status)) return extensions;
+ 
+   if (!keywords) return extensions;
+-  char value[ULOC_FULLNAME_CAPACITY];
++  char value[ULOC_FULLNAME_CAPACITY + 1];
+ 
+   int32_t length;
+   status = U_ZERO_ERROR;
+@@ -2459,7 +2459,8 @@ std::map<std::string, std::string> LookupAndValidateUnicodeExtensions(
+       continue;
+     }
+ 
+-    icu_locale->getKeywordValue(keyword, value, ULOC_FULLNAME_CAPACITY, status);
++    const int32_t value_len = icu_locale->getKeywordValue(
++        keyword, value, ULOC_FULLNAME_CAPACITY, status);
+ 
+     // Ignore failures in ICU and skip to the next keyword.
+     //
+@@ -2468,6 +2469,9 @@ std::map<std::string, std::string> LookupAndValidateUnicodeExtensions(
+       status = U_ZERO_ERROR;
+       continue;
+     }
++    // Ensure the `value` is null-terminated even when the `status` is
++    // `U_STRING_NOT_TERMINATED_WARNING`.
++    value[value_len] = '\0';
+ 
+     const char* bcp47_key = uloc_toUnicodeLocaleKey(keyword);
+ 
+diff --git a/test/intl/date-format/long-locale.js b/test/intl/date-format/long-locale.js
+new file mode 100644
+index 00000000000..54d590ecc1b
+--- /dev/null
++++ b/test/intl/date-format/long-locale.js
+@@ -0,0 +1,15 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++let locale = "zh-TW-u-ca-chinese";
++for (let i = 0; i < 300; ++i) {
++  try {
++    Intl.DateTimeFormat(locale);
++  } catch (e) {
++    // "RangeError: Invalid language tag", for locales ending with "-", or
++    // sub-tags of one character, are not relevant to this test.
++  }
++  locale += (i % 5) ? "a" : "-";
++}
++// Pass if this test doesn't crash.

@@ -1,0 +1,1 @@
+A test for a section group section-reference in src/lib/libdwarf/dwarf_elf_load_headers.c fails to catch a section number that is just one too big, potentially allowing out-of-bounds section references.

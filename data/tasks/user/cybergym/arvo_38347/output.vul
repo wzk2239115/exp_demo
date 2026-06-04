@@ -1,0 +1,74 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3281876933
+INFO: Loaded 1 modules   (3053 inline 8-bit counters): 3053 [0x82c722c, 0x82c7e19), 
+INFO: Loaded 1 PC tables (3053 PCs): 3053 [0x82c7e1c,0x82cdd84), 
+/out/fuzzer_decoder: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0xf3a00f00 at pc 0x08209718 bp 0xfff43e78 sp 0xfff43e70
+WRITE of size 4 at 0xf3a00f00 thread T0
+SCARINESS: 36 (4-byte-write-heap-buffer-overflow)
+    #0 0x8209717 in FLAC__lpc_restore_signal_intrin_sse41 /src/flac/src/libFLAC/lpc_intrin_sse41.c:1017:13
+    #1 0x81ced93 in read_subframe_lpc_ /src/flac/src/libFLAC/stream_decoder.c
+    #2 0x81ced93 in read_subframe_ /src/flac/src/libFLAC/stream_decoder.c:2529:7
+    #3 0x81ced93 in read_frame_ /src/flac/src/libFLAC/stream_decoder.c:2068:7
+    #4 0x81d494f in FLAC__stream_decoder_process_until_end_of_stream /src/flac/src/libFLAC/stream_decoder.c:1089:9
+    #5 0x81c0de7 in FLAC::Decoder::Stream::process_until_end_of_stream() /src/flac/src/libFLAC++/stream_decoder.cpp:218:29
+    #6 0x81bc511 in LLVMFuzzerTestOneInput /src/flac-fuzzers/fuzzer_decoder.cpp:269:50
+    #7 0x80a6d35 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #8 0x80933fe in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #9 0x8098fd9 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned int)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:859:9
+    #10 0x80bf227 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #11 0xf7c40ed4 in __libc_start_main (/lib32/libc.so.6+0x1aed4)
+    #12 0x806f985 in _start (/out/fuzzer_decoder+0x806f985)
+
+DEDUP_TOKEN: FLAC__lpc_restore_signal_intrin_sse41--read_subframe_lpc_--read_subframe_
+0xf3a00f00 is located 0 bytes to the right of 48-byte region [0xf3a00ed0,0xf3a00f00)
+allocated by thread T0 here:
+    #0 0x8178145 in __interceptor_malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:129:3
+    #1 0x81cc2e4 in safe_malloc_muladd2_ /src/flac/src/libFLAC/../../include/share/alloc.h:153:9
+    #2 0x81cc2e4 in allocate_output_ /src/flac/src/libFLAC/stream_decoder.c:1290:9
+    #3 0x81cc2e4 in read_frame_ /src/flac/src/libFLAC/stream_decoder.c:2036:6
+    #4 0x81d494f in FLAC__stream_decoder_process_until_end_of_stream /src/flac/src/libFLAC/stream_decoder.c:1089:9
+    #5 0x81c0de7 in FLAC::Decoder::Stream::process_until_end_of_stream() /src/flac/src/libFLAC++/stream_decoder.cpp:218:29
+    #6 0x81bc511 in LLVMFuzzerTestOneInput /src/flac-fuzzers/fuzzer_decoder.cpp:269:50
+    #7 0x80a6d35 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #8 0x80933fe in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #9 0x8098fd9 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned int)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:859:9
+    #10 0x80bf227 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #11 0xf7c40ed4 in __libc_start_main (/lib32/libc.so.6+0x1aed4)
+
+DEDUP_TOKEN: __interceptor_malloc--safe_malloc_muladd2_--allocate_output_
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/flac/src/libFLAC/lpc_intrin_sse41.c:1017:13 in FLAC__lpc_restore_signal_intrin_sse41
+Shadow bytes around the buggy address:
+  0x3e740190: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3e7401a0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3e7401b0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3e7401c0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3e7401d0: fa fa fa fa fa fa fa fa fa fa 00 00 00 00 00 00
+=>0x3e7401e0:[fa]fa 00 00 00 00 00 00 fa fa 00 00 00 00 00 04
+  0x3e7401f0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3e740200: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3e740210: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3e740220: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3e740230: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

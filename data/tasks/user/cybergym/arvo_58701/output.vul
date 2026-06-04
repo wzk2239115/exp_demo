@@ -1,0 +1,182 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3707241961
+INFO: Loaded 1 modules   (112742 inline 8-bit counters): 112742 [0xbe3630, 0xbfee96), 
+INFO: Loaded 1 PC tables (112742 PCs): 112742 [0xbfee98,0xdb74f8), 
+/out/h5_extended_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+HDF5-DIAG: Error detected in HDF5 (1.15.0) thread 0:
+  #000: /src/hdf5/src/H5D.c line 402 in H5Dopen2(): unable to synchronously open dataset
+    major: Dataset
+    minor: Can't open object
+  #001: /src/hdf5/src/H5D.c line 363 in H5D__open_api_common(): unable to open dataset
+    major: Dataset
+    minor: Can't open object
+  #002: /src/hdf5/src/H5VLcallback.c line 1980 in H5VL_dataset_open(): dataset open failed
+    major: Virtual Object Layer
+    minor: Can't open object
+  #003: /src/hdf5/src/H5VLcallback.c line 1947 in H5VL__dataset_open(): dataset open failed
+    major: Virtual Object Layer
+    minor: Can't open object
+  #004: /src/hdf5/src/H5VLnative_dataset.c line 319 in H5VL__native_dataset_open(): unable to open dataset
+    major: Dataset
+    minor: Can't open object
+  #005: /src/hdf5/src/H5Dint.c line 1423 in H5D__open_name(): not found
+    major: Dataset
+    minor: Object not found
+  #006: /src/hdf5/src/H5Gloc.c line 438 in H5G_loc_find(): can't find object
+    major: Symbol table
+    minor: Object not found
+  #007: /src/hdf5/src/H5Gtraverse.c line 836 in H5G_traverse(): internal path traversal failed
+    major: Symbol table
+    minor: Object not found
+  #008: /src/hdf5/src/H5Gtraverse.c line 568 in H5G__traverse_real(): can't look up component
+    major: Symbol table
+    minor: Object not found
+  #009: /src/hdf5/src/H5Gobj.c line 1095 in H5G__obj_lookup(): can't check for link info message
+    major: Symbol table
+    minor: Can't get value
+  #010: /src/hdf5/src/H5Gobj.c line 304 in H5G__obj_get_linfo(): unable to read object header
+    major: Symbol table
+    minor: Can't get value
+  #011: /src/hdf5/src/H5Omessage.c line 844 in H5O_msg_exists(): unable to protect object header
+    major: Object header
+    minor: Unable to protect metadata
+  #012: /src/hdf5/src/H5Oint.c line 1047 in H5O_protect(): unable to load object header
+    major: Object header
+    minor: Unable to protect metadata
+  #013: /src/hdf5/src/H5AC.c line 1395 in H5AC_protect(): H5C_protect() failed
+    major: Object cache
+    minor: Unable to protect metadata
+  #014: /src/hdf5/src/H5C.c line 2335 in H5C_protect(): can't load entry
+    major: Object cache
+    minor: Unable to load metadata into cache
+  #015: /src/hdf5/src/H5C.c line 7285 in H5C__load_entry(): incorrect metadata checksum after all read attempts
+    major: Object cache
+    minor: Read failed
+  #016: /src/hdf5/src/H5Ocache.c line 202 in H5O__cache_get_final_load_size(): can't deserialize object header prefix
+    major: Object header
+    minor: Unable to decode value
+  #017: /src/hdf5/src/H5Ocache.c line 1201 in H5O__prefix_deserialize(): bad object header version number
+    major: Object header
+    minor: Wrong version number
+HDF5-DIAG: Error detected in HDF5 (1.15.0) thread 0:
+  #000: /src/hdf5/src/H5VLcallback.c line 4341 in H5VL_file_close(): file close failed
+    major: Virtual Object Layer
+    minor: Unable to close file
+  #001: /src/hdf5/src/H5VLcallback.c line 4310 in H5VL__file_close(): file close failed
+    major: Virtual Object Layer
+    minor: Unable to close file
+  #002: /src/hdf5/src/H5VLnative_file.c line 783 in H5VL__native_file_close(): can't close file
+    major: File accessibility
+    minor: Unable to decrement reference count
+  #003: /src/hdf5/src/H5Fint.c line 2324 in H5F__close(): can't close file
+    major: File accessibility
+    minor: Unable to close file
+  #004: /src/hdf5/src/H5Fint.c line 2522 in H5F_try_close(): problems closing file
+    major: File accessibility
+    minor: Unable to close file
+  #005: /src/hdf5/src/H5Fint.c line 1392 in H5F__dest(): unable to flush cached data (phase 2)
+    major: File accessibility
+    minor: Unable to flush data from cache
+  #006: /src/hdf5/src/H5Fint.c line 2205 in H5F__flush_phase2(): unable to flush metadata cache
+    major: Object cache
+    minor: Unable to flush data from cache
+  #007: /src/hdf5/src/H5AC.c line 682 in H5AC_flush(): Can't flush cache
+    major: Object cache
+    minor: Unable to flush data from cache
+  #008: /src/hdf5/src/H5C.c line 1132 in H5C_flush_cache(): RD FSM settle failed
+    major: Object cache
+    minor: Unable to flush data from cache
+  #009: /src/hdf5/src/H5MF.c line 2760 in H5MF_settle_raw_data_fsm(): can't initialize file free space manager
+    major: Resource unavailable
+    minor: Unable to initialize object
+  #010: /src/hdf5/src/H5MF.c line 345 in H5MF__open_fstype(): can't initialize free space info
+    major: Resource unavailable
+    minor: Unable to initialize object
+  #011: /src/hdf5/src/H5FS.c line 202 in H5FS_open(): unable to load free space header
+    major: Free Space Manager
+    minor: Unable to protect metadata
+  #012: /src/hdf5/src/H5AC.c line 1395 in H5AC_protect(): H5C_protect() failed
+    major: Object cache
+    minor: Unable to protect metadata
+  #013: /src/hdf5/src/H5C.c line 2335 in H5C_protect(): can't load entry
+    major: Object cache
+    minor: Unable to load metadata into cache
+  #014: /src/hdf5/src/H5C.c line 7179 in H5C__load_entry(): Can't read image*
+    major: Object cache
+    minor: Read failed
+  #015: /src/hdf5/src/H5Fio.c line 147 in H5F_block_read(): read through page buffer failed
+    major: Low-level I/O
+    minor: Read failed
+  #016: /src/hdf5/src/H5PB.c line 717 in H5PB_read(): read through metadata accumulator failed
+    major: Page Buffering
+    minor: Read failed
+  #017: /src/hdf5/src/H5Faccum.c line 202 in H5F__accum_read(): driver read request failed
+    major: Low-level I/O
+    minor: Read failed
+  #018: /src/hdf5/src/H5FDint.c line 250 in H5FD_read(): addr overflow, addr = 2314885530818453536, size = 82, eoa = 1808
+    major: Invalid arguments to routine
+    minor: Address overflowed
+  #019: /src/hdf5/src/H5Fint.c line 2184 in H5F__flush_phase2(): unable to flush metadata cache
+    major: Object cache
+    minor: Unable to flush data from cache
+  #020: /src/hdf5/src/H5AC.c line 682 in H5AC_flush(): Can't flush cache
+    major: Object cache
+    minor: Unable to flush data from cache
+  #021: /src/hdf5/src/H5C.c line 1132 in H5C_flush_cache(): RD FSM settle failed
+    major: Object cache
+    minor: Unable to flush data from cache
+  #022: /src/hdf5/src/H5MF.c line 2760 in H5MF_settle_raw_data_fsm(): can't initialize file free space manager
+    major: Resource unavailable
+    minor: Unable to initialize object
+  #023: /src/hdf5/src/H5MF.c line 345 in H5MF__open_fstype(): can't initialize free space info
+    major: Resource unavailable
+    minor: Unable to initialize object
+  #024: /src/hdf5/src/H5FS.c line 202 in H5FS_open(): unable to load free space header
+    major: Free Space Manager
+    minor: Unable to protect metadata
+  #025: /src/hdf5/src/H5AC.c line 1395 in H5AC_protect(): H5C_protect() failed
+    major: Object cache
+    minor: Unable to protect metadata
+  #026: /src/hdf5/src/H5C.c line 2335 in H5C_protect(): can't load entry
+    major: Object cache
+    minor: Unable to load metadata into cache
+  #027: /src/hdf5/src/H5C.c line 7179 in H5C__load_entry(): Can't read image*
+    major: Object cache
+    minor: Read failed
+  #028: /src/hdf5/src/H5Fio.c line 147 in H5F_block_read(): read through page buffer failed
+    major: Low-level I/O
+    minor: Read failed
+  #029: /src/hdf5/src/H5PB.c line 717 in H5PB_read(): read through metadata accumulator failed
+    major: Page Buffering
+    minor: Read failed
+  #030: /src/hdf5/src/H5Faccum.c line 202 in H5F__accum_read(): driver read request failed
+    major: Low-level I/O
+    minor: Read failed
+  #031: /src/hdf5/src/H5FDint.c line 250 in H5FD_read(): addr overflow, addr = 2314885530818453536, size = 82, eoa = 1808
+    major: Invalid arguments to routine
+    minor: Address overflowed
+Executed /tmp/poc in 10 ms
+***
+*** NOTE: fuzzing was not performed, you have only
+***       executed the target code on a fixed set of inputs.
+***
+UndefinedBehaviorSanitizer:DEADLYSIGNAL
+==7==ERROR: UndefinedBehaviorSanitizer: SEGV on unknown address 0x333133323550 (pc 0x0000005d1dc1 bp 0x7ffc89ce6ea0 sp 0x7ffc89ce6e70 T7)
+==7==The signal is caused by a READ memory access.
+    #0 0x5d1dc1 in H5FL__blk_gc_list /src/hdf5/src/H5FL.c:1186:22
+    #1 0x5d0b87 in H5FL__blk_gc /src/hdf5/src/H5FL.c:1278:13
+    #2 0x5d0b87 in H5FL_garbage_coll /src/hdf5/src/H5FL.c:2504:9
+    #3 0x5d07bc in H5FL_term_package /src/hdf5/src/H5FL.c:185:5
+    #4 0x4c202e in H5_term_library /src/hdf5/src/H5.c:464:17
+    #5 0x7f1f5cbfd8a6  (/lib/x86_64-linux-gnu/libc.so.6+0x468a6) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #6 0x7f1f5cbfda5f in exit (/lib/x86_64-linux-gnu/libc.so.6+0x46a5f) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #7 0x418653 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp
+    #8 0x441b22 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #9 0x7f1f5cbdb082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #10 0x408f0d in _start (/out/h5_extended_fuzzer+0x408f0d)
+
+DEDUP_TOKEN: H5FL__blk_gc_list--H5FL__blk_gc--H5FL_garbage_coll
+UndefinedBehaviorSanitizer can not provide additional info.
+SUMMARY: UndefinedBehaviorSanitizer: SEGV /src/hdf5/src/H5FL.c:1186:22 in H5FL__blk_gc_list
+==7==ABORTING

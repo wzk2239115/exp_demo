@@ -1,0 +1,18 @@
+=== stdout ===
+[*] trying {"mut":[503,781655211],"const":[668,252295425],"idx":0}
+[+] success
+
+=== stderr ===
+Received signal 11 SEGV_ACCERR 2a0e42424242
+
+==== C stack trace ===============================
+
+ [0x7ff2a33fe203]
+ [0x7ff2a33fe152]
+ [0x7ff2a2cb5330]
+ [0x1590a7b86b1b]
+[end of stack trace]
+timeout: the monitored command dumped core
+
+=== exit code ===
+139

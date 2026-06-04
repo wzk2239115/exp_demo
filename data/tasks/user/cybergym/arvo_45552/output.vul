@@ -1,0 +1,57 @@
+Reading 5989 bytes from /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x613000002038 at pc 0x00000053caff bp 0x7ffe4c7870f0 sp 0x7ffe4c7870e8
+WRITE of size 8 at 0x613000002038 thread T0
+SCARINESS: 52 (8-byte-write-heap-buffer-overflow-far-from-bounds)
+    #0 0x53cafe in new_file /src/opensc/src/tests/fuzzing/../../../src/pkcs15init/profile.c:1254:24
+    #1 0x53b28f in process_ef /src/opensc/src/tests/fuzzing/../../../src/pkcs15init/profile.c:1027:21
+    #2 0x538869 in process_block /src/opensc/src/tests/fuzzing/../../../src/pkcs15init/profile.c:2079:11
+    #3 0x53b029 in process_df /src/opensc/src/tests/fuzzing/../../../src/pkcs15init/profile.c:1013:9
+    #4 0x538869 in process_block /src/opensc/src/tests/fuzzing/../../../src/pkcs15init/profile.c:2079:11
+    #5 0x53b029 in process_df /src/opensc/src/tests/fuzzing/../../../src/pkcs15init/profile.c:1013:9
+    #6 0x538869 in process_block /src/opensc/src/tests/fuzzing/../../../src/pkcs15init/profile.c:2079:11
+    #7 0x538869 in process_block /src/opensc/src/tests/fuzzing/../../../src/pkcs15init/profile.c:2079:11
+    #8 0x52b530 in process_conf /src/opensc/src/tests/fuzzing/../../../src/pkcs15init/profile.c:2109:9
+    #9 0x530986 in fuzz_profile_load /src/opensc/src/tests/fuzzing/fuzz_pkcs15init.c:46:10
+    #10 0x530f6d in fuzz_pkcs15init_bind /src/opensc/src/tests/fuzzing/fuzz_pkcs15init.c:88:9
+    #11 0x53419a in LLVMFuzzerTestOneInput /src/opensc/src/tests/fuzzing/fuzz_pkcs15init.c:314:5
+    #12 0x54ca75 in ExecuteFilesOnyByOne /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c:191:7
+    #13 0x54c8e5 in main /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c
+    #14 0x7f790a42d082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)
+    #15 0x41fe2d in _start (/out/fuzz_pkcs15init+0x41fe2d)
+
+DEDUP_TOKEN: new_file--process_ef--process_block
+Address 0x613000002038 is a wild pointer inside of access range of size 0x000000000008.
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/opensc/src/tests/fuzzing/../../../src/pkcs15init/profile.c:1254:24 in new_file
+Shadow bytes around the buggy address:
+  0x0c267fff83b0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c267fff83c0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c267fff83d0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c267fff83e0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c267fff83f0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+=>0x0c267fff8400: fa fa fa fa fa fa fa[fa]fa fa fa fa fa fa fa fa
+  0x0c267fff8410: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c267fff8420: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c267fff8430: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c267fff8440: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c267fff8450: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

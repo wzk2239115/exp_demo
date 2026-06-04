@@ -1,0 +1,27 @@
+
+Sandbox testing mode is enabled. Only sandbox violations will be reported, all other crashes will be ignored.
+Sandbox bounds: [0x1f4a00000000,0x204a00000000)
+
+## V8 sandbox violation detected!
+
+Access type was read though which is technically not a sandbox violation. This requires manual investigation.
+Received signal 11 SEGV_MAPERR 5555bb640000
+
+==== C stack trace ===============================
+
+/build/v8/out/debug/libv8_libbase.so(_ZN2v84base5debug10StackTraceC2Ev+0x13)[0x7f16126b6df3]
+/build/v8/out/debug/libv8_libbase.so(v8::base::debug::(anonymous namespace)::StackDumpSignalHandler(int, siginfo_t*, void*) ./../../src/base/debug/stack_trace_posix.cc:287:41)[0x7f16126b6d4f]
+/lib/x86_64-linux-gnu/libc.so.6(+0x45330)[0x7f1611eeb330]
+/build/v8/out/debug/libv8.so(partition_alloc::internal::FreelistEntry* partition_alloc::internal::FreelistEntry::GetNextInternal<false>(unsigned long) const ./../../third_party/partition_alloc/src/partition_alloc/pool_offset_freelist.h:71:70)[0x7f1614bd571a]
+/build/v8/out/debug/libv8.so(unsigned long partition_alloc::PartitionRoot::AllocFromBucket<(partition_alloc::internal::AllocFlags)15>(partition_alloc::internal::PartitionBucket*, unsigned long, unsigned long, unsigned long*, unsigned long*, bool*) ./../../third_party/partition_alloc/src/partition_alloc/partition_page.h:786:17)[0x7f1614bd52db]
+/build/v8/out/debug/libv8.so(unsigned long partition_alloc::PartitionRoot::RawAlloc<(partition_alloc::internal::AllocFlags)15>(partition_alloc::internal::PartitionBucket*, unsigned long, unsigned long, unsigned long*, unsigned long*, bool*) ./../../third_party/partition_alloc/src/partition_alloc/partition_root.h:2266:10)[0x7f1614bd472a]
+/build/v8/out/debug/libv8.so(void* partition_alloc::PartitionRoot::AllocInternalNoHooks<(partition_alloc::internal::AllocFlags)15>(unsigned long, unsigned long) ./../../third_party/partition_alloc/src/partition_alloc/partition_root.h:2171:8)[0x7f1614bd408e]
+/build/v8/out/debug/libv8.so(void* partition_alloc::PartitionRoot::AllocInternal<(partition_alloc::internal::AllocFlags)15>(unsigned long, unsigned long, char const*) ./../../third_party/partition_alloc/src/partition_alloc/partition_root.h:2083:7)[0x7f1614bd3ad0]
+/build/v8/out/debug/libv8.so(_ZN2v88internal4Heap28AllocateExternalBackingStoreERKNSt4__Cr8functionIFPvmEEEm+0x69)[0x7f161497eda9]
+/build/v8/out/debug/libv8.so(_ZN2v88internal12BackingStore8AllocateEPNS0_7IsolateEmNS0_10SharedFlagENS0_15InitializedFlagE+0x1ae)[0x7f1614cf157e]
+/build/v8/out/debug/libv8.so(v8::internal::(anonymous namespace)::ConstructBuffer(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::DirectHandle<v8::internal::JSReceiver>, v8::internal::DirectHandle<v8::internal::Object>, v8::internal::DirectHandle<v8::internal::Object>, v8::internal::InitializedFlag) ./../../src/builtins/builtins-arraybuffer.cc:68:11)[0x7f161444e064]
+/build/v8/out/debug/libv8.so(v8::internal::Builtin_Impl_ArrayBufferConstructor(v8::internal::BuiltinArguments, v8::internal::Isolate*) ./../../src/builtins/builtins-arraybuffer.cc:0:10)[0x7f161444b64e]
+/build/v8/out/debug/libv8.so(v8::internal::Builtin_ArrayBufferConstructor(int, unsigned long*, v8::internal::Isolate*) ./../../src/builtins/builtins-arraybuffer.cc:138:1)[0x7f161444ac11]
+/build/v8/out/debug/libv8.so(Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc:0:0)[0x7f16139cadbd]
+[end of stack trace]
+timeout: the monitored command dumped core

@@ -1,0 +1,1 @@
+A vulnerability exists due to a missing bounds check against a hardcoded CMap value size, which can lead to out-of-bounds access.

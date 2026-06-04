@@ -1,0 +1,1 @@
+A vulnerability exists in p_lx_elf.cpp where nbucket is not checked early enough in DT_HASH on ELF files, potentially allowing invalid or malicious input to cause issues.

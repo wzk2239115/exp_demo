@@ -1,0 +1,31 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3249074000
+INFO: Loaded 1 modules   (19281 inline 8-bit counters): 19281 [0xb0c838, 0xb11389), 
+INFO: Loaded 1 PC tables (19281 PCs): 19281 [0x7f9e28,0x845338), 
+/out/sleuthkit_fls_apfs_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x62500001015f (pc 0x0000006dda79 bp 0x7ffcc5c33810 sp 0x7ffcc5c33810 T0)
+==7==The signal is caused by a READ memory access.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x6dda79 in std::__1::enable_if<true, apfs_omap_key const*>::type APFSBtreeNode<apfs_omap_key, apfs_omap_value>::key<apfs_omap_key const*>(unsigned int) const /src/sleuthkit/tsk/fs/./tsk_apfs.hpp:401:48
+    #1 0x6c7586 in APFSBtreeNodeIterator<APFSBtreeNode<apfs_omap_key, apfs_omap_value> > APFSBtreeNode<apfs_omap_key, apfs_omap_value>::find<unsigned long, APFSObjectBtreeNode::find(unsigned long) const::$_2>(unsigned long const&, APFSObjectBtreeNode::find(unsigned long) const::$_2) const /src/sleuthkit/tsk/fs/./tsk_apfs.hpp:502:25
+    #2 0x6c738a in APFSObjectBtreeNode::find(unsigned long) const /src/sleuthkit/tsk/fs/apfs.cpp:658:25
+    #3 0x6f6bca in APFSJObjTree::APFSJObjTree(APFSPool const&, unsigned long, unsigned long, APFSFileSystem::crypto_info_t const&) /src/sleuthkit/tsk/fs/apfs_fs.cpp:19:40
+    #4 0x6f6f61 in APFSJObjTree::APFSJObjTree(APFSFileSystem const&) /src/sleuthkit/tsk/fs/apfs_fs.cpp:24:7
+    #5 0x6e6341 in APFSFSCompat::APFSFSCompat(TSK_IMG_INFO*, _TSK_POOL_INFO const*, unsigned long, char const*) /src/sleuthkit/tsk/fs/apfs_compat.cpp:170:7
+    #6 0x6218a7 in apfs_open /src/sleuthkit/tsk/fs/apfs_open.cpp:49:19
+    #7 0x56a861 in tsk_fs_open_img_decrypt /src/sleuthkit/tsk/fs/fs_open.c:229:16
+    #8 0x55871f in LLVMFuzzerTestOneInput /src/sleuthkit_fls_apfs_fuzzer.cc:44:8
+    #9 0x45b393 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:599:15
+    #10 0x4451a2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #11 0x44afea in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9
+    #12 0x476cd2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #13 0x7f957a29483f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #14 0x41fe88 in _start (/out/sleuthkit_fls_apfs_fuzzer+0x41fe88)
+
+DEDUP_TOKEN: std::__1::enable_if<true, apfs_omap_key const*>::type APFSBtreeNode<apfs_omap_key, apfs_omap_value>::key<apfs_omap_key const*>(unsigned int) const--APFSBtreeNodeIterator<APFSBtreeNode<apfs_omap_key, apfs_omap_value> > APFSBtreeNode<apfs_omap_key, apfs_omap_value>::find<unsigned long, APFSObjectBtreeNode::find(unsigned long) const::$_2>(unsigned long const&, APFSObjectBtreeNode::find(unsigned long) const::$_2) const--APFSObjectBtreeNode::find(unsigned long) const
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/sleuthkit/tsk/fs/./tsk_apfs.hpp:401:48 in std::__1::enable_if<true, apfs_omap_key const*>::type APFSBtreeNode<apfs_omap_key, apfs_omap_value>::key<apfs_omap_key const*>(unsigned int) const
+==7==ABORTING

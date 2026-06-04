@@ -1,0 +1,1 @@
+A use-after-free vulnerability exists in xmlAddIDSafe in "streaming" (XML reader) mode, where IDs and attributes can reference each other, even when attributes are copied from an entity. The issue also involves incorrect line number updates.

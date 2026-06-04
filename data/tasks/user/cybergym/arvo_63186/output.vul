@@ -1,0 +1,23 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3815580442
+INFO: Loaded 1 modules   (95915 inline 8-bit counters): 95915 [0xda96a8, 0xdc0d53), 
+INFO: Loaded 1 PC tables (95915 PCs): 95915 [0xdc0d58,0xf37808), 
+/out/dns_message_checksig_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+qp.c:2000:6: runtime error: index -1 out of bounds for type 'struct (unnamed struct at ./include/dns/qp.h:247:2)[128]'
+    #0 0x722b59 in add_link /src/bind9/lib/dns/qp.c:2000:35
+    #1 0x7225a1 in dns_qp_lookup /src/bind9/lib/dns/qp.c:2168:3
+    #2 0x66e71e in dns_zt_find /src/bind9/lib/dns/zt.c:181:11
+    #3 0x5eae24 in dns_view_find /src/bind9/lib/dns/view.c:850:12
+    #4 0x5ebb14 in dns_view_simplefind /src/bind9/lib/dns/view.c:1061:11
+    #5 0x4f38e8 in dns_message_checksig /src/bind9/lib/dns/message.c:3168:12
+    #6 0x4c58c4 in LLVMFuzzerTestOneInput /src/bind9/fuzz/dns_message_checksig.c:456:11
+    #7 0x42a913 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #8 0x416072 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #9 0x41b91c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #10 0x444e52 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #11 0x7fc46991f082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #12 0x40c23d in _start (/out/dns_message_checksig_fuzzer+0x40c23d)
+
+DEDUP_TOKEN: add_link--dns_qp_lookup--dns_zt_find
+SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior qp.c:2000:6 in 

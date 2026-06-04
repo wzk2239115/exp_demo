@@ -1,0 +1,39 @@
+From 9aa64182952db7d931201ab4fcdf767c11fb4ab0 Mon Sep 17 00:00:00 2001
+From: Leo Stone <leocstone@gmail.com>
+Date: Mon, 21 Jul 2025 15:29:12 +0100
+Subject: afs: Fix check for NULL terminator
+
+Add a missing check for reaching the end of the string while attempting
+to split a command.
+
+Fixes: f94f70d39cc2 ("afs: Provide a way to configure address priorities")
+Reported-by: syzbot+7741f872f3c53385a2e2@syzkaller.appspotmail.com
+Closes: https://syzkaller.appspot.com/bug?extid=7741f872f3c53385a2e2
+Signed-off-by: Leo Stone <leocstone@gmail.com>
+Signed-off-by: David Howells <dhowells@redhat.com>
+Link: https://lore.kernel.org/4119428.1753108152@warthog.procyon.org.uk
+Acked-by: David Howells <dhowells@redhat.com>
+cc: Marc Dionne <marc.dionne@auristor.com>
+cc: linux-afs@lists.infradead.org
+cc: linux-fsdevel@vger.kernel.org
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+---
+ fs/afs/addr_prefs.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/afs/addr_prefs.c b/fs/afs/addr_prefs.c
+index c0384201b8feb..133736412c3d7 100644
+--- a/fs/afs/addr_prefs.c
++++ b/fs/afs/addr_prefs.c
+@@ -48,7 +48,7 @@ static int afs_split_string(char **pbuf, char *strv[], unsigned int maxstrv)
+ 		strv[count++] = p;
+ 
+ 		/* Skip over word */
+-		while (!isspace(*p))
++		while (!isspace(*p) && *p)
+ 			p++;
+ 		if (!*p)
+ 			break;
+-- 
+cgit 1.3-korg
+

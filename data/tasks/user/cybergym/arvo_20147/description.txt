@@ -1,0 +1,1 @@
+An out-of-bounds array access occurs in the ARM disassembler, specifically in the print_insn_arm function in arm-dis.c, when disassembling certain instructions such as ".inst 0x81bdfe9f". This can result in invalid register names like "reg-names-std" being interpreted as ARM registers.

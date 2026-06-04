@@ -1,0 +1,29 @@
+
+
+#
+# Fatal error in ../../src/ast/scopes.cc, line 1548
+# Debug check failed: scope->outer_scope()->is_class_scope().
+#
+#
+#
+#FailureMessage Object: 0x7ffe5c5fa030
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x56238b36e793]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x56238b36dbcd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:204:10) [0x56238b35269e]
+    out/debug/d8(+0x392b0f5) [0x56238b3520f5]
+    d8(v8::internal::Scope::GetHomeObjectScope() ./../../src/ast/scopes.h:468:39) [0x5623883a9dab]
+    d8(v8::internal::Scope::ResolveVariable(v8::internal::VariableProxy*) ./../../src/ast/scopes.cc:2307:43) [0x5623883ad23a]
+    d8(v8::internal::Scope::ResolveVariablesRecursively(v8::internal::Scope*) ./../../src/base/threaded-list.h:164:31) [0x5623883ab65f]
+    d8(v8::internal::DeclarationScope::AllocateVariables(v8::internal::ParseInfo*) ./../../src/ast/scopes.cc:0:8) [0x5623883a7a6f]
+    d8(v8::internal::DeclarationScope::Analyze(v8::internal::ParseInfo*) ./../../src/ast/scopes.cc:730:15) [0x5623883a77f8]
+    d8(void v8::internal::Parser::PostProcessParseResult<v8::internal::Isolate>(v8::internal::Isolate*, v8::internal::ParseInfo*, v8::internal::FunctionLiteral*) ./../../src/parsing/parser.cc:749:9) [0x562388e7279b]
+    d8(v8::internal::Parser::ParseProgram(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Script>, v8::internal::ParseInfo*, v8::internal::MaybeHandle<v8::internal::ScopeInfo>) ./../../src/parsing/parser.cc:593:3) [0x562388e7568d]
+    d8(v8::internal::parsing::ParseProgram(v8::internal::ParseInfo*, v8::internal::Handle<v8::internal::Script>, v8::internal::MaybeHandle<v8::internal::ScopeInfo>, v8::internal::Isolate*, v8::internal::parsing::ReportStatisticsMode) ./../../src/parsing/parsing.cc:29:3) [0x562388eb18c2]
+    d8(v8::internal::(anonymous namespace)::CompileToplevel(v8::internal::ParseInfo*, v8::internal::Handle<v8::internal::Script>, v8::internal::MaybeHandle<v8::internal::ScopeInfo>, v8::internal::Isolate*, v8::internal::IsCompiledScope*) ./../../src/codegen/compiler.cc:1571:7) [0x56238851dc59]
+    d8(v8::internal::Compiler::GetFunctionFromEval(v8::internal::Handle<v8::internal::String>, v8::internal::Handle<v8::internal::SharedFunctionInfo>, v8::internal::Handle<v8::internal::Context>, v8::internal::LanguageMode, v8::internal::ParseRestriction, int, int, int, v8::internal::ParsingWhileDebugging) ./../../src/codegen/compiler.cc:2967:10) [0x56238851f0da]
+    d8(v8::internal::__RT_impl_Runtime_ResolvePossiblyDirectEval(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:647:3) [0x562388fd2461]
+    d8(v8::internal::Runtime_ResolvePossiblyDirectEval(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:656:1) [0x562388fd1e50]
+    d8(Builtins_CEntry_Return1_ArgvInRegister_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x56238aa74978]
+timeout: the monitored command dumped core

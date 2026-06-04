@@ -1,0 +1,26 @@
+
+
+
+#
+# Fatal error in ../../src/ast/scopes.cc, line 2834
+# Debug check failed: (var) != nullptr.
+#
+#
+#
+#FailureMessage Object: 0x7ffd9504aa20
+==== C stack trace ===============================
+
+    /build/v8/out/debug/libv8_libbase.so(v8::base::debug::StackTrace::StackTrace()+0x13) [0x7fe3eefb73e3]
+    /build/v8/out/debug/libv8_libplatform.so(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x7fe3eef6530d]
+    /build/v8/out/debug/libv8_libbase.so(V8_Fatal(char const*, int, char const*, ...)+0x17e) [0x7fe3eef9880e]
+    /build/v8/out/debug/libv8_libbase.so(+0x27255) [0x7fe3eef98255]
+    /build/v8/out/debug/libv8.so(v8::internal::ClassScope::FinalizeReparsedClassScope(v8::internal::Isolate*, v8::internal::MaybeHandle<v8::internal::ScopeInfo>, v8::internal::AstValueFactory*, bool)+0x430) [0x7fe3f06c1720]
+    /build/v8/out/debug/libv8.so(v8::internal::Parser::ParseClassForMemberInitialization(v8::internal::Isolate*, v8::internal::MaybeHandle<v8::internal::ScopeInfo>, v8::internal::FunctionKind, int, int, int, v8::internal::AstRawString const*)+0x3eb) [0x7fe3f12a352b]
+    /build/v8/out/debug/libv8.so(v8::internal::Parser::ParseFunction(v8::internal::Isolate*, v8::internal::ParseInfo*, v8::internal::Handle<v8::internal::SharedFunctionInfo>)+0x698) [0x7fe3f12a2f38]
+    /build/v8/out/debug/libv8.so(v8::internal::parsing::ParseFunction(v8::internal::ParseInfo*, v8::internal::Handle<v8::internal::SharedFunctionInfo>, v8::internal::Isolate*, v8::internal::parsing::ReportStatisticsMode)+0x16b) [0x7fe3f12dcecb]
+    /build/v8/out/debug/libv8.so(v8::internal::(anonymous namespace)::RenderCallSite(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::MessageLocation*, v8::internal::CallPrinter::ErrorHint*) ./../../src/execution/messages.cc:807:9) [0x7fe3f0a49a88]
+    /build/v8/out/debug/libv8.so(v8::internal::ErrorUtils::NewCalledNonCallableError(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>) ./../../src/execution/messages.cc:900:28) [0x7fe3f0a4a947]
+    /build/v8/out/debug/libv8.so(v8::internal::__RT_impl_Runtime_ThrowCalledNonCallable(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/handles/handles.h:163:22) [0x7fe3f142ba10]
+    /build/v8/out/debug/libv8.so(v8::internal::Runtime_ThrowCalledNonCallable(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-internal.cc:574:1) [0x7fe3f142b670]
+    [0x7fe37f7a02fd]
+timeout: the monitored command dumped core

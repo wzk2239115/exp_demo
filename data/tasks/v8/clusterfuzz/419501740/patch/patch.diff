@@ -1,0 +1,28 @@
+diff --git a/src/json/json-parser.cc b/src/json/json-parser.cc
+index 9e6708bd2b4..57b6fc7b798 100644
+--- a/src/json/json-parser.cc
++++ b/src/json/json-parser.cc
+@@ -1639,6 +1639,8 @@ bool JsonParser<Char>::ParseJsonObjectProperties(
+             return ParseJsonObjectProperties<FastIterableState::kJsonSlow>(
+                 cont, first_token_msg, {});
+           }
++          // No more properties to scan, we are done.
++          return true;
+         }
+         ++idx;
+       }
+diff --git a/test/mjsunit/regress/regress-419501740.js b/test/mjsunit/regress/regress-419501740.js
+new file mode 100644
+index 00000000000..e80e1150d4d
+--- /dev/null
++++ b/test/mjsunit/regress/regress-419501740.js
+@@ -0,0 +1,9 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++class clazz {
++};
++const obj = [{[clazz]: -430.85078006555455 }, {foo: 168}];
++const expected = '[{"class clazz {\\n}":-430.85078006555455},{"foo":168}]';
++assertEquals(expected, (JSON.stringify(JSON.parse(JSON.stringify(obj)))));

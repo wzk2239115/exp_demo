@@ -1,0 +1,1 @@
+A vulnerability exists where duplicate entries in the filter list are not checked, potentially allowing unintended behavior due to repeated filters.

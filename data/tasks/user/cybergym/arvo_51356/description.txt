@@ -1,0 +1,1 @@
+A potential security vulnerability exists in the cellToVertex function, where an uninitialized value may be used.

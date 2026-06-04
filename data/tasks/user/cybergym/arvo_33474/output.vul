@@ -1,0 +1,78 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3200054555
+INFO: Loaded 1 modules   (47852 inline 8-bit counters): 47852 [0xd179d8, 0xd234c4), 
+INFO: Loaded 1 PC tables (47852 PCs): 47852 [0xd234c8,0xdde388), 
+/out/fuzz_geo2: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: stack-use-after-scope on address 0x7f9a24b61218 at pc 0x0000008c14c8 bp 0x7ffcb2a64190 sp 0x7ffcb2a64188
+READ of size 8 at 0x7f9a24b61218 thread T0
+SCARINESS: 23 (8-byte-read-stack-use-after-scope)
+    #0 0x8c14c7 in disjoint /src/geos/include/geos/geom/Envelope.inl:283:29
+    #1 0x8c14c7 in isClippedCompletely /src/geos/src/operation/overlayng/EdgeNodingBuilder.cpp:287:21
+    #2 0x8c14c7 in geos::operation::overlayng::EdgeNodingBuilder::add(geos::geom::Geometry const*, unsigned char) /src/geos/src/operation/overlayng/EdgeNodingBuilder.cpp:156:9
+    #3 0x8c0c6b in geos::operation::overlayng::EdgeNodingBuilder::build(geos::geom::Geometry const*, geos::geom::Geometry const*) /src/geos/src/operation/overlayng/EdgeNodingBuilder.cpp:83:5
+    #4 0x7640d4 in geos::operation::overlayng::OverlayNG::computeEdgeOverlay() /src/geos/src/operation/overlayng/OverlayNG.cpp:225:46
+    #5 0x761917 in geos::operation::overlayng::OverlayNG::getResult() /src/geos/src/operation/overlayng/OverlayNG.cpp:180:18
+    #6 0x761149 in geos::operation::overlayng::OverlayNG::overlay(geos::geom::Geometry const*, geos::geom::Geometry const*, int, geos::geom::PrecisionModel const*) /src/geos/src/operation/overlayng/OverlayNG.cpp:99:15
+    #7 0x76a436 in geos::operation::overlayng::OverlayNGRobust::Overlay(geos::geom::Geometry const*, geos::geom::Geometry const*, int) /src/geos/src/operation/overlayng/OverlayNGRobust.cpp:110:18
+    #8 0x60d8ae in geos::geom::HeuristicOverlay(geos::geom::Geometry const*, geos::geom::Geometry const*, int) /src/geos/src/geom/HeuristicOverlay.cpp:415:19
+    #9 0x5f1f3b in geos::geom::Geometry::intersection(geos::geom::Geometry const*) const /src/geos/src/geom/Geometry.cpp:553:12
+    #10 0x566658 in operator() /src/geos/capi/geos_ts_c.cpp:1047:27
+    #11 0x566658 in execute<(lambda at /src/geos/capi/geos_ts_c.cpp:1046:35), nullptr> /src/geos/capi/geos_ts_c.cpp:393:16
+    #12 0x566658 in GEOSIntersection_r /src/geos/capi/geos_ts_c.cpp:1046:16
+    #13 0x5585d7 in LLVMFuzzerTestOneInput /src/geos/tests/fuzz/fuzz_geo2.c:53:32
+    #14 0x45b023 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:599:15
+    #15 0x444e32 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #16 0x44ac7a in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9
+    #17 0x476962 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #18 0x7f9a23ae083f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #19 0x41fb18 in _start (/out/fuzz_geo2+0x41fb18)
+
+DEDUP_TOKEN: disjoint--isClippedCompletely--geos::operation::overlayng::EdgeNodingBuilder::add(geos::geom::Geometry const*, unsigned char)
+Address 0x7f9a24b61218 is located in stack of thread T0 at offset 536 in frame
+    #0 0x763baf in geos::operation::overlayng::OverlayNG::computeEdgeOverlay() /src/geos/src/operation/overlayng/OverlayNG.cpp:208
+
+DEDUP_TOKEN: geos::operation::overlayng::OverlayNG::computeEdgeOverlay()
+  This frame has 5 object(s):
+    [32, 56) 'labeller.i' (line 274)
+    [96, 464) 'nodingBuilder' (line 213)
+    [528, 560) 'clipEnv' (line 218) <== Memory access at offset 536 is inside this variable
+    [592, 616) 'edges' (line 225)
+    [656, 840) 'graph' (line 246)
+HINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork
+      (longjmp and C++ exceptions *are* supported)
+SUMMARY: AddressSanitizer: stack-use-after-scope /src/geos/include/geos/geom/Envelope.inl:283:29 in disjoint
+Shadow bytes around the buggy address:
+  0x0ff3c49641f0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff3c4964200: f1 f1 f1 f1 f8 f8 f8 f2 f2 f2 f2 f2 00 00 00 00
+  0x0ff3c4964210: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff3c4964220: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff3c4964230: 00 00 00 00 00 00 00 00 00 00 f2 f2 f2 f2 f2 f2
+=>0x0ff3c4964240: f2 f2 f8[f8]f8 f8 f2 f2 f2 f2 00 00 00 f2 f2 f2
+  0x0ff3c4964250: f2 f2 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8
+  0x0ff3c4964260: f8 f8 f8 f8 f8 f8 f8 f8 f8 f3 f3 f3 f3 f3 f3 f3
+  0x0ff3c4964270: f3 f3 f3 f3 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff3c4964280: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff3c4964290: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==7==ABORTING

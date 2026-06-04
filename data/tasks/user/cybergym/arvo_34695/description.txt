@@ -1,0 +1,1 @@
+A vulnerability exists where the isolate level can be decreased even if it is already zero.

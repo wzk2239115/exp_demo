@@ -1,0 +1,1 @@
+The parsing of data URLs in URLParser does not conform to the specification, as it cannot parse the components of the MIME type and instead represents it as a string, while the specification requires parsing as a "MIME type record."

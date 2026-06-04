@@ -1,0 +1,1 @@
+A vulnerability exists in avifParse where error flow is not properly handled, and the uniqueness of ftyp, moov, and meta boxes at the file container level is not guaranteed.

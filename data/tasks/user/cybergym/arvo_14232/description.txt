@@ -1,0 +1,1 @@
+A vulnerability exists where the pointer advances past the end of the buffer when parsing headers. The calculation of header string length does not ensure that the header name is within the request buffer bounds, potentially leading to out-of-bounds memory access.

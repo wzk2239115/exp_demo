@@ -1,0 +1,34 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3609720985
+INFO: Loaded 1 modules   (157309 inline 8-bit counters): 157309 [0x3abd740, 0x3ae3dbd), 
+INFO: Loaded 1 PC tables (157309 PCs): 157309 [0x16d0800,0x1936fd0), 
+/out/pdf_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+warning: first object in xref is not free
+error: object out of range (3 0 R); xref size 3
+warning: cannot load object (3 0 R) into cache
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address (pc 0x0000009183e0 bp 0x7ffc55cffdd0 sp 0x7ffc55cffd80 T0)
+==7==The signal is caused by a READ memory access.
+==7==Hint: this fault was caused by a dereference of a high value address (see register values below).  Disassemble the provided pc to learn which register was used.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x9183e0 in fz_drop_imp16 /src/mupdf/include/mupdf/fitz/context.h:809:7
+    #1 0x9183e0 in pdf_drop_obj /src/mupdf/source/pdf/pdf-object.c:2718:7
+    #2 0x6fe9de in pdf_drop_xref_subsec /src/mupdf/source/pdf/pdf-xref.c:64:4
+    #3 0x7002bd in pdf_drop_xref_sections_imp /src/mupdf/source/pdf/pdf-xref.c:89:3
+    #4 0x7002bd in pdf_drop_xref_sections /src/mupdf/source/pdf/pdf-xref.c:97:2
+    #5 0x7002bd in pdf_drop_document_imp /src/mupdf/source/pdf/pdf-xref.c:1885:2
+    #6 0x57c496 in fz_drop_document /src/mupdf/source/fitz/document.c:304:4
+    #7 0x56d859 in LLVMFuzzerTestOneInput /src/pdf_fuzzer.cc:153:5
+    #8 0x43f093 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #9 0x42a7f2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #10 0x43009c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #11 0x4595d2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #12 0x7fc3fb2e2082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #13 0x4209bd in _start (/out/pdf_fuzzer+0x4209bd)
+
+DEDUP_TOKEN: fz_drop_imp16--pdf_drop_obj--pdf_drop_xref_subsec
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/mupdf/include/mupdf/fitz/context.h:809:7 in fz_drop_imp16
+==7==ABORTING

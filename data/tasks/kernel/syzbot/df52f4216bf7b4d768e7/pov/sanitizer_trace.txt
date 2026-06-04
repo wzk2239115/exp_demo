@@ -1,0 +1,124 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+==================================================================
+BUG: KASAN: slab-use-after-free in nr_dec_obs net/netrom/nr_route.c:471 [inline]
+BUG: KASAN: slab-use-after-free in nr_rt_ioctl+0x599/0xfb0 net/netrom/nr_route.c:692
+Read of size 2 at addr ffff8880303c5832 by task syz-executor340/6870
+
+CPU: 1 UID: 0 PID: 6870 Comm: syz-executor340 Not tainted 6.13.0-rc6-syzkaller-00051-geea6e4b4dfb8 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/13/2024
+Call Trace:
+ <TASK>
+ __dump_stack lib/dump_stack.c:94 [inline]
+ dump_stack_lvl+0x241/0x360 lib/dump_stack.c:120
+ print_address_description mm/kasan/report.c:378 [inline]
+ print_report+0x169/0x550 mm/kasan/report.c:489
+ kasan_report+0x143/0x180 mm/kasan/report.c:602
+ nr_dec_obs net/netrom/nr_route.c:471 [inline]
+ nr_rt_ioctl+0x599/0xfb0 net/netrom/nr_route.c:692
+ sock_do_ioctl+0x158/0x460 net/socket.c:1209
+ sock_ioctl+0x626/0x8e0 net/socket.c:1328
+ vfs_ioctl fs/ioctl.c:51 [inline]
+ __do_sys_ioctl fs/ioctl.c:906 [inline]
+ __se_sys_ioctl+0xf5/0x170 fs/ioctl.c:892
+ do_syscall_x64 arch/x86/entry/common.c:52 [inline]
+ do_syscall_64+0xf3/0x230 arch/x86/entry/common.c:83
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7f60fff09869
+Code: 28 00 00 00 75 05 48 83 c4 28 c3 e8 31 1a 00 00 90 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007ffea64573f8 EFLAGS: 00000246 ORIG_RAX: 0000000000000010
+RAX: ffffffffffffffda RBX: 0000000000000003 RCX: 00007f60fff09869
+RDX: 0000000000000000 RSI: 00000000000089e2 RDI: 0000000000000004
+RBP: 0000000000000000 R08: 00007f60fff57214 R09: 00007f60fff57214
+R10: 00007f60fff57214 R11: 0000000000000246 R12: 00007ffea645741c
+R13: 00007ffea6457450 R14: 00007ffea6457430 R15: 00000000000000c7
+ </TASK>
+
+Allocated by task 6870:
+ kasan_save_stack mm/kasan/common.c:47 [inline]
+ kasan_save_track+0x3f/0x80 mm/kasan/common.c:68
+ poison_kmalloc_redzone mm/kasan/common.c:377 [inline]
+ __kasan_kmalloc+0x98/0xb0 mm/kasan/common.c:394
+ kasan_kmalloc include/linux/kasan.h:260 [inline]
+ __kmalloc_cache_noprof+0x243/0x390 mm/slub.c:4329
+ kmalloc_noprof include/linux/slab.h:901 [inline]
+ nr_add_node+0x856/0x2230 net/netrom/nr_route.c:146
+ nr_rt_ioctl+0xd43/0xfb0 net/netrom/nr_route.c:651
+ sock_do_ioctl+0x158/0x460 net/socket.c:1209
+ sock_ioctl+0x626/0x8e0 net/socket.c:1328
+ vfs_ioctl fs/ioctl.c:51 [inline]
+ __do_sys_ioctl fs/ioctl.c:906 [inline]
+ __se_sys_ioctl+0xf5/0x170 fs/ioctl.c:892
+ do_syscall_x64 arch/x86/entry/common.c:52 [inline]
+ do_syscall_64+0xf3/0x230 arch/x86/entry/common.c:83
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+Freed by task 6870:
+ kasan_save_stack mm/kasan/common.c:47 [inline]
+ kasan_save_track+0x3f/0x80 mm/kasan/common.c:68
+ kasan_save_free_info+0x40/0x50 mm/kasan/generic.c:582
+ poison_slab_object mm/kasan/common.c:247 [inline]
+ __kasan_slab_free+0x59/0x70 mm/kasan/common.c:264
+ kasan_slab_free include/linux/kasan.h:233 [inline]
+ slab_free_hook mm/slub.c:2353 [inline]
+ slab_free mm/slub.c:4613 [inline]
+ kfree+0x196/0x430 mm/slub.c:4761
+ nr_dec_obs net/netrom/nr_route.c:469 [inline]
+ nr_rt_ioctl+0x2e5/0xfb0 net/netrom/nr_route.c:692
+ sock_do_ioctl+0x158/0x460 net/socket.c:1209
+ sock_ioctl+0x626/0x8e0 net/socket.c:1328
+ vfs_ioctl fs/ioctl.c:51 [inline]
+ __do_sys_ioctl fs/ioctl.c:906 [inline]
+ __se_sys_ioctl+0xf5/0x170 fs/ioctl.c:892
+ do_syscall_x64 arch/x86/entry/common.c:52 [inline]
+ do_syscall_64+0xf3/0x230 arch/x86/entry/common.c:83
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+The buggy address belongs to the object at ffff8880303c5800
+ which belongs to the cache kmalloc-64 of size 64
+The buggy address is located 50 bytes inside of
+ freed 64-byte region [ffff8880303c5800, ffff8880303c5840)
+
+The buggy address belongs to the physical page:
+page: refcount:1 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x303c5
+flags: 0xfff00000000000(node=0|zone=1|lastcpupid=0x7ff)
+page_type: f5(slab)
+raw: 00fff00000000000 ffff88801ac418c0 ffffea0000b0c4c0 dead000000000004
+raw: 0000000000000000 0000000080200020 00000001f5000000 0000000000000000
+page dumped because: kasan: bad access detected
+page_owner tracks the page as allocated
+page last allocated via order 0, migratetype Unmovable, gfp_mask 0x52cc0(GFP_KERNEL|__GFP_NOWARN|__GFP_NORETRY|__GFP_COMP), pid 726, tgid 726 (kworker/u8:5), ts 14164187734, free_ts 0
+ set_page_owner include/linux/page_owner.h:32 [inline]
+ post_alloc_hook+0x1f3/0x230 mm/page_alloc.c:1558
+ prep_new_page mm/page_alloc.c:1566 [inline]
+ get_page_from_freelist+0x3651/0x37a0 mm/page_alloc.c:3476
+ __alloc_pages_noprof+0x292/0x710 mm/page_alloc.c:4753
+ alloc_pages_mpol_noprof+0x3e8/0x680 mm/mempolicy.c:2269
+ alloc_slab_page+0x6a/0x110 mm/slub.c:2423
+ allocate_slab+0x5a/0x2b0 mm/slub.c:2589
+ new_slab mm/slub.c:2642 [inline]
+ ___slab_alloc+0xc27/0x14a0 mm/slub.c:3830
+ __slab_alloc+0x58/0xa0 mm/slub.c:3920
+ __slab_alloc_node mm/slub.c:3995 [inline]
+ slab_alloc_node mm/slub.c:4156 [inline]
+ __kmalloc_cache_node_noprof+0x294/0x3a0 mm/slub.c:4337
+ kmalloc_node_noprof include/linux/slab.h:924 [inline]
+ __get_vm_area_node+0x132/0x2d0 mm/vmalloc.c:3127
+ __vmalloc_node_range_noprof+0x344/0x1380 mm/vmalloc.c:3806
+ alloc_thread_stack_node kernel/fork.c:314 [inline]
+ dup_task_struct+0x444/0x8c0 kernel/fork.c:1116
+ copy_process+0x5d1/0x3d50 kernel/fork.c:2224
+ kernel_clone+0x223/0x870 kernel/fork.c:2806
+ user_mode_thread+0x132/0x1a0 kernel/fork.c:2884
+ call_usermodehelper_exec_work+0x5c/0x230 kernel/umh.c:171
+page_owner free stack trace missing
+
+Memory state around the buggy address:
+ ffff8880303c5700: 00 00 00 00 00 00 fc fc fc fc fc fc fc fc fc fc
+ ffff8880303c5780: fa fb fb fb fb fb fb fb fc fc fc fc fc fc fc fc
+>ffff8880303c5800: fa fb fb fb fb fb fb fb fc fc fc fc fc fc fc fc
+                                     ^
+ ffff8880303c5880: fa fb fb fb fb fb fb fb fc fc fc fc fc fc fc fc
+ ffff8880303c5900: fa fb fb fb fb fb fb fb fc fc fc fc fc fc fc fc
+==================================================================

@@ -1,0 +1,281 @@
+diff --git a/src/builtins/builtins-object-gen.cc b/src/builtins/builtins-object-gen.cc
+index f840fea219c..f5c6053be84 100644
+--- a/src/builtins/builtins-object-gen.cc
++++ b/src/builtins/builtins-object-gen.cc
+@@ -432,8 +432,37 @@ TF_BUILTIN(ObjectAssign, ObjectBuiltinsAssembler) {
+     TNode<JSReceiver> from = ToObject_Inline(context, source);
+ 
+     TNode<Map> from_map = LoadMap(from);
++    // For the fast case we want the source to be a JSObject.
++    GotoIfNot(IsJSObjectMap(from_map), &slow_path);
++
+     TNode<Map> to_map = LoadMap(to);
+ 
++    // Chances that the fast cloning is possible is very low in case source
++    // and target maps belong to different native contexts (the only case
++    // it'd work is if the |from| object doesn't have enumerable properties)
++    // or if one of them is a remote JS object.
++    // TODO(olivf): Re-Evaluate this once we have a representation for "no
++    // enumerable properties" state in an Object.assign sidestep transition.
++    {
++      TNode<Map> to_meta_map = LoadMap(to_map);
++      GotoIfNot(TaggedEqual(LoadMap(from_map), to_meta_map), &slow_path);
++
++      // For the fast case we want the target to be a fresh empty object
++      // literal from current context.
++      // TODO(olivf): consider extending the fast path to a case when source
++      // and target objects are from the same context but not necessarily from
++      // current one.
++      TNode<NativeContext> native_context = LoadNativeContext(context);
++      TNode<Map> empty_object_literal_map =
++          LoadObjectFunctionInitialMap(native_context);
++      GotoIfNot(TaggedEqual(to_map, empty_object_literal_map), &slow_path);
++      // Double-check that the meta map is not contextless.
++      CSA_DCHECK(this,
++                 TaggedEqual(native_context,
++                             LoadMapConstructorOrBackPointerOrNativeContext(
++                                 to_meta_map)));
++    }
++
+     // Chances are very slim that cloning is possible if we have different
+     // instance sizes.
+     // TODO(olivf): Re-Evaluate this once we have a faster target map lookup
+@@ -463,14 +492,6 @@ TF_BUILTIN(ObjectAssign, ObjectBuiltinsAssembler) {
+             Word32And(target_field3, field3_descriptors_and_extensible_mask)),
+         &slow_path);
+ 
+-    // For the fastcase we want the source to be a JSObject and the target a
+-    // fresh empty object literal.
+-    TNode<NativeContext> native_context = LoadNativeContext(context);
+-    TNode<Map> empty_object_literal_map =
+-        LoadObjectFunctionInitialMap(native_context);
+-    GotoIfNot(TaggedEqual(to_map, empty_object_literal_map), &slow_path);
+-    GotoIfNot(IsJSObjectMap(from_map), &slow_path);
+-
+     // Check that the source is in fastmode, not a prototype and not deprecated.
+     TNode<Uint32T> source_field3 = LoadMapBitField3(from_map);
+     TNode<Uint32T> field3_exclusion_mask_const =
+@@ -495,7 +516,7 @@ TF_BUILTIN(ObjectAssign, ObjectBuiltinsAssembler) {
+     // Check if our particular source->target combination is fast clonable.
+     // E.g., this ensures that we only have fast properties and in general that
+     // the binary layout is compatible for `FastCloneJSObject`.
+-    // If suche a clone map exists then it can be found in the transition array
++    // If such a clone map exists then it can be found in the transition array
+     // with object_assign_clone_transition_symbol as a key. If this transition
+     // slot is cleared, then the map is not clonable. If the key is missing
+     // from the transitions we rely on the runtime function
+diff --git a/src/diagnostics/objects-printer.cc b/src/diagnostics/objects-printer.cc
+index f66cb063474..8e5d36d2a34 100644
+--- a/src/diagnostics/objects-printer.cc
++++ b/src/diagnostics/objects-printer.cc
+@@ -1469,14 +1469,14 @@ void FixedDoubleArray::FixedDoubleArrayPrint(std::ostream& os) {
+ 
+ void WeakFixedArray::WeakFixedArrayPrint(std::ostream& os) {
+   PrintHeader(os, "WeakFixedArray");
+-  os << "\n - length: " << length() << "\n";
++  os << "\n - length: " << length();
+   PrintWeakArrayElements(os, this);
+   os << "\n";
+ }
+ 
+ void TrustedWeakFixedArray::TrustedWeakFixedArrayPrint(std::ostream& os) {
+   PrintHeader(os, "TrustedWeakFixedArray");
+-  os << "\n - length: " << length() << "\n";
++  os << "\n - length: " << length();
+   PrintWeakArrayElements(os, this);
+   os << "\n";
+ }
+@@ -1484,7 +1484,7 @@ void TrustedWeakFixedArray::TrustedWeakFixedArrayPrint(std::ostream& os) {
+ void WeakArrayList::WeakArrayListPrint(std::ostream& os) {
+   PrintHeader(os, "WeakArrayList");
+   os << "\n - capacity: " << capacity();
+-  os << "\n - length: " << length() << "\n";
++  os << "\n - length: " << length();
+   PrintWeakArrayElements(os, this);
+   os << "\n";
+ }
+@@ -1492,6 +1492,7 @@ void WeakArrayList::WeakArrayListPrint(std::ostream& os) {
+ void TransitionArray::TransitionArrayPrint(std::ostream& os) {
+   PrintHeader(os, "TransitionArray");
+   PrintInternal(os);
++  os << "\n";
+ }
+ 
+ void FeedbackCell::FeedbackCellPrint(std::ostream& os) {
+@@ -3362,6 +3363,9 @@ void HeapObject::HeapObjectShortPrint(std::ostream& os) {
+       os << "<DescriptorArray["
+          << Cast<DescriptorArray>(*this)->number_of_descriptors() << "]>";
+       break;
++    case WEAK_FIXED_ARRAY_TYPE:
++      os << "<WeakFixedArray[" << Cast<WeakFixedArray>(*this)->length() << "]>";
++      break;
+     case TRANSITION_ARRAY_TYPE:
+       os << "<TransitionArray[" << Cast<TransitionArray>(*this)->length()
+          << "]>";
+@@ -3727,7 +3731,8 @@ void Map::MapPrint(std::ostream& os) {
+     Isolate* isolate = GetIsolateFromWritableObject(*this);
+     TransitionsAccessor transitions(isolate, *this);
+     int nof_transitions = transitions.NumberOfTransitions();
+-    if (nof_transitions > 0) {
++    if (nof_transitions > 0 || transitions.HasPrototypeTransitions() ||
++        transitions.HasSideStepTransitions()) {
+       os << "\n - transitions #" << nof_transitions << ": ";
+       Tagged<HeapObject> heap_object;
+       Tagged<Smi> smi;
+@@ -3844,7 +3849,7 @@ void TransitionsAccessor::PrintOneTransition(std::ostream& os, Tagged<Name> key,
+ void TransitionArray::PrintInternal(std::ostream& os) {
+   {
+     int num_transitions = number_of_transitions();
+-    os << "   Transition array #" << num_transitions << ":";
++    os << "\n   Transitions #" << num_transitions << ":";
+     for (int i = 0; i < num_transitions; i++) {
+       Tagged<Name> key = GetKey(i);
+       Tagged<Map> target;
+@@ -3856,7 +3861,8 @@ void TransitionArray::PrintInternal(std::ostream& os) {
+   if (HasPrototypeTransitions()) {
+     auto prototype_transitions = GetPrototypeTransitions();
+     int num_transitions = NumberOfPrototypeTransitions(prototype_transitions);
+-    os << "\n   Prototype transitions #" << num_transitions << ":";
++    os << "\n   Prototype transitions #" << num_transitions << ": "
++       << Brief(prototype_transitions);
+     for (int i = 0; i < num_transitions; i++) {
+       auto maybe = prototype_transitions->get(
+           TransitionArray::kProtoTransitionHeaderSize + i);
+@@ -3868,6 +3874,18 @@ void TransitionArray::PrintInternal(std::ostream& os) {
+       }
+     }
+   }
++
++  if (HasSideStepTransitions()) {
++    auto sidestep_transitions = GetSideStepTransitions();
++    int num_transitions = sidestep_transitions->length();
++    os << "\n   Sidestep transitions #" << num_transitions << ": "
++       << Brief(sidestep_transitions);
++    for (int i = 0; i < num_transitions; i++) {
++      SideStepTransition::Kind kind = static_cast<SideStepTransition::Kind>(i);
++      auto maybe_target = sidestep_transitions->get(i);
++      os << "\n     " << kind << " -> " << Brief(maybe_target);
++    }
++  }
+ }
+ 
+ void TransitionsAccessor::PrintTransitions(std::ostream& os) {
+@@ -3884,7 +3902,6 @@ void TransitionsAccessor::PrintTransitions(std::ostream& os) {
+       break;
+     }
+     case kFullTransitionArray:
+-      std::cout << "\n";
+       return transitions()->PrintInternal(os);
+   }
+ }
+@@ -3960,10 +3977,6 @@ void TransitionsAccessor::PrintTransitionTree(
+         std::stringstream ss;
+         ss << Brief(side_step);
+         os << std::left << std::setw(50) << ss.str() << ": sidestep " << kind;
+-        if (!side_step.IsSmi()) {
+-          TransitionsAccessor transitions(isolate_, Cast<Map>(side_step));
+-          transitions.PrintTransitionTree(os, level + 1, no_gc);
+-        }
+       });
+ }
+ 
+diff --git a/src/ic/ic.cc b/src/ic/ic.cc
+index b2315df3385..da01d073837 100644
+--- a/src/ic/ic.cc
++++ b/src/ic/ic.cc
+@@ -3278,7 +3278,7 @@ FastCloneObjectMode GetCloneModeForMapPreCheck(DirectHandle<Map> map,
+   }
+ 
+   // TODO(olivf): Think about cases where cross-context copies are safe.
+-  if (*map->map()->native_context() != *isolate->native_context()) {
++  if (!map->BelongsToSameNativeContextAs(isolate->context())) {
+     return FastCloneObjectMode::kNotSupported;
+   }
+ 
+@@ -3550,10 +3550,14 @@ Tagged<Object> GetCloneTargetMap(Isolate* isolate, DirectHandle<Map> source_map,
+                                  DirectHandle<Map> override_map) {
+   static_assert(kind == SideStepTransition::Kind::kObjectAssign ||
+                 kind == SideStepTransition::Kind::kCloneObject);
+-  if (source_map->map()->native_context() != *isolate->native_context()) {
++  if (!v8_flags.clone_object_sidestep_transitions) {
++    return SideStepTransition::Empty;
++  }
++
++  // Ensure we can follow the sidestep transition NativeContext-wise.
++  if (!source_map->BelongsToSameNativeContextAs(isolate->context())) {
+     return SideStepTransition::Empty;
+   }
+-  if (!v8_flags.clone_object_sidestep_transitions) return {};
+   Tagged<Object> result = SideStepTransition::Empty;
+   TransitionsAccessor transitions(isolate, *source_map);
+   if (transitions.HasSideStepTransitions()) {
+@@ -3884,7 +3888,7 @@ RUNTIME_FUNCTION(Runtime_ObjectAssignTryFastcase) {
+   DCHECK(!target_map->is_deprecated());
+   DCHECK(target_map->is_extensible());
+   DCHECK(!IsUndefined(*source, isolate) && !IsNull(*source, isolate));
+-  DCHECK_EQ(source_map->map()->native_context(), *isolate->native_context());
++  DCHECK(source_map->BelongsToSameNativeContextAs(isolate->context()));
+ 
+   ReadOnlyRoots roots(isolate);
+   {
+diff --git a/src/objects/map-inl.h b/src/objects/map-inl.h
+index 5e83d4a7a09..b025256ed4b 100644
+--- a/src/objects/map-inl.h
++++ b/src/objects/map-inl.h
+@@ -903,6 +903,22 @@ bool Map::IsPrototypeValidityCellValid() const {
+   return cell_value == Smi::FromInt(Map::kPrototypeChainValid);
+ }
+ 
++bool Map::BelongsToSameNativeContextAs(Tagged<Map> other_map) const {
++  Tagged<Map> this_meta_map = map();
++  // If the meta map is contextless (as in case of remote object's meta map)
++  // we can't be sure the maps belong to the same context.
++  if (this_meta_map == GetReadOnlyRoots().meta_map()) return false;
++  DCHECK(IsNativeContext(this_meta_map->native_context_or_null()));
++  return this_meta_map == other_map->map();
++}
++
++bool Map::BelongsToSameNativeContextAs(Tagged<Context> context) const {
++  Tagged<Map> context_meta_map = context->map()->map();
++  Tagged<Map> this_meta_map = map();
++  DCHECK_NE(context_meta_map, GetReadOnlyRoots().meta_map());
++  return this_meta_map == context_meta_map;
++}
++
+ DEF_GETTER(Map, GetConstructorRaw, Tagged<Object>) {
+   Tagged<Object> maybe_constructor = constructor_or_back_pointer(cage_base);
+   // Follow any back pointers.
+diff --git a/src/objects/map.h b/src/objects/map.h
+index 79447d380c7..2c660365e79 100644
+--- a/src/objects/map.h
++++ b/src/objects/map.h
+@@ -685,6 +685,13 @@ class Map : public TorqueGeneratedMap<Map, HeapObject> {
+   // chain state.
+   inline bool IsPrototypeValidityCellValid() const;
+ 
++  // Returns true if this map belongs to the same native context as given map,
++  // i.e. this map's meta map is equal to other_map's meta map.
++  // Returns false if this map is contextless (in case of JSObject map this
++  // means that the object is remote).
++  inline bool BelongsToSameNativeContextAs(Tagged<Map> other_map) const;
++  inline bool BelongsToSameNativeContextAs(Tagged<Context> context) const;
++
+   inline Tagged<Name> GetLastDescriptorName(Isolate* isolate) const;
+   inline PropertyDetails GetLastDescriptorDetails(Isolate* isolate) const;
+ 
+diff --git a/test/mjsunit/regress/regress-crbug-364422411.js b/test/mjsunit/regress/regress-crbug-364422411.js
+new file mode 100644
+index 00000000000..a8eb4517063
+--- /dev/null
++++ b/test/mjsunit/regress/regress-crbug-364422411.js
+@@ -0,0 +1,10 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++var r = Realm.create();
++for (let i = 0; i < 3; i++) {
++  var dst = {};
++  var src = Realm.eval(r, "var o = {}; o.x = 1; o");
++  Object.assign(dst, src);
++}

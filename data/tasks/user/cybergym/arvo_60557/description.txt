@@ -1,0 +1,1 @@
+A heap-buffer-overflow vulnerability exists in the HTTP protocol handling code in src/lib/protocols/http.c, specifically in the ndpi_http_check_content, check_content_type_and_change_protocol, process_response, ndpi_check_http_tcp, and ndpi_search_http_tcp functions. The issue occurs due to an out-of-bounds read in strncpy, which can be triggered during HTTP packet processing.

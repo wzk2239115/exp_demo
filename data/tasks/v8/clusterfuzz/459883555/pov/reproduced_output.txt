@@ -1,0 +1,25 @@
+V8 is running with experimental features enabled. Stability and security will suffer.
+
+
+#
+# Fatal error in ../../src/wasm/module-compiler.cc, line 2009
+# Debug check failed: module->num_imported_functions == statuses.size() (3 vs. 1).
+#
+#
+#
+#FailureMessage Object: 0x7ffcc0f5b9e0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x557719827623]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55771982653d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:231:10) [0x55771980c154]
+    out/debug/d8(+0x4d49a35) [0x55771980ba35]
+    d8(v8::internal::wasm::ValidateAndSetBuiltinImports(v8::internal::wasm::WasmModule const*, v8::base::Vector<unsigned char const>, v8::internal::wasm::CompileTimeImports const&, v8::internal::wasm::WasmDetectedFeatures*) ./gen/third_party/libc++/src/include/string:2118:12) [0x5577173747e8]
+    d8(v8::internal::wasm::WasmEngine::SyncCompile(v8::internal::Isolate*, v8::internal::wasm::WasmEnabledFeatures, v8::internal::wasm::CompileTimeImports, v8::internal::wasm::ErrorThrower*, v8::base::OwnedVector<unsigned char const>) ./../../src/wasm/wasm-result.h:47:5) [0x55771740115a]
+    d8(v8::internal::wasm::WebAssemblyModule(v8::FunctionCallbackInfo<v8::Value> const&) ./../../src/wasm/wasm-js.cc:879:48) [0x55771742abee]
+    d8(v8::internal::FunctionCallbackArguments::CallOrConstruct(v8::internal::Tagged<v8::internal::FunctionTemplateInfo>, bool) ./../../src/objects/slots-inl.h:45:25) [0x557715a65d38]
+    d8(v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<true>(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::HeapObject>, v8::internal::DirectHandle<v8::internal::FunctionTemplateInfo>, v8::internal::DirectHandle<v8::internal::Object>, unsigned long*, int) ./../../src/builtins/builtins-api.cc:105:16) [0x557715a64629]
+    d8(v8::internal::Builtin_Impl_HandleApiConstruct(v8::internal::BuiltinArguments, v8::internal::Isolate*) ./../../src/builtins/builtins-api.cc:136:3) [0x557715a62c66]
+    d8(v8::internal::Builtin_HandleApiConstruct(int, unsigned long*, v8::internal::Isolate*) ./../../src/builtins/builtins-api.cc:127:1) [0x557715a628b1]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc:0:0) [0x557718ce45fd]
+timeout: the monitored command dumped core

@@ -1,0 +1,20 @@
+V8 is running with experimental features enabled. Stability and security will suffer.
+Received signal 11 SEGV_ACCERR 049b001404b0
+
+==== C stack trace ===============================
+
+d8(v8::base::debug::(anonymous namespace)::StackDumpSignalHandler(int, siginfo_t*, void*) ./../../src/base/debug/stack_trace_posix.cc:395:32)[0x562681c69ec4]
+/lib/x86_64-linux-gnu/libc.so.6(+0x45330)[0x7f726df59330]
+d8(void v8::internal::RegExpCodeGenerator::Visit<(v8::internal::RegExpBytecode)36>() ./../../src/regexp/regexp-code-generator.cc:118:20)[0x56267f0c6500]
+d8(v8::internal::RegExpCodeGenerator::VisitBytecodes() ./../../src/regexp/regexp-code-generator.cc:0:65)[0x56267f0c4b25]
+d8(v8::internal::RegExpCodeGenerator::Assemble(v8::internal::DirectHandle<v8::internal::String>, v8::base::Flags<v8::internal::RegExpFlag, int, int>) ./../../src/regexp/regexp-code-generator.cc:0:3)[0x56267f0c48b5]
+d8(v8::internal::RegExpImpl::CompileIrregexpFromBytecode(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::IrRegExpData>, v8::internal::DirectHandle<v8::internal::String>, bool) ./../../src/regexp/regexp-code-generator.h:31:44)[0x56267f12f00d]
+d8(v8::internal::RegExpImpl::EnsureCompiledIrregexp(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::IrRegExpData>, v8::internal::DirectHandle<v8::internal::String>, bool) ./../../src/regexp/regexp.cc:0:9)[0x56267f12f747]
+d8(v8::internal::RegExpImpl::IrregexpPrepare(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::IrRegExpData>, v8::internal::DirectHandle<v8::internal::String>) ./../../src/regexp/regexp.cc:0:8)[0x56267f12b28e]
+d8(v8::internal::RegExpImpl::IrregexpExec(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::IrRegExpData>, v8::internal::DirectHandle<v8::internal::String>, int, int*, unsigned int) ./../../src/regexp/regexp.cc:1025:29)[0x56267f12b91c]
+d8(v8::internal::RegExp::Exec(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSRegExp>, v8::internal::DirectHandle<v8::internal::String>, int, int*, unsigned int) ./../../src/regexp/regexp.cc:0:14)[0x56267f12b626]
+d8(v8::internal::__RT_impl_Runtime_RegExpExec(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/runtime/runtime-regexp.cc:934:10)[0x56267f1f9ab7]
+d8(v8::internal::Runtime_RegExpExec(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-regexp.cc:957:1)[0x56267f1f9614]
+d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0)[0x562681313e3d]
+[end of stack trace]
+timeout: the monitored command dumped core

@@ -1,0 +1,322 @@
+diff --git a/src/codegen/bailout-reason.h b/src/codegen/bailout-reason.h
+index 6690a291cdb..791dcb67042 100644
+--- a/src/codegen/bailout-reason.h
++++ b/src/codegen/bailout-reason.h
+@@ -40,6 +40,7 @@ namespace internal {
+   V(kInvalidJumpTableIndex, "Invalid jump table index")                        \
+   V(kInvalidParametersAndRegistersInGenerator,                                 \
+     "invalid parameters and registers in generator")                           \
++  V(kMaglevGraphBuildingFailed, "Maglev optimized graph construction failed")  \
+   V(kMissingBytecodeArray, "Missing bytecode array from function")             \
+   V(kObjectNotTagged, "The object is not tagged")                              \
+   V(kObjectTagged, "The object is tagged")                                     \
+diff --git a/src/compiler/turboshaft/turbolev-graph-builder.cc b/src/compiler/turboshaft/turbolev-graph-builder.cc
+index b1608b81d9d..112f9531890 100644
+--- a/src/compiler/turboshaft/turbolev-graph-builder.cc
++++ b/src/compiler/turboshaft/turbolev-graph-builder.cc
+@@ -6427,13 +6427,13 @@ bool ShouldPrintMaglevGraph(PipelineData* data) {
+ // SimplifiedLowering, but is much less powerful (doesn't take truncations into
+ // account, doesn't do proper range analysis, doesn't run a fixpoint
+ // analysis...).
+-void RunMaglevOptimizations(PipelineData* data,
++bool RunMaglevOptimizations(PipelineData* data,
+                             maglev::MaglevCompilationInfo* compilation_info,
+                             maglev::Graph* maglev_graph) {
+   // Non-eager inlining.
+   if (v8_flags.turbolev_non_eager_inlining) {
+     maglev::MaglevInliner inliner(maglev_graph);
+-    inliner.Run();
++    if (inliner.Run()) return false;
+   }
+ 
+   // Truncation pass.
+@@ -6487,6 +6487,8 @@ void RunMaglevOptimizations(PipelineData* data,
+     PrintMaglevGraph(*data, maglev_graph,
+                      "After escape analysis and dead node sweeping");
+   }
++
++  return true;
+ }
+ 
+ std::optional<BailoutReason> TurbolevGraphBuildingPhase::Run(PipelineData* data,
+@@ -6525,13 +6527,17 @@ std::optional<BailoutReason> TurbolevGraphBuildingPhase::Run(PipelineData* data,
+   maglev::MaglevGraphBuilder maglev_graph_builder(
+       local_isolate, compilation_info->toplevel_compilation_unit(),
+       maglev_graph);
+-  maglev_graph_builder.Build();
++  if (!maglev_graph_builder.Build()) {
++    return BailoutReason::kMaglevGraphBuildingFailed;
++  }
+ 
+   if (V8_UNLIKELY(ShouldPrintMaglevGraph(data))) {
+     PrintMaglevGraph(*data, maglev_graph, "After graph building");
+   }
+ 
+-  RunMaglevOptimizations(data, compilation_info.get(), maglev_graph);
++  if (!RunMaglevOptimizations(data, compilation_info.get(), maglev_graph)) {
++    return BailoutReason::kMaglevGraphBuildingFailed;
++  }
+ 
+   // TODO(nicohartmann): Should we have source positions here?
+   data->InitializeGraphComponent(nullptr);
+diff --git a/src/maglev/maglev-compiler.cc b/src/maglev/maglev-compiler.cc
+index f0af5677cf3..c03a314376c 100644
+--- a/src/maglev/maglev-compiler.cc
++++ b/src/maglev/maglev-compiler.cc
+@@ -101,7 +101,7 @@ bool MaglevCompiler::Compile(LocalIsolate* local_isolate,
+                    "V8.Maglev.GraphBuilding");
+       MaglevGraphBuilder graph_builder(
+           local_isolate, compilation_info->toplevel_compilation_unit(), graph);
+-      graph_builder.Build();
++      if (!graph_builder.Build()) return false;
+       PrintGraph(graph, v8_flags.print_maglev_graphs, "After graph building");
+       VerifyGraph(graph);
+     }
+@@ -110,7 +110,7 @@ bool MaglevCompiler::Compile(LocalIsolate* local_isolate,
+       TRACE_EVENT0(TRACE_DISABLED_BY_DEFAULT("v8.compile"),
+                    "V8.Maglev.Inlining");
+       MaglevInliner inliner(graph);
+-      inliner.Run();
++      if (!inliner.Run()) return false;
+       VerifyGraph(graph);
+     }
+ 
+diff --git a/src/maglev/maglev-graph-builder.cc b/src/maglev/maglev-graph-builder.cc
+index bc3de7e6215..9dd4eca2c07 100644
+--- a/src/maglev/maglev-graph-builder.cc
++++ b/src/maglev/maglev-graph-builder.cc
+@@ -19,6 +19,7 @@
+ #include "src/base/vector.h"
+ #include "src/builtins/builtins-constructor.h"
+ #include "src/builtins/builtins.h"
++#include "src/codegen/bailout-reason.h"
+ #include "src/codegen/cpu-features.h"
+ #include "src/codegen/interface-descriptors-inl.h"
+ #include "src/common/assert-scope.h"
+@@ -7922,6 +7923,11 @@ ReduceResult MaglevGraphBuilder::BuildInlineFunction(
+   }
+   inlining_id_ = static_cast<int>(graph()->inlined_functions().size() - 1);
+ 
++  if (should_abort_compilation_) {
++    // We will abort the compilation at the end.
++    return BuildAbort(AbortReason::kMaglevGraphBuildingFailed);
++  }
++
+   DCHECK_NE(inlining_id_, SourcePosition::kNotInlined);
+   reducer_.SetBytecodeOffset(entrypoint_);
+   reducer_.SetStartSourcePosition(inlining_id_);
+@@ -8229,7 +8235,7 @@ ReduceResult MaglevGraphBuilder::BuildEagerInlineCall(
+   ReduceResult result = inner_graph_builder.BuildInlineFunction(
+       GetCurrentSourcePosition(), context, function, new_target);
+ 
+-  // Prapagate back (or reset) builder state.
++  // Propagate back (or reset) builder state.
+   unobserved_context_slot_stores_ =
+       inner_graph_builder.unobserved_context_slot_stores_;
+   latest_checkpointed_frame_ = nullptr;
+@@ -15386,8 +15392,9 @@ DEBUG_BREAK_BYTECODE_LIST(DEBUG_BREAK)
+ #undef DEBUG_BREAK
+ ReduceResult MaglevGraphBuilder::VisitIllegal() { UNREACHABLE(); }
+ 
+-void MaglevGraphBuilder::Build() {
++bool MaglevGraphBuilder::Build() {
+   DCHECK(!is_inline());
++  if (should_abort_compilation_) return false;
+ 
+   DCHECK_EQ(inlining_id_, SourcePosition::kNotInlined);
+   reducer_.SetBytecodeOffset(entrypoint_);
+@@ -15442,6 +15449,7 @@ void MaglevGraphBuilder::Build() {
+   }
+ 
+   BuildBody();
++  return !should_abort_compilation_;
+ }
+ 
+ void MaglevGraphBuilder::BuildBody() {
+diff --git a/src/maglev/maglev-graph-builder.h b/src/maglev/maglev-graph-builder.h
+index 39553e484e2..2a241096a79 100644
+--- a/src/maglev/maglev-graph-builder.h
++++ b/src/maglev/maglev-graph-builder.h
+@@ -101,7 +101,7 @@ class MaglevGraphBuilder {
+                               Graph* graph,
+                               MaglevCallerDetails* caller_details = nullptr);
+ 
+-  void Build();
++  bool Build();
+ 
+   ReduceResult BuildInlineFunction(SourcePosition call_site_position,
+                                    ValueNode* context, ValueNode* function,
+@@ -216,6 +216,8 @@ class MaglevGraphBuilder {
+ 
+   bool is_turbolev() const { return is_turbolev_; }
+ 
++  bool should_abort_compilation() const { return should_abort_compilation_; }
++
+   bool is_non_eager_inlining_enabled() const {
+     if (is_turbolev()) {
+       return v8_flags.turbolev_non_eager_inlining;
+@@ -1889,7 +1891,12 @@ class MaglevGraphBuilder {
+     DCHECK_IMPLIES(merge_states_[offset],
+                    merge_states_[offset]->predecessor_count() ==
+                        predecessor_count_[offset] + diff);
+-    predecessor_count_[offset] += diff;
++    uint32_t updated_pred_count = predecessor_count_[offset] + diff;
++    if (updated_pred_count > NodeBase::kMaxInputs) {
++      should_abort_compilation_ = true;
++      return;
++    }
++    predecessor_count_[offset] = updated_pred_count;
+   }
+   uint32_t predecessor_count(uint32_t offset) {
+     DCHECK_LE(offset, bytecode().length());
+@@ -1965,6 +1972,7 @@ class MaglevGraphBuilder {
+   ValueNode* inlined_new_target_ = nullptr;
+ 
+   bool is_turbolev_ = false;
++  bool should_abort_compilation_ = false;
+ 
+   // Bytecode offset at which compilation should start.
+   int entrypoint_;
+diff --git a/src/maglev/maglev-inlining.cc b/src/maglev/maglev-inlining.cc
+index e3b35c8b2f2..83b46cda3d6 100644
+--- a/src/maglev/maglev-inlining.cc
++++ b/src/maglev/maglev-inlining.cc
+@@ -66,8 +66,8 @@ bool MaglevInliner::IsSmallWithHeapNumberInputsOutputs(
+          max_inlined_bytecode_size_small_with_heapnum_in_out();
+ }
+ 
+-void MaglevInliner::Run() {
+-  if (graph_->inlineable_calls().empty()) return;
++bool MaglevInliner::Run() {
++  if (graph_->inlineable_calls().empty()) return true;
+ 
+   while (!graph_->inlineable_calls().empty()) {
+     MaglevCallSiteInfo* call_site = ChooseNextCallSite();
+@@ -100,10 +100,12 @@ void MaglevInliner::Run() {
+       }
+     }
+ 
+-    TRACE("> Inlining!");
+-    MaybeReduceResult result =
++    InliningResult result =
+         BuildInlineFunction(call_site, is_small_with_heapnum_input_outputs);
+-    if (result.IsFail()) continue;
++    if (result == InliningResult::kAbort) return false;
++    if (result == InliningResult::kFail) continue;
++    DCHECK_EQ(result, InliningResult::kDone);
++
+     // If --trace-maglev-inlining-verbose, we print the graph after each
+     // inlining step/call.
+     if (V8_UNLIKELY(ShouldPrintMaglevGraph())) {
+@@ -136,6 +138,8 @@ void MaglevInliner::Run() {
+     std::cout << "\nAfter inlining" << std::endl;
+     PrintGraph(std::cout, graph_);
+   }
++
++  return true;
+ }
+ 
+ int MaglevInliner::max_inlined_bytecode_size_cumulative() const {
+@@ -166,7 +170,7 @@ MaglevCallSiteInfo* MaglevInliner::ChooseNextCallSite() {
+   return call_site;
+ }
+ 
+-MaybeReduceResult MaglevInliner::BuildInlineFunction(
++MaglevInliner::InliningResult MaglevInliner::BuildInlineFunction(
+     MaglevCallSiteInfo* call_site, bool is_small) {
+   CallKnownJSFunction* call_node = call_site->generic_call_node;
+   BasicBlock* call_block = call_node->owner();
+@@ -179,7 +183,7 @@ MaybeReduceResult MaglevInliner::BuildInlineFunction(
+   if (!call_block || call_block->is_dead()) {
+     // The block containing the call is unreachable, and it was previously
+     // removed. Do not try to inline the call.
+-    return ReduceResult::Fail();
++    return InliningResult::kFail;
+   }
+ 
+   if (V8_UNLIKELY(v8_flags.trace_maglev_inlining && is_tracing_enabled())) {
+@@ -267,6 +271,10 @@ MaybeReduceResult MaglevInliner::BuildInlineFunction(
+       call_node->new_target().node()->Unwrap());
+ 
+   if (result.IsDoneWithAbort()) {
++    if (inner_graph_builder.should_abort_compilation()) {
++      return InliningResult::kAbort;
++    }
++
+     // Since the rest of the block is dead, these nodes don't belong
+     // to any basic block anymore.
+     for (auto node : rem_nodes_in_call_block) {
+@@ -282,7 +290,7 @@ MaybeReduceResult MaglevInliner::BuildInlineFunction(
+     // remove unreachable blocks, but only the successors of control_node in
+     // saved_bbs.
+     RemoveUnreachableBlocks();
+-    return result;
++    return InliningResult::kDone;
+   }
+ 
+   DCHECK(result.IsDoneWithValue());
+@@ -326,7 +334,7 @@ MaybeReduceResult MaglevInliner::BuildInlineFunction(
+     RemoveUnreachableBlocks();
+   }
+ 
+-  return ReduceResult::Done();
++  return InliningResult::kDone;
+ }
+ 
+ std::vector<BasicBlock*> MaglevInliner::TruncateGraphAt(BasicBlock* block) {
+diff --git a/src/maglev/maglev-inlining.h b/src/maglev/maglev-inlining.h
+index 132b8af4fff..1e0df36b577 100644
+--- a/src/maglev/maglev-inlining.h
++++ b/src/maglev/maglev-inlining.h
+@@ -38,25 +38,31 @@ class MaglevInliner {
+  public:
+   explicit MaglevInliner(Graph* graph) : graph_(graph) {}
+ 
+-  void Run();
++  bool Run();
+ 
+  private:
++  Graph* graph_;
++
+   int max_inlined_bytecode_size_cumulative() const;
+   int max_inlined_bytecode_size_small_total() const;
+   int max_inlined_bytecode_size_small_with_heapnum_in_out() const;
+ 
+   bool IsSmallWithHeapNumberInputsOutputs(MaglevCallSiteInfo* call_site) const;
+ 
+-  Graph* graph_;
+-
+   compiler::JSHeapBroker* broker() const { return graph_->broker(); }
+   Zone* zone() const { return graph_->zone(); }
+ 
+   bool is_tracing_enabled() const { return graph_->is_tracing_enabled(); }
+ 
+   MaglevCallSiteInfo* ChooseNextCallSite();
+-  MaybeReduceResult BuildInlineFunction(MaglevCallSiteInfo* call_site,
+-                                        bool is_small);
++
++  enum class InliningResult {
++    kDone,
++    kFail,
++    kAbort,
++  };
++  InliningResult BuildInlineFunction(MaglevCallSiteInfo* call_site,
++                                     bool is_small);
+ 
+   // Truncates the graph at the given basic block `block`.  All blocks
+   // following `block` (exclusive) are removed from the graph and returned.
+diff --git a/src/maglev/maglev-ir.h b/src/maglev/maglev-ir.h
+index 3601765d009..f60ed713211 100644
+--- a/src/maglev/maglev-ir.h
++++ b/src/maglev/maglev-ir.h
+@@ -2290,9 +2290,9 @@ class NodeBase : public ZoneObject {
+   template <class T, int size>
+   using NextBitField = ReservedFields::Next<T, size>;
+ 
++ public:
+   static constexpr int kMaxInputs = InputCountField::kMax;
+ 
+- public:
+   template <class T>
+   static constexpr Opcode opcode_of = detail::opcode_of_helper<T>::value;
+ 

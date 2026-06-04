@@ -1,0 +1,1 @@
+The bitstream buffer allocation in mvcdec does not account for the worst case FGC SEI payload size. In conjunction with the worst case sizes of other NALUs, this can result in a required buffer size significantly larger than the default bitstream buffer size of 256000. The vulnerability arises because the buffer size is not set to the sum of 256000 and MAX_FGC_SEI_SIZE.

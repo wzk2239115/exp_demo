@@ -1,0 +1,1 @@
+A null dereference vulnerability exists due to not checking the result of colormap removal, which can cause a crash if the operation fails.

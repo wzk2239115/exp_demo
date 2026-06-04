@@ -1,0 +1,8 @@
+listener 1892
+allow_anonymous true
+
+connection bridge_sample
+address 127.0.0.1:notifications false
+rtesart_timeout 5
+bridge_protocol_versimemory_limitmax_quþÿÿÿÿãÙŸes
+_max_topic_alias 0

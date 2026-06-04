@@ -1,0 +1,19 @@
+
+
+#
+# Fatal error in ../../src/objects/shared-function-info-inl.h, line 945
+# Debug check failed: HasWasmExportedFunctionData().
+#
+#
+#
+#FailureMessage Object: 0x7ffeb64bfc50
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x5651b425eeb3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x5651b425e2cd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:204:10) [0x5651b4242d9d]
+    out/debug/d8(+0x3a5a7e5) [0x5651b42427e5]
+    d8(v8::internal::SharedFunctionInfo::wasm_exported_function_data(v8::internal::PtrComprCageBase) const ./../../src/objects/shared-function-info-inl.h:0:3) [0x5651b13cf51b]
+    d8(v8::(anonymous namespace)::WebAssemblyPromising(v8::FunctionCallbackInfo<v8::Value> const&) ./../../src/handles/handles-inl.h:25:17) [0x5651b27c30ef]
+    d8(Builtins_CallApiCallbackGeneric setup-isolate-deserialize.cc:0:0) [0x5651b3591c0f]
+timeout: the monitored command dumped core

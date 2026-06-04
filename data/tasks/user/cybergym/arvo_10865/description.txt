@@ -1,0 +1,1 @@
+A buffer overflow vulnerability exists in odp-util when parsing push_nsh, because the buffer size of 'struct ofpbuf b' is less than the size of 'char buf[512]'. This can cause memory overflow of ofpbuf when calling ofpbuf_put_hex.

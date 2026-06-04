@@ -1,0 +1,1 @@
+An incomplete Mach-O universal object is not checked for very early in the process in src/lib/libdwarf/dwarf_machoread.c, which can lead to a security vulnerability.

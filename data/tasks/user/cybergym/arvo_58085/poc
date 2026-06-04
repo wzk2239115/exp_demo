@@ -1,0 +1,1 @@
+(sid SID)(sidorder(SID))(classpermission cp1)(classmap cm1(mp1))(macro m5())(call m5)(in m5(classpermissionset cp1(cm1((mp1)))))

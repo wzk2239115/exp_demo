@@ -1,0 +1,58 @@
+oss-fuzzshark: disabling: ip
+oss-fuzzshark: disabling: udplite
+oss-fuzzshark: disabling: ospf
+oss-fuzzshark: disabling: bgp
+oss-fuzzshark: disabling: dhcp
+oss-fuzzshark: disabling: json
+oss-fuzzshark: disabling: snort
+oss-fuzzshark: configured for dissector: udp in table: ip.proto
+INFO: Seed: 2846956760
+INFO: Loaded 1 modules   (426821 inline 8-bit counters): 426821 [0x4b3e450, 0x4ba6795), 
+INFO: Loaded 1 PC tables (426821 PCs): 426821 [0x4ba6798,0x5229be8), 
+/out/fuzzshark_ip_proto-udp: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+UndefinedBehaviorSanitizer:DEADLYSIGNAL
+==7==ERROR: UndefinedBehaviorSanitizer: SEGV on unknown address 0x0000ffff20ff (pc 0x000001bdffe0 bp 0x7ffc20b0f020 sp 0x7ffc20b0ef48 T7)
+==7==The signal is caused by a READ memory access.
+    #0 0x1bdffdf  (/out/fuzzshark_ip_proto-udp+0x1bdffdf)
+    #1 0x1bdf4d2 in g_hash_table_lookup (/out/fuzzshark_ip_proto-udp+0x1bdf4d2)
+    #2 0x14c1189 in dissect_tls /src/wireshark/epan/dissectors/packet-tls.c:650:31
+    #3 0x552919 in call_dissector_through_handle /src/wireshark/epan/packet.c:706:9
+    #4 0x552919 in call_dissector_work /src/wireshark/epan/packet.c:799:9
+    #5 0x552637 in dissector_try_uint_new /src/wireshark/epan/packet.c:1399:8
+    #6 0x1346608 in dissect_payload /src/wireshark/epan/dissectors/packet-sctp.c:2549:9
+    #7 0x13442b3 in dissect_data_chunk /src/wireshark/epan/dissectors/packet-sctp.c:3502:16
+    #8 0x13414f3 in dissect_sctp_chunk /src/wireshark/epan/dissectors/packet-sctp.c
+    #9 0x133fad3 in dissect_sctp_chunks /src/wireshark/epan/dissectors/packet-sctp.c:4618:9
+    #10 0x133fad3 in dissect_sctp_packet /src/wireshark/epan/dissectors/packet-sctp.c:4760:3
+    #11 0x133e64b in dissect_sctp /src/wireshark/epan/dissectors/packet-sctp.c:4824:3
+    #12 0x552919 in call_dissector_through_handle /src/wireshark/epan/packet.c:706:9
+    #13 0x552919 in call_dissector_work /src/wireshark/epan/packet.c:799:9
+    #14 0x552bb5 in dissector_try_uint_new /src/wireshark/epan/packet.c:1399:8
+    #15 0x552bb5 in dissector_try_uint /src/wireshark/epan/packet.c:1423:9
+    #16 0x15003ba in decode_udp_ports /src/wireshark/epan/dissectors/packet-udp.c:690:7
+    #17 0x14ff369 in dissect /src/wireshark/epan/dissectors/packet-udp.c:1222:5
+    #18 0x150120d in dissect_udp /src/wireshark/epan/dissectors/packet-udp.c:1228:3
+    #19 0x552919 in call_dissector_through_handle /src/wireshark/epan/packet.c:706:9
+    #20 0x552919 in call_dissector_work /src/wireshark/epan/packet.c:799:9
+    #21 0x5577d3 in call_dissector_only /src/wireshark/epan/packet.c:3183:8
+    #22 0x5577d3 in call_all_postdissectors /src/wireshark/epan/packet.c:3558:3
+    #23 0xbf33f0 in dissect_frame /src/wireshark/epan/dissectors/packet-frame.c:730:5
+    #24 0x552919 in call_dissector_through_handle /src/wireshark/epan/packet.c:706:9
+    #25 0x552919 in call_dissector_work /src/wireshark/epan/packet.c:799:9
+    #26 0x550c37 in call_dissector_only /src/wireshark/epan/packet.c:3183:8
+    #27 0x550c37 in call_dissector_with_data /src/wireshark/epan/packet.c:3196:8
+    #28 0x550a47 in dissect_record /src/wireshark/epan/packet.c:580:3
+    #29 0x549e63 in epan_dissect_run /src/wireshark/epan/epan.c:564:2
+    #30 0x4b74ac in LLVMFuzzerTestOneInput /src/wireshark/fuzz/fuzzshark.c:381:2
+    #31 0x446461 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:554:15
+    #32 0x430c91 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6
+    #33 0x4369ae in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:775:9
+    #34 0x460332 in main /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10
+    #35 0x7f64bbaba83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #36 0x40a2b8 in _start (/out/fuzzshark_ip_proto-udp+0x40a2b8)
+
+DEDUP_TOKEN: g_hash_table_lookup--dissect_tls
+UndefinedBehaviorSanitizer can not provide additional info.
+SUMMARY: UndefinedBehaviorSanitizer: SEGV (/out/fuzzshark_ip_proto-udp+0x1bdffdf) 
+==7==ABORTING

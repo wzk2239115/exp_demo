@@ -1,0 +1,108 @@
+diff --git a/src/maglev/maglev-graph-builder.cc b/src/maglev/maglev-graph-builder.cc
+index b1ab7c8c37f..ed3e9df587e 100644
+--- a/src/maglev/maglev-graph-builder.cc
++++ b/src/maglev/maglev-graph-builder.cc
+@@ -1660,7 +1660,7 @@ CheckType GetCheckType(NodeType type) {
+ }
+ }  // namespace
+ 
+-ValueNode* MaglevGraphBuilder::GetInternalizedString(
++ReduceResult MaglevGraphBuilder::GetInternalizedString(
+     interpreter::Register reg) {
+   ValueNode* node = current_interpreter_frame_.get(reg);
+   NodeType old_type;
+@@ -1672,6 +1672,9 @@ ValueNode* MaglevGraphBuilder::GetInternalizedString(
+   }
+ 
+   if (!NodeTypeIs(old_type, NodeType::kString)) {
++    if (IsEmptyNodeType(IntersectType(old_type, NodeType::kString))) {
++      return EmitUnconditionalDeopt(DeoptimizeReason::kNotAString);
++    }
+     known_info->IntersectType(NodeType::kString);
+   }
+ 
+@@ -3175,6 +3178,8 @@ bool MaglevGraphBuilder::TryReduceCompareEqualAgainstConstant() {
+   }
+   if (!maybe_constant) return false;
+ 
++  DCHECK(!IsEmptyNodeType(GetType(other)));
++
+   if (CheckType(other, NodeType::kBoolean)) {
+     auto CompareOtherWith = [&](bool constant) {
+       compiler::OptionalHeapObjectRef const_other = TryGetConstant(other);
+@@ -3397,13 +3402,17 @@ ReduceResult MaglevGraphBuilder::VisitCompareOperation() {
+              kOperation == Operation::kStrictEqual);
+       ValueNode *left, *right;
+       if (IsRegisterEqualToAccumulator(0)) {
+-        left = right = GetInternalizedString(iterator_.GetRegisterOperand(0));
++        GET_VALUE_OR_ABORT(
++            left, GetInternalizedString(iterator_.GetRegisterOperand(0)));
++        right = left;
+         SetAccumulator(GetRootConstant(RootIndex::kTrueValue));
+         return ReduceResult::Done();
+       }
+-      left = GetInternalizedString(iterator_.GetRegisterOperand(0));
+-      right =
+-          GetInternalizedString(interpreter::Register::virtual_accumulator());
++      GET_VALUE_OR_ABORT(
++          left, GetInternalizedString(iterator_.GetRegisterOperand(0)));
++      GET_VALUE_OR_ABORT(
++          right,
++          GetInternalizedString(interpreter::Register::virtual_accumulator()));
+       if (TryConstantFoldEqual(left, right)) return ReduceResult::Done();
+       SetAccumulator(BuildTaggedEqual(left, right));
+       return ReduceResult::Done();
+diff --git a/src/maglev/maglev-graph-builder.h b/src/maglev/maglev-graph-builder.h
+index d71daca139f..f978bc5a100 100644
+--- a/src/maglev/maglev-graph-builder.h
++++ b/src/maglev/maglev-graph-builder.h
+@@ -728,7 +728,7 @@ class MaglevGraphBuilder {
+     return GetTaggedValue(value, record_use_repr_hint);
+   }
+ 
+-  ValueNode* GetInternalizedString(interpreter::Register reg);
++  ReduceResult GetInternalizedString(interpreter::Register reg);
+ 
+   // Get an Int32 representation node whose value is equivalent to the ToInt32
+   // truncation of the given node (including a ToNumber call). Only trivial
+diff --git a/src/maglev/maglev-interpreter-frame-state.h b/src/maglev/maglev-interpreter-frame-state.h
+index 8a6a82c67ac..9a9f00b2a36 100644
+--- a/src/maglev/maglev-interpreter-frame-state.h
++++ b/src/maglev/maglev-interpreter-frame-state.h
+@@ -376,6 +376,7 @@ struct KnownNodeAspects {
+     NodeType static_type = node->GetStaticType(broker);
+     if (current_type) *current_type = static_type;
+     if (NodeTypeIs(static_type, type)) return true;
++    if (IsEmptyNodeType(IntersectType(static_type, type))) return false;
+     auto it = FindInfo(node);
+     if (!IsValid(it)) return false;
+     if (current_type) *current_type = it->second.type();
+diff --git a/test/mjsunit/maglev/regress-426935233.js b/test/mjsunit/maglev/regress-426935233.js
+new file mode 100644
+index 00000000000..b1b66ba849a
+--- /dev/null
++++ b/test/mjsunit/maglev/regress-426935233.js
+@@ -0,0 +1,23 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax
++
++function empty() {}
++%PrepareFunctionForOptimization(empty);
++function f0(a1, p) {
++  if (p) {
++    a1 == "stuff";
++    empty(12345 == !4);
++  }
++}
++%PrepareFunctionForOptimization(f0);
++f0("a", true);
++function f13(p) {
++  f0(12345, p);
++}
++%PrepareFunctionForOptimization(f13);
++f13(false);
++%OptimizeMaglevOnNextCall(f13);
++f13(false);

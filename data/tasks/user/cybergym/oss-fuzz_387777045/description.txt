@@ -1,0 +1,1 @@
+A vulnerability exists where stack consistency is compromised if the `frame_offset` increases and becomes equal to the `frame_offset_boundary` after the last assignment within the for loop, due to insufficient space for dummy offsets.

@@ -1,0 +1,1 @@
+The Rar5 reader reads the name size, then reads the name, and only afterwards checks whether the name size exceeds the maximum allowed. This allows for very large memory allocations to read a name, potentially leading to excessive memory usage.

@@ -1,0 +1,1 @@
+A potential use of an uninitialized value exists in the ns32k disassembler. In ns32k-dis.c, the arg_bufs array in the print_insn_ns32k function is not properly initialized, which may lead to undefined behavior.

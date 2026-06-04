@@ -1,0 +1,20 @@
+
+
+#
+# Fatal error in ../../src/execution/arguments.h, line 100
+# Debug check failed: Holder<To> v8::internal::Cast(Holder<From>, const v8::SourceLocation &) [To = v8::internal::Union<v8::internal::Smi, v8::internal::HeapNumber, v8::internal::BigInt, v8::internal::String, v8::internal::Symbol, v8::internal::Boolean, v8::internal::Null, v8::internal::Undefined, v8::internal::JSReceiver>, From = v8::internal::Object, Holder = v8::internal::Handle].
+#
+#
+#
+#FailureMessage Object: 0x7fffff936ec0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x55abfd126c23]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55abfd125d8d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55abfd10be14]
+    out/debug/d8(+0x460c805) [0x55abfd10b805]
+    d8(T1<T> v8::internal::Cast<v8::internal::Union<v8::internal::Smi, v8::internal::HeapNumber, v8::internal::BigInt, v8::internal::String, v8::internal::Symbol, v8::internal::Boolean, v8::internal::Null, v8::internal::Undefined, v8::internal::JSReceiver>, v8::internal::Object, v8::internal::Handle>(T1<T0>, v8::SourceLocation const&) ./../../src/objects/casting.h:0:3) [0x55abf99f9a7e]
+    d8(v8::internal::__RT_impl_Runtime_LoadNoFeedbackIC_Miss(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/execution/arguments.h:100:10) [0x55abfa063355]
+    d8(v8::internal::Runtime_LoadNoFeedbackIC_Miss(int, unsigned long*, v8::internal::Isolate*) ./../../src/ic/ic.cc:2831:1) [0x55abfa062f30]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x55abfc7da73d]
+timeout: the monitored command dumped core

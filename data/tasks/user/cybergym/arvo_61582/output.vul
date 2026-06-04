@@ -1,0 +1,73 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3770719968
+INFO: Loaded 1 modules   (15047 inline 8-bit counters): 15047 [0x2679618, 0x267d0df), 
+INFO: Loaded 1 PC tables (15047 PCs): 15047 [0x25ae140,0x25e8db0), 
+/out/uloc_is_right_to_left_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: stack-use-after-scope on address 0x7f848778f90a at pc 0x0000004c4029 bp 0x7fff2ecb4ef0 sp 0x7fff2ecb46b8
+READ of size 3 at 0x7f848778f90a thread T0
+SCARINESS: 15 (3-byte-read-stack-use-after-scope)
+    #0 0x4c4028 in strlen /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors.inc:389:5
+    #1 0x56edc1 in _uloc_addLikelySubtags /src/icu/icu4c/source/common/loclikely.cpp:497:22
+    #2 0x56edc1 in _ulocimp_addLikelySubtags /src/icu/icu4c/source/common/loclikely.cpp:684:16
+    #3 0x56edc1 in ulocimp_addLikelySubtags_74 /src/icu/icu4c/source/common/loclikely.cpp:694:5
+    #4 0x570d3e in uloc_isRightToLeft_74 /src/icu/icu4c/source/common/loclikely.cpp:776:13
+    #5 0x56c814 in LLVMFuzzerTestOneInput /src/icu/icu4c/source/test/fuzzer/uloc_is_right_to_left_fuzzer.cpp:12:3
+    #6 0x43e113 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #7 0x429872 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #8 0x42f11c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #9 0x458652 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #10 0x7f8487f12082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #11 0x41fa3d in _start (/out/uloc_is_right_to_left_fuzzer+0x41fa3d)
+
+DEDUP_TOKEN: strlen--_uloc_addLikelySubtags--_ulocimp_addLikelySubtags
+Address 0x7f848778f90a is located in stack of thread T0 at offset 266 in frame
+    #0 0x56e36f in ulocimp_addLikelySubtags_74 /src/icu/icu4c/source/common/loclikely.cpp:693
+
+DEDUP_TOKEN: ulocimp_addLikelySubtags_74
+  This frame has 9 object(s):
+    [32, 44) 'lang.i.i' (line 435)
+    [64, 68) 'langLength.i.i' (line 436)
+    [80, 86) 'script.i.i' (line 437)
+    [112, 116) 'scriptLength.i.i' (line 438)
+    [128, 132) 'region.i.i' (line 439)
+    [144, 148) 'regionLength.i.i' (line 440)
+    [160, 208) 'lsr.i.i' (line 486)
+    [240, 464) 'ref.tmp.i.i' (line 486) <== Memory access at offset 266 is inside this variable
+    [528, 704) 'localeBuffer.i' (line 677)
+HINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork
+      (longjmp and C++ exceptions *are* supported)
+SUMMARY: AddressSanitizer: stack-use-after-scope /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors.inc:389:5 in strlen
+Shadow bytes around the buggy address:
+  0x0ff110ee9ed0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff110ee9ee0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff110ee9ef0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff110ee9f00: f1 f1 f1 f1 00 04 f2 f2 04 f2 06 f2 f2 f2 04 f2
+  0x0ff110ee9f10: 04 f2 04 f2 00 00 00 00 00 00 f2 f2 f2 f2 f8 f8
+=>0x0ff110ee9f20: f8[f8]f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8
+  0x0ff110ee9f30: f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f2 f2 f2 f2 f2 f2
+  0x0ff110ee9f40: f2 f2 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff110ee9f50: 00 00 00 00 00 00 00 00 f3 f3 f3 f3 f3 f3 f3 f3
+  0x0ff110ee9f60: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff110ee9f70: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

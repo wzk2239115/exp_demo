@@ -1,0 +1,150 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3684047249
+INFO: Loaded 1 modules   (147269 inline 8-bit counters): 147269 [0x224e3ad, 0x22722f2), 
+INFO: Loaded 1 PC tables (147269 PCs): 147269 [0x22722f8,0x24b1748), 
+/out/php-fuzz-execute: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x12aa406 in normalize_value /src/php-src/Zend/zend_ini_parser.y:310:42
+    #1 0x12aa406 in ini_parse /src/php-src/Zend/zend_ini_parser.y:394:93
+    #2 0x12aa9e4 in zend_parse_ini_string /src/php-src/Zend/zend_ini_parser.y:260:11
+    #3 0xe6a7b7 in zif_parse_ini_string /src/php-src/ext/standard/basic_functions.c:2585:6
+    #4 0x1552151 in execute_internal /src/php-src/Zend/zend_execute.c:3809:2
+    #5 0x1ba62ef in fuzzer_execute_internal /src/php-src/sapi/fuzzer/fuzzer-execute-common.h:95:2
+    #6 0x1684df7 in ZEND_DO_FCALL_SPEC_RETVAL_UNUSED_HANDLER /src/php-src/Zend/zend_vm_execute.h
+    #7 0x1ba5dd5 in fuzzer_execute_ex /src/php-src/sapi/fuzzer/fuzzer-execute-common.h:57:14
+    #8 0x1562d1d in zend_execute /src/php-src/Zend/zend_vm_execute.h:61403:2
+    #9 0x1ba770d in fuzzer_do_request_from_buffer /src/php-src/sapi/fuzzer/fuzzer-sapi.c:276:5
+    #10 0x1ba5a00 in LLVMFuzzerTestOneInput /src/php-src/sapi/fuzzer/fuzzer-execute.c:27:2
+    #11 0x620873 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #12 0x60bfd2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #13 0x61187c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #14 0x63adb2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #15 0x7f54b6fee082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #16 0x60219d in _start (/out/php-fuzz-execute+0x60219d)
+
+DEDUP_TOKEN: normalize_value--ini_parse--zend_parse_ini_string
+  Uninitialized value was stored to memory at
+    #0 0x6be674 in __msan_memcpy /src/llvm-project/compiler-rt/lib/msan/msan_interceptors.cpp:1570:3
+    #1 0x12a5fd4 in ini_parse /src/php-src/Zend/zend_ini_parser.c:2168:14
+    #2 0x12aa9e4 in zend_parse_ini_string /src/php-src/Zend/zend_ini_parser.y:260:11
+    #3 0xe6a7b7 in zif_parse_ini_string /src/php-src/ext/standard/basic_functions.c:2585:6
+    #4 0x1552151 in execute_internal /src/php-src/Zend/zend_execute.c:3809:2
+    #5 0x1ba62ef in fuzzer_execute_internal /src/php-src/sapi/fuzzer/fuzzer-execute-common.h:95:2
+    #6 0x1684df7 in ZEND_DO_FCALL_SPEC_RETVAL_UNUSED_HANDLER /src/php-src/Zend/zend_vm_execute.h
+    #7 0x1ba5dd5 in fuzzer_execute_ex /src/php-src/sapi/fuzzer/fuzzer-execute-common.h:57:14
+    #8 0x1562d1d in zend_execute /src/php-src/Zend/zend_vm_execute.h:61403:2
+    #9 0x1ba770d in fuzzer_do_request_from_buffer /src/php-src/sapi/fuzzer/fuzzer-sapi.c:276:5
+    #10 0x1ba5a00 in LLVMFuzzerTestOneInput /src/php-src/sapi/fuzzer/fuzzer-execute.c:27:2
+    #11 0x620873 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #12 0x60bfd2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #13 0x61187c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #14 0x63adb2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #15 0x7f54b6fee082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+
+DEDUP_TOKEN: __msan_memcpy--ini_parse--zend_parse_ini_string
+  Uninitialized value was stored to memory at
+    #0 0x6be674 in __msan_memcpy /src/llvm-project/compiler-rt/lib/msan/msan_interceptors.cpp:1570:3
+    #1 0x12a5f70 in ini_parse /src/php-src/Zend/zend_ini_parser.y
+    #2 0x12aa9e4 in zend_parse_ini_string /src/php-src/Zend/zend_ini_parser.y:260:11
+    #3 0xe6a7b7 in zif_parse_ini_string /src/php-src/ext/standard/basic_functions.c:2585:6
+    #4 0x1552151 in execute_internal /src/php-src/Zend/zend_execute.c:3809:2
+    #5 0x1ba62ef in fuzzer_execute_internal /src/php-src/sapi/fuzzer/fuzzer-execute-common.h:95:2
+    #6 0x1684df7 in ZEND_DO_FCALL_SPEC_RETVAL_UNUSED_HANDLER /src/php-src/Zend/zend_vm_execute.h
+    #7 0x1ba5dd5 in fuzzer_execute_ex /src/php-src/sapi/fuzzer/fuzzer-execute-common.h:57:14
+    #8 0x1562d1d in zend_execute /src/php-src/Zend/zend_vm_execute.h:61403:2
+    #9 0x1ba770d in fuzzer_do_request_from_buffer /src/php-src/sapi/fuzzer/fuzzer-sapi.c:276:5
+    #10 0x1ba5a00 in LLVMFuzzerTestOneInput /src/php-src/sapi/fuzzer/fuzzer-execute.c:27:2
+    #11 0x620873 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #12 0x60bfd2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #13 0x61187c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #14 0x63adb2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #15 0x7f54b6fee082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+
+DEDUP_TOKEN: __msan_memcpy--ini_parse--zend_parse_ini_string
+  Uninitialized value was stored to memory at
+    #0 0x6be674 in __msan_memcpy /src/llvm-project/compiler-rt/lib/msan/msan_interceptors.cpp:1570:3
+    #1 0x12a5fd4 in ini_parse /src/php-src/Zend/zend_ini_parser.c:2168:14
+    #2 0x12aa9e4 in zend_parse_ini_string /src/php-src/Zend/zend_ini_parser.y:260:11
+    #3 0xe6a7b7 in zif_parse_ini_string /src/php-src/ext/standard/basic_functions.c:2585:6
+    #4 0x1552151 in execute_internal /src/php-src/Zend/zend_execute.c:3809:2
+    #5 0x1ba62ef in fuzzer_execute_internal /src/php-src/sapi/fuzzer/fuzzer-execute-common.h:95:2
+    #6 0x1684df7 in ZEND_DO_FCALL_SPEC_RETVAL_UNUSED_HANDLER /src/php-src/Zend/zend_vm_execute.h
+    #7 0x1ba5dd5 in fuzzer_execute_ex /src/php-src/sapi/fuzzer/fuzzer-execute-common.h:57:14
+    #8 0x1562d1d in zend_execute /src/php-src/Zend/zend_vm_execute.h:61403:2
+    #9 0x1ba770d in fuzzer_do_request_from_buffer /src/php-src/sapi/fuzzer/fuzzer-sapi.c:276:5
+    #10 0x1ba5a00 in LLVMFuzzerTestOneInput /src/php-src/sapi/fuzzer/fuzzer-execute.c:27:2
+    #11 0x620873 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #12 0x60bfd2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #13 0x61187c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #14 0x63adb2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #15 0x7f54b6fee082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+
+DEDUP_TOKEN: __msan_memcpy--ini_parse--zend_parse_ini_string
+  Uninitialized value was stored to memory at
+    #0 0x6be674 in __msan_memcpy /src/llvm-project/compiler-rt/lib/msan/msan_interceptors.cpp:1570:3
+    #1 0x12a5f70 in ini_parse /src/php-src/Zend/zend_ini_parser.y
+    #2 0x12aa9e4 in zend_parse_ini_string /src/php-src/Zend/zend_ini_parser.y:260:11
+    #3 0xe6a7b7 in zif_parse_ini_string /src/php-src/ext/standard/basic_functions.c:2585:6
+    #4 0x1552151 in execute_internal /src/php-src/Zend/zend_execute.c:3809:2
+    #5 0x1ba62ef in fuzzer_execute_internal /src/php-src/sapi/fuzzer/fuzzer-execute-common.h:95:2
+    #6 0x1684df7 in ZEND_DO_FCALL_SPEC_RETVAL_UNUSED_HANDLER /src/php-src/Zend/zend_vm_execute.h
+    #7 0x1ba5dd5 in fuzzer_execute_ex /src/php-src/sapi/fuzzer/fuzzer-execute-common.h:57:14
+    #8 0x1562d1d in zend_execute /src/php-src/Zend/zend_vm_execute.h:61403:2
+    #9 0x1ba770d in fuzzer_do_request_from_buffer /src/php-src/sapi/fuzzer/fuzzer-sapi.c:276:5
+    #10 0x1ba5a00 in LLVMFuzzerTestOneInput /src/php-src/sapi/fuzzer/fuzzer-execute.c:27:2
+    #11 0x620873 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #12 0x60bfd2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #13 0x61187c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #14 0x63adb2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #15 0x7f54b6fee082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+
+DEDUP_TOKEN: __msan_memcpy--ini_parse--zend_parse_ini_string
+  Uninitialized value was stored to memory at
+    #0 0x6be674 in __msan_memcpy /src/llvm-project/compiler-rt/lib/msan/msan_interceptors.cpp:1570:3
+    #1 0x12a5fd4 in ini_parse /src/php-src/Zend/zend_ini_parser.c:2168:14
+    #2 0x12aa9e4 in zend_parse_ini_string /src/php-src/Zend/zend_ini_parser.y:260:11
+    #3 0xe6a7b7 in zif_parse_ini_string /src/php-src/ext/standard/basic_functions.c:2585:6
+    #4 0x1552151 in execute_internal /src/php-src/Zend/zend_execute.c:3809:2
+    #5 0x1ba62ef in fuzzer_execute_internal /src/php-src/sapi/fuzzer/fuzzer-execute-common.h:95:2
+    #6 0x1684df7 in ZEND_DO_FCALL_SPEC_RETVAL_UNUSED_HANDLER /src/php-src/Zend/zend_vm_execute.h
+    #7 0x1ba5dd5 in fuzzer_execute_ex /src/php-src/sapi/fuzzer/fuzzer-execute-common.h:57:14
+    #8 0x1562d1d in zend_execute /src/php-src/Zend/zend_vm_execute.h:61403:2
+    #9 0x1ba770d in fuzzer_do_request_from_buffer /src/php-src/sapi/fuzzer/fuzzer-sapi.c:276:5
+    #10 0x1ba5a00 in LLVMFuzzerTestOneInput /src/php-src/sapi/fuzzer/fuzzer-execute.c:27:2
+    #11 0x620873 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #12 0x60bfd2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #13 0x61187c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #14 0x63adb2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #15 0x7f54b6fee082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+
+DEDUP_TOKEN: __msan_memcpy--ini_parse--zend_parse_ini_string
+  Uninitialized value was stored to memory at
+    #0 0x6be674 in __msan_memcpy /src/llvm-project/compiler-rt/lib/msan/msan_interceptors.cpp:1570:3
+    #1 0x12a430a in ini_parse /src/php-src/Zend/zend_ini_parser.c:1830:11
+    #2 0x12aa9e4 in zend_parse_ini_string /src/php-src/Zend/zend_ini_parser.y:260:11
+    #3 0xe6a7b7 in zif_parse_ini_string /src/php-src/ext/standard/basic_functions.c:2585:6
+    #4 0x1552151 in execute_internal /src/php-src/Zend/zend_execute.c:3809:2
+    #5 0x1ba62ef in fuzzer_execute_internal /src/php-src/sapi/fuzzer/fuzzer-execute-common.h:95:2
+    #6 0x1684df7 in ZEND_DO_FCALL_SPEC_RETVAL_UNUSED_HANDLER /src/php-src/Zend/zend_vm_execute.h
+    #7 0x1ba5dd5 in fuzzer_execute_ex /src/php-src/sapi/fuzzer/fuzzer-execute-common.h:57:14
+    #8 0x1562d1d in zend_execute /src/php-src/Zend/zend_vm_execute.h:61403:2
+    #9 0x1ba770d in fuzzer_do_request_from_buffer /src/php-src/sapi/fuzzer/fuzzer-sapi.c:276:5
+    #10 0x1ba5a00 in LLVMFuzzerTestOneInput /src/php-src/sapi/fuzzer/fuzzer-execute.c:27:2
+    #11 0x620873 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #12 0x60bfd2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #13 0x61187c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #14 0x63adb2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #15 0x7f54b6fee082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+
+DEDUP_TOKEN: __msan_memcpy--ini_parse--zend_parse_ini_string
+  Uninitialized value was created by an allocation of 'yyvsa' in the stack frame of function 'ini_parse'
+    #0 0x12a3550 in ini_parse /src/php-src/Zend/zend_ini_parser.c:1583
+
+DEDUP_TOKEN: ini_parse
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /src/php-src/Zend/zend_ini_parser.y:310:42 in normalize_value
+Unique heap origins: 4234
+Stack depot allocated bytes: 9764880
+Unique origin histories: 401
+History depot allocated bytes: 196608
+Exiting

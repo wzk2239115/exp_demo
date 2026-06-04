@@ -1,0 +1,22 @@
+V8 is running with experimental features enabled. Stability and security will suffer.
+
+
+#
+# Fatal error in ../../src/objects/js-atomics-synchronization-inl.h, line 205
+# Debug check failed: IsCurrentThreadOwner().
+#
+#
+#
+#FailureMessage Object: 0x7fffd95c0980
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x55e4d87b4a23]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55e4d87b3e0d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55e4d8798cf4]
+    out/debug/d8(+0x3ed8715) [0x55e4d8798715]
+    d8(v8::internal::JSAtomicsMutex::Unlock(v8::internal::Isolate*) ./../../src/objects/tagged-impl.h:114:56) [0x55e4d53e6356]
+    d8(v8::internal::(anonymous namespace)::UnlockAsyncLockedMutexFromPromiseHandler(v8::internal::Isolate*) ./../../src/builtins/builtins-atomics-synchronization.cc:40:1) [0x55e4d53e65d1]
+    d8(v8::internal::Builtin_Impl_AtomicsMutexAsyncUnlockResolveHandler(v8::internal::BuiltinArguments, v8::internal::Isolate*) ./../../src/builtins/builtins-atomics-synchronization.cc:235:7) [0x55e4d53e2ef3]
+    d8(v8::internal::Builtin_AtomicsMutexAsyncUnlockResolveHandler(int, unsigned long*, v8::internal::Isolate*) ./../../src/builtins/builtins-atomics-synchronization.cc:229:1) [0x55e4d53e2b9d]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc:0:0) [0x55e4d7f100fd]
+timeout: the monitored command dumped core

@@ -1,0 +1,36 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3893143830
+INFO: Loaded 1 modules   (95766 inline 8-bit counters): 95766 [0xe94208, 0xeab81e), 
+INFO: Loaded 1 PC tables (95766 PCs): 95766 [0xb03df0,0xc79f50), 
+/out/decompress_packed_file_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+UndefinedBehaviorSanitizer:DEADLYSIGNAL
+==7==ERROR: UndefinedBehaviorSanitizer: SEGV on unknown address 0x000016506000 (pc 0x0000008bf966 bp 0x7fffb68706f0 sp 0x7fffb68706f0 T7)
+==7==The signal is caused by a READ memory access.
+    #0 0x8bf966 in get_ne32<void, void> /src/upx/src/util/../bele.h:117:5
+    #1 0x8bf966 in get_le32<void, void> /src/upx/src/util/../bele.h:220:59
+    #2 0x8bf966 in N_BELE_RTP::LEPolicy::get32(void const*) const /src/upx/src/util/../bele_policy.h:172:48
+    #3 0x5fc382 in PackLinuxElf32::invert_pt_dynamic(N_Elf::Dyn<N_Elf::ElfITypes<LE16, LE32, LE32, LE32, LE32> > const*, unsigned int) /src/upx/src/p_lx_elf.cpp:2142:26
+    #4 0x5f8b24 in PackLinuxElf32::PackLinuxElf32help1(InputFile*) /src/upx/src/p_lx_elf.cpp:359:13
+    #5 0x6a2d62 in PackLinuxElf32Le::PackLinuxElf32Le(InputFile*) /src/upx/src/p_lx_elf.h:465:9
+    #6 0x6a2a28 in PackLinuxElf32x86::PackLinuxElf32x86(InputFile*) /src/upx/src/p_lx_elf.cpp:7481:54
+    #7 0x6a3118 in PackBSDElf32x86::PackBSDElf32x86(InputFile*) /src/upx/src/p_lx_elf.cpp:7506:50
+    #8 0x6a3334 in PackFreeBSDElf32x86::PackFreeBSDElf32x86(InputFile*) /src/upx/src/p_lx_elf.cpp:7517:58
+    #9 0x83a9f4 in PackMaster::visitAllPackers(upx::TriBool<int, false> (*)(PackerBase*, void*), InputFile*, Options const*, void*) /src/upx/src/packmast.cpp:194:9
+    #10 0x841f85 in getUnpacker /src/upx/src/packmast.cpp:247:22
+    #11 0x841f85 in PackMaster::unpack(OutputFile*) /src/upx/src/packmast.cpp:265:14
+    #12 0x8c0f98 in do_one_file(char const*, char*) /src/upx/src/work.cpp:333:12
+    #13 0x8c2a13 in do_files(int, int, char**) /src/upx/src/work.cpp:421:13
+    #14 0x5c771d in upx_main(int, char**) /src/upx/src/main.cpp:1303:9
+    #15 0x4c4730 in LLVMFuzzerTestOneInput /src/upx/fuzzers/decompress_packed_file_fuzzer.cpp:44:5
+    #16 0x42a553 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #17 0x415cb2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #18 0x41b55c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #19 0x444a92 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #20 0x7f915848f082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #21 0x40be7d in _start (/out/decompress_packed_file_fuzzer+0x40be7d)
+
+DEDUP_TOKEN: get_ne32<void, void>--get_le32<void, void>--N_BELE_RTP::LEPolicy::get32(void const*) const
+UndefinedBehaviorSanitizer can not provide additional info.
+SUMMARY: UndefinedBehaviorSanitizer: SEGV /src/upx/src/util/../bele.h:117:5 in get_ne32<void, void>
+==7==ABORTING

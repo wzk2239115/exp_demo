@@ -1,0 +1,36 @@
+diff --git a/src/compiler/js-call-reducer.cc b/src/compiler/js-call-reducer.cc
+index 1ddbd70a928..c785c5989b2 100644
+--- a/src/compiler/js-call-reducer.cc
++++ b/src/compiler/js-call-reducer.cc
+@@ -8357,8 +8357,7 @@ Reduction JSCallReducer::ReduceArrayBufferViewAccessor(
+     TNode<HeapObject> buffer = a.LoadField<HeapObject>(
+         AccessBuilder::ForJSArrayBufferViewBuffer(), receiver);
+     TNode<Word32T> bitfield = a.EnterMachineGraph<Word32T>(
+-        a.LoadField<Word32T>(AccessBuilder::ForJSArrayBufferViewBitField(),
+-                             buffer),
++        a.LoadField<Word32T>(AccessBuilder::ForJSArrayBufferBitField(), buffer),
+         UseInfo::TruncatingWord32());
+     TNode<Word32T> detached_bit = a.Word32And(
+         bitfield, a.Uint32Constant(JSArrayBuffer::WasDetachedBit::kMask));
+diff --git a/test/mjsunit/regress/regress-384773802.js b/test/mjsunit/regress/regress-384773802.js
+new file mode 100644
+index 00000000000..e6065b4ac7e
+--- /dev/null
++++ b/test/mjsunit/regress/regress-384773802.js
+@@ -0,0 +1,16 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --allow-natives-syntax
++
++function getLength() { return arr.length; }
++
++var buf = new ArrayBuffer(0x10000);
++var arr = new Uint8Array(buf);
++
++%ArrayBufferDetach(arr.buffer);
++%PrepareFunctionForOptimization(getLength);
++assertEquals(0, getLength());
++%OptimizeFunctionOnNextCall(getLength);
++assertEquals(0, getLength());

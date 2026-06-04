@@ -1,0 +1,1 @@
+The set_cmnd_path() stub returns a status of FOUND even though it does not modify user_cmnd, which can lead to incorrect behavior when resetting user_cmnd based on a new runchroot.

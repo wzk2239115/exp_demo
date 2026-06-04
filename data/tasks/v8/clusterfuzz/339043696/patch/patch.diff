@@ -1,0 +1,213 @@
+diff --git a/src/builtins/builtins-atomics-synchronization.cc b/src/builtins/builtins-atomics-synchronization.cc
+index 0bb03a62130..0aca5432265 100644
+--- a/src/builtins/builtins-atomics-synchronization.cc
++++ b/src/builtins/builtins-atomics-synchronization.cc
+@@ -217,8 +217,11 @@ BUILTIN(AtomicsMutexLockAsync) {
+     timeout = GetTimeoutDelta(timeout_obj);
+   }
+ 
+-  Handle<JSPromise> result_promise = JSAtomicsMutex::LockOrEnqueuePromise(
+-      isolate, js_mutex, run_under_lock, timeout);
++  Handle<JSPromise> result_promise;
++  ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++      isolate, result_promise,
++      JSAtomicsMutex::LockOrEnqueuePromise(isolate, js_mutex, run_under_lock,
++                                           timeout));
+ 
+   return *result_promise;
+ }
+@@ -375,8 +378,10 @@ BUILTIN(AtomicsConditionWaitAsync) {
+         NewTypeError(MessageTemplate::kAtomicsMutexNotOwnedByCurrentThread));
+   }
+ 
+-  Handle<JSPromise> result_promise =
+-      JSAtomicsCondition::WaitAsync(isolate, js_condition, js_mutex, timeout);
++  Handle<JSPromise> result_promise;
++  ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++      isolate, result_promise,
++      JSAtomicsCondition::WaitAsync(isolate, js_condition, js_mutex, timeout));
+   return *result_promise;
+ }
+ 
+diff --git a/src/objects/js-atomics-synchronization.cc b/src/objects/js-atomics-synchronization.cc
+index 3af24776788..a15285bb26a 100644
+--- a/src/objects/js-atomics-synchronization.cc
++++ b/src/objects/js-atomics-synchronization.cc
+@@ -24,7 +24,7 @@ namespace {
+ // TODO(v8:12547): Move this logic into a static method JSPromise::PerformThen
+ // so that other callsites like this one can use it.
+ // Set fulfill/reject handlers for a JSPromise object.
+-Handle<JSPromise> PerformPromiseThen(
++MaybeHandle<JSPromise> PerformPromiseThen(
+     Isolate* isolate, Handle<JSPromise> promise,
+     Handle<JSFunction> fulfill_handler,
+     MaybeHandle<JSFunction> reject_handler = MaybeHandle<JSFunction>()) {
+@@ -34,16 +34,22 @@ Handle<JSPromise> PerformPromiseThen(
+     reject_handler_handle = reject_handler.ToHandleChecked();
+   }
+   Handle<Object> argv[] = {fulfill_handler, reject_handler_handle};
+-  MaybeHandle<Object> then_result = Execution::CallBuiltin(
+-      isolate, isolate->promise_then(), promise, arraysize(argv), argv);
+ 
+-  return Handle<JSPromise>::cast(then_result.ToHandleChecked());
++  Handle<Object> then_result;
++  ASSIGN_RETURN_ON_EXCEPTION(
++      isolate, then_result,
++      Execution::CallBuiltin(isolate, isolate->promise_then(), promise,
++                             arraysize(argv), argv),
++      JSPromise);
++
++  return Handle<JSPromise>::cast(then_result);
+ }
+ 
+-void SetAsyncUnlockHandlers(Isolate* isolate, Handle<JSAtomicsMutex> mutex,
+-                            Handle<JSPromise> waiting_for_callback_promise,
+-                            Handle<JSPromise> unlocked_promise,
+-                            detail::WaiterQueueNode* async_locked_waiter) {
++Maybe<bool> SetAsyncUnlockHandlers(
++    Isolate* isolate, Handle<JSAtomicsMutex> mutex,
++    Handle<JSPromise> waiting_for_callback_promise,
++    Handle<JSPromise> unlocked_promise,
++    detail::WaiterQueueNode* async_locked_waiter) {
+   Handle<Context> handlers_context = isolate->factory()->NewBuiltinContext(
+       isolate->native_context(), JSAtomicsMutex::kAsyncContextLength);
+   handlers_context->set(JSAtomicsMutex::kMutexAsyncContextSlot, *mutex);
+@@ -77,8 +83,10 @@ void SetAsyncUnlockHandlers(Isolate* isolate, Handle<JSAtomicsMutex> mutex,
+           .set_allocation_type(AllocationType::kYoung)
+           .Build();
+ 
+-  PerformPromiseThen(isolate, waiting_for_callback_promise, resolver_callback,
+-                     reject_callback);
++  MaybeHandle<JSPromise> then_result =
++      PerformPromiseThen(isolate, waiting_for_callback_promise,
++                         resolver_callback, reject_callback);
++  return then_result.is_null() ? Nothing<bool>() : Just(true);
+ }
+ 
+ void AddPromiseToNativeContext(Isolate* isolate, Handle<JSPromise> promise) {
+@@ -813,13 +821,17 @@ void JSAtomicsMutex::UnlockSlowPath(Isolate* requester,
+ // 3. `unlocked_promise`, a promise that settles when the mutex is unlocked,
+ //    either explicitly or by timeout. Returned by lockAsync.
+ // static
+-Handle<JSPromise> JSAtomicsMutex::LockOrEnqueuePromise(
++MaybeHandle<JSPromise> JSAtomicsMutex::LockOrEnqueuePromise(
+     Isolate* requester, Handle<JSAtomicsMutex> mutex, Handle<Object> callback,
+     base::Optional<base::TimeDelta> timeout) {
+   Handle<JSPromise> internal_locked_promise =
+       requester->factory()->NewJSPromise();
+-  Handle<JSPromise> waiting_for_callback_promise = PerformPromiseThen(
+-      requester, internal_locked_promise, Handle<JSFunction>::cast(callback));
++  Handle<JSPromise> waiting_for_callback_promise;
++  ASSIGN_RETURN_ON_EXCEPTION(
++      requester, waiting_for_callback_promise,
++      PerformPromiseThen(requester, internal_locked_promise,
++                         Handle<JSFunction>::cast(callback)),
++      JSPromise);
+   Handle<JSPromise> unlocked_promise = requester->factory()->NewJSPromise();
+   LockAsyncWaiterQueueNode* waiter_node = nullptr;
+   bool locked = LockAsync(requester, mutex, internal_locked_promise,
+@@ -833,8 +845,20 @@ Handle<JSPromise> JSAtomicsMutex::LockOrEnqueuePromise(
+   }
+   // Set `waiting_for_callback_promise` resolve and reject handlers. Resposible
+   // for unlocking the mutex and resolving or rejecting the `unlocked_promise`.
+-  SetAsyncUnlockHandlers(requester, mutex, waiting_for_callback_promise,
+-                         unlocked_promise, waiter_node);
++  // The operation can fail if the inner call to `promise_then` is not
++  // successful. In that case, the asyncLock builtin call will fail, so cleanup
++  // before returning.
++  if (SetAsyncUnlockHandlers(requester, mutex, waiting_for_callback_promise,
++                             unlocked_promise, waiter_node)
++          .IsNothing()) {
++    if (locked) {
++      mutex->Unlock(requester);
++    } else {
++      RemovePromiseFromNativeContext(requester, internal_locked_promise);
++    }
++    LockAsyncWaiterQueueNode::RemoveFromAsyncWaiterQueueList(waiter_node);
++    return MaybeHandle<JSPromise>();
++  }
+   return unlocked_promise;
+ }
+ 
+@@ -1240,7 +1264,7 @@ uint32_t JSAtomicsCondition::Notify(Isolate* requester,
+ // 2. `lock_promise`, which will be resolved when the lock is acquired after
+ //    waiting.
+ // static
+-Handle<JSPromise> JSAtomicsCondition::WaitAsync(
++MaybeHandle<JSPromise> JSAtomicsCondition::WaitAsync(
+     Isolate* requester, Handle<JSAtomicsCondition> cv,
+     Handle<JSAtomicsMutex> mutex, base::Optional<base::TimeDelta> timeout) {
+   Handle<JSPromise> internal_waiting_promise =
+@@ -1257,8 +1281,12 @@ Handle<JSPromise> JSAtomicsCondition::WaitAsync(
+           .set_map(requester->strict_function_without_prototype_map())
+           .Build();
+ 
+-  Handle<JSPromise> lock_promise =
+-      PerformPromiseThen(requester, internal_waiting_promise, lock_function);
++  Handle<JSPromise> lock_promise;
++
++  ASSIGN_RETURN_ON_EXCEPTION(
++      requester, lock_promise,
++      PerformPromiseThen(requester, internal_waiting_promise, lock_function),
++      JSPromise);
+ 
+   // Create a new async waiter node in the C++ heap. Its lifetime is managed by
+   // the requester's `async_waiter_queue_nodes` list.
+diff --git a/src/objects/js-atomics-synchronization.h b/src/objects/js-atomics-synchronization.h
+index 8fbf6bb55c5..82740318820 100644
+--- a/src/objects/js-atomics-synchronization.h
++++ b/src/objects/js-atomics-synchronization.h
+@@ -248,7 +248,7 @@ class JSAtomicsMutex
+   // Try to take the lock and set up the promise logic to asynchronously run
+   // the callback under the lock. Always returns a promise that settles when the
+   // promise is unlocked or times out.
+-  static Handle<JSPromise> LockOrEnqueuePromise(
++  static MaybeHandle<JSPromise> LockOrEnqueuePromise(
+       Isolate* isolate, Handle<JSAtomicsMutex> mutex, Handle<Object> callback,
+       base::Optional<base::TimeDelta> timeout);
+ 
+@@ -410,7 +410,7 @@ class JSAtomicsCondition
+       Isolate* requester, Handle<JSAtomicsCondition> cv,
+       Handle<JSAtomicsMutex> mutex, base::Optional<base::TimeDelta> timeout);
+ 
+-  V8_EXPORT_PRIVATE static Handle<JSPromise> WaitAsync(
++  V8_EXPORT_PRIVATE static MaybeHandle<JSPromise> WaitAsync(
+       Isolate* requester, Handle<JSAtomicsCondition> cv,
+       Handle<JSAtomicsMutex> mutex, base::Optional<base::TimeDelta> timeout);
+ 
+diff --git a/test/mjsunit/shared-memory/regress-crbug-339043696.js b/test/mjsunit/shared-memory/regress-crbug-339043696.js
+new file mode 100644
+index 00000000000..e7d75d706fa
+--- /dev/null
++++ b/test/mjsunit/shared-memory/regress-crbug-339043696.js
+@@ -0,0 +1,30 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --harmony-struct --allow-natives-syntax
++
++(function TestAsyncLockFailsOnStackOveflow() {
++  let count = 0;
++  let error;
++  let mutex = new Atomics.Mutex;
++  (function f() {
++    try { f() } catch (e) {}
++    if (count === 0) {
++      count++;
++      try {
++        // This call will fail because internally it calls the promise_then
++        // builtin which will cause a stack overflow.
++        Atomics.Mutex.lockAsync(mutex, () => {});
++      } catch (e) {
++        // Don't call functions in here to avoid stack overflow.
++        error = e;
++      }
++    }
++  })();
++  // The lockAsync call failed and the waiter nodes were cleaned up.
++  assertEquals("Maximum call stack size exceeded", error.message);
++  assertEquals("RangeError", error.name);
++  assertEquals(0, %AtomicsSynchronizationPrimitiveNumWaitersForTesting(mutex));
++  assertEquals(0, %AtomicsSychronizationNumAsyncWaitersInIsolateForTesting());
++})();

@@ -1,0 +1,1 @@
+A vulnerability exists where the code does not abandon early on a dubious pattern replacement outcome, potentially leading to unexpected behavior.

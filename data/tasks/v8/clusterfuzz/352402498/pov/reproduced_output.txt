@@ -1,0 +1,20 @@
+
+
+
+#
+# Fatal error in ../../src/ic/ic.cc, line 3560
+# unreachable code
+#
+#
+#
+#FailureMessage Object: 0x7ffdee0cafd0
+==== C stack trace ===============================
+
+    /build/v8/out/debug/libv8_libbase.so(v8::base::debug::StackTrace::StackTrace()+0x13) [0x7f183b17c243]
+    /build/v8/out/debug/libv8_libplatform.so(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x7f183b12a29d]
+    /build/v8/out/debug/libv8_libbase.so(V8_Fatal(char const*, int, char const*, ...)+0x194) [0x7f183b15dbc4]
+    /build/v8/out/debug/libv8.so(+0x1e107fe) [0x7f183cf977fe]
+    /build/v8/out/debug/libv8.so(v8::internal::__RT_impl_Runtime_CloneObjectIC_Miss(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/ic/ic.cc:3641:20) [0x7f183cf8dfc1]
+    /build/v8/out/debug/libv8.so(v8::internal::Runtime_CloneObjectIC_Miss(int, unsigned long*, v8::internal::Isolate*) ./../../src/ic/ic.cc:3612:1) [0x7f183cf8d7d0]
+    /build/v8/out/debug/libv8.so(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x7f183bff49bd]
+timeout: the monitored command dumped core

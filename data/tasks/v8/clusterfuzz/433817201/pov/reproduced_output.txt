@@ -1,0 +1,50 @@
+
+
+#
+# Fatal error in ../../src/maglev/maglev-graph-builder.cc, line 4995
+# Debug check failed: !IsEmptyNodeType(GetType(index)).
+#
+#
+#
+#FailureMessage Object: 0x7ffc4481b210
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x56374d0ae023]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x56374d0ad18d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x56374d092e14]
+    out/debug/d8(+0x46c8805) [0x56374d092805]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildLoadFixedDoubleArrayElement(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*) ./../../src/maglev/maglev-graph-builder.cc:0:3) [0x56374aab59cc]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryReduceArrayPrototypeAt(v8::internal::compiler::JSFunctionRef, v8::internal::maglev::CallArguments&)::$_4::operator()() const ./../../src/maglev/maglev-graph-builder.cc:0:27) [0x56374abb2464]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryReduceArrayPrototypeAt(v8::internal::compiler::JSFunctionRef, v8::internal::maglev::CallArguments&) ./../../src/maglev/maglev-graph-builder.cc:915:12) [0x56374aad8964]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryReduceBuiltin(v8::internal::compiler::JSFunctionRef, v8::internal::compiler::SharedFunctionInfoRef, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-graph-builder.cc:0:5) [0x56374aae4d24]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryReduceCallForConstant(v8::internal::compiler::JSFunctionRef, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-reducer.h:57:39) [0x56374aab6bcd]
+    d8(v8::internal::maglev::MaglevGraphBuilder::ReduceCall(v8::internal::maglev::ValueNode*, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-reducer.h:57:39) [0x56374aad6e0c]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildCallWithFeedback(v8::internal::maglev::ValueNode*, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-graph-builder.cc:11341:3) [0x56374aae7534]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildCallFromRegisters(int, v8::internal::ConvertReceiverMode) ./../../src/maglev/maglev-graph-builder.cc:197:7) [0x56374aae9588]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitSingleBytecode() ./../../src/maglev/maglev-graph-builder.cc:15919:5) [0x56374aabfb0b]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildContinuationForPolymorphicPropertyLoad(v8::internal::maglev::MaglevGraphBuilder::ContinuationOffsets const&) ./../../src/maglev/maglev-reducer.h:67:48) [0x56374aabebf7]
+    d8(v8::internal::maglev::MaybeReduceResult v8::internal::maglev::MaglevGraphBuilder::TryBuildPolymorphicPropertyAccess<v8::internal::maglev::MaglevGraphBuilder::TryBuildLoadNamedProperty(v8::internal::maglev::ValueNode*, v8::internal::compiler::NameRef, v8::internal::compiler::FeedbackSource&)::$_0&>(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::compiler::NamedAccessFeedback const&, v8::internal::compiler::AccessMode, v8::internal::ZoneVector<v8::internal::compiler::PropertyAccessInfo> const&, v8::internal::maglev::MaglevGraphBuilder::TryBuildLoadNamedProperty(v8::internal::maglev::ValueNode*, v8::internal::compiler::NameRef, v8::internal::compiler::FeedbackSource&)::$_0&) ./../../src/maglev/maglev-reducer.h:67:48) [0x56374ab77aeb]
+    d8(v8::internal::maglev::MaybeReduceResult v8::internal::maglev::MaglevGraphBuilder::TryBuildLoadNamedProperty<v8::internal::maglev::MaglevGraphBuilder::TryBuildLoadNamedProperty(v8::internal::maglev::ValueNode*, v8::internal::compiler::NameRef, v8::internal::compiler::FeedbackSource&)::$_0&>(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::compiler::NameRef, v8::internal::compiler::FeedbackSource&, v8::internal::maglev::MaglevGraphBuilder::TryBuildLoadNamedProperty(v8::internal::maglev::ValueNode*, v8::internal::compiler::NameRef, v8::internal::compiler::FeedbackSource&)::$_0&) ./../../src/maglev/maglev-graph-builder.cc:0:12) [0x56374aac0bab]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitGetNamedProperty() ./../../src/maglev/maglev-graph-builder.cc:7220:3) [0x56374aac1183]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitSingleBytecode() ./../../src/maglev/maglev-graph-builder.cc:15919:5) [0x56374aabfbe5]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildBody() ./../../src/maglev/maglev-reducer.h:67:48) [0x56374aad1f34]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildInlineFunction(v8::internal::SourcePosition, v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*) ./../../src/maglev/maglev-graph-builder.cc:8097:8) [0x56374aad16fe]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildEagerInlineCall(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::compiler::SharedFunctionInfoRef, v8::internal::compiler::FeedbackCellRef, v8::internal::maglev::CallArguments&, float) ./../../src/maglev/maglev-graph-builder.cc:8361:45) [0x56374aad3907]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryBuildInlineCall(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::base::StrongAlias<v8::internal::JSDispatchHandleAliasTag, unsigned int>, v8::internal::compiler::SharedFunctionInfoRef, v8::internal::compiler::FeedbackCellRef, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-graph-builder.cc:0:0) [0x56374aad2d08]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryBuildCallKnownJSFunction(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::base::StrongAlias<v8::internal::JSDispatchHandleAliasTag, unsigned int>, v8::internal::compiler::SharedFunctionInfoRef, v8::internal::compiler::FeedbackCellRef, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-graph-builder.cc:0:5) [0x56374aae65d3]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildCallWithFeedback(v8::internal::maglev::ValueNode*, v8::internal::maglev::CallArguments&, v8::internal::compiler::FeedbackSource const&) ./../../src/maglev/maglev-graph-builder.cc:11328:9) [0x56374aae7671]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildCallFromRegisters(int, v8::internal::ConvertReceiverMode) ./../../src/maglev/maglev-graph-builder.cc:197:7) [0x56374aae9588]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitSingleBytecode() ./../../src/maglev/maglev-graph-builder.cc:15919:5) [0x56374aabfb60]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildBody() ./../../src/maglev/maglev-reducer.h:67:48) [0x56374aad1f34]
+    d8(v8::internal::maglev::MaglevGraphBuilder::Build() ./../../src/maglev/maglev-graph-builder.cc:15492:1) [0x56374ab0799f]
+    d8(v8::internal::maglev::MaglevCompiler::Compile(v8::internal::LocalIsolate*, v8::internal::maglev::MaglevCompilationInfo*) ./../../src/maglev/maglev-compiler.cc:0:21) [0x56374a98f616]
+    d8(v8::internal::maglev::MaglevCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../third_party/libc++/src/include/__memory/unique_ptr.h:277:12) [0x56374aa9aa3a]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:472:22) [0x563749957d02]
+    d8(v8::internal::(anonymous namespace)::CompileMaglev(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1325:16) [0x56374997b6b5]
+    d8(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:0:0) [0x563749969f72]
+    d8(v8::internal::Compiler::CompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind) ./../../src/handles/maybe-handles-inl.h:35:17) [0x563749969088]
+    d8(v8::internal::(anonymous namespace)::CompileOptimized(v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::Isolate*) ./../../src/handles/handles.h:202:22) [0x56374a66b845]
+    d8(v8::internal::__RT_impl_Runtime_OptimizeMaglevEager(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/common/ptr-compr-inl.h:74:18) [0x56374a664852]
+    d8(v8::internal::Runtime_OptimizeMaglevEager(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:214:1) [0x56374a664440]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x56374c75247d]
+timeout: the monitored command dumped core

@@ -1,0 +1,23 @@
+
+
+#
+# Fatal error in ../../src/heap/heap.cc, line 1599
+# Debug check failed: AllowGarbageCollection::IsAllowed().
+#
+#
+#
+#FailureMessage Object: 0x7ffec739c120
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:390:32) [0x556ced42a203]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x556ced42936d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x556ced40fdf4]
+    out/debug/d8(+0x43147e5) [0x556ced40f7e5]
+    d8(v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags) ./../../src/flags/flags.h:47:31) [0x556cea329fe2]
+    d8(v8::internal::Heap::AllocateExternalBackingStore(std::__Cr::function<void* (unsigned long)> const&, unsigned long) ./../../src/heap/heap.cc:0:7) [0x556cea336159]
+    d8(v8::internal::BackingStore::Allocate(v8::internal::Isolate*, unsigned long, v8::internal::SharedFlag, v8::internal::InitializedFlag) ./../../src/objects/backing-store.cc:224:37) [0x556cea68ac2e]
+    d8(v8::internal::JSTypedArray::GetBuffer() ./../../third_party/libc++/src/include/__memory/unique_ptr.h:274:19) [0x556cea871a79]
+    d8(v8::internal::Builtin_Impl_Uint8ArrayPrototypeToBase64(v8::internal::BuiltinArguments, v8::internal::Isolate*) ./../../src/handles/handles.h:202:22) [0x556ce9f0191c]
+    d8(v8::internal::Builtin_Uint8ArrayPrototypeToBase64(int, unsigned long*, v8::internal::Isolate*) ./../../src/builtins/builtins-typed-array.cc:723:1) [0x556ce9f00d7d]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc:0:0) [0x556cecb0b6bd]
+timeout: the monitored command dumped core

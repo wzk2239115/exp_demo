@@ -1,0 +1,1 @@
+A vulnerability exists in the parser where xmlParserInputGrow is called directly, complicating error handling. The lack of a context-aware approach in growing the parser input can lead to improper error management.

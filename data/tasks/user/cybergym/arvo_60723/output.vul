@@ -1,0 +1,45 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3760029878
+INFO: Loaded 1 modules   (6137 inline 8-bit counters): 6137 [0x67c590, 0x67dd89), 
+INFO: Loaded 1 PC tables (6137 PCs): 6137 [0x67dd90,0x695d20), 
+/out/fuzz_translate_generic: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: negative-size-param: (size=-2)
+SCARINESS: 10 (negative-size-param)
+    #0 0x52e29e in __asan_memcpy /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3
+    #1 0x593a51 in swapReplace /src/liblouis/liblouis/lou_translateString.c:481:4
+    #2 0x593a51 in passDoAction /src/liblouis/liblouis/lou_translateString.c:977:9
+    #3 0x583d0c in translateString /src/liblouis/liblouis/lou_translateString.c:3739:10
+    #4 0x56edcc in _lou_translate /src/liblouis/liblouis/lou_translateString.c:1280:16
+    #5 0x56c921 in lou_translate /src/liblouis/liblouis/lou_translateString.c:1120:9
+    #6 0x56c921 in lou_translateString /src/liblouis/liblouis/lou_translateString.c:1112:9
+    #7 0x56c709 in LLVMFuzzerTestOneInput /src/liblouis/tests/fuzzing/fuzz_translate_generic.c:104:2
+    #8 0x43dde3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #9 0x429542 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #10 0x42edec in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #11 0x458322 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #12 0x7f46402f7082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #13 0x41f70d in _start (/out/fuzz_translate_generic+0x41f70d)
+
+DEDUP_TOKEN: __asan_memcpy--swapReplace--passDoAction
+0x6300000080e2 is located 31970 bytes inside of 63248-byte region [0x630000000400,0x63000000fb10)
+allocated by thread T0 here:
+    #0 0x52ef76 in __interceptor_malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:69:3
+    #1 0x5c1e03 in allocateTranslationTable /src/liblouis/liblouis/compileTranslationTable.c:506:17
+    #2 0x5c1e03 in compileTable /src/liblouis/liblouis/compileTranslationTable.c:4879:24
+    #3 0x5c1e03 in getTable /src/liblouis/liblouis/compileTranslationTable.c:5077:7
+    #4 0x5c10d6 in _lou_getTable /src/liblouis/liblouis/compileTranslationTable.c:4986:2
+    #5 0x56cc9f in _lou_translate /src/liblouis/liblouis/lou_translateString.c:1179:2
+    #6 0x56c921 in lou_translate /src/liblouis/liblouis/lou_translateString.c:1120:9
+    #7 0x56c921 in lou_translateString /src/liblouis/liblouis/lou_translateString.c:1112:9
+    #8 0x56c709 in LLVMFuzzerTestOneInput /src/liblouis/tests/fuzzing/fuzz_translate_generic.c:104:2
+    #9 0x43dde3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #10 0x429542 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #11 0x42edec in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #12 0x458322 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #13 0x7f46402f7082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+
+DEDUP_TOKEN: __interceptor_malloc--allocateTranslationTable--compileTable
+SUMMARY: AddressSanitizer: negative-size-param /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3 in __asan_memcpy
+==7==ABORTING

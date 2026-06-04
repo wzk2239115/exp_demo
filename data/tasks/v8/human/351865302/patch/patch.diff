@@ -1,0 +1,13 @@
+diff --git a/src/ast/scopes.h b/src/ast/scopes.h
+index 883a295a089..95635118abb 100644
+--- a/src/ast/scopes.h
++++ b/src/ast/scopes.h
+@@ -227,7 +227,7 @@ class V8_EXPORT_PRIVATE Scope : public NON_EXPORTED_BASE(ZoneObject) {
+   VariableProxy* NewUnresolved(AstNodeFactory* factory,
+                                const AstRawString* name, int start_pos,
+                                VariableKind kind = NORMAL_VARIABLE) {
+-    DCHECK(!already_resolved_);
++    DCHECK_IMPLIES(already_resolved_, reparsing_for_class_initializer_);
+     DCHECK_EQ(factory->zone(), zone());
+     VariableProxy* proxy = factory->NewVariableProxy(name, kind, start_pos);
+     AddUnresolved(proxy);

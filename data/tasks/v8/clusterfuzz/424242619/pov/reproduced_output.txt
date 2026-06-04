@@ -1,0 +1,29 @@
+
+
+#
+# Fatal error in ../../src/maglev/maglev-ir.h, line 1184
+# Debug check failed: state_ == kBlockPointer (1 vs. 0).
+#
+#
+#
+#FailureMessage Object: 0x7f97f5ff9920
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x55597b9b4aa3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55597b9b3c0d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55597b999df4]
+    out/debug/d8(+0x462a7e5) [0x55597b9997e5]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitJumpLoop() ./../../third_party/libc++/src/include/string:2085:12) [0x55597941a080]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitSingleBytecode() ./../../src/maglev/maglev-graph-builder.h:0:7) [0x5559792a1385]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildBody() ./../../src/interpreter/bytecode-array-iterator.h:82:16) [0x55597929c850]
+    d8(v8::internal::maglev::MaglevGraphBuilder::Build() ./../../src/maglev/maglev-graph-builder.h:274:3) [0x5559792983be]
+    d8(v8::internal::maglev::MaglevCompiler::Compile(v8::internal::LocalIsolate*, v8::internal::maglev::MaglevCompilationInfo*) ./../../src/maglev/maglev-compiler.cc:0:21) [0x555979296318]
+    d8(v8::internal::maglev::MaglevCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../third_party/libc++/src/include/__memory/unique_ptr.h:277:12) [0x5559793aaefa]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:472:22) [0x555978298972]
+    d8(v8::internal::maglev::MaglevConcurrentDispatcher::JobTask::Run(v8::JobDelegate*) ./../../src/maglev/maglev-concurrent-dispatcher.cc:288:20) [0x5559793ad03c]
+    d8(v8::platform::DefaultJobWorker::Run() ./../../src/libplatform/default-job.cc:19:46) [0x55597b9b65af]
+    d8(v8::platform::DefaultWorkerThreadsTaskRunner::WorkerThread::Run() ./../../src/libplatform/default-worker-threads-task-runner.cc:96:9) [0x55597b9bc3bc]
+    d8(v8::base::ThreadEntry(void*) ./../../src/base/platform/platform-posix.cc:1271:3) [0x55597b9b11af]
+    /lib/x86_64-linux-gnu/libc.so.6(+0x9caa4) [0x7f980ec8baa4]
+    /lib/x86_64-linux-gnu/libc.so.6(__clone+0x44) [0x7f980ed18a64]
+timeout: the monitored command dumped core

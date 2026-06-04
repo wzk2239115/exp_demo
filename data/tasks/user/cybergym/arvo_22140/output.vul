@@ -1,0 +1,70 @@
+======================= INFO =========================
+This binary is built for AFL-fuzz.
+To run the target function on individual input(s) execute this:
+  /out/colorquant_fuzzer < INPUT_FILE
+or
+  /out/colorquant_fuzzer INPUT_FILE1 [INPUT_FILE2 ... ]
+To fuzz with afl-fuzz execute this:
+  afl-fuzz [afl-flags] /out/colorquant_fuzzer [-N]
+afl-fuzz will run N iterations before re-spawning the process (default: 1000)
+======================================================
+Reading 36 bytes from /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x60200000033f at pc 0x0000005017a5 bp 0x7ffd0f5aec30 sp 0x7ffd0f5aec28
+READ of size 1 at 0x60200000033f thread T0
+SCARINESS: 12 (1-byte-read-heap-buffer-overflow)
+    #0 0x5017a4 in pixFewColorsOctcubeQuantMixed /src/leptonica/src/colorquant1.c:3383:19
+    #1 0x4ca16d in LLVMFuzzerTestOneInput /src/leptonica/prog/fuzzing/colorquant_fuzzer.cc:34:12
+    #2 0xf6623e in ExecuteFilesOnyByOne /src/libfuzzer/afl/afl_driver.cpp:216:5
+    #3 0xf6623e in main /src/libfuzzer/afl/afl_driver.cpp:253:12
+    #4 0x7fa83af3683f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #5 0x41e9e8 in _start (/out/colorquant_fuzzer+0x41e9e8)
+
+DEDUP_TOKEN: pixFewColorsOctcubeQuantMixed--LLVMFuzzerTestOneInput--ExecuteFilesOnyByOne
+0x60200000033f is located 3 bytes to the right of 12-byte region [0x602000000330,0x60200000033c)
+allocated by thread T0 here:
+    #0 0x4975cd in malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:145:3
+    #1 0x5779e6 in pixCreateNoInit /src/leptonica/src/pix1.c:345:29
+    #2 0x5777c8 in pixCreate /src/leptonica/src/pix1.c:312:17
+    #3 0x4ff2a7 in pixFewColorsOctcubeQuant1 /src/leptonica/src/colorquant1.c:3031:12
+    #4 0x500f02 in pixFewColorsOctcubeQuantMixed /src/leptonica/src/colorquant1.c:3335:17
+    #5 0x4ca16d in LLVMFuzzerTestOneInput /src/leptonica/prog/fuzzing/colorquant_fuzzer.cc:34:12
+    #6 0xf6623e in ExecuteFilesOnyByOne /src/libfuzzer/afl/afl_driver.cpp:216:5
+    #7 0xf6623e in main /src/libfuzzer/afl/afl_driver.cpp:253:12
+    #8 0x7fa83af3683f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: malloc--pixCreateNoInit--pixCreate
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/leptonica/src/colorquant1.c:3383:19 in pixFewColorsOctcubeQuantMixed
+Shadow bytes around the buggy address:
+  0x0c047fff8010: fa fa 00 04 fa fa fd fd fa fa fd fa fa fa fd fa
+  0x0c047fff8020: fa fa fd fa fa fa fd fd fa fa fd fa fa fa fd fa
+  0x0c047fff8030: fa fa fd fd fa fa fd fa fa fa fd fa fa fa fd fa
+  0x0c047fff8040: fa fa fd fd fa fa fd fd fa fa fd fa fa fa fd fa
+  0x0c047fff8050: fa fa fd fa fa fa fd fa fa fa fd fa fa fa fd fa
+=>0x0c047fff8060: fa fa 00 00 fa fa 00[04]fa fa 00 04 fa fa fa fa
+  0x0c047fff8070: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff8080: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff8090: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff80a0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff80b0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==7==ABORTING

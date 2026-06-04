@@ -1,0 +1,1 @@
+The elf_cvt_gnuhash conversion in libelf may leave undefined bytes in the buffer, resulting in extra bytes that are not properly initialized or defined as in the file.

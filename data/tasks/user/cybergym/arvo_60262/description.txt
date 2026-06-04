@@ -1,0 +1,1 @@
+A vulnerability exists in LibVideo/VP9 where the range decoder size is not properly validated to be within the expected range.

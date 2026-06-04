@@ -1,0 +1,31 @@
+
+
+#
+# Fatal error in ../../src/codegen/x64/assembler-x64-inl.h, line 354
+# Debug check failed: V8_ENABLE_SANDBOX_BOOL implies !IsTrustedSpaceObject(target).
+#
+#
+#
+#FailureMessage Object: 0x7ffd8b65a8d0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x558b30fbc613]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x558b30fbba2d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x558b30fa0404]
+    out/debug/d8(+0x3c55e35) [0x558b30f9fe35]
+    d8(v8::internal::WritableRelocInfo::set_target_object(v8::internal::Tagged<v8::internal::HeapObject>, v8::internal::ICacheFlushMode) ./../../src/base/flags.h:58:18) [0x558b2e390754]
+    d8(v8::internal::InstructionStream::RelocateFromDesc(v8::internal::WritableJitAllocation&, v8::internal::Heap*, v8::internal::CodeDesc const&, unsigned long, v8::internal::PerThreadAssertScope<false, (v8::internal::PerThreadAssertType)1, (v8::internal::PerThreadAssertType)2> const&) ./../../src/heap/heap-write-barrier-inl.h:120:5) [0x558b2e75e07e]
+    d8(v8::internal::InstructionStream::Finalize(v8::internal::Tagged<v8::internal::Code>, v8::internal::Tagged<v8::internal::TrustedByteArray>, v8::internal::CodeDesc, v8::internal::Heap*) ./../../third_party/libc++/src/include/__tree:1448:21) [0x558b2e2605bf]
+    d8(v8::internal::Factory::CodeBuilder::BuildInternal(bool) ./../../src/flags/flags.h:46:31) [0x558b2e25f441]
+    d8(v8::internal::compiler::CodeGenerator::FinalizeCode() ./../../src/compiler/backend/code-generator.cc:545:42) [0x558b2f7a21bc]
+    d8(auto v8::internal::compiler::turboshaft::Pipeline::Run<v8::internal::compiler::turboshaft::FinalizeCodePhase>() ./../../src/compiler/turboshaft/register-allocation-phase.h:213:36) [0x558b2fae0cf8]
+    d8(v8::internal::compiler::turboshaft::Pipeline::FinalizeCode(bool) ./../../src/compiler/turboshaft/pipelines.h:521:36) [0x558b2fa97c02]
+    d8(v8::internal::compiler::PipelineCompilationJob::FinalizeJobImpl(v8::internal::Isolate*) ./../../src/codegen/compiler.h:467:12) [0x558b2fa976c7]
+    d8(v8::internal::OptimizedCompilationJob::FinalizeJob(v8::internal::Isolate*) ./../../src/codegen/compiler.cc:496:22) [0x558b2df37c5d]
+    d8(v8::internal::(anonymous namespace)::CompileTurbofan(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::Handle<v8::internal::SharedFunctionInfo>, v8::internal::ConcurrencyMode, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1089:33) [0x558b2df562d6]
+    d8(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:0:12) [0x558b2df45704]
+    d8(v8::internal::Compiler::CompileOptimized(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind) ./../../src/handles/maybe-handles.h:60:19) [0x558b2df4710a]
+    d8(v8::internal::__RT_impl_Runtime_CompileOptimized(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/handles/handles.h:160:22) [0x558b2eb5257f]
+    d8(v8::internal::Runtime_CompileOptimized(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:99:1) [0x558b2eb520a0]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x558b307b42fd]
+timeout: the monitored command dumped core

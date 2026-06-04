@@ -1,0 +1,1 @@
+A vulnerability exists in ReadOneJNGImage() where the function does not report a useful exception when a JNG file fails to provide the necessary image chunks to allocate the color image.

@@ -1,0 +1,1 @@
+A vulnerability exists in clist playback where an invalid or "insane" CTM (current transformation matrix) is not properly checked, potentially leading to unintended behavior. If the CTM is nonsensical, it can result in a zero size transformation.

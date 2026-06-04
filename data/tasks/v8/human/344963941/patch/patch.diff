@@ -1,0 +1,13 @@
+diff --git a/src/regexp/regexp-interpreter.cc b/src/regexp/regexp-interpreter.cc
+index 13cf076d9c2..a351e381db0 100644
+--- a/src/regexp/regexp-interpreter.cc
++++ b/src/regexp/regexp-interpreter.cc
+@@ -135,7 +135,7 @@ class BacktrackStack {
+     return (static_cast<int>(data_.size()) <= kMaxSize);
+   }
+   int peek() const {
+-    DCHECK(!data_.empty());
++    SBXCHECK(!data_.empty());
+     return data_.back();
+   }
+   int pop() {

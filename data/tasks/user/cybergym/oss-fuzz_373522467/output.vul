@@ -1,0 +1,39 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3977413283
+INFO: Loaded 1 modules   (473065 inline 8-bit counters): 473065 [0x55fdee04d4a0, 0x55fdee0c0c89), 
+INFO: Loaded 1 PC tables (473065 PCs): 473065 [0x55fdee0c0c90,0x55fdee7f8b20), 
+/out/cranelift-fuzzgen: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address (pc 0x7fb0c332f0ba bp 0x7ffd81bd8f80 sp 0x7ffd81bd8ed0 T0)
+==7==The signal is caused by a READ memory access.
+==7==Hint: this fault was caused by a dereference of a high value address (see register values below).  Disassemble the provided pc to learn which register was used.
+    #0 0x7fb0c332f0ba  (<unknown module>)
+    #1 0x7fb0c332f2e2  (<unknown module>)
+    #2 0x55fdebcfd640 in cranelift_filetests::function_runner::Trampoline::call::hd5b567790ced365c /src/wasmtime/cranelift/filetests/src/function_runner.rs:375:9
+    #3 0x55fdebbefe0c in cranelift_fuzzgen::run_in_host::h4cdbc8549be02256 /src/wasmtime/fuzz/fuzz_targets/cranelift-fuzzgen.rs:284:15
+    #4 0x55fdebbefe0c in cranelift_fuzzgen::_::run::_$u7b$$u7b$closure$u7d$$u7d$::hd4804902b59f9ada /src/wasmtime/fuzz/fuzz_targets/cranelift-fuzzgen.rs:410:43
+    #5 0x55fdebbefe0c in cranelift_fuzzgen::run_test_inputs::h7fc69a30a11a3b6e /src/wasmtime/fuzz/fuzz_targets/cranelift-fuzzgen.rs:357:19
+    #6 0x55fdebbefe0c in cranelift_fuzzgen::_::run::he7992d7a6a2ffb54 /src/wasmtime/fuzz/fuzz_targets/cranelift-fuzzgen.rs:410:9
+    #7 0x55fdebbea591 in rust_fuzzer_test_input /rust/registry/src/index.crates.io-1949cf8c6b5b557f/libfuzzer-sys-0.4.5/src/lib.rs:297:60
+    #8 0x55fdec1af654 in libfuzzer_sys::test_input_wrap::_$u7b$$u7b$closure$u7d$$u7d$::hd36cb7bebb7884b1 /rust/registry/src/index.crates.io-1949cf8c6b5b557f/libfuzzer-sys-0.4.5/src/lib.rs:61:9
+    #9 0x55fdec1af654 in std::panicking::try::do_call::h4f5ea5039ef3544b /rustc/824759493246ee383beb9cd5ceffa0e15deb9fa4/library/std/src/panicking.rs:584:40
+    #10 0x55fdec1b1b68 in __rust_try libfuzzer_sys.36f5dc374ba84044-cgu.0
+    #11 0x55fdec1b116d in std::panicking::try::ha04e0d7c0d7b14cb /rustc/824759493246ee383beb9cd5ceffa0e15deb9fa4/library/std/src/panicking.rs:547:19
+    #12 0x55fdec1b116d in std::panic::catch_unwind::h29882c472722db3c /rustc/824759493246ee383beb9cd5ceffa0e15deb9fa4/library/std/src/panic.rs:358:14
+    #13 0x55fdec1b116d in LLVMFuzzerTestOneInput /rust/registry/src/index.crates.io-1949cf8c6b5b557f/libfuzzer-sys-0.4.5/src/lib.rs:59:22
+    #14 0x55fdec1ce0e0 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #15 0x55fdec1b94a5 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #16 0x55fdec1bef3f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #17 0x55fdec1e9272 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #18 0x7fb0c37a6082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+
+==7==Register values:
+rax = 0x0000000000000000  rbx = 0x0000000000000000  rcx = 0x0000000000000000  rdx = 0x0000000000000000  
+rdi = 0x0000000000000000  rsi = 0x0000000000000000  rbp = 0x00007ffd81bd8f80  rsp = 0x00007ffd81bd8ed0  
+ r8 = 0x00007ffd81bd8f20   r9 = 0x00007ffd81bd8ee0  r10 = 0x00007ffd81bd8f30  r11 = 0x00007ffd81bd8ef0  
+r12 = 0x00007ffd81bd8f48  r13 = 0x00007fb0c1a02c00  r14 = 0x00007fb0c332f274  r15 = 0x00007fb0c1a010a4  
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV (<unknown module>) 
+==7==ABORTING

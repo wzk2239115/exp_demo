@@ -1,0 +1,30 @@
+
+
+#
+# Fatal error in ../../src/regexp/regexp-macro-assembler.cc, line 264
+# Debug check failed: base::IsInRange(cp_offset, kMinCPOffset, kMaxCPOffset).
+#
+#
+#
+#FailureMessage Object: 0x7ffef5a8a0e0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x55670ae145b3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55670ae1350d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55670adf8f14]
+    out/debug/d8(+0x4bd2905) [0x55670adf8905]
+    d8(v8::internal::NativeRegExpMacroAssembler::LoadCurrentCharacterImpl(int, v8::internal::Label*, bool, int, int) ./../../src/regexp/regexp-macro-assembler.cc:0:3) [0x556707f1df26]
+    d8(v8::internal::AssertionNode::Emit(v8::internal::RegExpCompiler*, v8::internal::Trace*) ./../../src/regexp/regexp-compiler.cc:2224:19) [0x556707eefee3]
+    d8(v8::internal::TextNode::Emit(v8::internal::RegExpCompiler*, v8::internal::Trace*) ./../../src/regexp/regexp-compiler.h:548:59) [0x556707ef1bbf]
+    d8(v8::internal::ActionNode::Emit(v8::internal::RegExpCompiler*, v8::internal::Trace*) ./../../src/regexp/regexp-compiler.cc:0:0) [0x556707ef51af]
+    d8(v8::internal::RegExpCompiler::Assemble(v8::internal::Isolate*, v8::internal::RegExpMacroAssembler*, v8::internal::RegExpNode*, int, v8::internal::DirectHandle<v8::internal::String>) ./../../src/regexp/regexp-compiler.cc:0:43) [0x556707eeadc8]
+    d8(v8::internal::RegExpImpl::Compile(v8::internal::Isolate*, v8::internal::Zone*, v8::internal::RegExpCompileData*, v8::base::Flags<v8::internal::RegExpFlag, int, int>, v8::internal::DirectHandle<v8::internal::String>, v8::internal::DirectHandle<v8::internal::String>, v8::internal::DirectHandle<v8::internal::IrRegExpData>, bool) ./../../src/regexp/regexp.cc:1251:36) [0x556707f3f975]
+    d8(v8::internal::RegExpImpl::CompileIrregexpFromSource(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::IrRegExpData>, v8::internal::DirectHandle<v8::internal::String>, bool, v8::internal::RegExpCompilationTarget) ./../../src/regexp/regexp.cc:705:7) [0x556707f3ee3b]
+    d8(v8::internal::RegExpImpl::EnsureCompiledIrregexp(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::IrRegExpData>, v8::internal::DirectHandle<v8::internal::String>, bool) ./../../src/regexp/regexp.cc:598:10) [0x556707f40a8e]
+    d8(v8::internal::RegExpImpl::IrregexpPrepare(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::IrRegExpData>, v8::internal::DirectHandle<v8::internal::String>) ./../../src/regexp/regexp.cc:0:8) [0x556707f3c66e]
+    d8(v8::internal::RegExpImpl::IrregexpExec(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::IrRegExpData>, v8::internal::DirectHandle<v8::internal::String>, int, int*, unsigned int) ./../../src/regexp/regexp.cc:1054:29) [0x556707f3ccfc]
+    d8(v8::internal::RegExp::Exec(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSRegExp>, v8::internal::DirectHandle<v8::internal::String>, int, int*, unsigned int) ./../../src/regexp/regexp.cc:0:14) [0x556707f3ca06]
+    d8(v8::internal::__RT_impl_Runtime_RegExpExec(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/runtime/runtime-regexp.cc:934:10) [0x55670800bd17]
+    d8(v8::internal::Runtime_RegExpExec(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-regexp.cc:957:1) [0x55670800b874]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x55670a2de1fd]
+timeout: the monitored command dumped core

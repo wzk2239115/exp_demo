@@ -1,0 +1,1 @@
+ArrayPrototype in LibJS is not an Array exotic object as required by the ECMAScript specification, which can lead to compatibility issues and unexpected behavior with JavaScript code that relies on Array-specific internal methods and properties. This affects the correct functioning of ArrayPrototype as defined in the ECMAScript standard.

@@ -1,0 +1,1 @@
+A heap buffer overflow occurs in addr_resolv when fewer than 6 bytes are passed to ws_manuf_lookup_str().

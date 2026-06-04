@@ -1,0 +1,51 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 4079221342
+INFO: Loaded 1 modules   (75154 inline 8-bit counters): 75154 [0x55dd63bb15d8, 0x55dd63bc3b6a), 
+INFO: Loaded 1 PC tables (75154 PCs): 75154 [0x55dd63bc3b70,0x55dd63ce9490), 
+/out/ffmpeg_AV_CODEC_ID_HEVC_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x55dd636d9b7c in av_clip_c /src/ffmpeg/./libavutil/common.h:183:14
+    #1 0x55dd636d9b7c in deblocking_filter_CTB /src/ffmpeg/libavcodec/hevc/filter.c:558:34
+    #2 0x55dd636d9b7c in ff_hevc_hls_filter /src/ffmpeg/libavcodec/hevc/filter.c:891:9
+    #3 0x55dd636e15e3 in ff_hevc_hls_filters /src/ffmpeg/libavcodec/hevc/filter.c:919:9
+    #4 0x55dd6315f213 in hls_decode_entry /src/ffmpeg/libavcodec/hevc/hevcdec.c:2579:9
+    #5 0x55dd6315f213 in decode_slice_data /src/ffmpeg/libavcodec/hevc/hevcdec.c:2833:12
+    #6 0x55dd6315f213 in decode_slice /src/ffmpeg/libavcodec/hevc/hevcdec.c:3227:11
+    #7 0x55dd6315f213 in decode_nal_unit /src/ffmpeg/libavcodec/hevc/hevcdec.c:3294:15
+    #8 0x55dd6315f213 in decode_nal_units /src/ffmpeg/libavcodec/hevc/hevcdec.c:3394:15
+    #9 0x55dd6314c94d in hevc_receive_frame /src/ffmpeg/libavcodec/hevc/hevcdec.c:3485:14
+    #10 0x55dd6312dd82 in ff_decode_receive_frame_internal /src/ffmpeg/libavcodec/decode.c:626:19
+    #11 0x55dd6313157d in decode_receive_frame_internal /src/ffmpeg/libavcodec/decode.c:658:15
+    #12 0x55dd63131303 in avcodec_send_packet /src/ffmpeg/libavcodec/decode.c:745:15
+    #13 0x55dd6311a843 in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_dec_fuzzer.c:541:25
+    #14 0x55dd6300d290 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #15 0x55dd62ff8505 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #16 0x55dd62ffdf9f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #17 0x55dd63029242 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #18 0x7fd0541ee082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+    #19 0x55dd62ff06ed in _start (/out/ffmpeg_AV_CODEC_ID_HEVC_fuzzer+0x2386ed)
+
+  Uninitialized value was created by a heap allocation
+    #0 0x55dd630b0813 in posix_memalign /src/llvm-project/compiler-rt/lib/msan/msan_interceptors.cpp:162:3
+    #1 0x55dd63a527ff in av_malloc /src/ffmpeg/libavutil/mem.c:107:9
+    #2 0x55dd63a527ff in av_malloc_array /src/ffmpeg/libavutil/mem.c:214:12
+    #3 0x55dd6314d1ba in pic_arrays_init /src/ffmpeg/libavcodec/hevc/hevcdec.c:130:29
+    #4 0x55dd6314d1ba in set_sps /src/ffmpeg/libavcodec/hevc/hevcdec.c:564:11
+    #5 0x55dd63157b56 in hevc_frame_start /src/ffmpeg/libavcodec/hevc/hevcdec.c:2945:15
+    #6 0x55dd63157b56 in decode_slice /src/ffmpeg/libavcodec/hevc/hevcdec.c:3212:15
+    #7 0x55dd63157b56 in decode_nal_unit /src/ffmpeg/libavcodec/hevc/hevcdec.c:3294:15
+    #8 0x55dd63157b56 in decode_nal_units /src/ffmpeg/libavcodec/hevc/hevcdec.c:3394:15
+    #9 0x55dd6314c94d in hevc_receive_frame /src/ffmpeg/libavcodec/hevc/hevcdec.c:3485:14
+    #10 0x55dd6312dd82 in ff_decode_receive_frame_internal /src/ffmpeg/libavcodec/decode.c:626:19
+    #11 0x55dd6313157d in decode_receive_frame_internal /src/ffmpeg/libavcodec/decode.c:658:15
+    #12 0x55dd63131303 in avcodec_send_packet /src/ffmpeg/libavcodec/decode.c:745:15
+    #13 0x55dd6311a843 in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_dec_fuzzer.c:541:25
+    #14 0x55dd6300d290 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #15 0x55dd62ff8505 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #16 0x55dd62ffdf9f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #17 0x55dd63029242 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #18 0x7fd0541ee082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /src/ffmpeg/./libavutil/common.h:183:14 in av_clip_c
+Exiting

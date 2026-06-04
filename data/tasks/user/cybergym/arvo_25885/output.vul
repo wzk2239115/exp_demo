@@ -1,0 +1,66 @@
+Accepting input from '/tmp/poc'
+Usage for fuzzing: honggfuzz -P [flags] -- /out/fuzz_pkcs15_reader
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x602000000616 at pc 0x0000004831ad bp 0x7fffc6a49a90 sp 0x7fffc6a49248
+READ of size 7 at 0x602000000616 thread T0
+SCARINESS: 21 (7-byte-read-heap-buffer-overflow)
+    #0 0x4831ac in strncpy /src/llvm-project/compiler-rt/lib/asan/asan_interceptors.cpp:482:5
+    #1 0x70966f in hextoint /src/opensc/src/libopensc/pkcs15-itacns.c:389:2
+    #2 0x709231 in get_name_from_EF_DatiPersonali /src/opensc/src/libopensc/pkcs15-itacns.c:408:18
+    #3 0x7084e5 in itacns_add_data_files /src/opensc/src/libopensc/pkcs15-itacns.c:556:6
+    #4 0x707415 in itacns_init /src/opensc/src/libopensc/pkcs15-itacns.c:820:6
+    #5 0x5212e4 in sc_pkcs15_bind_synthetic /src/opensc/src/libopensc/pkcs15-syn.c:122:8
+    #6 0x4f0221 in sc_pkcs15_bind /src/opensc/src/libopensc/pkcs15.c:1270:8
+    #7 0x4c7f35 in LLVMFuzzerTestOneInput /src/opensc/src/tests/fuzzing/fuzz_pkcs15_reader.c:210:5
+    #8 0x4c972c in main (/out/fuzz_pkcs15_reader+0x4c972c)
+    #9 0x7f8963b4883f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #10 0x41e338 in _start (/out/fuzz_pkcs15_reader+0x41e338)
+
+DEDUP_TOKEN: strncpy--hextoint--get_name_from_EF_DatiPersonali
+0x602000000616 is located 0 bytes to the right of 6-byte region [0x602000000610,0x602000000616)
+allocated by thread T0 here:
+    #0 0x496f1d in malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:145:3
+    #1 0x740253 in sc_der_copy /src/opensc/src/libopensc/asn1.c:2050:16
+    #2 0x4fe46f in sc_pkcs15_read_data_object /src/opensc/src/libopensc/pkcs15-data.c:60:2
+    #3 0x708358 in itacns_add_data_files /src/opensc/src/libopensc/pkcs15-itacns.c:546:7
+    #4 0x707415 in itacns_init /src/opensc/src/libopensc/pkcs15-itacns.c:820:6
+    #5 0x5212e4 in sc_pkcs15_bind_synthetic /src/opensc/src/libopensc/pkcs15-syn.c:122:8
+    #6 0x4f0221 in sc_pkcs15_bind /src/opensc/src/libopensc/pkcs15.c:1270:8
+    #7 0x4c7f35 in LLVMFuzzerTestOneInput /src/opensc/src/tests/fuzzing/fuzz_pkcs15_reader.c:210:5
+    #8 0x4c972c in main (/out/fuzz_pkcs15_reader+0x4c972c)
+
+DEDUP_TOKEN: malloc--sc_der_copy--sc_pkcs15_read_data_object
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/llvm-project/compiler-rt/lib/asan/asan_interceptors.cpp:482:5 in strncpy
+Shadow bytes around the buggy address:
+  0x0c047fff8070: fa fa fd fa fa fa fd fa fa fa fd fa fa fa fd fa
+  0x0c047fff8080: fa fa fd fa fa fa fd fa fa fa fd fa fa fa fd fd
+  0x0c047fff8090: fa fa fd fa fa fa fd fa fa fa fd fa fa fa fd fa
+  0x0c047fff80a0: fa fa fd fa fa fa fd fa fa fa fd fd fa fa 00 00
+  0x0c047fff80b0: fa fa 05 fa fa fa 00 01 fa fa 01 fa fa fa 06 fa
+=>0x0c047fff80c0: fa fa[06]fa fa fa 00 00 fa fa fa fa fa fa fa fa
+  0x0c047fff80d0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff80e0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff80f0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff8100: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff8110: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==7==ABORTING

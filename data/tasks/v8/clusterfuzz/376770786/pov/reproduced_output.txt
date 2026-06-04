@@ -1,0 +1,33 @@
+V8 is running with experimental features enabled. Stability and security will suffer.
+
+
+#
+# Fatal error in ../../src/compiler/turboshaft/graph.h, line 619
+# Debug check failed: i.valid().
+#
+#
+#
+#FailureMessage Object: 0x7ffef0b53b50
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x5589e89851b3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x5589e898459d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x5589e8968ef4]
+    out/debug/d8(+0x3e90915) [0x5589e8968915]
+    d8(v8::internal::compiler::turboshaft::Graph::Get(v8::internal::compiler::turboshaft::OpIndex) const ./../../src/compiler/turboshaft/graph.h:0:5) [0x5589e6a3adea]
+    d8(v8::internal::compiler::turboshaft::MachineOptimizationReducer<v8::internal::compiler::turboshaft::VariableReducer<v8::internal::compiler::turboshaft::RequiredOptimizationReducer<v8::internal::compiler::turboshaft::EmitProjectionReducer<v8::internal::compiler::turboshaft::ValueNumberingReducer<v8::internal::compiler::turboshaft::GenericReducerBase<v8::internal::compiler::turboshaft::TSReducerBase<v8::internal::compiler::turboshaft::StackBottom<v8::base::tmp::list1<v8::internal::compiler::turboshaft::BlockOriginTrackingReducer, v8::internal::compiler::turboshaft::MaglevEarlyLoweringReducer, v8::internal::compiler::turboshaft::MachineOptimizationReducer, v8::internal::compiler::turboshaft::VariableReducer, v8::internal::compiler::turboshaft::RequiredOptimizationReducer, v8::internal::compiler::turboshaft::ValueNumberingReducer, v8::internal::compiler::turboshaft::TSReducerBase>>>>>>>>>::ReduceLoadHelper(v8::internal::compiler::turboshaft::OpIndex, v8::internal::compiler::turboshaft::OptionalOpIndex, v8::internal::compiler::turboshaft::LoadOp::Kind, v8::internal::compiler::turboshaft::MemoryRepresentation, v8::internal::compiler::turboshaft::RegisterRepresentation, int, unsigned char) ./../../src/compiler/turboshaft/operations.h:958:21) [0x5589e77b1931]
+    d8(v8::internal::compiler::turboshaft::OpIndex v8::internal::compiler::turboshaft::MachineOptimizationReducer<v8::internal::compiler::turboshaft::VariableReducer<v8::internal::compiler::turboshaft::RequiredOptimizationReducer<v8::internal::compiler::turboshaft::EmitProjectionReducer<v8::internal::compiler::turboshaft::ValueNumberingReducer<v8::internal::compiler::turboshaft::GenericReducerBase<v8::internal::compiler::turboshaft::TSReducerBase<v8::internal::compiler::turboshaft::StackBottom<v8::base::tmp::list1<v8::internal::compiler::turboshaft::BlockOriginTrackingReducer, v8::internal::compiler::turboshaft::MaglevEarlyLoweringReducer, v8::internal::compiler::turboshaft::MachineOptimizationReducer, v8::internal::compiler::turboshaft::VariableReducer, v8::internal::compiler::turboshaft::RequiredOptimizationReducer, v8::internal::compiler::turboshaft::ValueNumberingReducer, v8::internal::compiler::turboshaft::TSReducerBase>>>>>>>>>::ReduceLoad<v8::internal::compiler::turboshaft::OpIndex, v8::internal::compiler::turboshaft::OptionalOpIndex, v8::internal::compiler::turboshaft::LoadOp::Kind, v8::internal::compiler::turboshaft::MemoryRepresentation, v8::internal::compiler::turboshaft::RegisterRepresentation, int, unsigned char>(v8::internal::compiler::turboshaft::OpIndex, v8::internal::compiler::turboshaft::OptionalOpIndex, v8::internal::compiler::turboshaft::LoadOp::Kind, v8::internal::compiler::turboshaft::MemoryRepresentation, v8::internal::compiler::turboshaft::RegisterRepresentation, int, unsigned char) ./../../src/compiler/turboshaft/machine-optimization-reducer.h:1941:11) [0x5589e77b175f]
+    d8(v8::internal::compiler::turboshaft::GraphBuildingNodeProcessor::Process(v8::internal::maglev::StringWrapperConcat*, v8::internal::maglev::ProcessingState const&) ./../../src/compiler/turboshaft/assembler.h:5102:3) [0x5589e77fefc5]
+    d8(v8::internal::maglev::ProcessResult v8::internal::compiler::turboshaft::NodeProcessorBase::Process<v8::internal::maglev::StringWrapperConcat>(v8::internal::maglev::StringWrapperConcat*, v8::internal::maglev::ProcessingState const&) ./../../src/compiler/turboshaft/maglev-graph-building-phase.cc:0:37) [0x5589e779e6c3]
+    d8(v8::internal::maglev::GraphProcessor<v8::internal::compiler::turboshaft::NodeProcessorBase, true>::ProcessGraph(v8::internal::maglev::Graph*) ./../../src/maglev/maglev-graph-processor.h:170:9) [0x5589e774f4bd]
+    d8(v8::internal::compiler::turboshaft::MaglevGraphBuildingPhase::Run(v8::internal::compiler::turboshaft::PipelineData*, v8::internal::Zone*) ./../../src/zone/zone-containers.h:276:35) [0x5589e774f13f]
+    d8(auto v8::internal::compiler::turboshaft::Pipeline::Run<v8::internal::compiler::turboshaft::MaglevGraphBuildingPhase>() ./../../src/compiler/turboshaft/pipelines.h:82:27) [0x5589e738ea16]
+    d8(v8::internal::compiler::turboshaft::Pipeline::CreateGraphWithMaglev() ./../../src/compiler/turboshaft/pipelines.h:132:9) [0x5589e737b134]
+    d8(v8::internal::compiler::PipelineCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/compiler/pipeline.cc:813:9) [0x5589e737af63]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:486:22) [0x5589e572351d]
+    d8(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1092:7) [0x5589e5731b5b]
+    d8(v8::internal::Compiler::CompileOptimized(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind) ./../../src/handles/maybe-handles.h:60:19) [0x5589e573454a]
+    d8(v8::internal::__RT_impl_Runtime_CompileOptimized(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/handles/handles.h:190:22) [0x5589e63e262f]
+    d8(v8::internal::Runtime_CompileOptimized(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:128:1) [0x5589e63e2150]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x5589e80fadbd]
+timeout: the monitored command dumped core

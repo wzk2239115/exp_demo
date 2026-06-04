@@ -1,0 +1,46 @@
+diff --git a/src/numbers/conversions.cc b/src/numbers/conversions.cc
+index 9aab71e00a2..6a718cbe760 100644
+--- a/src/numbers/conversions.cc
++++ b/src/numbers/conversions.cc
+@@ -1196,10 +1196,6 @@ std::string_view DoubleToPrecisionStringView(double value, int p,
+                                              exponent, negative, p, buffer);
+   } else {
+     // Use fixed notation.
+-    //
+-    // Leave room in the result for appending a minus, a period and in
+-    // the case where decimal_point is not positive for a zero in
+-    // front of the period.
+     SimpleStringBuilder builder(buffer.begin(), buffer.length());
+     if (negative) builder.AddCharacter('-');
+     if (decimal_point <= 0) {
+diff --git a/src/numbers/conversions.h b/src/numbers/conversions.h
+index c21e27b7b06..d6438e0d73f 100644
+--- a/src/numbers/conversions.h
++++ b/src/numbers/conversions.h
+@@ -72,10 +72,9 @@ constexpr int kDoubleToFixedMaxDigitsBeforePoint = 21;
+ // Leave room in the result for appending a minus and a period.
+ constexpr int kDoubleToFixedMaxChars =
+     kDoubleToFixedMaxDigitsBeforePoint + kMaxFractionDigits + 2;
+-// Leave room in the result for appending a minus, for a period, the
+-// letter 'e', a minus or a plus depending on the exponent, and a
+-// three digit exponent.
+-constexpr int kDoubleToPrecisionMaxChars = kMaxFractionDigits + 7;
++// Leave room in the result for appending a minus, for a period, up to 5 zeros
++// padding after the period and a zero in front of the period.
++constexpr int kDoubleToPrecisionMaxChars = kMaxFractionDigits + 8;
+ // Leave room in the result for one digit before the period, a minus, a period,
+ // the letter 'e', a minus or a plus depending on the exponent, and a three
+ // digit exponent.
+diff --git a/test/mjsunit/regress/regress-386487312.js b/test/mjsunit/regress/regress-386487312.js
+new file mode 100644
+index 00000000000..effa7134fd2
+--- /dev/null
++++ b/test/mjsunit/regress/regress-386487312.js
+@@ -0,0 +1,7 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++assertEquals(
++    '-0.000001234499999999999996546707660416419827242862083949148654937744140625000000000000000000000000000000000',
++    (-.0000012345).toPrecision(100));

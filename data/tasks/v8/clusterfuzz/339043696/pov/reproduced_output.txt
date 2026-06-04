@@ -1,0 +1,21 @@
+V8 is running with experimental features enabled. Stability and security will suffer.
+
+
+#
+# Fatal error in ../../src/handles/maybe-handles.h, line 50
+# Check failed: (location_) != nullptr.
+#
+#
+#
+#FailureMessage Object: 0x7ffd132c5ea0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x558df1b65f23]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x558df1b6533d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:204:10) [0x558df1b49dad]
+    d8(v8::internal::(anonymous namespace)::PerformPromiseThen(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSPromise>, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::MaybeHandle<v8::internal::JSFunction>) ./../../src/objects/slots.h:84:5) [0x558def42fb44]
+    d8(v8::internal::JSAtomicsMutex::LockOrEnqueuePromise(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSAtomicsMutex>, v8::internal::Handle<v8::internal::Object>, std::__Cr::optional<v8::base::TimeDelta>) ./../../src/objects/js-atomics-synchronization.cc:0:52) [0x558def42f57d]
+    d8(v8::internal::Builtin_Impl_AtomicsMutexLockAsync(v8::internal::BuiltinArguments, v8::internal::Isolate*) ./../../src/handles/handles.h:166:22) [0x558deeb40b7a]
+    d8(v8::internal::Builtin_AtomicsMutexLockAsync(int, unsigned long*, v8::internal::Isolate*) ./../../src/builtins/builtins-atomics-synchronization.cc:190:1) [0x558deeb402ad]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc:0:0) [0x558df12fe83d]
+timeout: the monitored command dumped core

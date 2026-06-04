@@ -1,0 +1,1 @@
+A vulnerability exists in awssigv4 where the date pointer, which is not allocated, is freed on error when there is wrong syntax. This can lead to undefined behavior.

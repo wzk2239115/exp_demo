@@ -1,0 +1,1 @@
+A vulnerability exists where Bucket->key is not removed before the destructor call, which may result in the destructor updating the same HashTable.

@@ -1,0 +1,31 @@
+Accepting input from '/tmp/poc'
+Usage for fuzzing: honggfuzz -P [flags] -- /out/fuzz_addr2line
+BFD: /tmp/libfuzzer.7: no group info for section ''
+/tmp/libfuzzer.7: no group info for section ''
+BFD: /tmp/libfuzzer.7: no group info for section ''
+/tmp/libfuzzer.7: no group info for section ''
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x000260038002 (pc 0x00000049f032 bp 0x7ffe23be1430 sp 0x7ffe23be0bf8 T0)
+==7==The signal is caused by a READ memory access.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x49f032 in AddressIsPoisoned /src/llvm-project/compiler-rt/lib/asan/asan_mapping.h:377:21
+    #1 0x49f032 in __asan::QuickCheckForUnpoisonedRegion(unsigned long, unsigned long) /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.h:31:13
+    #2 0x49ef04 in __asan_memcpy /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3
+    #3 0x8a614e in ecoff_swap_sym_in /src/binutils-gdb/bfd/./ecoffswap.h:445:10
+    #4 0xba17b6 in lookup_line /src/binutils-gdb/bfd/ecofflink.c:2193:4
+    #5 0xba17b6 in _bfd_ecoff_locate_line /src/binutils-gdb/bfd/ecofflink.c:2393:13
+    #6 0x8eff9d in _bfd_mips_elf_find_nearest_line /src/binutils-gdb/bfd/elfxx-mips.c:13213:11
+    #7 0x4e96bd in find_address_in_section /src/binutils-gdb/binutils/./fuzz_addr2line.h:197:11
+    #8 0x504dc3 in bfd_map_over_sections /src/binutils-gdb/bfd/section.c:1366:5
+    #9 0x4e84d9 in translate_addresses /src/binutils-gdb/binutils/./fuzz_addr2line.h:337:2
+    #10 0x4e84d9 in process_file /src/binutils-gdb/binutils/./fuzz_addr2line.h:470:3
+    #11 0x4e9462 in LLVMFuzzerTestOneInput /src/binutils-gdb/binutils/fuzz_addr2line.c:66:5
+    #12 0x4dd54b in main (/out/fuzz_addr2line+0x4dd54b)
+    #13 0x7fb7e082a082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #14 0x41e75d in _start (/out/fuzz_addr2line+0x41e75d)
+
+DEDUP_TOKEN: AddressIsPoisoned--__asan::QuickCheckForUnpoisonedRegion(unsigned long, unsigned long)--__asan_memcpy
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/llvm-project/compiler-rt/lib/asan/asan_mapping.h:377:21 in AddressIsPoisoned
+==7==ABORTING

@@ -1,0 +1,58 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3785028946
+INFO: Loaded 1 modules   (106294 inline 8-bit counters): 106294 [0x8ec2340, 0x8edc276), 
+INFO: Loaded 1 PC tables (106294 PCs): 106294 [0x8edc278,0x8fabc28), 
+/out/curl_fuzzer_ws: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: attempting double-free on 0xf2d03b00 in thread T0:
+SCARINESS: 42 (double-free)
+    #0 0x81e5776 in free /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:52:3
+    #1 0x824848e in curl_dbg_free /src/curl/lib/memdebug.c:297:5
+    #2 0x8292940 in curl_slist_free_all /src/curl/lib/slist.c:142:5
+    #3 0x822b049 in fuzz_terminate_fuzz_data(fuzz_data*) /src/curl_fuzzer/curl_fuzzer.cc:259:5
+    #4 0x8229598 in LLVMFuzzerTestOneInput /src/curl_fuzzer/curl_fuzzer.cc:101:3
+    #5 0x80ea00e in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #6 0x80d4f6e in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #7 0x80dab70 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned int)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #8 0x8104757 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #9 0xf7c8ced4 in __libc_start_main (/lib32/libc.so.6+0x1aed4) (BuildId: d56935956a210bf85f6592f3178b979ad4f7b35f)
+    #10 0x80cc0b5 in _start (/out/curl_fuzzer_ws+0x80cc0b5)
+
+DEDUP_TOKEN: free--curl_dbg_free--curl_slist_free_all
+0xf2d03b00 is located 0 bytes inside of 240-byte region [0xf2d03b00,0xf2d03bf0)
+freed by thread T0 here:
+    #0 0x81e5776 in free /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:52:3
+    #1 0x824848e in curl_dbg_free /src/curl/lib/memdebug.c:297:5
+    #2 0x838ed22 in Curl_output_aws_sigv4 /src/curl/lib/http_aws_sigv4.c:643:3
+    #3 0x835728b in output_auth_headers /src/curl/lib/http.c:732:14
+    #4 0x8356e0e in Curl_http_output_auth /src/curl/lib/http.c:916:14
+    #5 0x835217f in Curl_http /src/curl/lib/http.c:3196:14
+    #6 0x826c09b in multi_do /src/curl/lib/multi.c:1625:14
+    #7 0x826c09b in multi_runsingle /src/curl/lib/multi.c:2221:18
+    #8 0x8268c36 in curl_multi_perform /src/curl/lib/multi.c:2765:16
+    #9 0x822a4ee in fuzz_handle_transfer(fuzz_data*) /src/curl_fuzzer/curl_fuzzer.cc:341:3
+    #10 0x8229589 in LLVMFuzzerTestOneInput /src/curl_fuzzer/curl_fuzzer.cc:97:3
+    #11 0x80ea00e in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #12 0x80d4f6e in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #13 0x80dab70 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned int)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #14 0x8104757 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #15 0xf7c8ced4 in __libc_start_main (/lib32/libc.so.6+0x1aed4) (BuildId: d56935956a210bf85f6592f3178b979ad4f7b35f)
+
+DEDUP_TOKEN: free--curl_dbg_free--Curl_output_aws_sigv4
+previously allocated by thread T0 here:
+    #0 0x81e5a9f in __interceptor_malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:69:3
+    #1 0x8248014 in curl_dbg_malloc /src/curl/lib/memdebug.c:146:9
+    #2 0x8248014 in curl_dbg_strdup /src/curl/lib/memdebug.c:200:9
+    #3 0x82923b5 in curl_slist_append /src/curl/lib/slist.c:94:19
+    #4 0x822e64e in fuzz_parse_tlv(fuzz_data*, tlv*) /src/curl_fuzzer/curl_fuzzer_tlv.cc:151:18
+    #5 0x822937e in LLVMFuzzerTestOneInput /src/curl_fuzzer/curl_fuzzer.cc:60:10
+    #6 0x80ea00e in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #7 0x80d4f6e in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #8 0x80dab70 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned int)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #9 0x8104757 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #10 0xf7c8ced4 in __libc_start_main (/lib32/libc.so.6+0x1aed4) (BuildId: d56935956a210bf85f6592f3178b979ad4f7b35f)
+
+DEDUP_TOKEN: __interceptor_malloc--curl_dbg_malloc--curl_dbg_strdup
+SUMMARY: AddressSanitizer: double-free /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:52:3 in free
+==7==ABORTING

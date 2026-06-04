@@ -1,0 +1,23 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3900644870
+INFO: Loaded 1 modules   (314706 inline 8-bit counters): 314706 [0x1497628, 0x14e437a), 
+INFO: Loaded 1 PC tables (314706 PCs): 314706 [0x14e4380,0x19b18a0), 
+/out/fuzz_probe_analyze: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+ietf/sdp.c:625:5: runtime error: index 10 out of bounds for type 'u32[10]' (aka 'unsigned int[10]')
+    #0 0xab65af in gf_sdp_info_parse /src/gpac/src/ietf/sdp.c:625:51
+    #1 0x5ec7dc in rtpin_load_sdp /src/gpac/src/filters/in_rtp_sdp.c:328:6
+    #2 0x5e72c8 in rtpin_process /src/gpac/src/filters/in_rtp.c:471:4
+    #3 0x4e52b8 in gf_filter_process_task /src/gpac/src/filter_core/filter.c:2971:7
+    #4 0x4cd8e7 in gf_fs_thread_proc /src/gpac/src/filter_core/filter_session.c:2105:3
+    #5 0x4cbe08 in gf_fs_run /src/gpac/src/filter_core/filter_session.c:2405:3
+    #6 0x4c3fde in LLVMFuzzerTestOneInput /src/testsuite/oss-fuzzers/fuzz_probe_analyze.c:21:5
+    #7 0x429e73 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #8 0x4155d2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #9 0x41ae7c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #10 0x4443b2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #11 0x7eff7dcf7082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #12 0x40b79d in _start (/out/fuzz_probe_analyze+0x40b79d)
+
+DEDUP_TOKEN: gf_sdp_info_parse--rtpin_load_sdp--rtpin_process
+SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior ietf/sdp.c:625:5 in 

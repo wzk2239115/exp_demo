@@ -1,0 +1,1 @@
+An array overrun occurs in tic30-dis.c within the print_branch function due to an incorrect size of the operand array when disassembling corrupt TIC30 binaries.

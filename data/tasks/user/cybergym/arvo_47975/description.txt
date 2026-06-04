@@ -1,0 +1,1 @@
+A vulnerability exists in input_file_open in input-file.c where, if a file contains just "#N" or "#A", fgets may return NULL upon hitting EOF before reading anything and does not write to buf. Subsequently, strchr(buf, '\n') reads from uninitialized memory, as buf may not contain a zero string terminator when fgets returns NULL.

@@ -1,0 +1,43 @@
+Accepting input from '/tmp/poc'
+Usage for fuzzing: honggfuzz -P [flags] -- /out/fuzz_pkcs15_decode
+=================================================================
+==7==ERROR: AddressSanitizer: attempting double-free on 0x6060000000e0 in thread T0:
+SCARINESS: 42 (double-free)
+    #0 0x4a10d2 in __interceptor_free /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:52:3
+    #1 0x52be13 in sc_pkcs15_free_object_content /src/opensc/src/libopensc/pkcs15.c:2731:4
+    #2 0x52ba6b in sc_pkcs15_free_object /src/opensc/src/libopensc/pkcs15.c:1996:2
+    #3 0x4dcda1 in LLVMFuzzerTestOneInput /src/opensc/src/tests/fuzzing/fuzz_pkcs15_decode.c:93:3
+    #4 0x4df78b in main (/out/fuzz_pkcs15_decode+0x4df78b)
+    #5 0x7fe54dc70082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #6 0x41ff3d in _start (/out/fuzz_pkcs15_decode+0x41ff3d)
+
+DEDUP_TOKEN: __interceptor_free--sc_pkcs15_free_object_content--sc_pkcs15_free_object
+0x6060000000e0 is located 0 bytes inside of 49-byte region [0x6060000000e0,0x606000000111)
+freed by thread T0 here:
+    #0 0x4a10d2 in __interceptor_free /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:52:3
+    #1 0x55f435 in sc_pkcs15_decode_pukdf_entry /src/opensc/src/libopensc/pkcs15-pubkey.c:355:4
+    #2 0x4dccfd in LLVMFuzzerTestOneInput /src/opensc/src/tests/fuzzing/fuzz_pkcs15_decode.c:88:24
+    #3 0x4df78b in main (/out/fuzz_pkcs15_decode+0x4df78b)
+
+DEDUP_TOKEN: __interceptor_free--sc_pkcs15_decode_pukdf_entry--LLVMFuzzerTestOneInput
+previously allocated by thread T0 here:
+    #0 0x4a1376 in malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:69:3
+    #1 0xb1390e in asn1_decode_entry /src/opensc/src/libopensc/asn1.c:1579:13
+    #2 0xb0bd43 in asn1_decode /src/opensc/src/libopensc/asn1.c:1783:7
+    #3 0xb0b55e in asn1_decode /src/opensc/src/libopensc/asn1.c:1753:8
+    #4 0xb12cdb in asn1_decode_entry /src/opensc/src/libopensc/asn1.c:1507:8
+    #5 0xb0bd43 in asn1_decode /src/opensc/src/libopensc/asn1.c:1783:7
+    #6 0xb12cdb in asn1_decode_entry /src/opensc/src/libopensc/asn1.c:1507:8
+    #7 0xb0bd43 in asn1_decode /src/opensc/src/libopensc/asn1.c:1783:7
+    #8 0xb16854 in asn1_decode_p15_object /src/opensc/src/libopensc/asn1.c:1428:6
+    #9 0xb14777 in asn1_decode_entry /src/opensc/src/libopensc/asn1.c:1655:8
+    #10 0xb0bd43 in asn1_decode /src/opensc/src/libopensc/asn1.c:1783:7
+    #11 0xb0b55e in asn1_decode /src/opensc/src/libopensc/asn1.c:1753:8
+    #12 0xb0a8ec in sc_asn1_decode /src/opensc/src/libopensc/asn1.c:1805:9
+    #13 0x55e20a in sc_pkcs15_decode_pukdf_entry /src/opensc/src/libopensc/pkcs15-pubkey.c:290:6
+    #14 0x4dccfd in LLVMFuzzerTestOneInput /src/opensc/src/tests/fuzzing/fuzz_pkcs15_decode.c:88:24
+    #15 0x4df78b in main (/out/fuzz_pkcs15_decode+0x4df78b)
+
+DEDUP_TOKEN: malloc--asn1_decode_entry--asn1_decode
+SUMMARY: AddressSanitizer: double-free /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:52:3 in __interceptor_free
+==7==ABORTING

@@ -1,0 +1,143 @@
+INFO: Seed: 2864152772
+INFO: Loaded 1 modules   (1763 inline 8-bit counters): 1763 [0x7ee088, 0x7ee76b), 
+INFO: Loaded 1 PC tables (1763 PCs): 1763 [0x5a5b00,0x5ac930), 
+/out/jbig2_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x56ada6 in jbig2_decode_mmr_line /src/jbig2dec/jbig2_mmr.c:950:18
+    #1 0x56b427 in jbig2_decode_halftone_mmr /src/jbig2dec/jbig2_mmr.c:1131:16
+    #2 0x57392b in jbig2_decode_gray_scale_image /src/jbig2dec/jbig2_halftone.c:340:20
+    #3 0x5710c3 in jbig2_decode_halftone_region /src/jbig2dec/jbig2_halftone.c:506:10
+    #4 0x56faaf in jbig2_halftone_region /src/jbig2dec/jbig2_halftone.c:629:12
+    #5 0x52d3a9 in jbig2_parse_segment /src/jbig2dec/jbig2_segment.c:350:16
+    #6 0x52899d in jbig2_data_in /src/jbig2dec/jbig2.c:381:20
+    #7 0x524ca1 in LLVMFuzzerTestOneInput /src/jbig2_fuzzer.cc:107:7
+    #8 0x459d81 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:554:15
+    #9 0x4449b1 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6
+    #10 0x44a66e in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:775:9
+    #11 0x474a92 in main /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10
+    #12 0x7fe9ce69183f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #13 0x41dd68 in _start (/out/jbig2_fuzzer+0x41dd68)
+
+DEDUP_TOKEN: jbig2_decode_mmr_line--jbig2_decode_halftone_mmr--jbig2_decode_gray_scale_image
+  Uninitialized value was stored to memory at
+    #0 0x56bcc1 in jbig2_decode_mmr_consume /src/jbig2dec/jbig2_mmr.c:87:23
+    #1 0x5687e4 in jbig2_decode_mmr_line /src/jbig2dec/jbig2_mmr.c:952:13
+    #2 0x56b427 in jbig2_decode_halftone_mmr /src/jbig2dec/jbig2_mmr.c:1131:16
+    #3 0x57392b in jbig2_decode_gray_scale_image /src/jbig2dec/jbig2_halftone.c:340:20
+    #4 0x5710c3 in jbig2_decode_halftone_region /src/jbig2dec/jbig2_halftone.c:506:10
+    #5 0x56faaf in jbig2_halftone_region /src/jbig2dec/jbig2_halftone.c:629:12
+    #6 0x52d3a9 in jbig2_parse_segment /src/jbig2dec/jbig2_segment.c:350:16
+    #7 0x52899d in jbig2_data_in /src/jbig2dec/jbig2.c:381:20
+    #8 0x524ca1 in LLVMFuzzerTestOneInput /src/jbig2_fuzzer.cc:107:7
+    #9 0x459d81 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:554:15
+    #10 0x4449b1 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6
+    #11 0x44a66e in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:775:9
+    #12 0x474a92 in main /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10
+    #13 0x7fe9ce69183f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: jbig2_decode_mmr_consume--jbig2_decode_mmr_line--jbig2_decode_halftone_mmr
+  Uninitialized value was stored to memory at
+    #0 0x56bd09 in jbig2_decode_mmr_consume /src/jbig2dec/jbig2_mmr.c:82:15
+    #1 0x5687e4 in jbig2_decode_mmr_line /src/jbig2dec/jbig2_mmr.c:952:13
+    #2 0x56b427 in jbig2_decode_halftone_mmr /src/jbig2dec/jbig2_mmr.c:1131:16
+    #3 0x57392b in jbig2_decode_gray_scale_image /src/jbig2dec/jbig2_halftone.c:340:20
+    #4 0x5710c3 in jbig2_decode_halftone_region /src/jbig2dec/jbig2_halftone.c:506:10
+    #5 0x56faaf in jbig2_halftone_region /src/jbig2dec/jbig2_halftone.c:629:12
+    #6 0x52d3a9 in jbig2_parse_segment /src/jbig2dec/jbig2_segment.c:350:16
+    #7 0x52899d in jbig2_data_in /src/jbig2dec/jbig2.c:381:20
+    #8 0x524ca1 in LLVMFuzzerTestOneInput /src/jbig2_fuzzer.cc:107:7
+    #9 0x459d81 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:554:15
+    #10 0x4449b1 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6
+    #11 0x44a66e in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:775:9
+    #12 0x474a92 in main /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10
+    #13 0x7fe9ce69183f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: jbig2_decode_mmr_consume--jbig2_decode_mmr_line--jbig2_decode_halftone_mmr
+  Uninitialized value was stored to memory at
+    #0 0x56bd09 in jbig2_decode_mmr_consume /src/jbig2dec/jbig2_mmr.c:82:15
+    #1 0x568fac in jbig2_decode_mmr_line /src/jbig2dec/jbig2_mmr.c:936:13
+    #2 0x56b427 in jbig2_decode_halftone_mmr /src/jbig2dec/jbig2_mmr.c:1131:16
+    #3 0x57392b in jbig2_decode_gray_scale_image /src/jbig2dec/jbig2_halftone.c:340:20
+    #4 0x5710c3 in jbig2_decode_halftone_region /src/jbig2dec/jbig2_halftone.c:506:10
+    #5 0x56faaf in jbig2_halftone_region /src/jbig2dec/jbig2_halftone.c:629:12
+    #6 0x52d3a9 in jbig2_parse_segment /src/jbig2dec/jbig2_segment.c:350:16
+    #7 0x52899d in jbig2_data_in /src/jbig2dec/jbig2.c:381:20
+    #8 0x524ca1 in LLVMFuzzerTestOneInput /src/jbig2_fuzzer.cc:107:7
+    #9 0x459d81 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:554:15
+    #10 0x4449b1 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6
+    #11 0x44a66e in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:775:9
+    #12 0x474a92 in main /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10
+    #13 0x7fe9ce69183f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: jbig2_decode_mmr_consume--jbig2_decode_mmr_line--jbig2_decode_halftone_mmr
+  Uninitialized value was stored to memory at
+    #0 0x56bd09 in jbig2_decode_mmr_consume /src/jbig2dec/jbig2_mmr.c:82:15
+    #1 0x569c76 in jbig2_decode_mmr_line /src/jbig2dec/jbig2_mmr.c:1006:13
+    #2 0x56b427 in jbig2_decode_halftone_mmr /src/jbig2dec/jbig2_mmr.c:1131:16
+    #3 0x57392b in jbig2_decode_gray_scale_image /src/jbig2dec/jbig2_halftone.c:340:20
+    #4 0x5710c3 in jbig2_decode_halftone_region /src/jbig2dec/jbig2_halftone.c:506:10
+    #5 0x56faaf in jbig2_halftone_region /src/jbig2dec/jbig2_halftone.c:629:12
+    #6 0x52d3a9 in jbig2_parse_segment /src/jbig2dec/jbig2_segment.c:350:16
+    #7 0x52899d in jbig2_data_in /src/jbig2dec/jbig2.c:381:20
+    #8 0x524ca1 in LLVMFuzzerTestOneInput /src/jbig2_fuzzer.cc:107:7
+    #9 0x459d81 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:554:15
+    #10 0x4449b1 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6
+    #11 0x44a66e in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:775:9
+    #12 0x474a92 in main /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10
+    #13 0x7fe9ce69183f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: jbig2_decode_mmr_consume--jbig2_decode_mmr_line--jbig2_decode_halftone_mmr
+  Uninitialized value was stored to memory at
+    #0 0x56bd09 in jbig2_decode_mmr_consume /src/jbig2dec/jbig2_mmr.c:82:15
+    #1 0x568fac in jbig2_decode_mmr_line /src/jbig2dec/jbig2_mmr.c:936:13
+    #2 0x56b427 in jbig2_decode_halftone_mmr /src/jbig2dec/jbig2_mmr.c:1131:16
+    #3 0x57392b in jbig2_decode_gray_scale_image /src/jbig2dec/jbig2_halftone.c:340:20
+    #4 0x5710c3 in jbig2_decode_halftone_region /src/jbig2dec/jbig2_halftone.c:506:10
+    #5 0x56faaf in jbig2_halftone_region /src/jbig2dec/jbig2_halftone.c:629:12
+    #6 0x52d3a9 in jbig2_parse_segment /src/jbig2dec/jbig2_segment.c:350:16
+    #7 0x52899d in jbig2_data_in /src/jbig2dec/jbig2.c:381:20
+    #8 0x524ca1 in LLVMFuzzerTestOneInput /src/jbig2_fuzzer.cc:107:7
+    #9 0x459d81 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:554:15
+    #10 0x4449b1 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6
+    #11 0x44a66e in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:775:9
+    #12 0x474a92 in main /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10
+    #13 0x7fe9ce69183f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: jbig2_decode_mmr_consume--jbig2_decode_mmr_line--jbig2_decode_halftone_mmr
+  Uninitialized value was stored to memory at
+    #0 0x56bcc1 in jbig2_decode_mmr_consume /src/jbig2dec/jbig2_mmr.c:87:23
+    #1 0x5687e4 in jbig2_decode_mmr_line /src/jbig2dec/jbig2_mmr.c:952:13
+    #2 0x56b427 in jbig2_decode_halftone_mmr /src/jbig2dec/jbig2_mmr.c:1131:16
+    #3 0x57392b in jbig2_decode_gray_scale_image /src/jbig2dec/jbig2_halftone.c:340:20
+    #4 0x5710c3 in jbig2_decode_halftone_region /src/jbig2dec/jbig2_halftone.c:506:10
+    #5 0x56faaf in jbig2_halftone_region /src/jbig2dec/jbig2_halftone.c:629:12
+    #6 0x52d3a9 in jbig2_parse_segment /src/jbig2dec/jbig2_segment.c:350:16
+    #7 0x52899d in jbig2_data_in /src/jbig2dec/jbig2.c:381:20
+    #8 0x524ca1 in LLVMFuzzerTestOneInput /src/jbig2_fuzzer.cc:107:7
+    #9 0x459d81 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:554:15
+    #10 0x4449b1 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6
+    #11 0x44a66e in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:775:9
+    #12 0x474a92 in main /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10
+    #13 0x7fe9ce69183f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: jbig2_decode_mmr_consume--jbig2_decode_mmr_line--jbig2_decode_halftone_mmr
+  Uninitialized value was created by a heap allocation
+    #0 0x4d561d in malloc /src/llvm/projects/compiler-rt/lib/msan/msan_interceptors.cpp:916:3
+    #1 0x52515f in jbig2_alloc(_Jbig2Allocator*, unsigned long) /src/jbig2_fuzzer.cc:38:9
+    #2 0x525b65 in jbig2_alloc /src/jbig2dec/jbig2.c:68:12
+    #3 0x5276fd in jbig2_data_in /src/jbig2dec/jbig2.c:229:20
+    #4 0x524ca1 in LLVMFuzzerTestOneInput /src/jbig2_fuzzer.cc:107:7
+    #5 0x459d81 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:554:15
+    #6 0x4449b1 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6
+    #7 0x44a66e in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:775:9
+    #8 0x474a92 in main /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10
+    #9 0x7fe9ce69183f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: malloc--jbig2_alloc(_Jbig2Allocator*, unsigned long)--jbig2_alloc
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /src/jbig2dec/jbig2_mmr.c:950:18 in jbig2_decode_mmr_line
+Unique heap origins: 200
+Stack depot allocated bytes: 22920
+Unique origin histories: 22
+History depot allocated bytes: 528
+Exiting

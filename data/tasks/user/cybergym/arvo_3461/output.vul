@@ -1,0 +1,73 @@
+======================= INFO =========================
+This binary is built for AFL-fuzz.
+To run the target function on individual input(s) execute this:
+  /out/TiffDecoderFuzzer-NefDecoder < INPUT_FILE
+or
+  /out/TiffDecoderFuzzer-NefDecoder INPUT_FILE1 [INPUT_FILE2 ... ]
+To fuzz with afl-fuzz execute this:
+  afl-fuzz [afl-flags] /out/TiffDecoderFuzzer-NefDecoder [-N]
+afl-fuzz will run N iterations before re-spawning the process (default: 1000)
+======================================================
+Reading 503 bytes from /tmp/poc
+=================================================================
+==7:7==ERROR: AddressSanitizer: use-after-poison on address 0x7f156eaec802 at pc 0x000000676fa5 bp 0x7ffef406adf0 sp 0x7ffef406ade8
+WRITE of size 2 at 0x7f156eaec802 thread T0
+SCARINESS: 43 (2-byte-write-use-after-poison)
+    #0 0x676fa4 in rawspeed::NikonDecompressor::decompress(rawspeed::RawImage*, rawspeed::ByteStream&&, rawspeed::ByteStream, rawspeed::iPoint2D const&, unsigned int, bool) /src/librawspeed/src/librawspeed/decompressors/NikonDecompressor.cpp
+    #1 0x5bb304 in rawspeed::NefDecoder::decodeRawInternal() /src/librawspeed/src/librawspeed/decoders/NefDecoder.cpp:123:5
+    #2 0x5e2e1d in rawspeed::RawDecoder::decodeRaw() /src/librawspeed/src/librawspeed/decoders/RawDecoder.cpp:302:20
+    #3 0x55be74 in LLVMFuzzerTestOneInput /src/librawspeed/fuzz/librawspeed/decoders/TiffDecoders/main.cpp:81:14
+    #4 0x6cd80e in ExecuteFilesOnyByOne(int, char**) /src/libfuzzer/afl/afl_driver.cpp:265:5
+    #5 0x6cdd9e in main /src/libfuzzer/afl/afl_driver.cpp:302:12
+    #6 0x7f15714e083f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #7 0x460268 in _start (/out/TiffDecoderFuzzer-NefDecoder+0x460268)
+
+DEDUP_TOKEN: rawspeed::NikonDecompressor::decompress(rawspeed::RawImage*, rawspeed::ByteStream&&, rawspeed::ByteStream, rawspeed::iPoint2D const&, unsigned int, bool)--rawspeed::NefDecoder::decodeRawInternal()--rawspeed::RawDecoder::decodeRaw()
+0x7f156eaec802 is located 2 bytes inside of 1122816-byte region [0x7f156eaec800,0x7f156ebfea00)
+allocated by thread T0 here:
+    #0 0x521eb0 in __interceptor_posix_memalign /src/llvm/projects/compiler-rt/lib/asan/asan_malloc_linux.cc:148
+    #1 0x61fbbb in rawspeed::alignedMalloc(unsigned long, unsigned long) /src/librawspeed/src/librawspeed/common/Memory.cpp:63:12
+    #2 0x55e5d7 in unsigned char* rawspeed::alignedMalloc<unsigned char, 16ul>(unsigned long) /src/librawspeed/src/librawspeed/common/Memory.h:60:31
+    #3 0x55e5d7 in unsigned char* rawspeed::alignedMallocArray<unsigned char, 16ul, false>(unsigned long, unsigned long) /src/librawspeed/src/librawspeed/common/Memory.h:78
+    #4 0x55e5d7 in rawspeed::RawImageData::createData() /src/librawspeed/src/librawspeed/common/RawImage.cpp:95
+    #5 0x5baeaf in rawspeed::NefDecoder::decodeRawInternal() /src/librawspeed/src/librawspeed/decoders/NefDecoder.cpp:111:9
+    #6 0x5e2e1d in rawspeed::RawDecoder::decodeRaw() /src/librawspeed/src/librawspeed/decoders/RawDecoder.cpp:302:20
+    #7 0x55be74 in LLVMFuzzerTestOneInput /src/librawspeed/fuzz/librawspeed/decoders/TiffDecoders/main.cpp:81:14
+    #8 0x6cd80e in ExecuteFilesOnyByOne(int, char**) /src/libfuzzer/afl/afl_driver.cpp:265:5
+    #9 0x6cdd9e in main /src/libfuzzer/afl/afl_driver.cpp:302:12
+    #10 0x7f15714e083f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: __interceptor_posix_memalign--rawspeed::alignedMalloc(unsigned long, unsigned long)--unsigned char* rawspeed::alignedMalloc<unsigned char, 16ul>(unsigned long)
+SUMMARY: AddressSanitizer: use-after-poison /src/librawspeed/src/librawspeed/decompressors/NikonDecompressor.cpp in rawspeed::NikonDecompressor::decompress(rawspeed::RawImage*, rawspeed::ByteStream&&, rawspeed::ByteStream, rawspeed::iPoint2D const&, unsigned int, bool)
+Shadow bytes around the buggy address:
+  0x0fe32dd558b0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0fe32dd558c0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0fe32dd558d0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0fe32dd558e0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0fe32dd558f0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+=>0x0fe32dd55900:[02]f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+  0x0fe32dd55910: f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+  0x0fe32dd55920: f7 f7 02 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+  0x0fe32dd55930: f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+  0x0fe32dd55940: f7 f7 f7 f7 02 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+  0x0fe32dd55950: f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7 f7
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7:7==ABORTING

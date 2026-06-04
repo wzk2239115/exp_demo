@@ -1,0 +1,24 @@
+
+
+#
+# Fatal error in ../../src/diagnostics/objects-debug.cc, line 477
+# Check failed: IsSmi(value) || IsTheHole(value, isolate).
+#
+#
+#
+#FailureMessage Object: 0x7fff88a5d8e0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:390:32) [0x55cbb6384913]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55cbb6383cbd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55cbb636aec4]
+    d8(v8::internal::JSObject::JSObjectVerify(v8::internal::Isolate*) ./../../src/diagnostics/objects-debug.cc:482:7) [0x55cbb2fe35ed]
+    d8(v8::internal::TorqueGeneratedClassVerifiers::JSArrayVerify(v8::internal::Tagged<v8::internal::JSArray>, v8::internal::Isolate*) ./../../third_party/libc++/src/include/__atomic/support/c11.h:75:10) [0x55cbb47abd01]
+    d8(v8::internal::JSArray::JSArrayVerify(v8::internal::Isolate*) ./../../src/objects/js-objects-inl.h:66:72) [0x55cbb2ffc24c]
+    d8(v8::internal::HeapObject::HeapObjectVerify(v8::internal::Isolate*) ./../../src/diagnostics/objects-debug.cc:354:7) [0x55cbb2fdd3b2]
+    d8(v8::internal::Object::ObjectVerify(v8::internal::Tagged<v8::internal::Object>, v8::internal::Isolate*) ./../../src/objects/tagged-impl.h:142:5) [0x55cbb2fdaab6]
+    d8(v8::internal::__RT_impl_Runtime_HeapObjectVerify(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/roots/roots-inl.h:120:0) [0x55cbb3c30ab9]
+    d8(v8::internal::Runtime_HeapObjectVerify(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-test.cc:1922:1) [0x55cbb3c306d0]
+    d8(Builtins_CEntry_Return1_ArgvInRegister_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x55cbb59e49b8]
+timeout: the monitored command dumped core
+

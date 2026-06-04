@@ -1,0 +1,183 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+==================================================================
+BUG: KASAN: slab-out-of-bounds in usbtmc_interrupt+0x68d/0x6a0 drivers/usb/class/usbtmc.c:2309
+Read of size 1 at addr ffff88802284e281 by task swapper/1/0
+
+CPU: 1 UID: 0 PID: 0 Comm: swapper/1 Not tainted syzkaller #0 PREEMPT(full) 
+Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
+Call Trace:
+ <IRQ>
+ __dump_stack lib/dump_stack.c:94 [inline]
+ dump_stack_lvl+0x100/0x190 lib/dump_stack.c:120
+ print_address_description mm/kasan/report.c:378 [inline]
+ print_report+0x156/0x4c9 mm/kasan/report.c:482
+ kasan_report+0xdf/0x1e0 mm/kasan/report.c:595
+ usbtmc_interrupt+0x68d/0x6a0 drivers/usb/class/usbtmc.c:2309
+ __usb_hcd_giveback_urb+0x38d/0x610 drivers/usb/core/hcd.c:1657
+ usb_hcd_giveback_urb+0x3ca/0x4a0 drivers/usb/core/hcd.c:1741
+ dummy_timer+0xd85/0x3670 drivers/usb/gadget/udc/dummy_hcd.c:1995
+ __run_hrtimer kernel/time/hrtimer.c:1785 [inline]
+ __hrtimer_run_queues+0x50e/0xa70 kernel/time/hrtimer.c:1849
+ hrtimer_run_softirq+0x17d/0x350 kernel/time/hrtimer.c:1866
+ handle_softirqs+0x1eb/0x9e0 kernel/softirq.c:622
+ __do_softirq kernel/softirq.c:656 [inline]
+ invoke_softirq kernel/softirq.c:496 [inline]
+ __irq_exit_rcu+0xef/0x150 kernel/softirq.c:723
+ irq_exit_rcu+0x9/0x30 kernel/softirq.c:739
+ instr_sysvec_apic_timer_interrupt arch/x86/kernel/apic/apic.c:1056 [inline]
+ sysvec_apic_timer_interrupt+0xa3/0xc0 arch/x86/kernel/apic/apic.c:1056
+ </IRQ>
+ <TASK>
+ asm_sysvec_apic_timer_interrupt+0x1a/0x20 arch/x86/include/asm/idtentry.h:697
+RIP: 0010:pv_native_safe_halt+0xf/0x20 arch/x86/kernel/paravirt.c:63
+Code: d8 82 02 c3 cc cc cc cc 0f 1f 00 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 f3 0f 1e fa eb 07 0f 00 2d 43 0c 1c 00 fb f4 <e9> bc 35 03 00 66 2e 0f 1f 84 00 00 00 00 00 66 90 90 90 90 90 90
+RSP: 0018:ffffc90000177df0 EFLAGS: 00000206
+RAX: 0000000000067e03 RBX: ffff88801e6ca480 RCX: ffffffff8b8f7c75
+RDX: 0000000000000000 RSI: ffffffff8de71ed4 RDI: ffffffff8c1aefa0
+RBP: 0000000000000001 R08: 0000000000000001 R09: ffffed100d4a6795
+R10: ffff88806a533cab R11: 0000000000000000 R12: ffffed1003cd9490
+R13: 0000000000000001 R14: ffffffff90d96410 R15: 0000000000000000
+ arch_safe_halt arch/x86/include/asm/paravirt.h:73 [inline]
+ default_idle+0x9/0x10 arch/x86/kernel/process.c:767
+ default_idle_call+0x6c/0xb0 kernel/sched/idle.c:122
+ cpuidle_idle_call kernel/sched/idle.c:191 [inline]
+ do_idle+0x35b/0x4b0 kernel/sched/idle.c:332
+ cpu_startup_entry+0x4f/0x60 kernel/sched/idle.c:430
+ start_secondary+0x21d/0x2d0 arch/x86/kernel/smpboot.c:312
+ common_startup_64+0x13e/0x148
+ </TASK>
+
+Allocated by task 29:
+ kasan_save_stack+0x30/0x50 mm/kasan/common.c:57
+ kasan_save_track+0x14/0x30 mm/kasan/common.c:78
+ poison_kmalloc_redzone mm/kasan/common.c:398 [inline]
+ __kasan_kmalloc+0xaa/0xb0 mm/kasan/common.c:415
+ kasan_kmalloc include/linux/kasan.h:263 [inline]
+ __do_kmalloc_node mm/slub.c:5219 [inline]
+ __kmalloc_noprof+0x301/0x850 mm/slub.c:5231
+ kmalloc_noprof include/linux/slab.h:966 [inline]
+ usbtmc_probe+0xa41/0x1bc0 drivers/usb/class/usbtmc.c:2452
+ usb_probe_interface+0x303/0x8f0 drivers/usb/core/driver.c:396
+ call_driver_probe drivers/base/dd.c:583 [inline]
+ really_probe+0x241/0xa60 drivers/base/dd.c:661
+ __driver_probe_device+0x1de/0x400 drivers/base/dd.c:803
+ driver_probe_device+0x4c/0x1b0 drivers/base/dd.c:833
+ __device_attach_driver+0x1ff/0x3e0 drivers/base/dd.c:961
+ bus_for_each_drv+0x159/0x1e0 drivers/base/bus.c:500
+ __device_attach+0x1e4/0x4d0 drivers/base/dd.c:1033
+ device_initial_probe+0xaf/0xd0 drivers/base/dd.c:1088
+ bus_probe_device+0x64/0x160 drivers/base/bus.c:574
+ device_add+0x11d9/0x1950 drivers/base/core.c:3689
+ usb_set_configuration+0xd97/0x1c60 drivers/usb/core/message.c:2208
+ usb_generic_driver_probe+0xa1/0xe0 drivers/usb/core/generic.c:250
+ usb_probe_device+0xef/0x400 drivers/usb/core/driver.c:291
+ call_driver_probe drivers/base/dd.c:583 [inline]
+ really_probe+0x241/0xa60 drivers/base/dd.c:661
+ __driver_probe_device+0x1de/0x400 drivers/base/dd.c:803
+ driver_probe_device+0x4c/0x1b0 drivers/base/dd.c:833
+ __device_attach_driver+0x1ff/0x3e0 drivers/base/dd.c:961
+ bus_for_each_drv+0x159/0x1e0 drivers/base/bus.c:500
+ __device_attach+0x1e4/0x4d0 drivers/base/dd.c:1033
+ device_initial_probe+0xaf/0xd0 drivers/base/dd.c:1088
+ bus_probe_device+0x64/0x160 drivers/base/bus.c:574
+ device_add+0x11d9/0x1950 drivers/base/core.c:3689
+ usb_new_device.cold+0x685/0x115c drivers/usb/core/hub.c:2695
+ hub_port_connect drivers/usb/core/hub.c:5567 [inline]
+ hub_port_connect_change drivers/usb/core/hub.c:5707 [inline]
+ port_event drivers/usb/core/hub.c:5871 [inline]
+ hub_event+0x314d/0x4af0 drivers/usb/core/hub.c:5953
+ process_one_work+0x9d7/0x1920 kernel/workqueue.c:3275
+ process_scheduled_works kernel/workqueue.c:3358 [inline]
+ worker_thread+0x5da/0xe40 kernel/workqueue.c:3439
+ kthread+0x370/0x450 kernel/kthread.c:467
+ ret_from_fork+0x754/0xd80 arch/x86/kernel/process.c:158
+ ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:245
+
+The buggy address belongs to the object at ffff88802284e280
+ which belongs to the cache kmalloc-8 of size 8
+The buggy address is located 0 bytes to the right of
+ allocated 1-byte region [ffff88802284e280, ffff88802284e281)
+
+The buggy address belongs to the physical page:
+page: refcount:0 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x2284e
+flags: 0xfff00000000000(node=0|zone=1|lastcpupid=0x7ff)
+page_type: f5(slab)
+raw: 00fff00000000000 ffff88801b842500 dead000000000100 dead000000000122
+raw: 0000000000000000 0000000000800080 00000000f5000000 0000000000000000
+page dumped because: kasan: bad access detected
+page_owner tracks the page as allocated
+page last allocated via order 0, migratetype Unmovable, gfp_mask 0xd2cc0(GFP_KERNEL|__GFP_NOWARN|__GFP_NORETRY|__GFP_COMP|__GFP_NOMEMALLOC), pid 1, tgid 1 (swapper/0), ts 3014625096, free_ts 0
+ set_page_owner include/linux/page_owner.h:32 [inline]
+ post_alloc_hook+0x153/0x170 mm/page_alloc.c:1889
+ prep_new_page mm/page_alloc.c:1897 [inline]
+ get_page_from_freelist+0x111d/0x3140 mm/page_alloc.c:3962
+ __alloc_frozen_pages_noprof+0x27c/0x2ba0 mm/page_alloc.c:5250
+ alloc_slab_page mm/slub.c:3255 [inline]
+ allocate_slab mm/slub.c:3444 [inline]
+ new_slab+0xa6/0x6d0 mm/slub.c:3502
+ refill_objects+0x26b/0x400 mm/slub.c:7134
+ refill_sheaf mm/slub.c:2804 [inline]
+ alloc_full_sheaf mm/slub.c:2825 [inline]
+ __pcs_replace_empty_main+0x19f/0x600 mm/slub.c:4588
+ alloc_from_pcs mm/slub.c:4681 [inline]
+ slab_alloc_node mm/slub.c:4815 [inline]
+ __do_kmalloc_node mm/slub.c:5218 [inline]
+ __kmalloc_noprof+0x688/0x850 mm/slub.c:5231
+ kmalloc_noprof include/linux/slab.h:966 [inline]
+ acpi_ex_allocate_name_string+0x8c/0x340 drivers/acpi/acpica/exnames.c:66
+ acpi_ex_get_name_string+0x322/0xb90 drivers/acpi/acpica/exnames.c:367
+ acpi_ds_create_operand+0x3fd/0xc20 drivers/acpi/acpica/dsutils.c:446
+ acpi_ds_evaluate_name_path+0x158/0x4a0 drivers/acpi/acpica/dsutils.c:778
+ acpi_ds_exec_end_op+0xb78/0x1e60 drivers/acpi/acpica/dswexec.c:374
+ acpi_ps_parse_loop+0x5dd/0x24a0 drivers/acpi/acpica/psloop.c:525
+ acpi_ps_parse_aml+0x81e/0x1120 drivers/acpi/acpica/psparse.c:475
+ acpi_ps_execute_method+0x5c4/0xe90 drivers/acpi/acpica/psxface.c:190
+ acpi_ns_evaluate+0x640/0x1670 drivers/acpi/acpica/nseval.c:205
+page_owner free stack trace missing
+
+Memory state around the buggy address:
+ ffff88802284e180: 04 fc fc fc 00 fc fc fc 06 fc fc fc fa fc fc fc
+ ffff88802284e200: fa fc fc fc fa fc fc fc fa fc fc fc 00 fc fc fc
+>ffff88802284e280: 01 fc fc fc fa fc fc fc 00 fc fc fc fa fc fc fc
+                   ^
+ ffff88802284e300: 00 fc fc fc fa fc fc fc 06 fc fc fc 00 fc fc fc
+ ffff88802284e380: 00 fc fc fc 00 fc fc fc fa fc fc fc fa fc fc fc
+==================================================================
+----------------
+Code disassembly (best guess):
+   0:	d8 82 02 c3 cc cc    	fadds  -0x33333cfe(%rdx)
+   6:	cc                   	int3
+   7:	cc                   	int3
+   8:	0f 1f 00             	nopl   (%rax)
+   b:	90                   	nop
+   c:	90                   	nop
+   d:	90                   	nop
+   e:	90                   	nop
+   f:	90                   	nop
+  10:	90                   	nop
+  11:	90                   	nop
+  12:	90                   	nop
+  13:	90                   	nop
+  14:	90                   	nop
+  15:	90                   	nop
+  16:	90                   	nop
+  17:	90                   	nop
+  18:	90                   	nop
+  19:	90                   	nop
+  1a:	90                   	nop
+  1b:	f3 0f 1e fa          	endbr64
+  1f:	eb 07                	jmp    0x28
+  21:	0f 00 2d 43 0c 1c 00 	verw   0x1c0c43(%rip)        # 0x1c0c6b
+  28:	fb                   	sti
+  29:	f4                   	hlt
+* 2a:	e9 bc 35 03 00       	jmp    0x335eb <-- trapping instruction
+  2f:	66 2e 0f 1f 84 00 00 	cs nopw 0x0(%rax,%rax,1)
+  36:	00 00 00
+  39:	66 90                	xchg   %ax,%ax
+  3b:	90                   	nop
+  3c:	90                   	nop
+  3d:	90                   	nop
+  3e:	90                   	nop
+  3f:	90                   	nop

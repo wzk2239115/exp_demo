@@ -1,0 +1,33 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+==================================================================
+BUG: KASAN: vmalloc-out-of-bounds in irq_work_run_list kernel/irq_work.c:251 [inline]
+BUG: KASAN: vmalloc-out-of-bounds in run_irq_workd+0x116/0x190 kernel/irq_work.c:305
+Read of size 8 at addr ffffc9000cc08090 by task irq_work/1/26
+
+CPU: 1 UID: 0 PID: 26 Comm: irq_work/1 Not tainted syzkaller #0 PREEMPT_{RT,(full)} 
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 10/02/2025
+Call Trace:
+ <TASK>
+ dump_stack_lvl+0x189/0x250 lib/dump_stack.c:120
+ print_address_description mm/kasan/report.c:378 [inline]
+ print_report+0xca/0x240 mm/kasan/report.c:482
+ kasan_report+0x118/0x150 mm/kasan/report.c:595
+ irq_work_run_list kernel/irq_work.c:251 [inline]
+ run_irq_workd+0x116/0x190 kernel/irq_work.c:305
+ smpboot_thread_fn+0x53f/0xa60 kernel/smpboot.c:160
+ kthread+0x711/0x8a0 kernel/kthread.c:463
+ ret_from_fork+0x4b9/0x870 arch/x86/kernel/process.c:158
+ ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:245
+ </TASK>
+
+The buggy address belongs to a vmalloc virtual mapping
+Memory state around the buggy address:
+ ffffc9000cc07f80: f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8
+ ffffc9000cc08000: f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8
+>ffffc9000cc08080: f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8
+                         ^
+ ffffc9000cc08100: f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8
+ ffffc9000cc08180: f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8
+==================================================================

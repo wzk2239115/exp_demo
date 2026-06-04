@@ -1,0 +1,350 @@
+diff --git a/src/compiler/js-native-context-specialization.cc b/src/compiler/js-native-context-specialization.cc
+index 772c7db7918..72d12dd4dfe 100644
+--- a/src/compiler/js-native-context-specialization.cc
++++ b/src/compiler/js-native-context-specialization.cc
+@@ -1599,9 +1599,6 @@ Reduction JSNativeContextSpecialization::ReduceNamedAccess(
+     } else if (!access_builder.TryBuildStringCheck(
+                    broker(), access_info.lookup_start_object_maps(), &receiver,
+                    &effect, control) &&
+-               !access_builder.TryBuildStringWrapperCheck(
+-                   broker(), access_info.lookup_start_object_maps(), &receiver,
+-                   &effect, control) &&
+                !access_builder.TryBuildNumberCheck(
+                    broker(), access_info.lookup_start_object_maps(), &receiver,
+                    &effect, control)) {
+@@ -1633,6 +1630,19 @@ Reduction JSNativeContextSpecialization::ReduceNamedAccess(
+         access_builder.BuildCheckMaps(receiver, &effect, control,
+                                       access_info.lookup_start_object_maps());
+       }
++
++      if (HasOnlyStringWrapperMaps(broker(),
++                                   access_info.lookup_start_object_maps())) {
++        // In order to be able to use StringWrapperLength, we need a TypeGuard
++        // when all input maps are StringWrapper maps. Note that, alternatively,
++        // we could have a CheckStringWrapper, but it makes things simpler to
++        // just rely on CheckMaps. This is slightly suboptimal in case the code
++        // contains multiple string wrappers with different properties, but this
++        // should be a rare case.
++        lookup_start_object = receiver = effect =
++            graph()->NewNode(common()->TypeGuard(Type::StringWrapper()),
++                             lookup_start_object, effect, control);
++      }
+     } else {
+       // At least one of TryBuildStringCheck & TryBuildNumberCheck succeeded
+       // and updated the receiver. Update lookup_start_object to match (they
+diff --git a/src/compiler/opcodes.h b/src/compiler/opcodes.h
+index 4aff0da3a1b..f82d51fa47d 100644
+--- a/src/compiler/opcodes.h
++++ b/src/compiler/opcodes.h
+@@ -461,7 +461,6 @@
+   V(CheckReceiverOrNullOrUndefined)     \
+   V(CheckSmi)                           \
+   V(CheckString)                        \
+-  V(CheckStringWrapper)                 \
+   V(CheckStringOrStringWrapper)         \
+   V(CheckSymbol)                        \
+   V(CheckTurboshaftTypeOf)              \
+diff --git a/src/compiler/property-access-builder.cc b/src/compiler/property-access-builder.cc
+index 1fe11315a49..32c0ccf9b4d 100644
+--- a/src/compiler/property-access-builder.cc
++++ b/src/compiler/property-access-builder.cc
+@@ -80,20 +80,6 @@ bool PropertyAccessBuilder::TryBuildStringCheck(JSHeapBroker* broker,
+   return false;
+ }
+ 
+-bool PropertyAccessBuilder::TryBuildStringWrapperCheck(
+-    JSHeapBroker* broker, ZoneVector<MapRef> const& maps, Node** receiver,
+-    Effect* effect, Control control) {
+-  if (HasOnlyStringWrapperMaps(broker, maps)) {
+-    // Monormorphic string access (ignoring the fact that there are multiple
+-    // String maps).
+-    *receiver = *effect =
+-        graph()->NewNode(simplified()->CheckStringWrapper(FeedbackSource()),
+-                         *receiver, *effect, control);
+-    return true;
+-  }
+-  return false;
+-}
+-
+ bool PropertyAccessBuilder::TryBuildNumberCheck(JSHeapBroker* broker,
+                                                 ZoneVector<MapRef> const& maps,
+                                                 Node** receiver, Effect* effect,
+@@ -219,7 +205,6 @@ Node* PropertyAccessBuilder::TryFoldLoadConstantDataField(
+   if (!holder.has_value()) {
+     // Otherwise, try to match the {lookup_start_object} as a constant.
+     if (lookup_start_object->opcode() == IrOpcode::kCheckString ||
+-        lookup_start_object->opcode() == IrOpcode::kCheckStringWrapper ||
+         lookup_start_object->opcode() ==
+             IrOpcode::kCheckStringOrStringWrapper) {
+       // Bypassing Check inputs in order to allow constant folding.
+diff --git a/src/compiler/property-access-builder.h b/src/compiler/property-access-builder.h
+index 11fbf5d0593..85866766478 100644
+--- a/src/compiler/property-access-builder.h
++++ b/src/compiler/property-access-builder.h
+@@ -35,12 +35,6 @@ class PropertyAccessBuilder {
+   // maps.
+   bool TryBuildStringCheck(JSHeapBroker* broker, ZoneVector<MapRef> const& maps,
+                            Node** receiver, Effect* effect, Control control);
+-  // Builds the appropriate string wrapper check if the maps are only string
+-  // wrapper maps.
+-  bool TryBuildStringWrapperCheck(JSHeapBroker* broker,
+-                                  ZoneVector<MapRef> const& maps,
+-                                  Node** receiver, Effect* effect,
+-                                  Control control);
+   // Builds a number check if all maps are number maps.
+   bool TryBuildNumberCheck(JSHeapBroker* broker, ZoneVector<MapRef> const& maps,
+                            Node** receiver, Effect* effect, Control control);
+diff --git a/src/compiler/redundancy-elimination.cc b/src/compiler/redundancy-elimination.cc
+index 911bbea7b52..ab871717645 100644
+--- a/src/compiler/redundancy-elimination.cc
++++ b/src/compiler/redundancy-elimination.cc
+@@ -40,7 +40,6 @@ Reduction RedundancyElimination::Reduce(Node* node) {
+     case IrOpcode::kCheckReceiverOrNullOrUndefined:
+     case IrOpcode::kCheckSmi:
+     case IrOpcode::kCheckString:
+-    case IrOpcode::kCheckStringWrapper:
+     case IrOpcode::kCheckStringOrStringWrapper:
+     case IrOpcode::kCheckSymbol:
+     // These are not really check nodes, but behave the same in that they can be
+@@ -187,9 +186,6 @@ Subsumption CheckSubsumes(Node const* a, Node const* b,
+     } else if (a->opcode() == IrOpcode::kCheckInternalizedString &&
+                b->opcode() == IrOpcode::kCheckStringOrStringWrapper) {
+       // CheckInteralizedString(node) implies CheckStringOrStringWrapper(node)
+-    } else if (a->opcode() == IrOpcode::kCheckStringWrapper &&
+-               b->opcode() == IrOpcode::kCheckStringOrStringWrapper) {
+-      // CheckStringWrapper(node) implies CheckStringOrStringWrapper(node)
+     } else if (a->opcode() == IrOpcode::kCheckSmi &&
+                b->opcode() == IrOpcode::kCheckNumber) {
+       // CheckSmi(node) implies CheckNumber(node)
+@@ -223,7 +219,6 @@ Subsumption CheckSubsumes(Node const* a, Node const* b,
+         case IrOpcode::kCheckBounds:
+         case IrOpcode::kCheckSmi:
+         case IrOpcode::kCheckString:
+-        case IrOpcode::kCheckStringWrapper:
+         case IrOpcode::kCheckStringOrStringWrapper:
+         case IrOpcode::kCheckNumber:
+         case IrOpcode::kCheckBigInt:
+diff --git a/src/compiler/simplified-lowering.cc b/src/compiler/simplified-lowering.cc
+index 204f89283c8..ac791f0e118 100644
+--- a/src/compiler/simplified-lowering.cc
++++ b/src/compiler/simplified-lowering.cc
+@@ -3814,20 +3814,6 @@ class RepresentationSelector {
+         }
+         return;
+       }
+-      case IrOpcode::kCheckStringWrapper: {
+-        const CheckParameters& params = CheckParametersOf(node->op());
+-        if (InputIs(node, Type::StringWrapper())) {
+-          VisitUnop<T>(node, UseInfo::AnyTagged(),
+-                       MachineRepresentation::kTaggedPointer);
+-          if (lower<T>()) DeferReplacement(node, node->InputAt(0));
+-        } else {
+-          VisitUnop<T>(
+-              node,
+-              UseInfo::CheckedHeapObjectAsTaggedPointer(params.feedback()),
+-              MachineRepresentation::kTaggedPointer);
+-        }
+-        return;
+-      }
+       case IrOpcode::kCheckStringOrStringWrapper: {
+         const CheckParameters& params = CheckParametersOf(node->op());
+         if (InputIs(node, Type::StringOrStringWrapper())) {
+diff --git a/src/compiler/simplified-operator.cc b/src/compiler/simplified-operator.cc
+index 8c5efd81f7e..a8fd6fba72b 100644
+--- a/src/compiler/simplified-operator.cc
++++ b/src/compiler/simplified-operator.cc
+@@ -937,7 +937,6 @@ bool operator==(AssertNotNullParameters const& lhs,
+   V(CheckNumber, 1, 1)                   \
+   V(CheckSmi, 1, 1)                      \
+   V(CheckString, 1, 1)                   \
+-  V(CheckStringWrapper, 1, 1)            \
+   V(CheckStringOrStringWrapper, 1, 1)    \
+   V(CheckBigInt, 1, 1)                   \
+   V(CheckedBigIntToBigInt64, 1, 1)       \
+diff --git a/src/compiler/simplified-operator.h b/src/compiler/simplified-operator.h
+index 4a7ae712a24..ee61ba530af 100644
+--- a/src/compiler/simplified-operator.h
++++ b/src/compiler/simplified-operator.h
+@@ -1009,7 +1009,6 @@ class V8_EXPORT_PRIVATE SimplifiedOperatorBuilder final
+   const Operator* CheckReceiverOrNullOrUndefined();
+   const Operator* CheckSmi(const FeedbackSource& feedback);
+   const Operator* CheckString(const FeedbackSource& feedback);
+-  const Operator* CheckStringWrapper(const FeedbackSource& feedback);
+   const Operator* CheckStringOrStringWrapper(const FeedbackSource& feedback);
+   const Operator* CheckSymbol();
+ 
+diff --git a/src/compiler/turbofan-typer.cc b/src/compiler/turbofan-typer.cc
+index 41bb223baaa..371a46b9a91 100644
+--- a/src/compiler/turbofan-typer.cc
++++ b/src/compiler/turbofan-typer.cc
+@@ -2452,11 +2452,6 @@ Type Typer::Visitor::TypeCheckString(Node* node) {
+   return Type::Intersect(arg, Type::String(), zone());
+ }
+ 
+-Type Typer::Visitor::TypeCheckStringWrapper(Node* node) {
+-  Type arg = Operand(node, 0);
+-  return Type::Intersect(arg, Type::StringWrapper(), zone());
+-}
+-
+ Type Typer::Visitor::TypeCheckStringOrStringWrapper(Node* node) {
+   Type arg = Operand(node, 0);
+   return Type::Intersect(arg, Type::StringOrStringWrapper(), zone());
+diff --git a/src/compiler/turboshaft/assembler.h b/src/compiler/turboshaft/assembler.h
+index 3665080e505..0d46eb24d1a 100644
+--- a/src/compiler/turboshaft/assembler.h
++++ b/src/compiler/turboshaft/assembler.h
+@@ -2104,7 +2104,6 @@ class TurboshaftAssemblerOpInterface
+   DECL_OBJECT_IS(ReceiverOrNullOrUndefined)
+   DECL_OBJECT_IS(Smi)
+   DECL_OBJECT_IS(String)
+-  DECL_OBJECT_IS(StringWrapper)
+   DECL_OBJECT_IS(StringOrStringWrapper)
+   DECL_OBJECT_IS(Symbol)
+   DECL_OBJECT_IS(Undetectable)
+diff --git a/src/compiler/turboshaft/graph-builder.cc b/src/compiler/turboshaft/graph-builder.cc
+index 6c412176163..f1161beb337 100644
+--- a/src/compiler/turboshaft/graph-builder.cc
++++ b/src/compiler/turboshaft/graph-builder.cc
+@@ -829,8 +829,6 @@ OpIndex GraphBuilder::Process(
+                            NotAJavaScriptObjectOrNullOrUndefined, {})
+       CHECK_OBJECT_IS_CASE(CheckString, String, HeapObject, NotAString,
+                            CheckParametersOf(op).feedback())
+-      CHECK_OBJECT_IS_CASE(CheckStringWrapper, StringWrapper, HeapObject,
+-                           NotAStringWrapper, CheckParametersOf(op).feedback())
+       CHECK_OBJECT_IS_CASE(CheckStringOrStringWrapper, StringOrStringWrapper,
+                            HeapObject, NotAStringOrStringWrapper,
+                            CheckParametersOf(op).feedback())
+diff --git a/src/compiler/turboshaft/machine-lowering-reducer-inl.h b/src/compiler/turboshaft/machine-lowering-reducer-inl.h
+index 686b3788920..07c345e99f8 100644
+--- a/src/compiler/turboshaft/machine-lowering-reducer-inl.h
++++ b/src/compiler/turboshaft/machine-lowering-reducer-inl.h
+@@ -507,7 +507,6 @@ class MachineLoweringReducer : public Next {
+                                 (kIsNotStringMask | kIsNotInternalizedMask)),
+             kInternalizedTag);
+       }
+-      case ObjectIsOp::Kind::kStringWrapper:
+       case ObjectIsOp::Kind::kStringOrStringWrapper: {
+         Label<Word32> done(this);
+ 
+@@ -520,10 +519,8 @@ class MachineLoweringReducer : public Next {
+         V<Map> map = __ LoadMapField(input);
+         V<Word32> instance_type = __ LoadInstanceTypeField(map);
+ 
+-        if (kind == ObjectIsOp::Kind::kStringOrStringWrapper) {
+-          GOTO_IF(__ Uint32LessThan(instance_type, FIRST_NONSTRING_TYPE), done,
+-                  1);
+-        }
++        GOTO_IF(__ Uint32LessThan(instance_type, FIRST_NONSTRING_TYPE), done,
++                1);
+         GOTO_IF_NOT(__ Word32Equal(instance_type, JS_PRIMITIVE_WRAPPER_TYPE),
+                     done, 0);
+ 
+diff --git a/src/compiler/turboshaft/operations.cc b/src/compiler/turboshaft/operations.cc
+index b49b4b9a67b..bcf17dd148d 100644
+--- a/src/compiler/turboshaft/operations.cc
++++ b/src/compiler/turboshaft/operations.cc
+@@ -1116,8 +1116,6 @@ std::ostream& operator<<(std::ostream& os, ObjectIsOp::Kind kind) {
+       return os << "Smi";
+     case ObjectIsOp::Kind::kString:
+       return os << "String";
+-    case ObjectIsOp::Kind::kStringWrapper:
+-      return os << "StringWrapper";
+     case ObjectIsOp::Kind::kStringOrStringWrapper:
+       return os << "StringOrStringWrapper";
+     case ObjectIsOp::Kind::kSymbol:
+diff --git a/src/compiler/turboshaft/operations.h b/src/compiler/turboshaft/operations.h
+index deed6cedfd3..bc47f1c4748 100644
+--- a/src/compiler/turboshaft/operations.h
++++ b/src/compiler/turboshaft/operations.h
+@@ -4576,7 +4576,6 @@ struct ObjectIsOp : FixedArityOperationT<1, ObjectIsOp> {
+     kReceiverOrNullOrUndefined,
+     kSmi,
+     kString,
+-    kStringWrapper,
+     kStringOrStringWrapper,
+     kSymbol,
+     kUndetectable,
+diff --git a/src/compiler/typed-optimization.cc b/src/compiler/typed-optimization.cc
+index e494425996e..7fe49983bcc 100644
+--- a/src/compiler/typed-optimization.cc
++++ b/src/compiler/typed-optimization.cc
+@@ -51,8 +51,6 @@ Reduction TypedOptimization::Reduce(Node* node) {
+       return ReduceCheckNumber(node);
+     case IrOpcode::kCheckString:
+       return ReduceCheckString(node);
+-    case IrOpcode::kCheckStringWrapper:
+-      return ReduceCheckStringWrapper(node);
+     case IrOpcode::kCheckStringOrStringWrapper:
+       return ReduceCheckStringOrStringWrapper(node);
+     case IrOpcode::kCheckEqualsInternalizedString:
+@@ -270,16 +268,6 @@ Reduction TypedOptimization::ReduceCheckString(Node* node) {
+   return NoChange();
+ }
+ 
+-Reduction TypedOptimization::ReduceCheckStringWrapper(Node* node) {
+-  Node* const input = NodeProperties::GetValueInput(node, 0);
+-  Type const input_type = NodeProperties::GetType(input);
+-  if (input_type.Is(Type::StringWrapper())) {
+-    ReplaceWithValue(node, input);
+-    return Replace(input);
+-  }
+-  return NoChange();
+-}
+-
+ Reduction TypedOptimization::ReduceCheckStringOrStringWrapper(Node* node) {
+   Node* const input = NodeProperties::GetValueInput(node, 0);
+   Type const input_type = NodeProperties::GetType(input);
+diff --git a/src/compiler/typed-optimization.h b/src/compiler/typed-optimization.h
+index b24cf251570..1f3ba402a65 100644
+--- a/src/compiler/typed-optimization.h
++++ b/src/compiler/typed-optimization.h
+@@ -44,7 +44,6 @@ class V8_EXPORT_PRIVATE TypedOptimization final
+   Reduction ReduceCheckMaps(Node* node);
+   Reduction ReduceCheckNumber(Node* node);
+   Reduction ReduceCheckString(Node* node);
+-  Reduction ReduceCheckStringWrapper(Node* node);
+   Reduction ReduceCheckStringOrStringWrapper(Node* node);
+   Reduction ReduceCheckEqualsInternalizedString(Node* node);
+   Reduction ReduceCheckEqualsSymbol(Node* node);
+diff --git a/src/compiler/verifier.cc b/src/compiler/verifier.cc
+index 1815caca7af..94bfb9fa1e8 100644
+--- a/src/compiler/verifier.cc
++++ b/src/compiler/verifier.cc
+@@ -1555,10 +1555,6 @@ void Verifier::Visitor::Check(Node* node, const AllNodes& all) {
+       CheckValueInputIs(node, 0, Type::Any());
+       CheckTypeIs(node, Type::String());
+       break;
+-    case IrOpcode::kCheckStringWrapper:
+-      CheckValueInputIs(node, 0, Type::Any());
+-      CheckTypeIs(node, Type::StringWrapper());
+-      break;
+     case IrOpcode::kCheckStringOrStringWrapper:
+       CheckValueInputIs(node, 0, Type::Any());
+       CheckTypeIs(node, Type::StringOrStringWrapper());
+diff --git a/test/mjsunit/compiler/regress-376307767.js b/test/mjsunit/compiler/regress-376307767.js
+new file mode 100644
+index 00000000000..168d2a51e95
+--- /dev/null
++++ b/test/mjsunit/compiler/regress-376307767.js
+@@ -0,0 +1,21 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax
++
++function foo(o) {
++  return o.x;
++}
++
++let s1 = new String("abc");
++s1.x = 42;
++
++let s2 = new String("def");
++s2.y = 17;
++
++%PrepareFunctionForOptimization(foo);
++assertEquals(42, foo(s1));
++
++%OptimizeFunctionOnNextCall(foo);
++assertEquals(undefined, foo(s2));

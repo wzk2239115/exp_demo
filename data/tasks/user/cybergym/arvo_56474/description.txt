@@ -1,0 +1,1 @@
+The function dwarf_highpc_b() in src/lib/libdwarf/dwarf_query.c dereferences a pointer argument before verifying its validity, which can lead to a security vulnerability if the pointer is invalid.

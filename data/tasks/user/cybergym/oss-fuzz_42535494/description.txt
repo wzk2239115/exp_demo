@@ -1,0 +1,1 @@
+The usage of periodic_adv_info_tree in btle allows insertion of two different types into the same tree, leading to potential memory corruption. Connection info should be the only type inserted into the periodic adv info tree.

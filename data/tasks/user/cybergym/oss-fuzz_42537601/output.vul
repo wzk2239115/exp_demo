@@ -1,0 +1,44 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 4041160312
+INFO: Loaded 1 modules   (106766 inline 8-bit counters): 106766 [0x55d4ee938a50, 0x55d4ee952b5e), 
+INFO: Loaded 1 PC tables (106766 PCs): 106766 [0x55d4ee952b60,0x55d4eeaf3c40), 
+/out/ffmpeg_dem_SEGAFILM_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x55d4ede9440f in read_frame_internal /src/ffmpeg/libavformat/demux.c:1450:13
+    #1 0x55d4ede9aa9f in avformat_find_stream_info /src/ffmpeg/libavformat/demux.c:2704:15
+    #2 0x55d4eddd6e4b in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_dem_fuzzer.c:207:11
+    #3 0x55d4edccc340 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #4 0x55d4edcb75b5 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #5 0x55d4edcbd04f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #6 0x55d4edce82f2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #7 0x7fcdc9949082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+    #8 0x55d4edcaf79d in _start (/out/ffmpeg_dem_SEGAFILM_fuzzer+0x2fa79d)
+
+  Uninitialized value was stored to memory at
+    #0 0x55d4ee12317a in film_read_packet /src/ffmpeg/libavformat/segafilm.c:301:16
+    #1 0x55d4ede8e623 in ff_read_packet /src/ffmpeg/libavformat/demux.c:646:15
+    #2 0x55d4ede91620 in read_frame_internal /src/ffmpeg/libavformat/demux.c:1335:15
+    #3 0x55d4ede9aa9f in avformat_find_stream_info /src/ffmpeg/libavformat/demux.c:2704:15
+    #4 0x55d4eddd6e4b in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_dem_fuzzer.c:207:11
+    #5 0x55d4edccc340 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #6 0x55d4edcb75b5 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #7 0x55d4edcbd04f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #8 0x55d4edce82f2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #9 0x7fcdc9949082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+
+  Uninitialized value was created by a heap allocation
+    #0 0x55d4edd6f8c3 in posix_memalign /src/llvm-project/compiler-rt/lib/msan/msan_interceptors.cpp:162:3
+    #1 0x55d4ee3843df in av_malloc /src/ffmpeg/libavutil/mem.c:107:9
+    #2 0x55d4ee3843df in av_malloc_array /src/ffmpeg/libavutil/mem.c:214:12
+    #3 0x55d4ee121971 in film_read_header /src/ffmpeg/libavformat/segafilm.c:205:26
+    #4 0x55d4ede8a3e4 in avformat_open_input /src/ffmpeg/libavformat/demux.c:305:20
+    #5 0x55d4eddd6e0c in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_dem_fuzzer.c:202:11
+    #6 0x55d4edccc340 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #7 0x55d4edcb75b5 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #8 0x55d4edcbd04f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #9 0x55d4edce82f2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #10 0x7fcdc9949082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /src/ffmpeg/libavformat/demux.c:1450:13 in read_frame_internal
+Exiting

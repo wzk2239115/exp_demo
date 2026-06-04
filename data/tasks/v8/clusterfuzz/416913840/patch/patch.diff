@@ -1,0 +1,70 @@
+diff --git a/src/objects/descriptor-array-inl.h b/src/objects/descriptor-array-inl.h
+index f87013f55f0..a9000d2fdfe 100644
+--- a/src/objects/descriptor-array-inl.h
++++ b/src/objects/descriptor-array-inl.h
+@@ -232,7 +232,9 @@ void DescriptorArray::SetKey(InternalIndex descriptor_number,
+   EntryKeyField::Relaxed_Store(*this, entry_offset, key);
+   WRITE_BARRIER(*this, entry_offset + kEntryKeyOffset, key);
+   // Conservatively assume that the new key might break fast iteration.
+-  set_fast_iterable(FastIterableState::kUnknown);
++  // If the key was already known to be slow, it will stay slow.
++  set_fast_iterable_if(FastIterableState::kUnknown,
++                       FastIterableState::kJsonFast);
+ }
+ 
+ int DescriptorArray::GetSortedKeyIndex(int descriptor_number) {
+@@ -328,7 +330,7 @@ void DescriptorArray::Set(InternalIndex descriptor_number, Tagged<Name> key,
+   SetDetails(descriptor_number, details);
+   SetValue(descriptor_number, value);
+   // Resetting the fast iterable state is bottlenecked in SetKey().
+-  DCHECK_EQ(fast_iterable(), FastIterableState::kUnknown);
++  DCHECK_NE(fast_iterable(), FastIterableState::kJsonFast);
+ }
+ 
+ void DescriptorArray::Set(InternalIndex descriptor_number, Descriptor* desc) {
+@@ -336,7 +338,7 @@ void DescriptorArray::Set(InternalIndex descriptor_number, Descriptor* desc) {
+   Tagged<MaybeObject> value = *desc->GetValue();
+   Set(descriptor_number, key, value, desc->GetDetails());
+   // Resetting the fast iterable state is bottlenecked in SetKey().
+-  DCHECK_EQ(fast_iterable(), FastIterableState::kUnknown);
++  DCHECK_NE(fast_iterable(), FastIterableState::kJsonFast);
+ }
+ 
+ void DescriptorArray::Append(Descriptor* desc) {
+@@ -362,7 +364,7 @@ void DescriptorArray::Append(Descriptor* desc) {
+   SetSortedKey(insertion, descriptor_number);
+ 
+   // Resetting the fast iterable state is bottlenecked in SetKey().
+-  DCHECK_EQ(fast_iterable(), FastIterableState::kUnknown);
++  DCHECK_NE(fast_iterable(), FastIterableState::kJsonFast);
+ 
+   if (V8_LIKELY(collision_hash != desc_hash)) return;
+ 
+diff --git a/src/objects/objects.cc b/src/objects/objects.cc
+index d975a1a1eea..8a9d9a0c620 100644
+--- a/src/objects/objects.cc
++++ b/src/objects/objects.cc
+@@ -3937,7 +3937,7 @@ void DescriptorArray::Replace(InternalIndex index, Descriptor* descriptor) {
+   descriptor->SetSortedKeyIndex(GetSortedKeyIndex(index.as_int()));
+   Set(index, descriptor);
+   // Resetting the fast iterable state is bottlenecked in SetKey().
+-  DCHECK_EQ(fast_iterable(), FastIterableState::kUnknown);
++  DCHECK_NE(fast_iterable(), FastIterableState::kJsonFast);
+ }
+ 
+ // static
+diff --git a/test/mjsunit/regress/regress-416913840.js b/test/mjsunit/regress/regress-416913840.js
+new file mode 100644
+index 00000000000..b041c61343c
+--- /dev/null
++++ b/test/mjsunit/regress/regress-416913840.js
+@@ -0,0 +1,9 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++const str = '{"":13.3,"😊":[{"😊":0.011461940429979247},' +
++  '{"😊":{"😊":{}}},{"":[]}],"":[{}],"*":[[]]}';
++const expected = '{"":[{}],"😊":[{"😊":0.011461940429979247},' +
++  '{"😊":{"😊":{}}},{"":[]}],"*":[[]]}';
++assertEquals(expected, JSON.stringify(JSON.parse(str)));

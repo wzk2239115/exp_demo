@@ -1,0 +1,1 @@
+An underflow of the BMP palette size in the code is possible, which can lead to incorrect memory handling.

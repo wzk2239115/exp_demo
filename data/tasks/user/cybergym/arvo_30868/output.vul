@@ -1,0 +1,67 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3150421707
+INFO: Loaded 1 modules   (40884 inline 8-bit counters): 40884 [0x8745320, 0x874f2d4), 
+INFO: Loaded 1 PC tables (40884 PCs): 40884 [0x86a7aa4,0x86f7844), 
+/out/decompress_frame_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0xf6102938 at pc 0x082443f4 bp 0xffe98348 sp 0xffe98340
+READ of size 1 at 0xf6102938 thread T0
+SCARINESS: 12 (1-byte-read-heap-buffer-overflow)
+    #0 0x82443f3 in get_vlmeta_from_trailer /src/c-blosc2/blosc/frame.c:1337:7
+    #1 0x82443f3 in frame_get_vlmetalayers /src/c-blosc2/blosc/frame.c:1483:9
+    #2 0x8244fed in frame_to_schunk /src/c-blosc2/blosc/frame.c:1700:8
+    #3 0x82326d9 in blosc2_schunk_from_buffer /src/c-blosc2/blosc/schunk.c:448:27
+    #4 0x81a939f in LLVMFuzzerTestOneInput /src/c-blosc2/tests/fuzz/fuzz_decompress_frame.c:23:27
+    #5 0x80a37f1 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:599:15
+    #6 0x808dd8e in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #7 0x8093cb4 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned int)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9
+    #8 0x80bd497 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #9 0xf7d2d646 in __libc_start_main (/lib32/libc.so.6+0x18646)
+    #10 0x8068238 in _start (/out/decompress_frame_fuzzer+0x8068238)
+
+DEDUP_TOKEN: get_vlmeta_from_trailer--frame_get_vlmetalayers--frame_to_schunk
+0xf6102938 is located 6 bytes to the right of 98-byte region [0xf61028d0,0xf6102932)
+allocated by thread T0 here:
+    #0 0x8171c65 in malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:145:3
+    #1 0x8082544 in operator new(unsigned int) (/out/decompress_frame_fuzzer+0x8082544)
+    #2 0x808dd8e in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #3 0x8093cb4 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned int)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9
+    #4 0x80bd497 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #5 0xf7d2d646 in __libc_start_main (/lib32/libc.so.6+0x18646)
+
+DEDUP_TOKEN: malloc--operator new(unsigned int)--fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int)
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/c-blosc2/blosc/frame.c:1337:7 in get_vlmeta_from_trailer
+Shadow bytes around the buggy address:
+  0x3ec204d0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3ec204e0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3ec204f0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3ec20500: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3ec20510: fa fa fa fa fa fa fa fa fa fa 00 00 00 00 00 00
+=>0x3ec20520: 00 00 00 00 00 00 02[fa]fa fa fa fa fa fa fa fa
+  0x3ec20530: 00 00 00 00 00 00 00 00 00 00 00 00 02 fa fa fa
+  0x3ec20540: fa fa fa fa fa fa fd fd fd fd fd fd fd fd fd fd
+  0x3ec20550: fd fd fd fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3ec20560: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3ec20570: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==7==ABORTING

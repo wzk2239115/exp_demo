@@ -1,0 +1,1 @@
+A security vulnerability exists in the decode_r11 function where dwg_get_first_object fails when handling TABLE_CONTROL.

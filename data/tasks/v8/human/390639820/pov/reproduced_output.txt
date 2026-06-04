@@ -1,0 +1,16 @@
+=== stdout ===
+[*] spraying...
+[*] get [0]
+[+] SortState = c0411
+[*] get [1]
+
+=== stderr ===
+Sandbox testing mode is enabled. Only sandbox violations will be reported, all other crashes will be ignored.
+
+## V8 sandbox violation detected!
+
+Received signal 11 SEGV_MAPERR 42424242c0d3
+timeout: the monitored command dumped core
+
+=== exit code ===
+139

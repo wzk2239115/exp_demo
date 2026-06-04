@@ -1,0 +1,44 @@
+Accepting input from '/tmp/poc'
+Usage for fuzzing: honggfuzz -P [flags] -- /out/fuzz_objdump_safe
+=================================================================
+==7==ERROR: AddressSanitizer: attempting free on address which was not malloc()-ed: 0x602000000058 in thread T0
+SCARINESS: 40 (bad-free)
+    #0 0x49f962 in free /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:52:3
+    #1 0xbfe3af in alpha_ecoff_get_relocated_section_contents /src/binutils-gdb/bfd/coff-alpha.c:1137:3
+    #2 0x965c87 in bfd_get_relocated_section_contents /src/binutils-gdb/bfd/bfd.c:2342:10
+    #3 0x989439 in bfd_simple_get_relocated_section_contents /src/binutils-gdb/bfd/simple.c:276:14
+    #4 0x4e7811 in load_specific_debug_section /src/binutils-gdb/binutils/./fuzz_objdump.h:4252:13
+    #5 0x4f2044 in dump_dwarf_section /src/binutils-gdb/binutils/./fuzz_objdump.h:4422:6
+    #6 0x988153 in bfd_map_over_sections /src/binutils-gdb/bfd/section.c:1381:5
+    #7 0x4f0898 in dump_dwarf /src/binutils-gdb/binutils/./fuzz_objdump.h:4463:3
+    #8 0x4ed1e9 in dump_bfd /src/binutils-gdb/binutils/./fuzz_objdump.h:5667:5
+    #9 0x4eb83a in display_object_bfd /src/binutils-gdb/binutils/./fuzz_objdump.h
+    #10 0x4eb83a in display_any_bfd /src/binutils-gdb/binutils/./fuzz_objdump.h:5831:5
+    #11 0x4eb5ce in display_file /src/binutils-gdb/binutils/./fuzz_objdump.h:5852:3
+    #12 0x4eb5ce in LLVMFuzzerTestOneInput /src/binutils-gdb/binutils/fuzz_objdump.c:69:3
+    #13 0x4dd5bb in main (/out/fuzz_objdump_safe+0x4dd5bb)
+    #14 0x7f3e1ea41082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #15 0x41e7cd in _start (/out/fuzz_objdump_safe+0x41e7cd)
+
+DEDUP_TOKEN: free--alpha_ecoff_get_relocated_section_contents--bfd_get_relocated_section_contents
+0x602000000058 is located 8 bytes inside of 16-byte region [0x602000000050,0x602000000060)
+allocated by thread T0 here:
+    #0 0x49fc06 in __interceptor_malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:69:3
+    #1 0x97d05c in bfd_malloc /src/binutils-gdb/bfd/libbfd.c:290:9
+    #2 0xbfc771 in alpha_ecoff_get_relocated_section_contents /src/binutils-gdb/bfd/coff-alpha.c:758:31
+    #3 0x965c87 in bfd_get_relocated_section_contents /src/binutils-gdb/bfd/bfd.c:2342:10
+    #4 0x989439 in bfd_simple_get_relocated_section_contents /src/binutils-gdb/bfd/simple.c:276:14
+    #5 0x4e7811 in load_specific_debug_section /src/binutils-gdb/binutils/./fuzz_objdump.h:4252:13
+    #6 0x4f2044 in dump_dwarf_section /src/binutils-gdb/binutils/./fuzz_objdump.h:4422:6
+    #7 0x988153 in bfd_map_over_sections /src/binutils-gdb/bfd/section.c:1381:5
+    #8 0x4f0898 in dump_dwarf /src/binutils-gdb/binutils/./fuzz_objdump.h:4463:3
+    #9 0x4ed1e9 in dump_bfd /src/binutils-gdb/binutils/./fuzz_objdump.h:5667:5
+    #10 0x4eb83a in display_object_bfd /src/binutils-gdb/binutils/./fuzz_objdump.h
+    #11 0x4eb83a in display_any_bfd /src/binutils-gdb/binutils/./fuzz_objdump.h:5831:5
+    #12 0x4eb5ce in display_file /src/binutils-gdb/binutils/./fuzz_objdump.h:5852:3
+    #13 0x4eb5ce in LLVMFuzzerTestOneInput /src/binutils-gdb/binutils/fuzz_objdump.c:69:3
+    #14 0x4dd5bb in main (/out/fuzz_objdump_safe+0x4dd5bb)
+
+DEDUP_TOKEN: __interceptor_malloc--bfd_malloc--alpha_ecoff_get_relocated_section_contents
+SUMMARY: AddressSanitizer: bad-free /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:52:3 in free
+==7==ABORTING

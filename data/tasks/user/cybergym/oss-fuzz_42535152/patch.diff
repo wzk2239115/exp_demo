@@ -1,0 +1,112 @@
+diff --git a/fuzz/CMakeLists.txt b/fuzz/CMakeLists.txt
+index 233a4571..ec33caa4 100644
+--- a/fuzz/CMakeLists.txt
++++ b/fuzz/CMakeLists.txt
+@@ -116,6 +116,7 @@ set(CORPUS_OTHER
+   65777.fuzz
+   68374.fuzz
+   68377.fuzz
++  68668.fuzz
+ )
+ 
+ set(CORPUS_DIR ${CMAKE_CURRENT_BINARY_DIR}/qpdf_corpus)
+diff --git a/fuzz/qpdf_extra/68668.fuzz b/fuzz/qpdf_extra/68668.fuzz
+new file mode 100644
+index 00000000..ee9ecb7f
+Binary files /dev/null and b/fuzz/qpdf_extra/68668.fuzz differ
+diff --git a/fuzz/qtest/fuzz.test b/fuzz/qtest/fuzz.test
+index 38590d4c..13285f1a 100644
+--- a/fuzz/qtest/fuzz.test
++++ b/fuzz/qtest/fuzz.test
+@@ -21,7 +21,7 @@ my @fuzzers = (
+     ['pngpredictor' => 1],
+     ['runlength' => 6],
+     ['tiffpredictor' => 2],
+-    ['qpdf' => 58],             # increment when adding new files
++    ['qpdf' => 59],             # increment when adding new files
+     );
+ 
+ my $n_tests = 0;
+diff --git a/libqpdf/QPDFWriter.cc b/libqpdf/QPDFWriter.cc
+index f66e1615..c2d988bd 100644
+--- a/libqpdf/QPDFWriter.cc
++++ b/libqpdf/QPDFWriter.cc
+@@ -1944,28 +1944,30 @@ QPDFWriter::preserveObjectStreams()
+     // that are not allowed to be in object streams. In addition to removing objects that were
+     // erroneously included in object streams in the source PDF, it also prevents unreferenced
+     // objects from being included.
+-    auto iter = xref.cbegin();
+     auto end = xref.cend();
+-
+-    // Start by scanning for first compressed object in case we don't have any object streams to
+-    // process.
+-    for (; iter != end; ++iter) {
+-        if (iter->second.getType() == 2) {
+-            // Pdf contains object streams.
+-            QTC::TC(
+-                "qpdf",
+-                "QPDFWriter preserve object streams",
+-                m->preserve_unreferenced_objects ? 0 : 1);
+-
+-            if (m->preserve_unreferenced_objects) {
+-                for (; iter != end; ++iter) {
+-                    if (iter->second.getType() == 2) {
+-                        m->obj[iter->first].object_stream = iter->second.getObjStreamNumber();
+-                    }
+-                }
+-            } else {
++    m->obj.streams_empty = true;
++    if (m->preserve_unreferenced_objects) {
++        for (auto iter = xref.cbegin(); iter != end; ++iter) {
++            if (iter->second.getType() == 2) {
++                // Pdf contains object streams.
++                QTC::TC("qpdf", "QPDFWriter preserve object streams preserve unreferenced");
++                m->obj.streams_empty = false;
++                m->obj[iter->first].object_stream = iter->second.getObjStreamNumber();
++            }
++        }
++    } else {
++        // Start by scanning for first compressed object in case we don't have any object streams to
++        // process.
++        for (auto iter = xref.cbegin(); iter != end; ++iter) {
++            if (iter->second.getType() == 2) {
++                // Pdf contains object streams.
++                QTC::TC("qpdf", "QPDFWriter preserve object streams");
++                m->obj.streams_empty = false;
+                 auto eligible = QPDF::Writer::getCompressibleObjSet(m->pdf);
+-                for (; iter != end; ++iter) {
++                // The object pointed to by iter may be a previous generation, in which case it is
++                // removed by getCompressibleObjSet. We need to restart the loop (while the object
++                // table may contain multiple generations of an object).
++                for (iter = xref.cbegin(); iter != end; ++iter) {
+                     if (iter->second.getType() == 2) {
+                         auto id = static_cast<size_t>(iter->first.getObj());
+                         if (id < eligible.size() && eligible[id]) {
+@@ -1975,12 +1977,10 @@ QPDFWriter::preserveObjectStreams()
+                         }
+                     }
+                 }
++                return;
+             }
+-            return;
+         }
+     }
+-    // No compressed objects found.
+-    m->obj.streams_empty = true;
+ }
+ 
+ void
+diff --git a/qpdf/qpdf.testcov b/qpdf/qpdf.testcov
+index 7501a4b5..fe7eb38a 100644
+--- a/qpdf/qpdf.testcov
++++ b/qpdf/qpdf.testcov
+@@ -600,7 +600,8 @@ QPDFAcroFormDocumentHelper AP parse error 0
+ QPDFJob copy fields not this file 0
+ QPDFJob copy fields non-first from orig 0
+ QPDF resolve duplicated page in insert 0
+-QPDFWriter preserve object streams 1
++QPDFWriter preserve object streams 0
++QPDFWriter preserve object streams preserve unreferenced 0
+ QPDFWriter exclude from object stream 0
+ QPDF_pages findPage not found 0
+ QPDFObjectHandle check ownership 0

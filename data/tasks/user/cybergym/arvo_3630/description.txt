@@ -1,0 +1,1 @@
+A missing return statement in PJ_lsat.c causes incorrect function behavior, potentially leading to a security vulnerability.

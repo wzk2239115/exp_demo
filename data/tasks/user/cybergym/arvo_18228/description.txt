@@ -1,0 +1,1 @@
+An illegal memory access occurs in the xgate disassembler due to incorrect decoding of the XGATE_OP_DYA operand in the print_insn function of xgate-dis.c.

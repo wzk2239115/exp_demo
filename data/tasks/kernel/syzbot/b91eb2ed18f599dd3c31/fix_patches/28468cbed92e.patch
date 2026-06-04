@@ -1,0 +1,79 @@
+From 28468cbed92ea5eed19e2cbd2d55758c3c7938ca Mon Sep 17 00:00:00 2001
+From: Bart Van Assche <bvanassche@acm.org>
+Date: Mon, 4 Mar 2024 10:29:44 -0800
+Subject: Revert "fs/aio: Make io_cancel() generate completions again"
+
+Patch "fs/aio: Make io_cancel() generate completions again" is based on the
+assumption that calling kiocb->ki_cancel() does not complete R/W requests.
+This is incorrect: the two drivers that call kiocb_set_cancel_fn() callers
+set a cancellation function that calls usb_ep_dequeue(). According to its
+documentation, usb_ep_dequeue() calls the completion routine with status
+-ECONNRESET. Hence this revert.
+
+Cc: Benjamin LaHaise <ben@communityfibre.ca>
+Cc: Eric Biggers <ebiggers@google.com>
+Cc: Christoph Hellwig <hch@lst.de>
+Cc: Avi Kivity <avi@scylladb.com>
+Cc: Sandeep Dhavale <dhavale@google.com>
+Cc: Jens Axboe <axboe@kernel.dk>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Kent Overstreet <kent.overstreet@linux.dev>
+Cc: stable@vger.kernel.org
+Reported-by: syzbot+b91eb2ed18f599dd3c31@syzkaller.appspotmail.com
+Fixes: 54cbc058d86b ("fs/aio: Make io_cancel() generate completions again")
+Signed-off-by: Bart Van Assche <bvanassche@acm.org>
+Link: https://lore.kernel.org/r/20240304182945.3646109-1-bvanassche@acm.org
+Acked-by: Eric Biggers <ebiggers@google.com>
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+---
+ fs/aio.c | 27 ++++++++++++++++-----------
+ 1 file changed, 16 insertions(+), 11 deletions(-)
+
+diff --git a/fs/aio.c b/fs/aio.c
+index 28223f5119312..da18dbcfcb220 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -2165,11 +2165,14 @@ COMPAT_SYSCALL_DEFINE3(io_submit, compat_aio_context_t, ctx_id,
+ #endif
+ 
+ /* sys_io_cancel:
+- *	Attempts to cancel an iocb previously passed to io_submit(). If the
+- *	operation is successfully cancelled 0 is returned. May fail with
+- *	-EFAULT if any of the data structures pointed to are invalid. May
+- *	fail with -EINVAL if aio_context specified by ctx_id is invalid. Will
+- *	fail with -ENOSYS if not implemented.
++ *	Attempts to cancel an iocb previously passed to io_submit.  If
++ *	the operation is successfully cancelled, the resulting event is
++ *	copied into the memory pointed to by result without being placed
++ *	into the completion queue and 0 is returned.  May fail with
++ *	-EFAULT if any of the data structures pointed to are invalid.
++ *	May fail with -EINVAL if aio_context specified by ctx_id is
++ *	invalid.  May fail with -EAGAIN if the iocb specified was not
++ *	cancelled.  Will fail with -ENOSYS if not implemented.
+  */
+ SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
+ 		struct io_event __user *, result)
+@@ -2200,12 +2203,14 @@ SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
+ 	}
+ 	spin_unlock_irq(&ctx->ctx_lock);
+ 
+-	/*
+-	 * The result argument is no longer used - the io_event is always
+-	 * delivered via the ring buffer.
+-	 */
+-	if (ret == 0 && kiocb->rw.ki_flags & IOCB_AIO_RW)
+-		aio_complete_rw(&kiocb->rw, -EINTR);
++	if (!ret) {
++		/*
++		 * The result argument is no longer used - the io_event is
++		 * always delivered via the ring buffer. -EINPROGRESS indicates
++		 * cancellation is progress:
++		 */
++		ret = -EINPROGRESS;
++	}
+ 
+ 	percpu_ref_put(&ctx->users);
+ 
+-- 
+cgit 1.3-korg
+

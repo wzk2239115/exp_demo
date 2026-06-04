@@ -1,0 +1,1 @@
+A vulnerability exists in the size calculation within the DEFINE_SIZE_ARRAY_SIZED macro.

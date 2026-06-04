@@ -1,0 +1,46 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3433315570
+INFO: Loaded 1 modules   (97453 inline 8-bit counters): 97453 [0x1222430, 0x123a0dd), 
+INFO: Loaded 1 PC tables (97453 PCs): 97453 [0x123a0e0,0x13b6bb0), 
+/out/flb-it-fuzz-parser_fuzzer_OSSFUZZ: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+[2026/04/06 05:18:39] [error] [build/src/CMakeFiles/fluent-bit-static.dir/compiler_depend.ts:234 errno=0] Success
+[2026/04/06 05:18:39] [error] [multiline: java] error on mapping rules
+[2026/04/06 05:18:39] [error] [multiline] could not init 'java' built-in parser
+[2026/04/06 05:18:39] [ info] Configuration:
+[2026/04/06 05:18:39] [ info]  flush time     | 1.000000 seconds
+[2026/04/06 05:18:39] [ info]  grace          | 5 seconds
+[2026/04/06 05:18:39] [ info]  daemon         | 0
+[2026/04/06 05:18:39] [ info] ___________
+[2026/04/06 05:18:39] [ info]  inputs:
+[2026/04/06 05:18:39] [ info] ___________
+[2026/04/06 05:18:39] [ info]  filters:
+[2026/04/06 05:18:39] [ info] ___________
+[2026/04/06 05:18:39] [ info]  outputs:
+[2026/04/06 05:18:39] [ info] ___________
+[2026/04/06 05:18:39] [ info]  collectors:
+[2026/04/06 05:18:39] [error] Not at boundary but still NULL terminating : 10 - ''
+[2026/04/06 05:18:39] [error] [build/src/CMakeFiles/fluent-bit-static.dir/compiler_depend.ts:43 errno=25] Inappropriate ioctl for device
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address (pc 0x000000595735 bp 0x7ffe96266d30 sp 0x7ffe96266d10 T0)
+==7==The signal is caused by a READ memory access.
+==7==Hint: this fault was caused by a dereference of a high value address (see register values below).  Disassemble the provided pc to learn which register was used.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x595735 in flb_sds_alloc /src/fluent-bit/include/fluent-bit/flb_sds.h:69:40
+    #1 0x595735 in flb_sds_copy /src/fluent-bit/src/flb_sds.c:265:13
+    #2 0x5cc53a in flb_parser_decoder_do /src/fluent-bit/src/flb_parser_decoder.c:360:19
+    #3 0x5d4250 in flb_parser_logfmt_do /src/fluent-bit/src/flb_parser_logfmt.c:309:15
+    #4 0x5c28b9 in flb_parser_do /src/fluent-bit/src/flb_parser.c:922:16
+    #5 0x5937ef in LLVMFuzzerTestOneInput /src/fluent-bit/tests/internal/fuzzers/parser_fuzzer.c:160:9
+    #6 0x48c8f2 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #7 0x4784a2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #8 0x47dd0c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #9 0x4a66a2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #10 0x7fc17c06f082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)
+    #11 0x456bed in _start (/out/flb-it-fuzz-parser_fuzzer_OSSFUZZ+0x456bed)
+
+DEDUP_TOKEN: flb_sds_alloc--flb_sds_copy--flb_parser_decoder_do
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/fluent-bit/include/fluent-bit/flb_sds.h:69:40 in flb_sds_alloc
+==7==ABORTING

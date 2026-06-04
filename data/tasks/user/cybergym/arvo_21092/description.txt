@@ -1,0 +1,1 @@
+An out-of-bound read occurs in the code when the input is larger than all the coordinates in the table, causing the index variable 'i' to become equal to the array's length due to the increment at the end of the loop.

@@ -1,0 +1,1 @@
+A heap-buffer-overflow vulnerability exists in the Bittorrent protocol detection code in ndpi_search_bittorrent (bittorrent.c:500:71), where the use of strncmp can read beyond the allocated buffer. This issue can be triggered during packet processing, leading to out-of-bounds memory access.

@@ -1,0 +1,58 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3384593053
+INFO: Loaded 3 modules   (182996 inline 8-bit counters): 13708 [0x7f4b475399e0, 0x7f4b4753cf6c), 959 [0x7f4b4759aa40, 0x7f4b4759adff), 168329 [0x2da30d0, 0x2dcc259), 
+INFO: Loaded 3 PC tables (182996 PCs): 13708 [0x7f4b4753cf70,0x7f4b47572830), 959 [0x7f4b4759ae00,0x7f4b4759e9f0), 168329 [0x24cdc30,0x275f4c0), 
+/out/gstoraster_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address (pc 0x7f4b4728bdd6 bp 0x7ffd0ce01690 sp 0x7ffd0ce01670 T0)
+==7==The signal is caused by a READ memory access.
+==7==Hint: this fault was caused by a dereference of a high value address (see register values below).  Disassemble the provided pc to learn which register was used.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x7f4b4728bdd6 in pthread_cond_destroy@@GLIBC_2.3.2 (/lib/x86_64-linux-gnu/libpthread.so.0+0xedd6)
+    #1 0x7094ca in gp_semaphore_close /src/ghostpdl/./base/gp_psync.c:167:13
+    #2 0xbae7a2 in gx_semaphore_free /src/ghostpdl/./base/gxsync.c:74:9
+    #3 0x737a09 in icc_linkcache_finalize /src/ghostpdl/./base/gsicc_cache.c:167:9
+    #4 0x12b83f6 in i_free_object /src/ghostpdl/./base/gsalloc.c:1502:9
+    #5 0x737677 in gsicc_cache_new /src/ghostpdl/./base/gsicc_cache.c
+    #6 0x8e4ed3 in gs_gstate_initialize /src/ghostpdl/./base/gsgstate.c:143:27
+    #7 0x11a1034 in clist_playback_band /src/ghostpdl/./base/gxclrast.c:643:12
+    #8 0x690e2c in clist_playback_file_bands /src/ghostpdl/./base/gxclread.c:1035:16
+    #9 0x695480 in clist_render_rectangle /src/ghostpdl/./base/gxclread.c:969:16
+    #10 0x69485a in clist_rasterize_lines /src/ghostpdl/./base/gxclread.c:858:20
+    #11 0x693a1f in clist_get_bits_rectangle /src/ghostpdl/./base/gxclread.c:747:12
+    #12 0x667dba in gdev_prn_get_bits /src/ghostpdl/./base/gdevprn.c:1639:12
+    #13 0x7f0c64 in cups_print_chunked /src/ghostpdl/./cups/gdevcups.c:4849:9
+    #14 0x7df54b in cups_print_pages /src/ghostpdl/./cups/gdevcups.c
+    #15 0x663c49 in gdev_prn_output_page_aux /src/ghostpdl/./base/gdevprn.c:1052:27
+    #16 0x662f05 in gdev_prn_output_page /src/ghostpdl/./base/gdevprn.c:1088:12
+    #17 0x7f0419 in cups_output_page /src/ghostpdl/./cups/gdevcups.c:2826:15
+    #18 0x8ab27f in gs_output_page /src/ghostpdl/./base/gsdevice.c:207:17
+    #19 0xdd0f42 in zoutputpage /src/ghostpdl/./psi/zdevice.c:416:12
+    #20 0xcfff1c in interp /src/ghostpdl/./psi/interp.c:1351:28
+    #21 0xcfff1c in gs_call_interp /src/ghostpdl/./psi/interp.c:522:12
+    #22 0xcfff1c in gs_interpret /src/ghostpdl/./psi/interp.c:479:12
+    #23 0x568daa in gs_main_interpret /src/ghostpdl/./psi/imain.c:257:12
+    #24 0x568daa in gs_main_run_string_end /src/ghostpdl/./psi/imain.c:945:12
+    #25 0x568daa in gs_main_run_string_with_length /src/ghostpdl/./psi/imain.c:889:12
+    #26 0x564252 in gs_main_run_string /src/ghostpdl/./psi/imain.c:870:12
+    #27 0x1026001 in run_string /src/ghostpdl/./psi/imainarg.c:1166:12
+    #28 0x1022039 in swproc /src/ghostpdl/./psi/imainarg.c:367:20
+    #29 0x101ef1e in gs_main_init_with_args01 /src/ghostpdl/./psi/imainarg.c:224:24
+    #30 0x1025d89 in gs_main_init_with_args /src/ghostpdl/./psi/imainarg.c:289:16
+    #31 0xceba04 in psapi_init_with_args /src/ghostpdl/./psi/psapi.c:281:12
+    #32 0x5606ac in gsapi_init_with_args /src/ghostpdl/./psi/iapi.c:253:12
+    #33 0x55f840 in gs_to_raster_fuzz /src/gstoraster_fuzzer.cc:97:8
+    #34 0x55f840 in LLVMFuzzerTestOneInput /src/gstoraster_fuzzer.cc:114:2
+    #35 0x456603 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) cxa_noexception.cpp
+    #36 0x442242 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #37 0x447a9c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) cxa_noexception.cpp
+    #38 0x4708a2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #39 0x7f4b46f33082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)
+    #40 0x4209fd in _start (/out/gstoraster_fuzzer+0x4209fd)
+
+DEDUP_TOKEN: pthread_cond_destroy@@GLIBC_2.3.2--gp_semaphore_close--gx_semaphore_free
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV (/lib/x86_64-linux-gnu/libpthread.so.0+0xedd6) in pthread_cond_destroy@@GLIBC_2.3.2
+==7==ABORTING

@@ -1,0 +1,1 @@
+A use of uninitialized value vulnerability exists in avcodec/hevc/hevcdec due to qp_y_tab not being initialized.

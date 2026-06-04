@@ -1,0 +1,31 @@
+
+
+#
+# Fatal error in ../../src/codegen/assembler.cc, line 237
+# Debug check failed: position.IsKnown().
+#
+#
+#
+#FailureMessage Object: 0x7f3bfbffdad0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x55c9a5a39a23]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55c9a5a38e0d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55c9a5a1dcf4]
+    out/debug/d8(+0x401b715) [0x55c9a5a1d715]
+    d8(v8::internal::Assembler::RecordDeoptReason(v8::internal::DeoptimizeReason, unsigned int, v8::internal::SourcePosition, int) ./../../src/codegen/assembler.cc:0:0) [0x55c9a266d51e]
+    d8(v8::internal::compiler::CodeGenerator::AssembleDeoptimizerCall(v8::internal::compiler::DeoptimizationExit*) ./../../src/compiler/backend/code-generator.cc:0:0) [0x55c9a401d174]
+    d8(v8::internal::compiler::CodeGenerator::AssembleCode() ./../../src/compiler/backend/code-generator.cc:405:15) [0x55c9a401e245]
+    d8(auto v8::internal::compiler::turboshaft::Pipeline::Run<v8::internal::compiler::turboshaft::AssembleCodePhase>() ./../../src/logging/runtime-call-stats.h:795:9) [0x55c9a4352a94]
+    d8(v8::internal::compiler::turboshaft::Pipeline::AssembleCode(v8::internal::compiler::Linkage*) ./../../src/compiler/turboshaft/pipelines.h:523:45) [0x55c9a431f9ec]
+    d8(v8::internal::compiler::(anonymous namespace)::GenerateCodeFromTurboshaftGraph(bool, v8::internal::compiler::Linkage*, v8::internal::compiler::turboshaft::Pipeline&, v8::internal::compiler::PipelineImpl*, std::__Cr::shared_ptr<v8::internal::compiler::OsrHelper>) ./../../src/compiler/pipeline.cc:0:25) [0x55c9a430b941]
+    d8(v8::internal::compiler::PipelineCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/compiler/pipeline.cc:849:10) [0x55c9a430a4d5]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:469:22) [0x55c9a267655d]
+    d8(v8::internal::OptimizingCompileDispatcher::CompileNext(v8::internal::TurbofanCompilationJob*, v8::internal::LocalIsolate*) ./../../src/compiler-dispatcher/optimizing-compile-dispatcher.cc:103:44) [0x55c9a2722c58]
+    d8(v8::internal::OptimizingCompileDispatcher::CompileTask::Run(v8::JobDelegate*) ./../../src/tracing/trace-event.h:568:9) [0x55c9a2724b61]
+    d8(v8::platform::DefaultJobWorker::Run() ./../../src/libplatform/default-job.cc:19:46) [0x55c9a5a3b449]
+    d8(v8::platform::DefaultWorkerThreadsTaskRunner::WorkerThread::Run() ./../../src/libplatform/default-worker-threads-task-runner.cc:96:9) [0x55c9a5a40d5c]
+    d8(v8::base::ThreadEntry(void*) ./../../src/base/platform/platform-posix.cc:1232:3) [0x55c9a5a364a6]
+    /lib/x86_64-linux-gnu/libc.so.6(+0x9caa4) [0x7f3c2dec7aa4]
+    /lib/x86_64-linux-gnu/libc.so.6(__clone+0x44) [0x7f3c2df54a64]
+timeout: the monitored command dumped core

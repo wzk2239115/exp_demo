@@ -1,0 +1,1 @@
+A vulnerability exists due to invalid handling of long hex values in the config file.

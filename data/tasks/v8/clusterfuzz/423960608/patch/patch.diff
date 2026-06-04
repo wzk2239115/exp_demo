@@ -1,0 +1,40 @@
+diff --git a/src/maglev/maglev-graph-builder.cc b/src/maglev/maglev-graph-builder.cc
+index 97fcf23ffd6..3aa16ebf614 100644
+--- a/src/maglev/maglev-graph-builder.cc
++++ b/src/maglev/maglev-graph-builder.cc
+@@ -7717,10 +7717,6 @@ MaglevGraphBuilder::FindContinuationForPolymorphicPropertyLoad() {
+     return {};
+   }
+ 
+-  DCHECK(iterator_.current_bytecode() ==
+-             interpreter::Bytecode::kGetNamedProperty ||
+-         iterator_.current_bytecode() ==
+-             interpreter::Bytecode::kGetNamedPropertyFromSuper);
+   if (iterator_.current_bytecode() !=
+       interpreter::Bytecode::kGetNamedProperty) {
+     return {};
+diff --git a/test/mjsunit/maglev/regress-423960608.js b/test/mjsunit/maglev/regress-423960608.js
+new file mode 100644
+index 00000000000..9547fefc440
+--- /dev/null
++++ b/test/mjsunit/maglev/regress-423960608.js
+@@ -0,0 +1,19 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax
++// Flags: --maglev-poly-calls
++
++function foo(o) {
++  try {
++    for (let p of o) {}
++  } catch (e) {}
++}
++%PrepareFunctionForOptimization(foo);
++
++foo(() => {});
++foo([1, 2, 3]);
++
++%OptimizeMaglevOnNextCall(foo);
++foo();

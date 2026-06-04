@@ -1,0 +1,61 @@
+Accepting input from '/tmp/poc'
+Usage for fuzzing: honggfuzz -P [flags] -- /out/fuzz_disassemble
+=================================================================
+==7==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x7f0ae4a2d864 at pc 0x00000078d7fd bp 0x7fff853a64d0 sp 0x7fff853a64c8
+WRITE of size 1 at 0x7f0ae4a2d864 thread T0
+SCARINESS: 46 (1-byte-write-stack-buffer-overflow)
+    #0 0x78d7fc in bfd_put_bits /src/binutils-gdb/bfd/libbfd.c:839:24
+    #1 0x6db75d in hash_insn_array /src/binutils-gdb/opcodes/cgen-dis.c:124:7
+    #2 0x6db3de in build_dis_hash_table /src/binutils-gdb/opcodes/cgen-dis.c:199:20
+    #3 0x6db281 in cgen_dis_lookup_insn /src/binutils-gdb/opcodes/cgen-dis.c:235:5
+    #4 0x591295 in print_insn /src/binutils-gdb/opcodes/bpf-dis.c:391:15
+    #5 0x590fac in bpf_print_insn /src/binutils-gdb/opcodes/bpf-dis.c:96:10
+    #6 0x590b15 in print_insn_bpf /src/binutils-gdb/opcodes/bpf-dis.c:623:12
+    #7 0x4c7505 in LLVMFuzzerTestOneInput /src/binutils-gdb/fuzz/fuzz_disassemble.c:86:30
+    #8 0x4c811d in main (/out/fuzz_disassemble+0x4c811d)
+    #9 0x7f0ae39ee83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #10 0x41ca98 in _start (/out/fuzz_disassemble+0x41ca98)
+
+DEDUP_TOKEN: bfd_put_bits--hash_insn_array--build_dis_hash_table
+Address 0x7f0ae4a2d864 is located in stack of thread T0 at offset 36 in frame
+    #0 0x6db54f in hash_insn_array /src/binutils-gdb/opcodes/cgen-dis.c:106
+
+DEDUP_TOKEN: hash_insn_array
+  This frame has 1 object(s):
+    [32, 36) 'buf' (line 113) <== Memory access at offset 36 overflows this variable
+HINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork
+      (longjmp and C++ exceptions *are* supported)
+SUMMARY: AddressSanitizer: stack-buffer-overflow /src/binutils-gdb/bfd/libbfd.c:839:24 in bfd_put_bits
+Shadow bytes around the buggy address:
+  0x0fe1dc93dab0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe1dc93dac0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe1dc93dad0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe1dc93dae0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe1dc93daf0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0fe1dc93db00: f1 f1 f1 f1 00 00 f3 f3 f1 f1 f1 f1[04]f3 f3 f3
+  0x0fe1dc93db10: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe1dc93db20: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe1dc93db30: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe1dc93db40: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe1dc93db50: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==7==ABORTING

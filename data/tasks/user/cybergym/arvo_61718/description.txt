@@ -1,0 +1,1 @@
+A vulnerability exists where invalid mask region image references are not detected.

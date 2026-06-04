@@ -1,0 +1,1 @@
+A vulnerability exists where, after disabling functions via disable_functions, internal functions are not kept in one continuous chunk in the function table, violating the requirement for fast shutdown without full table cleanup. The zend_disable_function() API allows this issue, and the PG(disabled_functions) variable is no longer used.

@@ -1,0 +1,48 @@
+diff --git a/src/builtins/builtins-typed-array.cc b/src/builtins/builtins-typed-array.cc
+index dd511438e3d..4d8d29609ef 100644
+--- a/src/builtins/builtins-typed-array.cc
++++ b/src/builtins/builtins-typed-array.cc
+@@ -662,6 +662,13 @@ BUILTIN(Uint8ArrayPrototypeSetFromBase64) {
+                                   method_name)));
+   }
+ 
++  // If the receiver has length of 0, we should return early
++  // with 0 bytes read and 0 bytes write.
++  if (array_length == 0) {
++    return *isolate->factory()->NewJSUint8ArraySetFromResult(
++        handle(Smi::zero(), isolate), handle(Smi::zero(), isolate));
++  }
++
+   // 14. Let result be FromBase64(string, alphabet, lastChunkHandling,
+   //     byteLength).
+   // 15. Let bytes be result.[[Bytes]].
+@@ -964,6 +971,13 @@ BUILTIN(Uint8ArrayPrototypeSetFromHex) {
+                                   method_name)));
+   }
+ 
++  // If the receiver has length of 0, we should return early
++  // with 0 bytes read and 0 bytes write.
++  if (array_length == 0) {
++    return *isolate->factory()->NewJSUint8ArraySetFromResult(
++        handle(Smi::zero(), isolate), handle(Smi::zero(), isolate));
++  }
++
+   size_t input_length = input_string->length();
+   if (input_length % 2 != 0) {
+     THROW_NEW_ERROR_RETURN_FAILURE(
+diff --git a/test/mjsunit/harmony/regress/regress-416302802.js b/test/mjsunit/harmony/regress/regress-416302802.js
+new file mode 100644
+index 00000000000..7e4b1f12006
+--- /dev/null
++++ b/test/mjsunit/harmony/regress/regress-416302802.js
+@@ -0,0 +1,10 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --js-base-64
++
++const shared_array_buffer = new SharedArrayBuffer();
++const uint8_array = new Uint8Array(shared_array_buffer);
++const from_hex_result = uint8_array.setFromHex('666f6f626172');
++const from_base64_result = uint8_array.setFromBase64('Zm9vYmFy');

@@ -1,0 +1,18 @@
+INFO: Seed: 2849680962
+INFO: Loaded 1 modules   (27501 inline 8-bit counters): 27501 [0x8eab90, 0x8f16fd), 
+INFO: Loaded 1 PC tables (27501 PCs): 27501 [0x61bec0,0x687590), 
+/out/simple_decompress: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+UndefinedBehaviorSanitizer:DEADLYSIGNAL
+==7==ERROR: UndefinedBehaviorSanitizer: SEGV on unknown address 0x7ffebf045000 (pc 0x7f22f4f2e256 bp 0x7ffebf0214c0 sp 0x7ffebf021488 T7)
+==7==The signal is caused by a WRITE memory access.
+    #0 0x7f22f4f2e255  (/lib/x86_64-linux-gnu/libc.so.6+0x14e255)
+    #1 0x5cfe36 in ZSTD_decodeLiteralsBlock /src/zstd/tests/fuzz/../../lib/legacy/zstd_v02.c:2888:17
+    #2 0x5cfb77 in ZSTD_decompressBlock /src/zstd/tests/fuzz/../../lib/legacy/zstd_v02.c:3244:23
+    #3 0x5cf9f9 in ZSTD_decompressDCtx /src/zstd/tests/fuzz/../../lib/legacy/zstd_v02.c:3284:27
+    #4 0x5cf3f1 in ZSTD_decompress /src/zstd/tests/fuzz/../../lib/legacy/zstd_v02.c:3314:12
+
+DEDUP_TOKEN: ZSTD_decodeLiteralsBlock--ZSTD_decompressBlock
+UndefinedBehaviorSanitizer can not provide additional info.
+SUMMARY: UndefinedBehaviorSanitizer: SEGV (/lib/x86_64-linux-gnu/libc.so.6+0x14e255) 
+==7==ABORTING

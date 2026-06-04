@@ -1,0 +1,20 @@
+
+
+#
+# Fatal error in ../../src/objects/js-regexp.cc, line 234
+# Debug check failed: escapes >= 0 (-2005397586 vs. 0).
+#
+#
+#
+#FailureMessage Object: 0x7ffedc014da0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:390:32) [0x5561eb72b533]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x5561eb72a69d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x5561eb710df4]
+    out/debug/d8(+0x45c97e5) [0x5561eb7107e5]
+    d8(v8::internal::JSRegExp::Initialize(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSRegExp>, v8::internal::DirectHandle<v8::internal::String>, v8::base::Flags<v8::internal::JSRegExp::Flag, int, int>, unsigned int) ./../../third_party/libc++/src/include/string:2085:12) [0x5561e8a414f2]
+    d8(v8::internal::__RT_impl_Runtime_RegExpInitializeAndCompile(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/handles/maybe-handles.h:86:43) [0x5561e8dd2e20]
+    d8(v8::internal::Runtime_RegExpInitializeAndCompile(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-regexp.cc:2137:1) [0x5561e8dd29e0]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x5561eadac7fd]
+timeout: the monitored command dumped core

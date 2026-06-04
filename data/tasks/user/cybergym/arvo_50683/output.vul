@@ -1,0 +1,65 @@
+Reading 41798 bytes from /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x7f95af8fac20 at pc 0x0000004a099a bp 0x7ffc5e8e3e30 sp 0x7ffc5e8e35f8
+WRITE of size 256 at 0x7f95af8fac20 thread T0
+SCARINESS: 60 (multi-byte-write-stack-buffer-overflow)
+    #0 0x4a0999 in __asan_memcpy /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3
+    #1 0x949e57 in sc_hsm_decode_ecdsa_signature /src/opensc/src/libopensc/card-sc-hsm.c:1083:5
+    #2 0x93e3d3 in sc_hsm_compute_signature /src/opensc/src/libopensc/card-sc-hsm.c:1134:10
+    #3 0xbec11c in sc_compute_signature /src/opensc/src/libopensc/sec.c:65:6
+    #4 0x5bdecb in use_key /src/opensc/src/libopensc/pkcs15-sec.c:154:8
+    #5 0x5c7f87 in sc_pkcs15_compute_signature /src/opensc/src/libopensc/pkcs15-sec.c:769:6
+    #6 0x4db951 in sign /src/opensc/src/tests/fuzzing/../../../src/tools/pkcs15-crypt.c:240:6
+    #7 0x4d93e5 in _main /src/opensc/src/tests/fuzzing/../../../src/tools/pkcs15-crypt.c:526:14
+    #8 0x4dc947 in test_operation /src/opensc/src/tests/fuzzing/fuzz_pkcs15_crypt.c:91:2
+    #9 0x4dddbd in LLVMFuzzerTestOneInput /src/opensc/src/tests/fuzzing/fuzz_pkcs15_crypt.c:160:3
+    #10 0x4e9f95 in ExecuteFilesOnyByOne /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c:191:7
+    #11 0x4e9e05 in main /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c
+    #12 0x7f95b0515082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)
+    #13 0x420e6d in _start (/out/fuzz_pkcs15_crypt+0x420e6d)
+
+DEDUP_TOKEN: __asan_memcpy--sc_hsm_decode_ecdsa_signature--sc_hsm_compute_signature
+Address 0x7f95af8fac20 is located in stack of thread T0 at offset 1056 in frame
+    #0 0x4db23f in sign /src/opensc/src/tests/fuzzing/../../../src/tools/pkcs15-crypt.c:215
+
+DEDUP_TOKEN: sign
+  This frame has 4 object(s):
+    [32, 1056) 'buf' (line 216)
+    [1184, 2208) 'out' (line 216) <== Memory access at offset 1056 partially underflows this variable
+    [2336, 2344) 'seq' (line 249)
+    [2368, 2376) 'seqlen' (line 250)
+HINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork
+      (longjmp and C++ exceptions *are* supported)
+SUMMARY: AddressSanitizer: stack-buffer-overflow /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3 in __asan_memcpy
+Shadow bytes around the buggy address:
+  0x0ff335f17530: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff335f17540: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff335f17550: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff335f17560: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff335f17570: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0ff335f17580: 00 00 00 00[f2]f2 f2 f2 f2 f2 f2 f2 f2 f2 f2 f2
+  0x0ff335f17590: f2 f2 f2 f2 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff335f175a0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff335f175b0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff335f175c0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0ff335f175d0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

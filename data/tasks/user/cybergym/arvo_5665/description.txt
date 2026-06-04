@@ -1,0 +1,1 @@
+The vulnerability allows crypt->len / 8 to range from 0 to 32, which, in the case of crypt->len == 256, causes access to uninitialized key data when only a 16-byte MD5 digest is computed. This results in up to 32 bytes of key data being accessed, potentially exposing uninitialized memory beyond the intended 16 bytes.

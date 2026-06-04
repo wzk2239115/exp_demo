@@ -1,0 +1,118 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+=====================================================
+BUG: KMSAN: kernel-infoleak in instrument_copy_to_user include/linux/instrumented.h:114 [inline]
+BUG: KMSAN: kernel-infoleak in copy_to_user_iter lib/iov_iter.c:24 [inline]
+BUG: KMSAN: kernel-infoleak in iterate_ubuf include/linux/iov_iter.h:30 [inline]
+BUG: KMSAN: kernel-infoleak in iterate_and_advance2 include/linux/iov_iter.h:300 [inline]
+BUG: KMSAN: kernel-infoleak in iterate_and_advance include/linux/iov_iter.h:328 [inline]
+BUG: KMSAN: kernel-infoleak in _copy_to_iter+0x2f3/0x2b30 lib/iov_iter.c:185
+ instrument_copy_to_user include/linux/instrumented.h:114 [inline]
+ copy_to_user_iter lib/iov_iter.c:24 [inline]
+ iterate_ubuf include/linux/iov_iter.h:30 [inline]
+ iterate_and_advance2 include/linux/iov_iter.h:300 [inline]
+ iterate_and_advance include/linux/iov_iter.h:328 [inline]
+ _copy_to_iter+0x2f3/0x2b30 lib/iov_iter.c:185
+ copy_to_iter include/linux/uio.h:211 [inline]
+ simple_copy_to_iter net/core/datagram.c:524 [inline]
+ __skb_datagram_iter+0x18d/0x1190 net/core/datagram.c:401
+ skb_copy_datagram_iter+0x5c/0x200 net/core/datagram.c:538
+ skb_copy_datagram_msg include/linux/skbuff.h:4076 [inline]
+ netlink_recvmsg+0x432/0x1610 net/netlink/af_netlink.c:1958
+ sock_recvmsg_nosec net/socket.c:1051 [inline]
+ sock_recvmsg+0x2c4/0x340 net/socket.c:1073
+ sock_read_iter+0x32d/0x3c0 net/socket.c:1143
+ io_iter_do_read io_uring/rw.c:771 [inline]
+ __io_read+0x8d2/0x20f0 io_uring/rw.c:865
+ io_read+0x3e/0xf0 io_uring/rw.c:943
+ io_issue_sqe+0x429/0x22c0 io_uring/io_uring.c:1739
+ io_queue_sqe io_uring/io_uring.c:1953 [inline]
+ io_req_task_submit+0x104/0x1e0 io_uring/io_uring.c:1373
+ io_poll_task_func+0x12e5/0x1620
+ io_handle_tw_list+0x23a/0x5c0 io_uring/io_uring.c:1063
+ tctx_task_work_run+0xf8/0x3d0 io_uring/io_uring.c:1135
+ tctx_task_work+0x6d/0xc0 io_uring/io_uring.c:1153
+ task_work_run+0x268/0x310 kernel/task_work.c:239
+ ptrace_notify+0x304/0x320 kernel/signal.c:2403
+ ptrace_report_syscall include/linux/ptrace.h:415 [inline]
+ ptrace_report_syscall_exit include/linux/ptrace.h:477 [inline]
+ syscall_exit_work+0x14e/0x3e0 kernel/entry/common.c:173
+ syscall_exit_to_user_mode_prepare kernel/entry/common.c:200 [inline]
+ __syscall_exit_to_user_mode_work kernel/entry/common.c:205 [inline]
+ syscall_exit_to_user_mode+0x13b/0x170 kernel/entry/common.c:218
+ do_syscall_64+0xda/0x1e0 arch/x86/entry/common.c:89
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+Uninit was stored to memory at:
+ pskb_expand_head+0x305/0x1a60 net/core/skbuff.c:2283
+ netlink_trim+0x2c2/0x330 net/netlink/af_netlink.c:1313
+ netlink_unicast+0x9f/0x1260 net/netlink/af_netlink.c:1347
+ nlmsg_unicast include/net/netlink.h:1158 [inline]
+ nlmsg_notify+0x21d/0x2f0 net/netlink/af_netlink.c:2602
+ rtnetlink_send+0x73/0x90 net/core/rtnetlink.c:770
+ rtnetlink_maybe_send include/linux/rtnetlink.h:18 [inline]
+ tcf_add_notify net/sched/act_api.c:2068 [inline]
+ tcf_action_add net/sched/act_api.c:2091 [inline]
+ tc_ctl_action+0x146e/0x19d0 net/sched/act_api.c:2139
+ rtnetlink_rcv_msg+0x12fc/0x1410 net/core/rtnetlink.c:6675
+ netlink_rcv_skb+0x375/0x650 net/netlink/af_netlink.c:2551
+ rtnetlink_rcv+0x34/0x40 net/core/rtnetlink.c:6693
+ netlink_unicast_kernel net/netlink/af_netlink.c:1331 [inline]
+ netlink_unicast+0xf52/0x1260 net/netlink/af_netlink.c:1357
+ netlink_sendmsg+0x10da/0x11e0 net/netlink/af_netlink.c:1901
+ sock_sendmsg_nosec net/socket.c:729 [inline]
+ __sock_sendmsg+0x30f/0x380 net/socket.c:744
+ ____sys_sendmsg+0x877/0xb60 net/socket.c:2607
+ ___sys_sendmsg+0x28d/0x3c0 net/socket.c:2661
+ __sys_sendmsg net/socket.c:2690 [inline]
+ __do_sys_sendmsg net/socket.c:2699 [inline]
+ __se_sys_sendmsg net/socket.c:2697 [inline]
+ __x64_sys_sendmsg+0x300/0x4a0 net/socket.c:2697
+ x64_sys_call+0x2da0/0x3ba0 arch/x86/include/generated/asm/syscalls_64.h:47
+ do_syscall_x64 arch/x86/entry/common.c:52 [inline]
+ do_syscall_64+0xcd/0x1e0 arch/x86/entry/common.c:83
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+Uninit was stored to memory at:
+ __nla_put lib/nlattr.c:1041 [inline]
+ nla_put+0x1c6/0x230 lib/nlattr.c:1099
+ tcf_ife_dump+0x250/0x10b0 net/sched/act_ife.c:660
+ tcf_action_dump_old net/sched/act_api.c:1190 [inline]
+ tcf_action_dump_1+0x85e/0x970 net/sched/act_api.c:1226
+ tcf_action_dump+0x1fd/0x460 net/sched/act_api.c:1250
+ tca_get_fill+0x519/0x7a0 net/sched/act_api.c:1648
+ tcf_add_notify_msg net/sched/act_api.c:2043 [inline]
+ tcf_add_notify net/sched/act_api.c:2062 [inline]
+ tcf_action_add net/sched/act_api.c:2091 [inline]
+ tc_ctl_action+0x1365/0x19d0 net/sched/act_api.c:2139
+ rtnetlink_rcv_msg+0x12fc/0x1410 net/core/rtnetlink.c:6675
+ netlink_rcv_skb+0x375/0x650 net/netlink/af_netlink.c:2551
+ rtnetlink_rcv+0x34/0x40 net/core/rtnetlink.c:6693
+ netlink_unicast_kernel net/netlink/af_netlink.c:1331 [inline]
+ netlink_unicast+0xf52/0x1260 net/netlink/af_netlink.c:1357
+ netlink_sendmsg+0x10da/0x11e0 net/netlink/af_netlink.c:1901
+ sock_sendmsg_nosec net/socket.c:729 [inline]
+ __sock_sendmsg+0x30f/0x380 net/socket.c:744
+ ____sys_sendmsg+0x877/0xb60 net/socket.c:2607
+ ___sys_sendmsg+0x28d/0x3c0 net/socket.c:2661
+ __sys_sendmsg net/socket.c:2690 [inline]
+ __do_sys_sendmsg net/socket.c:2699 [inline]
+ __se_sys_sendmsg net/socket.c:2697 [inline]
+ __x64_sys_sendmsg+0x300/0x4a0 net/socket.c:2697
+ x64_sys_call+0x2da0/0x3ba0 arch/x86/include/generated/asm/syscalls_64.h:47
+ do_syscall_x64 arch/x86/entry/common.c:52 [inline]
+ do_syscall_64+0xcd/0x1e0 arch/x86/entry/common.c:83
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+Local variable opt created at:
+ tcf_ife_dump+0xab/0x10b0 net/sched/act_ife.c:647
+ tcf_action_dump_old net/sched/act_api.c:1190 [inline]
+ tcf_action_dump_1+0x85e/0x970 net/sched/act_api.c:1226
+
+Bytes 158-159 of 216 are uninitialized
+Memory access of size 216 starts at ffff88811980e280
+
+CPU: 1 UID: 0 PID: 5791 Comm: syz-executor190 Not tainted 6.12.0-rc6-syzkaller-00077-g2e1b3cc9d7f7 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/13/2024
+=====================================================

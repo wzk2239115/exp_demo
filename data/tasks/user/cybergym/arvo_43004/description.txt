@@ -1,0 +1,1 @@
+A countdown error occurs where, on error, an object is counted down, and later counted down again, eventually leading to an attempt to use a stale cache entry and causing a segmentation fault.

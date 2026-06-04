@@ -1,0 +1,406 @@
+diff --git a/src/builtins/builtins-array.cc b/src/builtins/builtins-array.cc
+index 0bffd194ee7..b8c298145d5 100644
+--- a/src/builtins/builtins-array.cc
++++ b/src/builtins/builtins-array.cc
+@@ -138,11 +138,9 @@ V8_WARN_UNUSED_RESULT Maybe<double> GetRelativeIndex(Isolate* isolate,
+                                                      double init_if_undefined) {
+   double relative_index = init_if_undefined;
+   if (!IsUndefined(*index)) {
+-    DirectHandle<Object> relative_index_obj;
+-    ASSIGN_RETURN_ON_EXCEPTION_VALUE(isolate, relative_index_obj,
+-                                     Object::ToInteger(isolate, index),
+-                                     Nothing<double>());
+-    relative_index = Object::NumberValue(*relative_index_obj);
++    MAYBE_ASSIGN_RETURN_ON_EXCEPTION_VALUE(isolate, relative_index,
++                                           Object::IntegerValue(isolate, index),
++                                           Nothing<double>());
+   }
+ 
+   if (relative_index < 0) {
+diff --git a/src/builtins/builtins-arraybuffer.cc b/src/builtins/builtins-arraybuffer.cc
+index 61e495c92ea..4768c4defd5 100644
+--- a/src/builtins/builtins-arraybuffer.cc
++++ b/src/builtins/builtins-arraybuffer.cc
+@@ -220,16 +220,15 @@ static Tagged<Object> SliceHelper(BuiltinArguments args, Isolate* isolate,
+   double const len = array_buffer->GetByteLength();
+ 
+   // * Let relativeStart be ? ToInteger(start).
+-  DirectHandle<Object> relative_start;
+-  ASSIGN_RETURN_FAILURE_ON_EXCEPTION(isolate, relative_start,
+-                                     Object::ToInteger(isolate, start));
++  double relative_start;
++  MAYBE_ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++      isolate, relative_start, Object::IntegerValue(isolate, start));
+ 
+   // * If relativeStart < 0, let first be max((len + relativeStart), 0); else
+   //   let first be min(relativeStart, len).
+-  double const first =
+-      (Object::NumberValue(*relative_start) < 0)
+-          ? std::max(len + Object::NumberValue(*relative_start), 0.0)
+-          : std::min(Object::NumberValue(*relative_start), len);
++  double const first = (relative_start < 0)
++                           ? std::max(len + relative_start, 0.0)
++                           : std::min(relative_start, len);
+ 
+   // * If end is undefined, let relativeEnd be len; else let relativeEnd be ?
+   //   ToInteger(end).
+@@ -237,10 +236,8 @@ static Tagged<Object> SliceHelper(BuiltinArguments args, Isolate* isolate,
+   if (IsUndefined(*end, isolate)) {
+     relative_end = len;
+   } else {
+-    DirectHandle<Object> relative_end_obj;
+-    ASSIGN_RETURN_FAILURE_ON_EXCEPTION(isolate, relative_end_obj,
+-                                       Object::ToInteger(isolate, end));
+-    relative_end = Object::NumberValue(*relative_end_obj);
++    MAYBE_ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++        isolate, relative_end, Object::IntegerValue(isolate, end));
+   }
+ 
+   // * If relativeEnd < 0, let final be max((len + relativeEnd), 0); else let
+diff --git a/src/builtins/builtins-atomics-synchronization.cc b/src/builtins/builtins-atomics-synchronization.cc
+index ffc33e56c47..2529a128c31 100644
+--- a/src/builtins/builtins-atomics-synchronization.cc
++++ b/src/builtins/builtins-atomics-synchronization.cc
+@@ -325,9 +325,9 @@ BUILTIN(AtomicsConditionNotify) {
+   if (IsUndefined(*count_obj, isolate)) {
+     count = JSAtomicsCondition::kAllWaiters;
+   } else {
+-    ASSIGN_RETURN_FAILURE_ON_EXCEPTION(isolate, count_obj,
+-                                       Object::ToInteger(isolate, count_obj));
+-    double count_double = Object::NumberValue(*count_obj);
++    double count_double;
++    MAYBE_ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++        isolate, count_double, Object::IntegerValue(isolate, count_obj));
+     if (count_double <= 0) {
+       return Smi::zero();
+     } else if (count_double > JSAtomicsCondition::kAllWaiters) {
+diff --git a/src/builtins/builtins-bigint.cc b/src/builtins/builtins-bigint.cc
+index 9e5061d8096..f0d98b6de79 100644
+--- a/src/builtins/builtins-bigint.cc
++++ b/src/builtins/builtins-bigint.cc
+@@ -105,9 +105,9 @@ Tagged<Object> BigIntToStringImpl(Handle<Object> receiver, Handle<Object> radix,
+   int radix_number = 10;
+   if (!IsUndefined(*radix, isolate)) {
+     // 4. Else, let radixNumber be ? ToInteger(radix).
+-    ASSIGN_RETURN_FAILURE_ON_EXCEPTION(isolate, radix,
+-                                       Object::ToInteger(isolate, radix));
+-    double radix_double = Object::NumberValue(*radix);
++    double radix_double;
++    MAYBE_ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++        isolate, radix_double, Object::IntegerValue(isolate, radix));
+     // 5. If radixNumber < 2 or radixNumber > 36, throw a RangeError exception.
+     if (radix_double < 2 || radix_double > 36) {
+       THROW_NEW_ERROR_RETURN_FAILURE(
+diff --git a/src/builtins/builtins-intl.cc b/src/builtins/builtins-intl.cc
+index d13d957b349..dc2702fa907 100644
+--- a/src/builtins/builtins-intl.cc
++++ b/src/builtins/builtins-intl.cc
+@@ -1274,9 +1274,9 @@ BUILTIN(SegmentsPrototypeContaining) {
+   DirectHandle<Object> index = args.atOrUndefined(isolate, 1);
+ 
+   // 6. Let n be ? ToInteger(index).
+-  ASSIGN_RETURN_FAILURE_ON_EXCEPTION(isolate, index,
+-                                     Object::ToInteger(isolate, index));
+-  double const n = Object::NumberValue(*index);
++  double n;
++  MAYBE_ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++      isolate, n, Object::IntegerValue(isolate, index));
+ 
+   RETURN_RESULT_OR_FAILURE(isolate,
+                            JSSegments::Containing(isolate, segments, n));
+diff --git a/src/builtins/builtins-number.cc b/src/builtins/builtins-number.cc
+index 18f912b04dd..38ec6208385 100644
+--- a/src/builtins/builtins-number.cc
++++ b/src/builtins/builtins-number.cc
+@@ -38,9 +38,10 @@ BUILTIN(NumberPrototypeToExponential) {
+   double const value_number = Object::NumberValue(*value);
+ 
+   // Convert the {fraction_digits} to an integer first.
+-  ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
+-      isolate, fraction_digits, Object::ToInteger(isolate, fraction_digits));
+-  double const fraction_digits_number = Object::NumberValue(*fraction_digits);
++  double fraction_digits_number;
++  MAYBE_ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++      isolate, fraction_digits_number,
++      Object::IntegerValue(isolate, fraction_digits));
+ 
+   if (std::isnan(value_number)) return ReadOnlyRoots(isolate).NaN_string();
+   if (std::isinf(value_number)) {
+@@ -85,9 +86,10 @@ BUILTIN(NumberPrototypeToFixed) {
+   double const value_number = Object::NumberValue(*value);
+ 
+   // Convert the {fraction_digits} to an integer first.
+-  ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
+-      isolate, fraction_digits, Object::ToInteger(isolate, fraction_digits));
+-  double const fraction_digits_number = Object::NumberValue(*fraction_digits);
++  double fraction_digits_number;
++  MAYBE_ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++      isolate, fraction_digits_number,
++      Object::IntegerValue(isolate, fraction_digits));
+ 
+   // Check if the {fraction_digits} are in the supported range.
+   if (fraction_digits_number < 0.0 ||
+@@ -170,9 +172,9 @@ BUILTIN(NumberPrototypeToPrecision) {
+   }
+ 
+   // Convert the {precision} to an integer first.
+-  ASSIGN_RETURN_FAILURE_ON_EXCEPTION(isolate, precision,
+-                                     Object::ToInteger(isolate, precision));
+-  double const precision_number = Object::NumberValue(*precision);
++  double precision_number;
++  MAYBE_ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++      isolate, precision_number, Object::IntegerValue(isolate, precision));
+ 
+   if (std::isnan(value_number)) return ReadOnlyRoots(isolate).NaN_string();
+   if (std::isinf(value_number)) {
+diff --git a/src/builtins/builtins-sharedarraybuffer.cc b/src/builtins/builtins-sharedarraybuffer.cc
+index abaf772b353..d7ef20f93ee 100644
+--- a/src/builtins/builtins-sharedarraybuffer.cc
++++ b/src/builtins/builtins-sharedarraybuffer.cc
+@@ -144,9 +144,9 @@ BUILTIN(AtomicsNotify) {
+   if (IsUndefined(*count, isolate)) {
+     c = kMaxUInt32;
+   } else {
+-    ASSIGN_RETURN_FAILURE_ON_EXCEPTION(isolate, count,
+-                                       Object::ToInteger(isolate, count));
+-    double count_double = Object::NumberValue(*count);
++    double count_double;
++    MAYBE_ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++        isolate, count_double, Object::IntegerValue(isolate, count));
+     if (count_double < 0) {
+       count_double = 0;
+     } else if (count_double > kMaxUInt32) {
+diff --git a/src/builtins/builtins-string.cc b/src/builtins/builtins-string.cc
+index 3a92f083ae6..0eb19b36354 100644
+--- a/src/builtins/builtins-string.cc
++++ b/src/builtins/builtins-string.cc
+@@ -30,8 +30,7 @@ bool IsValidCodePoint(Isolate* isolate, DirectHandle<Object> value) {
+     return false;
+   }
+ 
+-  if (Object::NumberValue(
+-          *Object::ToInteger(isolate, value).ToHandleChecked()) !=
++  if (Object::IntegerValue(isolate, value).ToChecked() !=
+       Object::NumberValue(*value)) {
+     return false;
+   }
+diff --git a/src/builtins/builtins-typed-array.cc b/src/builtins/builtins-typed-array.cc
+index 20c8b1a7e7f..84e5d9a3bac 100644
+--- a/src/builtins/builtins-typed-array.cc
++++ b/src/builtins/builtins-typed-array.cc
+@@ -29,20 +29,11 @@ BUILTIN(TypedArrayPrototypeBuffer) {
+ 
+ namespace {
+ 
+-int64_t CapRelativeIndex(DirectHandle<Object> num, int64_t minimum,
+-                         int64_t maximum) {
+-  if (V8_LIKELY(IsSmi(*num))) {
+-    int64_t relative = Smi::ToInt(*num);
+-    return relative < 0 ? std::max<int64_t>(relative + maximum, minimum)
+-                        : std::min<int64_t>(relative, maximum);
+-  } else {
+-    DCHECK(IsHeapNumber(*num));
+-    double relative = Cast<HeapNumber>(*num)->value();
+-    DCHECK(!std::isnan(relative));
+-    return static_cast<int64_t>(
+-        relative < 0 ? std::max<double>(relative + maximum, minimum)
+-                     : std::min<double>(relative, maximum));
+-  }
++int64_t CapRelativeIndex(double relative, int64_t minimum, int64_t maximum) {
++  DCHECK(!std::isnan(relative));
++  return static_cast<int64_t>(
++      relative < 0 ? std::max<double>(relative + maximum, minimum)
++                   : std::min<double>(relative, maximum));
+ }
+ 
+ }  // namespace
+@@ -62,20 +53,20 @@ BUILTIN(TypedArrayPrototypeCopyWithin) {
+   int64_t final = len;
+ 
+   if (V8_LIKELY(args.length() > 1)) {
+-    DirectHandle<Object> num;
+-    ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
+-        isolate, num, Object::ToInteger(isolate, args.at<Object>(1)));
++    double num;
++    MAYBE_ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++        isolate, num, Object::IntegerValue(isolate, args.at<Object>(1)));
+     to = CapRelativeIndex(num, 0, len);
+ 
+     if (args.length() > 2) {
+-      ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
+-          isolate, num, Object::ToInteger(isolate, args.at<Object>(2)));
++      MAYBE_ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++          isolate, num, Object::IntegerValue(isolate, args.at<Object>(2)));
+       from = CapRelativeIndex(num, 0, len);
+ 
+       DirectHandle<Object> end = args.atOrUndefined(isolate, 3);
+       if (!IsUndefined(*end, isolate)) {
+-        ASSIGN_RETURN_FAILURE_ON_EXCEPTION(isolate, num,
+-                                           Object::ToInteger(isolate, end));
++        MAYBE_ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++            isolate, num, Object::IntegerValue(isolate, end));
+         final = CapRelativeIndex(num, 0, len);
+       }
+     }
+@@ -173,14 +164,15 @@ BUILTIN(TypedArrayPrototypeFill) {
+   if (args.length() > 2) {
+     // 6. Let relativeStart be ? ToIntegerOrInfinity(start).
+     DirectHandle<Object> num = args.atOrUndefined(isolate, 2);
+-    ASSIGN_RETURN_FAILURE_ON_EXCEPTION(isolate, num,
+-                                       Object::ToInteger(isolate, num));
++    double double_num;
++    MAYBE_ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++        isolate, double_num, Object::IntegerValue(isolate, num));
+ 
+     // 7. If relativeStart = -∞, let startIndex be 0.
+     // 8. Else if relativeStart < 0, let startIndex be max(len + relativeStart,
+     //    0).
+     // 9. Else, let startIndex be min(relativeStart, len).
+-    start = CapRelativeIndex(num, 0, len);
++    start = CapRelativeIndex(double_num, 0, len);
+ 
+     // 10. If end is undefined, let relativeEnd be len; else let relativeEnd be
+     //     ? ToIntegerOrInfinity(end).
+@@ -189,9 +181,9 @@ BUILTIN(TypedArrayPrototypeFill) {
+       // 11. If relativeEnd = -∞, let endIndex be 0.
+       // 12. Else if relativeEnd < 0, let endIndex be max(len + relativeEnd, 0).
+       // 13. Else, let endIndex be min(relativeEnd, len).
+-      ASSIGN_RETURN_FAILURE_ON_EXCEPTION(isolate, num,
+-                                         Object::ToInteger(isolate, num));
+-      end = CapRelativeIndex(num, 0, len);
++      MAYBE_ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++          isolate, double_num, Object::IntegerValue(isolate, num));
++      end = CapRelativeIndex(double_num, 0, len);
+     }
+   }
+ 
+@@ -252,9 +244,9 @@ BUILTIN(TypedArrayPrototypeIncludes) {
+ 
+   int64_t index = 0;
+   if (args.length() > 2) {
+-    DirectHandle<Object> num;
+-    ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
+-        isolate, num, Object::ToInteger(isolate, args.at<Object>(2)));
++    double num;
++    MAYBE_ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++        isolate, num, Object::IntegerValue(isolate, args.at<Object>(2)));
+     index = CapRelativeIndex(num, 0, len);
+   }
+ 
+@@ -280,9 +272,9 @@ BUILTIN(TypedArrayPrototypeIndexOf) {
+ 
+   int64_t index = 0;
+   if (args.length() > 2) {
+-    DirectHandle<Object> num;
+-    ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
+-        isolate, num, Object::ToInteger(isolate, args.at<Object>(2)));
++    double num;
++    MAYBE_ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++        isolate, num, Object::IntegerValue(isolate, args.at<Object>(2)));
+     index = CapRelativeIndex(num, 0, len);
+   }
+ 
+@@ -314,9 +306,9 @@ BUILTIN(TypedArrayPrototypeLastIndexOf) {
+ 
+   int64_t index = len - 1;
+   if (args.length() > 2) {
+-    DirectHandle<Object> num;
+-    ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
+-        isolate, num, Object::ToInteger(isolate, args.at<Object>(2)));
++    double num;
++    MAYBE_ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++        isolate, num, Object::IntegerValue(isolate, args.at<Object>(2)));
+     // Set a negative value (-1) for returning -1 if num is negative and
+     // len + num is still negative. Upper bound is len - 1.
+     index = std::min<int64_t>(CapRelativeIndex(num, -1, len), len - 1);
+diff --git a/src/objects/objects-inl.h b/src/objects/objects-inl.h
+index f7eb24e1861..dd14fd6fec3 100644
+--- a/src/objects/objects-inl.h
++++ b/src/objects/objects-inl.h
+@@ -673,6 +673,18 @@ double Object::NumberValue(Tagged<Smi> obj) {
+   return NumberValue(Cast<Number>(obj));
+ }
+ 
++// static
++template <typename T, template <typename> typename HandleType>
++  requires(std::is_convertible_v<HandleType<T>, DirectHandle<T>>)
++Maybe<double> Object::IntegerValue(Isolate* isolate, HandleType<T> input) {
++  ASSIGN_RETURN_ON_EXCEPTION_VALUE(
++      isolate, input, ConvertToNumber(isolate, input), Nothing<double>());
++  if (IsSmi(*input)) {
++    return Just(static_cast<double>(Cast<Smi>(*input).value()));
++  }
++  return Just(DoubleToInteger(Cast<HeapNumber>(*input)->value()));
++}
++
+ // static
+ bool Object::SameNumberValue(double value1, double value2) {
+   // Compare values bitwise, to cover -0 being different from 0 -- we'd need to
+diff --git a/src/objects/objects.h b/src/objects/objects.h
+index ca9031d94de..973eaa365f7 100644
+--- a/src/objects/objects.h
++++ b/src/objects/objects.h
+@@ -144,6 +144,12 @@ class Object : public AllStatic {
+   V8_EXPORT_PRIVATE static bool ToInt32(Tagged<Object> obj, int32_t* value);
+   static inline bool ToUint32(Tagged<Object> obj, uint32_t* value);
+ 
++  // ES6 section 7.1.5 ToIntegerOrInfinity
++  template <typename T, template <typename> typename HandleType>
++    requires(std::is_convertible_v<HandleType<T>, DirectHandle<T>>)
++  V8_WARN_UNUSED_RESULT static inline Maybe<double> IntegerValue(
++      Isolate* isolate, HandleType<T> input);
++
+   static inline Representation OptimalRepresentation(
+       Tagged<Object> obj, PtrComprCageBase cage_base);
+ 
+diff --git a/src/runtime/runtime-array.cc b/src/runtime/runtime-array.cc
+index 9f3c0f01734..c3ebc799815 100644
+--- a/src/runtime/runtime-array.cc
++++ b/src/runtime/runtime-array.cc
+@@ -262,27 +262,17 @@ RUNTIME_FUNCTION(Runtime_ArrayIncludes_Slow) {
+   // produces the value 0.)
+   int64_t index = 0;
+   if (!IsUndefined(*from_index, isolate)) {
+-    ASSIGN_RETURN_FAILURE_ON_EXCEPTION(isolate, from_index,
+-                                       Object::ToInteger(isolate, from_index));
++    double start_from;
++    MAYBE_ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++        isolate, start_from, Object::IntegerValue(isolate, from_index));
+ 
+-    if (V8_LIKELY(IsSmi(*from_index))) {
+-      int start_from = Smi::ToInt(*from_index);
++    if (start_from >= len) return ReadOnlyRoots(isolate).false_value();
++    if (V8_LIKELY(std::isfinite(start_from))) {
+       if (start_from < 0) {
+-        index = std::max<int64_t>(len + start_from, 0);
++        index = static_cast<int64_t>(std::max<double>(start_from + len, 0));
+       } else {
+         index = start_from;
+       }
+-    } else {
+-      DCHECK(IsHeapNumber(*from_index));
+-      double start_from = Object::NumberValue(*from_index);
+-      if (start_from >= len) return ReadOnlyRoots(isolate).false_value();
+-      if (V8_LIKELY(std::isfinite(start_from))) {
+-        if (start_from < 0) {
+-          index = static_cast<int64_t>(std::max<double>(start_from + len, 0));
+-        } else {
+-          index = start_from;
+-        }
+-      }
+     }
+ 
+     DCHECK_GE(index, 0);
+@@ -364,9 +354,9 @@ RUNTIME_FUNCTION(Runtime_ArrayIndexOf) {
+   // produces the value 0.)
+   int64_t start_from;
+   {
+-    ASSIGN_RETURN_FAILURE_ON_EXCEPTION(isolate, from_index,
+-                                       Object::ToInteger(isolate, from_index));
+-    double fp = Object::NumberValue(*from_index);
++    double fp;
++    MAYBE_ASSIGN_RETURN_FAILURE_ON_EXCEPTION(
++        isolate, fp, Object::IntegerValue(isolate, from_index));
+     if (fp > len) return Smi::FromInt(-1);
+     if (V8_LIKELY(fp >=
+                   static_cast<double>(std::numeric_limits<int64_t>::min()))) {

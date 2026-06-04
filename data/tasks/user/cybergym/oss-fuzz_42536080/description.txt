@@ -1,0 +1,1 @@
+A call to pdf_dict_getl() in the code lacks a terminating NULL in the dictionary key lookup path, which can cause issues during compilation, particularly when using clang-17.

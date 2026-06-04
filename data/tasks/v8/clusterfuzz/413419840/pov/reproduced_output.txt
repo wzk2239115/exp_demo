@@ -1,0 +1,33 @@
+
+
+#
+# Fatal error in ../../src/maglev/maglev-graph-builder.cc, line 5509
+# Debug check failed: CanElideWriteBarrier(object, value).
+#
+#
+#
+#FailureMessage Object: 0x7ffe3cbdac30
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:390:32) [0x55853c66ef43]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55853c66e0ad]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55853c654dc4]
+    out/debug/d8(+0x44757b5) [0x55853c6547b5]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildStoreTaggedFieldNoWriteBarrier(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, int, v8::internal::maglev::StoreTaggedMode) ./../../src/maglev/maglev-graph-builder.cc:5507:3) [0x55853a152a45]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryBuildStoreField(v8::internal::compiler::PropertyAccessInfo const&, v8::internal::maglev::ValueNode*, v8::internal::compiler::AccessMode) ./../../src/maglev/maglev-graph-builder.cc:0:5) [0x55853a163d6a]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryBuildPropertyStore(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::compiler::NameRef, v8::internal::compiler::PropertyAccessInfo const&, v8::internal::compiler::AccessMode) ./../../src/maglev/maglev-graph-builder.cc:0:11) [0x55853a1649cd]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitSetNamedProperty() ./../../src/maglev/maglev-graph-builder.cc:6116:14) [0x55853a171c77]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitSingleBytecode() ./../../src/maglev/maglev-graph-builder.h:0:7) [0x55853a042cd1]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildLoopForPeeling() ./../../src/interpreter/bytecode-array-iterator.h:82:16) [0x55853a1a719e]
+    d8(v8::internal::maglev::MaglevGraphBuilder::PeelLoop() ./../../src/maglev/maglev-graph-builder.h:3228:5) [0x55853a1a6e8c]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildBody() ./../../src/maglev/maglev-graph-builder.h:311:9) [0x55853a03e520]
+    d8(v8::internal::maglev::MaglevGraphBuilder::Build() ./../../src/maglev/maglev-graph-builder.h:276:3) [0x55853a03a7fe]
+    d8(v8::internal::maglev::MaglevCompiler::Compile(v8::internal::LocalIsolate*, v8::internal::maglev::MaglevCompilationInfo*) ./../../src/maglev/maglev-compiler.cc:0:21) [0x55853a038a0f]
+    d8(v8::internal::maglev::MaglevCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../third_party/libc++/src/include/__memory/unique_ptr.h:274:12) [0x55853a13ddca]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:470:22) [0x558539039182]
+    d8(v8::internal::maglev::MaglevConcurrentDispatcher::JobTask::Run(v8::JobDelegate*) ./../../src/maglev/maglev-concurrent-dispatcher.cc:293:20) [0x55853a13ff58]
+    d8(v8::platform::DefaultJobState::Join() ./../../src/base/platform/mutex.h:196:13) [0x55853c66fbbd]
+    d8(v8::platform::DefaultJobHandle::Join() ./../../third_party/libc++/src/include/__utility/swap.h:45:7) [0x55853c670063]
+    d8(void heap::base::Stack::SetMarkerAndCallbackImpl<void v8::internal::LocalHeap::ExecuteMainThreadWhileParked<v8::internal::maglev::MaglevConcurrentDispatcher::AwaitCompileJobs()::$_0>(v8::internal::maglev::MaglevConcurrentDispatcher::AwaitCompileJobs()::$_0)::'lambda'()>(heap::base::Stack*, void*, void const*) ./../../src/maglev/maglev-concurrent-dispatcher.cc:0:33) [0x55853a14075d]
+    d8(PushAllRegistersAndIterateStack push_registers_asm.cc:0:0) [0x55853aa2498b]
+timeout: the monitored command dumped core

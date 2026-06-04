@@ -1,0 +1,1 @@
+<!DOCTYPEF[<!ENTITY a ''>]><x:stylesheet xmlns:x="http://www.w3.org/1999/XSL/Transform"><x:template match="*">&a;<x:message><x:attribute name="n">   o</x:attribute></x:message></x:template></x:stylesheet>

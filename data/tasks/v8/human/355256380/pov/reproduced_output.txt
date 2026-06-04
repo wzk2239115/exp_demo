@@ -1,0 +1,36 @@
+
+
+#
+# Fatal error in ../../src/compiler/heap-refs.cc, line 1127
+# Debug check failed: IsJSObject().
+#
+#
+#
+#FailureMessage Object: 0x7f0f637fc350
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x55c22b437783]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55c22b436b9d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55c22b41b584]
+    out/debug/d8(+0x3cc7fb5) [0x55c22b41afb5]
+    d8(v8::internal::compiler::ObjectRef::AsJSObject() const ./../../src/compiler/heap-refs.cc:0:1) [0x55c229d154a5]
+    d8(v8::internal::maglev::MaglevGraphBuilder::InferHasInPrototypeChain(v8::internal::maglev::ValueNode*, v8::internal::compiler::HeapObjectRef) ./../../src/maglev/maglev-graph-builder.cc:10125:34) [0x55c2292ae24a]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildHasInPrototypeChain(v8::internal::maglev::ValueNode*, v8::internal::compiler::HeapObjectRef) ./../../src/maglev/maglev-graph-builder.cc:10138:26) [0x55c2292ae56c]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryBuildFastOrdinaryHasInstance(v8::internal::maglev::ValueNode*, v8::internal::compiler::JSObjectRef, v8::internal::maglev::ValueNode*) ./../../src/maglev/maglev-graph-builder.cc:10187:12) [0x55c2292ae8f8]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildOrdinaryHasInstance(v8::internal::maglev::ValueNode*, v8::internal::compiler::JSObjectRef, v8::internal::maglev::ValueNode*) ./../../src/maglev/maglev-graph-builder.cc:10196:3) [0x55c22929ba02]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryBuildFastInstanceOf(v8::internal::maglev::ValueNode*, v8::internal::compiler::JSObjectRef, v8::internal::maglev::ValueNode*) ./../../src/maglev/maglev-graph-builder.cc:0:0) [0x55c2292aed98]
+    d8(v8::internal::maglev::MaglevGraphBuilder::TryBuildFastInstanceOfWithFeedback(v8::internal::maglev::ValueNode*, v8::internal::maglev::ValueNode*, v8::internal::compiler::FeedbackSource) ./../../src/maglev/maglev-graph-builder.cc:0:0) [0x55c2292af793]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitTestInstanceOf() ./../../src/maglev/maglev-graph-builder.cc:10436:3) [0x55c2292af850]
+    d8(v8::internal::maglev::MaglevGraphBuilder::VisitSingleBytecode() ./../../src/maglev/maglev-graph-builder.h:0:7) [0x55c22919dfba]
+    d8(v8::internal::maglev::MaglevGraphBuilder::BuildBody() ./../../src/interpreter/bytecode-array-iterator.h:82:16) [0x55c2291994aa]
+    d8(v8::internal::maglev::MaglevGraphBuilder::Build() ./../../src/maglev/maglev-graph-builder.h:241:3) [0x55c22919644b]
+    d8(v8::internal::maglev::MaglevCompiler::Compile(v8::internal::LocalIsolate*, v8::internal::maglev::MaglevCompilationInfo*) ./../../src/maglev/maglev-compiler.cc:100:11) [0x55c229194ec9]
+    d8(v8::internal::maglev::MaglevCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/maglev/maglev-concurrent-dispatcher.cc:137:8) [0x55c22925e786]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:485:22) [0x55c22833f2ed]
+    d8(v8::internal::maglev::MaglevConcurrentDispatcher::JobTask::Run(v8::JobDelegate*) ./../../src/maglev/maglev-concurrent-dispatcher.cc:284:20) [0x55c2292605a7]
+    d8(v8::platform::DefaultJobWorker::Run() ./../../src/libplatform/default-job.cc:19:46) [0x55c22b4392e9]
+    d8(v8::platform::DefaultWorkerThreadsTaskRunner::WorkerThread::Run() ./../../src/libplatform/default-worker-threads-task-runner.cc:96:9) [0x55c22b43e3ec]
+    d8(v8::base::ThreadEntry(void*) ./../../src/base/platform/platform-posix.cc:1212:3) [0x55c22b433ff8]
+    /lib/x86_64-linux-gnu/libc.so.6(+0x9caa4) [0x7f0f99394aa4]
+    /lib/x86_64-linux-gnu/libc.so.6(__clone+0x44) [0x7f0f99421a64]
+timeout: the monitored command dumped core

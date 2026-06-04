@@ -1,0 +1,5 @@
+=== stderr ===
+timeout: the monitored command dumped core
+
+=== exit code ===
+133

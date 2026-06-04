@@ -1,0 +1,1 @@
+A global buffer overflow vulnerability exists in the function iusace_estimate_scfs_chan, triggered when the value of the scalefactor band form factor becomes zero. This leads to a runtime error due to reading beyond the buffer boundary.

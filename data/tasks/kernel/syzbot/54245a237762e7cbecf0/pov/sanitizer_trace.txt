@@ -1,0 +1,171 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+==================================================================
+BUG: KASAN: slab-use-after-free in ma_dead_node lib/maple_tree.c:572 [inline]
+BUG: KASAN: slab-use-after-free in mte_dead_node lib/maple_tree.c:587 [inline]
+BUG: KASAN: slab-use-after-free in mas_start lib/maple_tree.c:1207 [inline]
+BUG: KASAN: slab-use-after-free in mas_state_walk lib/maple_tree.c:3291 [inline]
+BUG: KASAN: slab-use-after-free in mas_walk+0x8cf/0x9b0 lib/maple_tree.c:4599
+Read of size 8 at addr ffff888078907400 by task syz.0.18/6008
+
+CPU: 0 UID: 0 PID: 6008 Comm: syz.0.18 Not tainted syzkaller #0 PREEMPT(full) 
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 01/24/2026
+Call Trace:
+ <TASK>
+ __dump_stack lib/dump_stack.c:94 [inline]
+ dump_stack_lvl+0x100/0x190 lib/dump_stack.c:120
+ print_address_description mm/kasan/report.c:378 [inline]
+ print_report+0x156/0x4c9 mm/kasan/report.c:482
+ kasan_report+0xdf/0x1a0 mm/kasan/report.c:595
+ ma_dead_node lib/maple_tree.c:572 [inline]
+ mte_dead_node lib/maple_tree.c:587 [inline]
+ mas_start lib/maple_tree.c:1207 [inline]
+ mas_state_walk lib/maple_tree.c:3291 [inline]
+ mas_walk+0x8cf/0x9b0 lib/maple_tree.c:4599
+ lock_vma_under_rcu+0x101/0x5a0 mm/mmap_lock.c:253
+ do_user_addr_fault+0x41f/0x12f0 arch/x86/mm/fault.c:1325
+ handle_page_fault arch/x86/mm/fault.c:1474 [inline]
+ exc_page_fault+0x6f/0xd0 arch/x86/mm/fault.c:1527
+ asm_exc_page_fault+0x26/0x30 arch/x86/include/asm/idtentry.h:618
+RIP: 0033:0x342000
+Code: Unable to access opcode bytes at 0x341fd6.
+RSP: 002b:000000000000000e EFLAGS: 00010246
+RAX: 0000000000000000 RBX: 00007ff2e4816090 RCX: 00007ff2e459bf79
+RDX: 0000000000000000 RSI: 0000000000000006 RDI: 0002000020003b4a
+RBP: 00007ff2e46327e0 R08: 0000000000000103 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000246 R12: 0000000000000000
+R13: 00007ff2e4816128 R14: 00007ff2e4816090 R15: 00007ffc4f622688
+ </TASK>
+
+Allocated by task 5934:
+ kasan_save_stack+0x30/0x50 mm/kasan/common.c:57
+ kasan_save_track+0x14/0x30 mm/kasan/common.c:78
+ unpoison_slab_object mm/kasan/common.c:340 [inline]
+ __kasan_slab_alloc+0x89/0x90 mm/kasan/common.c:366
+ kasan_slab_alloc include/linux/kasan.h:253 [inline]
+ slab_post_alloc_hook mm/slub.c:4953 [inline]
+ slab_alloc_node mm/slub.c:5263 [inline]
+ kmem_cache_alloc_noprof+0x2ad/0x780 mm/slub.c:5270
+ mt_alloc_one lib/maple_tree.c:174 [inline]
+ mas_dup_build lib/maple_tree.c:6299 [inline]
+ __mt_dup+0x5a8/0xc20 lib/maple_tree.c:6382
+ dup_mmap+0x36d/0x1e20 mm/mmap.c:1744
+ dup_mm kernel/fork.c:1530 [inline]
+ copy_mm kernel/fork.c:1582 [inline]
+ copy_process+0x7371/0x79b0 kernel/fork.c:2223
+ kernel_clone+0xfc/0x930 kernel/fork.c:2654
+ __do_sys_clone+0xd9/0x120 kernel/fork.c:2795
+ do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
+ do_syscall_64+0x106/0xf80 arch/x86/entry/syscall_64.c:94
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+Freed by task 6003:
+ kasan_save_stack+0x30/0x50 mm/kasan/common.c:57
+ kasan_save_track+0x14/0x30 mm/kasan/common.c:78
+ kasan_save_free_info+0x3b/0x70 mm/kasan/generic.c:584
+ poison_slab_object mm/kasan/common.c:253 [inline]
+ __kasan_slab_free+0x5f/0x80 mm/kasan/common.c:285
+ kasan_slab_free include/linux/kasan.h:235 [inline]
+ slab_free_hook mm/slub.c:2540 [inline]
+ slab_free mm/slub.c:6674 [inline]
+ kfree+0x1c7/0x690 mm/slub.c:6886
+ mt_destroy_walk+0xc0a/0xfa0 lib/maple_tree.c:5028
+ mte_destroy_walk lib/maple_tree.c:5049 [inline]
+ mte_destroy_walk lib/maple_tree.c:5040 [inline]
+ __mt_destroy+0x2d7/0x390 lib/maple_tree.c:6446
+ exit_mmap+0x5d3/0xae0 mm/mmap.c:1312
+ __mmput+0x12a/0x410 kernel/fork.c:1174
+ mmput+0x67/0x80 kernel/fork.c:1197
+ exit_mm kernel/exit.c:581 [inline]
+ do_exit+0x78a/0x2a30 kernel/exit.c:959
+ do_group_exit+0xd5/0x2a0 kernel/exit.c:1112
+ __do_sys_exit_group kernel/exit.c:1123 [inline]
+ __se_sys_exit_group kernel/exit.c:1121 [inline]
+ __x64_sys_exit_group+0x3e/0x50 kernel/exit.c:1121
+ x64_sys_call+0x102c/0x1530 arch/x86/include/generated/asm/syscalls_64.h:232
+ do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
+ do_syscall_64+0x106/0xf80 arch/x86/entry/syscall_64.c:94
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+The buggy address belongs to the object at ffff888078907400
+ which belongs to the cache maple_node of size 256
+The buggy address is located 0 bytes inside of
+ freed 256-byte region [ffff888078907400, ffff888078907500)
+
+The buggy address belongs to the physical page:
+page: refcount:0 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x78906
+head: order:1 mapcount:0 entire_mapcount:0 nr_pages_mapped:0 pincount:0
+anon flags: 0xfff00000000040(head|node=0|zone=1|lastcpupid=0x7ff)
+page_type: f5(slab)
+raw: 00fff00000000040 ffff88813ff34c80 ffffea0000cd3680 0000000000000005
+raw: 0000000000000000 0000000000100010 00000000f5000000 0000000000000000
+head: 00fff00000000040 ffff88813ff34c80 ffffea0000cd3680 0000000000000005
+head: 0000000000000000 0000000000100010 00000000f5000000 0000000000000000
+head: 00fff00000000001 ffffea0001e24181 00000000ffffffff 00000000ffffffff
+head: ffffffffffffffff 0000000000000000 00000000ffffffff 0000000000000002
+page dumped because: kasan: bad access detected
+page_owner tracks the page as allocated
+page last allocated via order 1, migratetype Unmovable, gfp_mask 0xd20c0(__GFP_IO|__GFP_FS|__GFP_NOWARN|__GFP_NORETRY|__GFP_COMP|__GFP_NOMEMALLOC), pid 5699, tgid 5699 (rm), ts 81546835733, free_ts 81543034225
+ set_page_owner include/linux/page_owner.h:32 [inline]
+ post_alloc_hook+0x1e1/0x250 mm/page_alloc.c:1884
+ prep_new_page mm/page_alloc.c:1892 [inline]
+ get_page_from_freelist+0x111d/0x3140 mm/page_alloc.c:3945
+ __alloc_frozen_pages_noprof+0x26c/0x2410 mm/page_alloc.c:5240
+ alloc_pages_mpol+0x1fb/0x550 mm/mempolicy.c:2486
+ alloc_slab_page mm/slub.c:3075 [inline]
+ allocate_slab mm/slub.c:3248 [inline]
+ new_slab+0x2c4/0x440 mm/slub.c:3302
+ ___slab_alloc+0xdb3/0x1cb0 mm/slub.c:4656
+ __kmem_cache_alloc_bulk+0x20f/0x700 mm/slub.c:7439
+ refill_sheaf mm/slub.c:2650 [inline]
+ __prefill_sheaf_pfmemalloc+0x42/0x90 mm/slub.c:5328
+ kmem_cache_prefill_sheaf+0x1b7/0x420 mm/slub.c:5422
+ mt_get_sheaf lib/maple_tree.c:189 [inline]
+ mas_alloc_nodes+0x2c3/0x390 lib/maple_tree.c:1140
+ mas_preallocate+0x39c/0xf10 lib/maple_tree.c:5194
+ vma_iter_prealloc mm/vma.h:505 [inline]
+ vma_link+0x12c/0x750 mm/vma.c:1823
+ insert_vm_struct+0xf4/0x2d0 mm/vma.c:3288
+ __install_special_mapping mm/mmap.c:1460 [inline]
+ _install_special_mapping+0x187/0x3d0 mm/mmap.c:1496
+ map_vdso+0x1b0/0x560 arch/x86/entry/vdso/vma.c:168
+ arch_setup_additional_pages+0x41/0x60 arch/x86/entry/vdso/vma.c:238
+page last free pid 5699 tgid 5699 stack trace:
+ reset_page_owner include/linux/page_owner.h:25 [inline]
+ free_pages_prepare mm/page_alloc.c:1433 [inline]
+ __free_frozen_pages+0x822/0x1130 mm/page_alloc.c:2973
+ __pagetable_free include/linux/mm.h:3197 [inline]
+ pagetable_free include/linux/mm.h:3221 [inline]
+ pagetable_dtor_free include/linux/mm.h:3325 [inline]
+ __pgd_free include/asm-generic/pgalloc.h:303 [inline]
+ _pgd_free arch/x86/mm/pgtable.c:319 [inline]
+ pgd_free+0x3f4/0x560 arch/x86/mm/pgtable.c:381
+ mm_free_pgd kernel/fork.c:585 [inline]
+ __mmdrop+0xe5/0x750 kernel/fork.c:727
+ mmdrop include/linux/sched/mm.h:55 [inline]
+ __mmput+0x379/0x410 kernel/fork.c:1186
+ mmput+0x67/0x80 kernel/fork.c:1197
+ exec_mmap fs/exec.c:893 [inline]
+ begin_new_exec+0x10f0/0x3840 fs/exec.c:1148
+ load_elf_binary+0x8f7/0x5110 fs/binfmt_elf.c:1010
+ search_binary_handler fs/exec.c:1664 [inline]
+ exec_binprm fs/exec.c:1696 [inline]
+ bprm_execve fs/exec.c:1748 [inline]
+ bprm_execve+0x8fb/0x1620 fs/exec.c:1724
+ do_execveat_common.isra.0+0x4a5/0x580 fs/exec.c:1846
+ __do_sys_execve fs/exec.c:1930 [inline]
+ __se_sys_execve fs/exec.c:1924 [inline]
+ __x64_sys_execve+0x93/0xd0 fs/exec.c:1924
+ do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
+ do_syscall_64+0x106/0xf80 arch/x86/entry/syscall_64.c:94
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+Memory state around the buggy address:
+ ffff888078907300: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+ ffff888078907380: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+>ffff888078907400: fa fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+                   ^
+ ffff888078907480: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+ ffff888078907500: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+==================================================================

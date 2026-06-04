@@ -1,0 +1,66 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+em28xx 4-1:0.0: Disconnecting em28xx
+ non-slab/vmalloc memory
+list_del corruption. prev->next should be ffff8880620dc250, but was ffffffff8711fa26. (prev=ffff888026fc0250)
+------------[ cut here ]------------
+kernel BUG at lib/list_debug.c:64!
+Oops: invalid opcode: 0000 [#1] SMP KASAN PTI
+CPU: 1 UID: 0 PID: 24 Comm: kworker/1:0 Not tainted 6.15.0-rc5-syzkaller-00353-gcd802e7e5f1e #0 PREEMPT(full) 
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 05/07/2025
+Workqueue: usb_hub_wq hub_event
+RIP: 0010:__list_del_entry_valid_or_report+0x15a/0x190 lib/list_debug.c:62
+Code: e8 9b 7a 43 fd 43 80 3c 2c 00 74 08 4c 89 ff e8 dc 4a 63 fd 49 8b 17 48 c7 c7 40 d8 c1 8b 48 89 de 4c 89 f9 e8 07 18 69 fc 90 <0f> 0b 4c 89 f7 e8 6c 7a 43 fd 43 80 3c 2c 00 74 08 4c 89 ff e8 ad
+RSP: 0018:ffffc900001e7440 EFLAGS: 00010246
+RAX: 000000000000006d RBX: ffff8880620dc250 RCX: 0f9dde49e7aa8200
+RDX: 0000000000000000 RSI: 0000000080000000 RDI: 0000000000000000
+RBP: ffff8880620dc000 R08: ffffffff8f7ef677 R09: 1ffffffff1efdece
+R10: dffffc0000000000 R11: fffffbfff1efdecf R12: 1ffff11004df804a
+R13: dffffc0000000000 R14: ffff88807b4c8250 R15: ffff888026fc0250
+FS:  0000000000000000(0000) GS:ffff8881261c9000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007ffd3ad68bf4 CR3: 000000001d2d0000 CR4: 00000000003526f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Call Trace:
+ <TASK>
+ __list_del_entry_valid include/linux/list.h:124 [inline]
+ __list_del_entry include/linux/list.h:215 [inline]
+ list_del include/linux/list.h:229 [inline]
+ em28xx_close_extension+0x130/0x220 drivers/media/usb/em28xx/em28xx-core.c:1137
+ em28xx_usb_disconnect+0x16b/0x2f0 drivers/media/usb/em28xx/em28xx-cards.c:4197
+ usb_unbind_interface+0x26b/0x8f0 drivers/usb/core/driver.c:458
+ device_remove drivers/base/dd.c:569 [inline]
+ __device_release_driver drivers/base/dd.c:1272 [inline]
+ device_release_driver_internal+0x4d6/0x7c0 drivers/base/dd.c:1295
+ bus_remove_device+0x34d/0x410 drivers/base/bus.c:579
+ device_del+0x511/0x8e0 drivers/base/core.c:3881
+ usb_disable_device+0x3e9/0x8a0 drivers/usb/core/message.c:1418
+ usb_disconnect+0x330/0x910 drivers/usb/core/hub.c:2316
+ hub_port_connect drivers/usb/core/hub.c:5371 [inline]
+ hub_port_connect_change drivers/usb/core/hub.c:5671 [inline]
+ port_event drivers/usb/core/hub.c:5831 [inline]
+ hub_event+0x1cdb/0x4a00 drivers/usb/core/hub.c:5913
+ process_one_work kernel/workqueue.c:3238 [inline]
+ process_scheduled_works+0xadb/0x17a0 kernel/workqueue.c:3319
+ worker_thread+0x8a0/0xda0 kernel/workqueue.c:3400
+ kthread+0x70e/0x8a0 kernel/kthread.c:464
+ ret_from_fork+0x4b/0x80 arch/x86/kernel/process.c:153
+ ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:245
+ </TASK>
+Modules linked in:
+---[ end trace 0000000000000000 ]---
+RIP: 0010:__list_del_entry_valid_or_report+0x15a/0x190 lib/list_debug.c:62
+Code: e8 9b 7a 43 fd 43 80 3c 2c 00 74 08 4c 89 ff e8 dc 4a 63 fd 49 8b 17 48 c7 c7 40 d8 c1 8b 48 89 de 4c 89 f9 e8 07 18 69 fc 90 <0f> 0b 4c 89 f7 e8 6c 7a 43 fd 43 80 3c 2c 00 74 08 4c 89 ff e8 ad
+RSP: 0018:ffffc900001e7440 EFLAGS: 00010246
+RAX: 000000000000006d RBX: ffff8880620dc250 RCX: 0f9dde49e7aa8200
+RDX: 0000000000000000 RSI: 0000000080000000 RDI: 0000000000000000
+RBP: ffff8880620dc000 R08: ffffffff8f7ef677 R09: 1ffffffff1efdece
+R10: dffffc0000000000 R11: fffffbfff1efdecf R12: 1ffff11004df804a
+R13: dffffc0000000000 R14: ffff88807b4c8250 R15: ffff888026fc0250
+FS:  0000000000000000(0000) GS:ffff8881261c9000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007ffd3ad68bf4 CR3: 000000001d2d0000 CR4: 00000000003526f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400

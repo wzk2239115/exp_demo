@@ -1,0 +1,1 @@
+A vulnerability exists where the code does not error if a CMap name exceeds the maximum file name length in the relevant file.

@@ -1,0 +1,1 @@
+A missing typesize check when reading frame header info allows processing of frames with incorrect or malicious typesize values, potentially leading to security issues.

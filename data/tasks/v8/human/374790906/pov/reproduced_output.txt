@@ -1,0 +1,14 @@
+=== stderr ===
+Received signal 11 SEGV_ACCERR 2b4342424242
+
+==== C stack trace ===============================
+
+ [0x7f47fdfb5883]
+ [0x7f47fdfb57d2]
+ [0x7f47fd878330]
+ [0x07249de36f7b]
+[end of stack trace]
+timeout: the monitored command dumped core
+
+=== exit code ===
+139

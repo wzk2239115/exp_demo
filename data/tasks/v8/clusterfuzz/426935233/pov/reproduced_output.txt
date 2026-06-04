@@ -1,0 +1,30 @@
+
+
+#
+# Fatal error in ../../src/maglev/x64/maglev-assembler-x64-inl.h, line 316
+# Debug check failed: input.operand().IsStackSlot().
+#
+#
+#
+#FailureMessage Object: 0x7ffd2ccad750
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x56037e8bcc33]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x56037e8bbd9d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x56037e8a1e14]
+    out/debug/d8(+0x45fe805) [0x56037e8a1805]
+    d8(v8::internal::maglev::LogicalNot::GenerateCode(v8::internal::maglev::MaglevAssembler*, v8::internal::maglev::ProcessingState const&) ./../../src/maglev/x64/maglev-assembler-x64-inl.h:0:5) [0x56037c57d821]
+    d8(v8::internal::maglev::ProcessResult v8::internal::maglev::NodeMultiProcessor<v8::internal::maglev::(anonymous namespace)::SafepointingNodeProcessor, v8::internal::maglev::(anonymous namespace)::MaglevCodeGeneratingNodeProcessor>::Process<v8::internal::maglev::LogicalNot>(v8::internal::maglev::LogicalNot*, v8::internal::maglev::ProcessingState const&) ./../../src/maglev/maglev-code-generator.cc:853:5) [0x56037c1973c4]
+    d8(v8::internal::maglev::MaglevCodeGenerator::EmitCode() ./../../src/maglev/maglev-graph-processor.h:172:9) [0x56037c0fe0af]
+    d8(v8::internal::maglev::MaglevCodeGenerator::Assemble() ./../../src/maglev/maglev-code-generator.cc:1719:8) [0x56037c0fbb09]
+    d8(v8::internal::maglev::MaglevCompiler::Compile(v8::internal::LocalIsolate*, v8::internal::maglev::MaglevCompilationInfo*) ./../../src/maglev/maglev-compiler.cc:289:36) [0x56037c1f140a]
+    d8(v8::internal::maglev::MaglevCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../third_party/libc++/src/include/__memory/unique_ptr.h:277:12) [0x56037c2f907a]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:472:22) [0x56037b1d9912]
+    d8(v8::internal::(anonymous namespace)::CompileMaglev(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1325:16) [0x56037b1fd645]
+    d8(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:0:0) [0x56037b1e9f7f]
+    d8(v8::internal::Compiler::CompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind) ./../../src/handles/maybe-handles-inl.h:40:17) [0x56037b1ebcc9]
+    d8(v8::internal::(anonymous namespace)::CompileOptimized(v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::Isolate*) ./../../src/handles/handles.h:202:22) [0x56037bedb655]
+    d8(v8::internal::__RT_impl_Runtime_OptimizeMaglevEager(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/common/ptr-compr-inl.h:74:18) [0x56037bed4632]
+    d8(v8::internal::Runtime_OptimizeMaglevEager(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:214:1) [0x56037bed4220]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x56037df7073d]
+timeout: the monitored command dumped core

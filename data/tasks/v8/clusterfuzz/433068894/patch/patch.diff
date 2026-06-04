@@ -1,0 +1,46 @@
+diff --git a/src/compiler/redundancy-elimination.cc b/src/compiler/redundancy-elimination.cc
+index a437048a752..589a7ce3c3f 100644
+--- a/src/compiler/redundancy-elimination.cc
++++ b/src/compiler/redundancy-elimination.cc
+@@ -282,10 +282,15 @@ Subsumption CheckSubsumes(Node const* a, Node const* b,
+               CheckTaggedInputParametersOf(a->op());
+           CheckTaggedInputParameters const& bp =
+               CheckTaggedInputParametersOf(b->op());
+-          // {a} subsumes {b} if the modes are either the same, or {a} checks
+-          // for Number, in which case {b} will be subsumed no matter what.
+-          if (ap.mode() != bp.mode() &&
+-              ap.mode() != CheckTaggedInputMode::kNumber) {
++          // {a} subsumes {b} if the modes are either the same, or {a} is
++          // a stricter check.
++          using Mode = CheckTaggedInputMode;
++          static_assert(static_cast<int32_t>(Mode::kAdditiveSafeInteger) == 0);
++          static_assert(static_cast<int32_t>(Mode::kNumber) == 1);
++          static_assert(static_cast<int32_t>(Mode::kNumberOrBoolean) == 2);
++          static_assert(static_cast<int32_t>(Mode::kNumberOrOddball) == 3);
++          if (static_cast<int32_t>(ap.mode()) >
++              static_cast<int32_t>(bp.mode())) {
+             return Subsumption::None();
+           }
+           break;
+diff --git a/test/mjsunit/regress/regress-433068894.js b/test/mjsunit/regress/regress-433068894.js
+new file mode 100644
+index 00000000000..64b10229658
+--- /dev/null
++++ b/test/mjsunit/regress/regress-433068894.js
+@@ -0,0 +1,16 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax
++
++function foo(param) {
++  let val1 = 0x7fffffff
++  var val2 = param & -5e-324;
++  val1 += param;
++  return val1 & 0x7fffffff | val2;
++}
++%PrepareFunctionForOptimization(foo);
++foo(1);
++%OptimizeFunctionOnNextCall(foo);
++assertEquals(2147483645, foo(-1.9));

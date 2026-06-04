@@ -1,0 +1,20 @@
+=== stdout ===
+[*] trying {"none":[666,682606326],"any":[87,739874433],"idx":0}
+[!] CompileError: WebAssembly.Module(): Compiling function #0:"addrof" failed: struct.get[0] expected type (ref null 3), found local.get of type (ref 4) @+371, retry with next candidate
+[*] trying {"none":[488,612821674],"any":[740,206404131],"idx":2}
+[+] success
+
+=== stderr ===
+Received signal 11 SEGV_ACCERR 352742424242
+
+==== C stack trace ===============================
+
+ [0x7f827683c203]
+ [0x7f827683c152]
+ [0x7f82760f3330]
+ [0x032fe1019b1b]
+[end of stack trace]
+timeout: the monitored command dumped core
+
+=== exit code ===
+139

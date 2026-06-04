@@ -1,0 +1,12 @@
+=== stderr ===
+#
+# Fatal error in ../../src/flags/flags.cc, line 125
+# Command-line provided flag --wasm-wrapper-tiering-budget specified multiple times.
+If a test variant caused this, it might be necessary to specify additional contradictory flags in tools/testrunner/local/variants.py.
+#
+#
+#
+#FailureMessage Object: 0x7fffe6888520timeout: the monitored command dumped core
+
+=== exit code ===
+134

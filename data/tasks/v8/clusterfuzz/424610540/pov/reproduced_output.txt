@@ -1,0 +1,31 @@
+
+
+#
+# Fatal error in ../../src/compiler/node-properties.h, line 92
+# Check failed: index < node->op()->ControlInputCount() (0 vs. 0).
+#
+#
+#
+#FailureMessage Object: 0x7ffd770cbf30
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x55a490a37aa3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55a490a36c0d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55a490a1cdf4]
+    out/debug/d8(+0x2b018d3) [0x55a48eef28d3]
+    d8(void v8::internal::compiler::RepresentationSelector::InsertUnreachableIfNecessary<(v8::internal::compiler::Phase)2>(v8::internal::compiler::Node*) ./../../src/compiler/simplified-lowering.cc:0:0) [0x55a48f1941c3]
+    d8(v8::internal::compiler::RepresentationSelector::RunLowerPhase(v8::internal::compiler::SimplifiedLowering*) ./../../src/compiler/node-origin-table.h:81:11) [0x55a48f19c41e]
+    d8(v8::internal::compiler::SimplifiedLowering::LowerAllNodes() ./../../src/compiler/simplified-lowering.cc:395:56) [0x55a48f194679]
+    d8(v8::internal::compiler::SimplifiedLoweringPhase::Run(v8::internal::compiler::TFPipelineData*, v8::internal::Zone*, v8::internal::compiler::Linkage*) ./../../third_party/libc++/src/include/optional:299:9) [0x55a48f1682fc]
+    d8(bool v8::internal::compiler::PipelineImpl::Run<v8::internal::compiler::SimplifiedLoweringPhase, v8::internal::compiler::Linkage*&>(v8::internal::compiler::Linkage*&) ./../../src/compiler/pipeline.cc:3302:63) [0x55a48f124063]
+    d8(v8::internal::compiler::PipelineImpl::OptimizeTurbofanGraph(v8::internal::compiler::Linkage*) ./../../src/compiler/pipeline.cc:2046:3) [0x55a48f11fc3c]
+    d8(v8::internal::compiler::PipelineCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/compiler/pipeline.cc:0:20) [0x55a48f11f1f1]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:472:22) [0x55a48d31a9d2]
+    d8(v8::internal::(anonymous namespace)::CompileTurbofan(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::DirectHandle<v8::internal::SharedFunctionInfo>, v8::internal::ConcurrencyMode, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1108:7) [0x55a48d33d7c2]
+    d8(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1421:12) [0x55a48d32b008]
+    d8(v8::internal::Compiler::CompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind) ./../../src/handles/maybe-handles-inl.h:40:17) [0x55a48d32cd89]
+    d8(v8::internal::(anonymous namespace)::CompileOptimized(v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::Isolate*) ./../../src/handles/handles.h:202:22) [0x55a48e017df5]
+    d8(v8::internal::__RT_impl_Runtime_OptimizeTurbofanEager(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/common/ptr-compr-inl.h:74:18) [0x55a48e0113b2]
+    d8(v8::internal::Runtime_OptimizeTurbofanEager(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:224:1) [0x55a48e010fa0]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x55a4900a99bd]
+timeout: the monitored command dumped core

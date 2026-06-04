@@ -1,0 +1,103 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3513117065
+INFO: Loaded 3 modules   (202634 inline 8-bit counters): 13708 [0x7f37f55e19e0, 0x7f37f55e4f6c), 959 [0x7f37f5642a40, 0x7f37f5642dff), 187967 [0x3447cd0, 0x3475b0f), 
+INFO: Loaded 3 PC tables (202634 PCs): 13708 [0x7f37f55e4f70,0x7f37f561a830), 959 [0x7f37f5642e00,0x7f37f56469f0), 187967 [0x27378d0,0x2a15cc0), 
+/out/gs_device_pdfwrite_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: stack-buffer-underflow on address 0x7f37f43b381c at pc 0x000001357029 bp 0x7fff2084c530 sp 0x7fff2084c528
+READ of size 4 at 0x7f37f43b381c thread T0
+SCARINESS: 32 (4-byte-read-stack-buffer-underflow)
+    #0 0x1357028 in gs_type1_piece_codes /src/ghostpdl/./base/gxtype1.c:548:25
+    #1 0x1357505 in gs_type1_glyph_pieces /src/ghostpdl/./base/gxtype1.c:583:16
+    #2 0x1357505 in gs_type1_glyph_info /src/ghostpdl/./base/gxtype1.c:631:16
+    #3 0x10f3a30 in pdfi_cff_glyph_info /src/ghostpdl/./pdf/pdf_font1C.c:397:16
+    #4 0x998757 in psf_add_subset_pieces /src/ghostpdl/./devices/vector/gdevpsfu.c:129:20
+    #5 0x979bf0 in gs_copy_glyph_options /src/ghostpdl/./devices/gxfcopy.c:2396:12
+    #6 0x97af0f in gs_copy_glyph /src/ghostpdl/./devices/gxfcopy.c:2378:12
+    #7 0x97af0f in gs_copy_font_complete /src/ghostpdl/./devices/gxfcopy.c:2510:20
+    #8 0x14345a3 in pdf_base_font_alloc /src/ghostpdl/./devices/vector/gdevpdtb.c:322:16
+    #9 0x9374c7 in pdf_font_descriptor_alloc /src/ghostpdl/./devices/vector/gdevpdtd.c:202:16
+    #10 0x95961f in pdf_make_font_resource /src/ghostpdl/./devices/vector/gdevpdtt.c:1583:17
+    #11 0x95d913 in pdf_obtain_font_resource_encoded /src/ghostpdl/./devices/vector/gdevpdtt.c:2117:24
+    #12 0x95ba47 in pdf_obtain_font_resource /src/ghostpdl/./devices/vector/gdevpdtt.c:2223:12
+    #13 0x1440c0c in pdf_process_string /src/ghostpdl/./devices/vector/gdevpdte.c:837:12
+    #14 0x1440c0c in pdf_process_string_aux /src/ghostpdl/./devices/vector/gdevpdte.c:81:12
+    #15 0x144e53b in process_plain_text /src/ghostpdl/./devices/vector/gdevpdte.c:1841:16
+    #16 0x96ab55 in pdf_text_process /src/ghostpdl/./devices/vector/gdevpdtt.c:3722:16
+    #17 0xaa17bf in gs_text_process /src/ghostpdl/./base/gstext.c:670:12
+    #18 0x1135b4f in pdfi_show_simple /src/ghostpdl/./pdf/pdf_text.c:445:16
+    #19 0x1135b4f in pdfi_show_Tr_preserve /src/ghostpdl/./pdf/pdf_text.c:780:12
+    #20 0x1135b4f in pdfi_show /src/ghostpdl/./pdf/pdf_text.c:830:16
+    #21 0x1136f89 in pdfi_Tj /src/ghostpdl/./pdf/pdf_text.c:1069:12
+    #22 0x103e02a in pdfi_interpret_stream_operator /src/ghostpdl/./pdf/pdf_int.c:1644:24
+    #23 0x103c226 in pdfi_interpret_content_stream /src/ghostpdl/./pdf/pdf_int.c:2101:24
+    #24 0x109d76c in pdfi_process_page_contents /src/ghostpdl/./pdf/pdf_page.c:127:20
+    #25 0x109d76c in pdfi_process_one_page /src/ghostpdl/./pdf/pdf_page.c:152:12
+    #26 0x109d76c in pdfi_page_render /src/ghostpdl/./pdf/pdf_page.c:895:12
+    #27 0xffaa8a in zPDFdrawpage /src/ghostpdl/./psi/zpdfops.c:1074:24
+    #28 0xe64dcb in interp /src/ghostpdl/./psi/interp.c:1725:40
+    #29 0xe64dcb in gs_call_interp /src/ghostpdl/./psi/interp.c:522:12
+    #30 0xe64dcb in gs_interpret /src/ghostpdl/./psi/interp.c:479:12
+    #31 0x567d4a in gs_main_interpret /src/ghostpdl/./psi/imain.c:257:12
+    #32 0x567d4a in gs_main_run_string_end /src/ghostpdl/./psi/imain.c:945:12
+    #33 0x567d4a in gs_main_run_string_with_length /src/ghostpdl/./psi/imain.c:889:12
+    #34 0x5631f2 in gs_main_run_string /src/ghostpdl/./psi/imain.c:870:12
+    #35 0x1197891 in run_string /src/ghostpdl/./psi/imainarg.c:1169:12
+    #36 0x1193899 in swproc /src/ghostpdl/./psi/imainarg.c:367:20
+    #37 0x119077e in gs_main_init_with_args01 /src/ghostpdl/./psi/imainarg.c:224:24
+    #38 0x1197619 in gs_main_init_with_args /src/ghostpdl/./psi/imainarg.c:289:16
+    #39 0xe4d424 in psapi_init_with_args /src/ghostpdl/./psi/psapi.c:281:12
+    #40 0x55f64c in gsapi_init_with_args /src/ghostpdl/./psi/iapi.c:253:12
+    #41 0x55e704 in fuzz_gs_device(unsigned char const*, unsigned long, int, char const*) /src/gs_fuzzlib.h:127:8
+    #42 0x55eb0a in LLVMFuzzerTestOneInput /src/gs_device_pdfwrite_fuzzer.cc:18:2
+    #43 0x456553 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #44 0x4421e2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #45 0x447a2c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #46 0x470622 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #47 0x7f37f4fdb082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)
+    #48 0x420a0d in _start (/out/gs_device_pdfwrite_fuzzer+0x420a0d)
+
+DEDUP_TOKEN: gs_type1_piece_codes--gs_type1_glyph_pieces--gs_type1_glyph_info
+Address 0x7f37f43b381c is located in stack of thread T0 at offset 28 in frame
+    #0 0x1355adf in gs_type1_piece_codes /src/ghostpdl/./base/gxtype1.c:351
+
+DEDUP_TOKEN: gs_type1_piece_codes
+  This frame has 2 object(s):
+    [32, 224) 'cstack' (line 367) <== Memory access at offset 28 underflows this variable
+    [288, 1080) 'ipstack' (line 369)
+HINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork
+      (longjmp and C++ exceptions *are* supported)
+SUMMARY: AddressSanitizer: stack-buffer-underflow /src/ghostpdl/./base/gxtype1.c:548:25 in gs_type1_piece_codes
+Shadow bytes around the buggy address:
+  0x0fe77e86e6b0: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x0fe77e86e6c0: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x0fe77e86e6d0: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x0fe77e86e6e0: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x0fe77e86e6f0: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+=>0x0fe77e86e700: f1 f1 f1[f1]00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe77e86e710: 00 00 00 00 00 00 00 00 00 00 00 00 f2 f2 f2 f2
+  0x0fe77e86e720: f2 f2 f2 f2 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe77e86e730: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe77e86e740: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fe77e86e750: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

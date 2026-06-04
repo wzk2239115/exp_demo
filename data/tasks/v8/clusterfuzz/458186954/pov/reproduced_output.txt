@@ -1,0 +1,20 @@
+gen/third_party/libc++/src/include/string:1065: libc++ Hardening assertion __s != nullptr failed: basic_string(const char*) detected nullptr
+Received signal 6
+
+==== C stack trace ===============================
+
+d8(v8::base::debug::(anonymous namespace)::StackDumpSignalHandler(int, siginfo_t*, void*) ./../../src/base/debug/stack_trace_posix.cc:395:32)[0x560f26a51574]
+/lib/x86_64-linux-gnu/libc.so.6(+0x45330)[0x7fc41bc31330]
+/lib/x86_64-linux-gnu/libc.so.6(pthread_kill+0x11c)[0x7fc41bc8ab2c]
+/lib/x86_64-linux-gnu/libc.so.6(gsignal+0x1e)[0x7fc41bc3127e]
+/lib/x86_64-linux-gnu/libc.so.6(abort+0xdf)[0x7fc41bc148ff]
+out/debug/d8(+0x50455de)[0x560f26d985de]
+d8(std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>>::basic_string<0>(char const*) ./gen/third_party/libc++/src/include/__utility/is_pointer_in_range.h:38:3)[0x560f22a85aa9]
+d8(v8::internal::Intl::ResolveLocale(v8::internal::Isolate*, std::__Cr::set<std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>>, std::__Cr::less<std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>>>, std::__Cr::allocator<std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>>>> const&, std::__Cr::vector<std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>>, std::__Cr::allocator<std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>>>> const&, v8::internal::Intl::MatcherOption, std::__Cr::set<std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>>, std::__Cr::less<std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>>>, std::__Cr::allocator<std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char>>>> const&) ./../../src/objects/intl-objects.cc:2479:26)[0x560f23712f7f]
+d8(v8::internal::JSDateTimeFormat::CreateDateTimeFormat(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::Map>, v8::internal::DirectHandle<v8::internal::Object>, v8::internal::DirectHandle<v8::internal::Object>, v8::internal::JSDateTimeFormat::RequiredOption, v8::internal::JSDateTimeFormat::DefaultsOption, v8::internal::MaybeDirectHandle<v8::internal::String>, char const*) ./../../include/v8-maybe.h:72:9)[0x560f2372b76a]
+d8(v8::internal::JSDateTimeFormat::New(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::Map>, v8::internal::DirectHandle<v8::internal::Object>, v8::internal::DirectHandle<v8::internal::Object>, char const*) ./../../src/objects/js-date-time-format.cc:2536:10)[0x560f2372e368]
+d8(v8::internal::Builtin_Impl_DateTimeFormatConstructor(v8::internal::BuiltinArguments, v8::internal::Isolate*) ./../../src/handles/maybe-handles-inl.h:35:17)[0x560f22d543ae]
+d8(v8::internal::Builtin_DateTimeFormatConstructor(int, unsigned long*, v8::internal::Isolate*) ./../../src/builtins/builtins-intl.cc:581:1)[0x560f22d53ee1]
+d8(Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc:0:0)[0x560f25f125fd]
+[end of stack trace]
+timeout: the monitored command dumped core

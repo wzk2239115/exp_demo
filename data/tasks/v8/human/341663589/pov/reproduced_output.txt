@@ -1,0 +1,39 @@
+
+
+#
+# Fatal error in ../../src/ast/scopes.cc, line 2450
+# Debug check failed: !var->has_forced_context_allocation() || var->is_used().
+#
+#
+#
+#FailureMessage Object: 0x7fffa1756bb0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x557aaa14cca3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x557aaa14c0bd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:204:10) [0x557aaa130b2d]
+    out/debug/d8(+0x3a4c575) [0x557aaa130575]
+    d8(v8::internal::Scope::MustAllocate(v8::internal::Variable*) ./../../src/ast/scopes.cc:2452:16) [0x557aa70d1d83]
+    d8(v8::internal::DeclarationScope::AllocateParameter(v8::internal::Variable*, int) ./../../src/ast/scopes.cc:2527:7) [0x557aa70dd1d8]
+    d8(v8::internal::Scope::AllocateVariablesRecursively() ./../../src/ast/scopes.h:355:55) [0x557aa70cfdfe]
+    d8(v8::internal::DeclarationScope::AllocateVariables(v8::internal::ParseInfo*) ./../../src/ast/scopes.cc:0:29) [0x557aa70cbf43]
+    d8(v8::internal::DeclarationScope::Analyze(v8::internal::ParseInfo*) ./../../src/ast/scopes.cc:732:15) [0x557aa70cbcb8]
+    d8(void v8::internal::Parser::PostProcessParseResult<v8::internal::Isolate>(v8::internal::Isolate*, v8::internal::ParseInfo*, v8::internal::FunctionLiteral*) ./../../src/parsing/parser.cc:749:9) [0x557aa7c5824b]
+    d8(v8::internal::Parser::ParseProgram(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Script>, v8::internal::ParseInfo*, v8::internal::MaybeHandle<v8::internal::ScopeInfo>) ./../../src/parsing/parser.cc:593:3) [0x557aa7c5b17d]
+    d8(v8::internal::parsing::ParseProgram(v8::internal::ParseInfo*, v8::internal::Handle<v8::internal::Script>, v8::internal::MaybeHandle<v8::internal::ScopeInfo>, v8::internal::Isolate*, v8::internal::parsing::ReportStatisticsMode) ./../../src/parsing/parsing.cc:28:3) [0x557aa7c979f2]
+    d8(v8::internal::(anonymous namespace)::CompileToplevel(v8::internal::ParseInfo*, v8::internal::Handle<v8::internal::Script>, v8::internal::MaybeHandle<v8::internal::ScopeInfo>, v8::internal::Isolate*, v8::internal::IsCompiledScope*) ./../../src/codegen/compiler.cc:1574:7) [0x557aa7251be9]
+    d8(v8::internal::(anonymous namespace)::CompileScriptOnMainThread(v8::internal::UnoptimizedCompileFlags, v8::internal::Handle<v8::internal::String>, v8::internal::ScriptDetails const&, v8::internal::NativesFlag, v8::Extension*, v8::internal::Isolate*, v8::internal::MaybeHandle<v8::internal::Script>, v8::internal::IsCompiledScope*, bool (*)(int, void*), void*) ./../../src/codegen/compiler.cc:2826:10) [0x557aa72634c6]
+    d8(v8::internal::(anonymous namespace)::GetSharedFunctionInfoForScriptImpl(v8::internal::Isolate*, v8::internal::Handle<v8::internal::String>, v8::internal::ScriptDetails const&, v8::Extension*, v8::internal::AlignedCachedData*, v8::internal::BackgroundDeserializeTask*, bool (*)(int, void*), void*, v8::ScriptCompiler::CompileOptions, v8::ScriptCompiler::NoCacheReason, v8::internal::NativesFlag, v8::ScriptCompiler::CompilationDetails*) ./../../src/codegen/compiler.cc:3696:22) [0x557aa7254b96]
+    d8(v8::internal::Compiler::GetSharedFunctionInfoForScript(v8::internal::Isolate*, v8::internal::Handle<v8::internal::String>, v8::internal::ScriptDetails const&, v8::ScriptCompiler::CompileOptions, v8::ScriptCompiler::NoCacheReason, v8::internal::NativesFlag, v8::ScriptCompiler::CompilationDetails*) ./../../src/codegen/compiler.cc:3728:3) [0x557aa7254793]
+    d8(v8::ScriptCompiler::CompileUnboundInternal(v8::Isolate*, v8::ScriptCompiler::Source*, v8::ScriptCompiler::CompileOptions, v8::ScriptCompiler::NoCacheReason) ./../../src/api/api.cc:2578:27) [0x557aa7045bfd]
+    d8(v8::ScriptCompiler::Compile(v8::Local<v8::Context>, v8::ScriptCompiler::Source*, v8::ScriptCompiler::CompileOptions, v8::ScriptCompiler::NoCacheReason) ./../../include/v8-handle-base.h:56:53) [0x557aa7046106]
+    d8(v8::MaybeLocal<v8::Script> v8::Shell::CompileString<v8::Script>(v8::Isolate*, v8::Local<v8::Context>, v8::Local<v8::String>, v8::ScriptOrigin const&) ./../../src/d8/d8.cc:657:10) [0x557aa6ffb80f]
+    d8(v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::String>, v8::Shell::ReportExceptions, v8::Global<v8::Value>*) ./../../include/v8-handle-base.h:56:53) [0x557aa6ffaf34]
+    d8(v8::SourceGroup::Execute(v8::Isolate*) ./../../src/d8/d8.cc:4471:10) [0x557aa70127b8]
+    d8(v8::Shell::RunMainIsolate(v8::Isolate*, bool) ./../../src/d8/d8.cc:5336:37) [0x557aa7016b47]
+    d8(v8::Shell::RunMain(v8::Isolate*, bool) ./../../src/d8/d8.cc:5245:18) [0x557aa7016625]
+    d8(v8::Shell::Main(int, char**) ./../../src/d8/d8.cc:6136:16) [0x557aa7018590]
+    /lib/x86_64-linux-gnu/libc.so.6(+0x2a1ca) [0x7ff45b2441ca]
+    /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b) [0x7ff45b24428b]
+    out/debug/d8(_start+0x2a) [0x557aa6fe402a]
+timeout: the monitored command dumped core

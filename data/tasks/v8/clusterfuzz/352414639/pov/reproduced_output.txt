@@ -1,0 +1,39 @@
+
+
+#
+# Fatal error in ../../src/ast/scopes.cc, line 2707
+# Debug check failed: !scope_info_.is_null().
+#
+#
+#
+#FailureMessage Object: 0x7ffc0bdac840
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x564595155333]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x56459515474d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x564595139174]
+    out/debug/d8(+0x3c4fba5) [0x564595138ba5]
+    d8(void v8::internal::Scope::AllocateScopeInfosRecursively<v8::internal::Isolate>(v8::internal::Isolate*, v8::internal::MaybeHandle<v8::internal::ScopeInfo>, std::__Cr::unordered_map<int, v8::internal::Handle<v8::internal::ScopeInfo>, std::__Cr::hash<int>, std::__Cr::equal_to<int>, std::__Cr::allocator<std::__Cr::pair<int const, v8::internal::Handle<v8::internal::ScopeInfo>>>>&) ./../../src/handles/handles.h:76:12) [0x564591f4082a]
+    d8(void v8::internal::Scope::AllocateScopeInfosRecursively<v8::internal::Isolate>(v8::internal::Isolate*, v8::internal::MaybeHandle<v8::internal::ScopeInfo>, std::__Cr::unordered_map<int, v8::internal::Handle<v8::internal::ScopeInfo>, std::__Cr::hash<int>, std::__Cr::equal_to<int>, std::__Cr::allocator<std::__Cr::pair<int const, v8::internal::Handle<v8::internal::ScopeInfo>>>>&) ./../../src/ast/scopes.cc:2727:0) [0x564591f403a4]
+    d8(void v8::internal::Scope::AllocateScopeInfosRecursively<v8::internal::Isolate>(v8::internal::Isolate*, v8::internal::MaybeHandle<v8::internal::ScopeInfo>, std::__Cr::unordered_map<int, v8::internal::Handle<v8::internal::ScopeInfo>, std::__Cr::hash<int>, std::__Cr::equal_to<int>, std::__Cr::allocator<std::__Cr::pair<int const, v8::internal::Handle<v8::internal::ScopeInfo>>>>&) ./../../src/ast/scopes.cc:2727:0) [0x564591f403a4]
+    d8(void v8::internal::Scope::AllocateScopeInfosRecursively<v8::internal::Isolate>(v8::internal::Isolate*, v8::internal::MaybeHandle<v8::internal::ScopeInfo>, std::__Cr::unordered_map<int, v8::internal::Handle<v8::internal::ScopeInfo>, std::__Cr::hash<int>, std::__Cr::equal_to<int>, std::__Cr::allocator<std::__Cr::pair<int const, v8::internal::Handle<v8::internal::ScopeInfo>>>>&) ./../../src/ast/scopes.cc:2727:0) [0x564591f403a4]
+    d8(void v8::internal::Scope::AllocateScopeInfosRecursively<v8::internal::Isolate>(v8::internal::Isolate*, v8::internal::MaybeHandle<v8::internal::ScopeInfo>, std::__Cr::unordered_map<int, v8::internal::Handle<v8::internal::ScopeInfo>, std::__Cr::hash<int>, std::__Cr::equal_to<int>, std::__Cr::allocator<std::__Cr::pair<int const, v8::internal::Handle<v8::internal::ScopeInfo>>>>&) ./../../src/ast/scopes.cc:2727:0) [0x564591f403a4]
+    d8(void v8::internal::DeclarationScope::AllocateScopeInfos<v8::internal::Isolate>(v8::internal::ParseInfo*, v8::internal::Handle<v8::internal::Script>, v8::internal::Isolate*) ./../../src/handles/handles.h:63:53) [0x564591f418a0]
+    d8(bool v8::internal::(anonymous namespace)::IterativelyExecuteAndFinalizeUnoptimizedCompilationJobs<v8::internal::Isolate>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Script>, v8::internal::ParseInfo*, v8::internal::AccountingAllocator*, v8::internal::IsCompiledScope*, std::__Cr::vector<v8::internal::FinalizeUnoptimizedCompilationData, std::__Cr::allocator<v8::internal::FinalizeUnoptimizedCompilationData>>*, std::__Cr::vector<v8::internal::DeferredFinalizationJobData, std::__Cr::allocator<v8::internal::DeferredFinalizationJobData>>*) ./../../third_party/libc++/src/include/vector:759:11) [0x5645920d2149]
+    d8(v8::internal::(anonymous namespace)::CompileToplevel(v8::internal::ParseInfo*, v8::internal::Handle<v8::internal::Script>, v8::internal::MaybeHandle<v8::internal::ScopeInfo>, v8::internal::Isolate*, v8::internal::IsCompiledScope*) ./../../src/codegen/compiler.cc:1591:7) [0x5645920d5446]
+    d8(v8::internal::(anonymous namespace)::CompileScriptOnMainThread(v8::internal::UnoptimizedCompileFlags, v8::internal::Handle<v8::internal::String>, v8::internal::ScriptDetails const&, v8::internal::NativesFlag, v8::Extension*, v8::internal::Isolate*, v8::internal::MaybeHandle<v8::internal::Script>, v8::internal::IsCompiledScope*, bool (*)(int, void*), void*) ./../../src/codegen/compiler.cc:2906:10) [0x5645920e82af]
+    d8(v8::internal::(anonymous namespace)::GetSharedFunctionInfoForScriptImpl(v8::internal::Isolate*, v8::internal::Handle<v8::internal::String>, v8::internal::ScriptDetails const&, v8::Extension*, v8::internal::AlignedCachedData*, v8::internal::BackgroundDeserializeTask*, bool (*)(int, void*), void*, v8::ScriptCompiler::CompileOptions, v8::ScriptCompiler::NoCacheReason, v8::internal::NativesFlag, v8::ScriptCompiler::CompilationDetails*) ./../../src/codegen/compiler.cc:3773:22) [0x5645920d84ce]
+    d8(v8::internal::Compiler::GetSharedFunctionInfoForScript(v8::internal::Isolate*, v8::internal::Handle<v8::internal::String>, v8::internal::ScriptDetails const&, v8::ScriptCompiler::CompileOptions, v8::ScriptCompiler::NoCacheReason, v8::internal::NativesFlag, v8::ScriptCompiler::CompilationDetails*) ./../../src/codegen/compiler.cc:3805:3) [0x5645920d7de3]
+    d8(v8::ScriptCompiler::CompileUnboundInternal(v8::Isolate*, v8::ScriptCompiler::Source*, v8::ScriptCompiler::CompileOptions, v8::ScriptCompiler::NoCacheReason) ./../../src/api/api.cc:2600:27) [0x564591eb5ec6]
+    d8(v8::ScriptCompiler::Compile(v8::Local<v8::Context>, v8::ScriptCompiler::Source*, v8::ScriptCompiler::CompileOptions, v8::ScriptCompiler::NoCacheReason) ./../../include/v8-handle-base.h:56:53) [0x564591eb6476]
+    d8(v8::MaybeLocal<v8::Script> v8::Shell::CompileString<v8::Script>(v8::Isolate*, v8::Local<v8::Context>, v8::Local<v8::String>, v8::ScriptOrigin const&) ./../../src/d8/d8.cc:656:10) [0x564591e6a1bf]
+    d8(v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::String>, v8::Shell::ReportExceptions, v8::Global<v8::Value>*) ./../../include/v8-handle-base.h:56:53) [0x564591e697e4]
+    d8(v8::SourceGroup::Execute(v8::Isolate*) ./../../src/d8/d8.cc:4725:10) [0x564591e81b38]
+    d8(v8::Shell::RunMainIsolate(v8::Isolate*, bool) ./../../src/d8/d8.cc:5658:37) [0x564591e86207]
+    d8(v8::Shell::RunMain(v8::Isolate*, bool) ./../../src/d8/d8.cc:5567:18) [0x564591e85d35]
+    d8(v8::Shell::Main(int, char**) ./../../src/d8/d8.cc:6420:16) [0x564591e878d7]
+    /lib/x86_64-linux-gnu/libc.so.6(+0x2a1ca) [0x7f340deef1ca]
+    /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b) [0x7f340deef28b]
+    out/debug/d8(_start+0x2a) [0x564591e5202a]
+Received signal 6
+timeout: the monitored command dumped core

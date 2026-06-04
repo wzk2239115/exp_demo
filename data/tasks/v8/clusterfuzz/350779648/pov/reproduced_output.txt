@@ -1,0 +1,112 @@
+=== stderr ===
+=================================================================
+==12204==ERROR: AddressSanitizer: heap-use-after-free on address 0x50600000ea80 at pc 0x55ac1b3876f3 bp 0x7fff36f83330 sp 0x7fff36f82af0
+READ of size 36 at 0x50600000ea80 thread T0
+    #0 0x55ac1b3876f2 in __asan_memmove /b/s/w/ir/cache/builder/src/third_party/llvm/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:71:3
+    #1 0x7efe6b332a96 in __constexpr_memmove<v8::Isolate::UseCounterFeature, const v8::Isolate::UseCounterFeature, 0> third_party/libc++/src/include/__string/constexpr_c_functions.h:227:5
+    #2 0x7efe6b332a96 in __copy_trivial_impl<const v8::Isolate::UseCounterFeature, v8::Isolate::UseCounterFeature> third_party/libc++/src/include/__algorithm/copy_move_common.h:65:3
+    #3 0x7efe6b332a96 in operator()<const v8::Isolate::UseCounterFeature, v8::Isolate::UseCounterFeature, 0> third_party/libc++/src/include/__algorithm/copy.h:102:12
+    #4 0x7efe6b332a96 in __copy_move_unwrap_iters<std::__Cr::__copy_impl<std::__Cr::_ClassicAlgPolicy>, const v8::Isolate::UseCounterFeature *, const v8::Isolate::UseCounterFeature *, v8::Isolate::UseCounterFeature *, 0> third_party/libc++/src/include/__algorithm/copy_move_common.h:95:19
+    #5 0x7efe6b332a96 in __copy<std::__Cr::_ClassicAlgPolicy, const v8::Isolate::UseCounterFeature *, const v8::Isolate::UseCounterFeature *, v8::Isolate::UseCounterFeature *> third_party/libc++/src/include/__algorithm/copy.h:109:10
+    #6 0x7efe6b332a96 in copy<const v8::Isolate::UseCounterFeature *, v8::Isolate::UseCounterFeature *> third_party/libc++/src/include/__algorithm/copy.h:116:10
+    #7 0x7efe6b332a96 in v8::Isolate::UseCounterFeature* v8::base::SmallVector<v8::Isolate::UseCounterFeature, 8ul, std::__Cr::allocator<v8::Isolate::UseCounterFeature>>::insert<v8::Isolate::UseCounterFeature const*>(v8::Isolate::UseCounterFeature*, v8::Isolate::UseCounterFeature const*, v8::Isolate::UseCounterFeature const*) src/base/small-vector.h:190:5
+    #8 0x7efe6b3395c8 in ReportStatisticsAfterGC src/heap/heap.cc:876:14
+    #9 0x7efe6b3395c8 in v8::internal::Heap::GarbageCollectionEpilogue(v8::internal::GarbageCollector) src/heap/heap.cc:1314:3
+    #10 0x7efe6b3a7888 in v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags)::$_1::operator()() const src/heap/heap.cc:1782:5
+    #11 0x7efe6b3a6e46 in void heap::base::Stack::SetMarkerAndCallbackImpl<v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags)::$_1>(heap::base::Stack*, void*, void const*) src/heap/base/stack.h:176:5
+    #12 0x7efe6dc60482 in PushAllRegistersAndIterateStack push_registers_asm.cc
+    #13 0x7efe6b33a6cc in SetMarkerIfNeededAndCallback<(lambda at ../../src/heap/heap.cc:1728:40)> src/heap/base/stack.h:82:7
+    #14 0x7efe6b33a6cc in v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags) src/heap/heap.cc:1728:11
+    #15 0x7efe6b33d10b in v8::internal::Heap::CollectAllAvailableGarbage(v8::internal::GarbageCollectionReason) src/heap/heap.cc:1506:5
+    #16 0x7efe6a692dc8 in v8::Isolate::LowMemoryNotification() src/api/api.cc:10436:24
+    #17 0x55ac1b42f5f5 in CollectGarbage src/d8/d8.cc:5674:14
+    #18 0x55ac1b42f5f5 in v8::Shell::RunMain(v8::Isolate*, bool) src/d8/d8.cc:5568:3
+    #19 0x55ac1b4329df in v8::Shell::Main(int, char**) src/d8/d8.cc:6420:18
+    #20 0x7efe65f0f1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 8e9fd827446c24067541ac5390e6f527fb5947bb)
+    #21 0x7efe65f0f28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 8e9fd827446c24067541ac5390e6f527fb5947bb)
+    #22 0x55ac1b2edc29 in _start (/build/v8/out/debug/d8+0xaac29) (BuildId: f3553405c6f95a2e)
+
+0x50600000ea80 is located 0 bytes inside of 64-byte region [0x50600000ea80,0x50600000eac0)
+freed by thread T0 here:
+    #0 0x55ac1b3c00bd in operator delete(void*) /b/s/w/ir/cache/builder/src/third_party/llvm/compiler-rt/lib/asan/asan_new_delete.cpp:143:3
+    #1 0x7efe6b3a6900 in v8::base::SmallVector<v8::Isolate::UseCounterFeature, 8ul, std::__Cr::allocator<v8::Isolate::UseCounterFeature>>::Grow(unsigned long) src/base/small-vector.h:239:19
+    #2 0x7efe6b332a02 in resize_no_init src/base/small-vector.h:201:32
+    #3 0x7efe6b332a02 in v8::Isolate::UseCounterFeature* v8::base::SmallVector<v8::Isolate::UseCounterFeature, 8ul, std::__Cr::allocator<v8::Isolate::UseCounterFeature>>::insert<v8::Isolate::UseCounterFeature const*>(v8::Isolate::UseCounterFeature*, v8::Isolate::UseCounterFeature const*, v8::Isolate::UseCounterFeature const*) src/base/small-vector.h:185:5
+    #4 0x7efe6b3395c8 in ReportStatisticsAfterGC src/heap/heap.cc:876:14
+    #5 0x7efe6b3395c8 in v8::internal::Heap::GarbageCollectionEpilogue(v8::internal::GarbageCollector) src/heap/heap.cc:1314:3
+    #6 0x7efe6b3a7888 in v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags)::$_1::operator()() const src/heap/heap.cc:1782:5
+    #7 0x7efe6b3a6e46 in void heap::base::Stack::SetMarkerAndCallbackImpl<v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags)::$_1>(heap::base::Stack*, void*, void const*) src/heap/base/stack.h:176:5
+    #8 0x7efe6dc60482 in PushAllRegistersAndIterateStack push_registers_asm.cc
+    #9 0x7efe6b33a6cc in SetMarkerIfNeededAndCallback<(lambda at ../../src/heap/heap.cc:1728:40)> src/heap/base/stack.h:82:7
+    #10 0x7efe6b33a6cc in v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags) src/heap/heap.cc:1728:11
+    #11 0x7efe6b33d10b in v8::internal::Heap::CollectAllAvailableGarbage(v8::internal::GarbageCollectionReason) src/heap/heap.cc:1506:5
+    #12 0x7efe6a692dc8 in v8::Isolate::LowMemoryNotification() src/api/api.cc:10436:24
+    #13 0x55ac1b42f5f5 in CollectGarbage src/d8/d8.cc:5674:14
+    #14 0x55ac1b42f5f5 in v8::Shell::RunMain(v8::Isolate*, bool) src/d8/d8.cc:5568:3
+    #15 0x55ac1b4329df in v8::Shell::Main(int, char**) src/d8/d8.cc:6420:18
+    #16 0x7efe65f0f1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 8e9fd827446c24067541ac5390e6f527fb5947bb)
+    #17 0x7efe65f0f28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 8e9fd827446c24067541ac5390e6f527fb5947bb)
+    #18 0x55ac1b2edc29 in _start (/build/v8/out/debug/d8+0xaac29) (BuildId: f3553405c6f95a2e)
+
+previously allocated by thread T0 here:
+    #0 0x55ac1b3bf85d in operator new(unsigned long) /b/s/w/ir/cache/builder/src/third_party/llvm/compiler-rt/lib/asan/asan_new_delete.cpp:86:3
+    #1 0x7efe6b3a68c3 in __libcpp_operator_new<unsigned long> third_party/libc++/src/include/new:265:10
+    #2 0x7efe6b3a68c3 in __libcpp_allocate third_party/libc++/src/include/new:289:10
+    #3 0x7efe6b3a68c3 in allocate third_party/libc++/src/include/__memory/allocator.h:118:32
+    #4 0x7efe6b3a68c3 in AllocateDynamicStorage src/base/small-vector.h:246:23
+    #5 0x7efe6b3a68c3 in v8::base::SmallVector<v8::Isolate::UseCounterFeature, 8ul, std::__Cr::allocator<v8::Isolate::UseCounterFeature>>::Grow(unsigned long) src/base/small-vector.h:234:22
+    #6 0x7efe6b332a02 in resize_no_init src/base/small-vector.h:201:32
+    #7 0x7efe6b332a02 in v8::Isolate::UseCounterFeature* v8::base::SmallVector<v8::Isolate::UseCounterFeature, 8ul, std::__Cr::allocator<v8::Isolate::UseCounterFeature>>::insert<v8::Isolate::UseCounterFeature const*>(v8::Isolate::UseCounterFeature*, v8::Isolate::UseCounterFeature const*, v8::Isolate::UseCounterFeature const*) src/base/small-vector.h:185:5
+    #8 0x7efe6af5f275 in v8::internal::Isolate::CountUsage(v8::Isolate::UseCounterFeature) src/execution/isolate.cc:6662:3
+    #9 0x7efe6aaf32ed in ReportStatistics src/codegen/compiler.cc:2487:14
+    #10 0x7efe6aaf32ed in v8::internal::BackgroundCompileTask::FinalizeFunction(v8::internal::Isolate*, v8::internal::Compiler::ClearExceptionFlag) src/codegen/compiler.cc:2458:3
+    #11 0x7efe6ab00a14 in v8::internal::Compiler::FinalizeBackgroundCompileTask(v8::internal::BackgroundCompileTask*, v8::internal::Isolate*, v8::internal::Compiler::ClearExceptionFlag) src/codegen/compiler.cc:2926:14
+    #12 0x7efe6ac6f7d9 in v8::internal::LazyCompileDispatcher::FinalizeSingleJob() src/compiler-dispatcher/lazy-compile-dispatcher.cc:511:5
+    #13 0x7efe6ac731c5 in v8::internal::LazyCompileDispatcher::DoIdleWork(double) src/compiler-dispatcher/lazy-compile-dispatcher.cc:537:28
+    #14 0x7efe678888d8 in v8::platform::DefaultPlatform::RunIdleTasks(v8::Isolate*, double) src/libplatform/default-platform.cc:196:11
+    #15 0x55ac1b43088f in v8::(anonymous namespace)::ProcessMessages(v8::Isolate*, std::__Cr::function<v8::platform::MessageLoopBehavior ()> const&) src/d8/d8.cc:5717:5
+    #16 0x55ac1b424d1c in CompleteMessageLoop src/d8/d8.cc:5748:10
+    #17 0x55ac1b424d1c in v8::Shell::FinishExecuting(v8::Isolate*, v8::Global<v8::Context> const&) src/d8/d8.cc:5752:8
+    #18 0x55ac1b43025f in v8::Shell::RunMainIsolate(v8::Isolate*, bool) src/d8/d8.cc:5661:8
+    #19 0x55ac1b42f595 in v8::Shell::RunMain(v8::Isolate*, bool) src/d8/d8.cc:5567:18
+    #20 0x55ac1b4329df in v8::Shell::Main(int, char**) src/d8/d8.cc:6420:18
+    #21 0x7efe65f0f1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 8e9fd827446c24067541ac5390e6f527fb5947bb)
+    #22 0x7efe65f0f28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 8e9fd827446c24067541ac5390e6f527fb5947bb)
+    #23 0x55ac1b2edc29 in _start (/build/v8/out/debug/d8+0xaac29) (BuildId: f3553405c6f95a2e)
+
+SUMMARY: AddressSanitizer: heap-use-after-free third_party/libc++/src/include/__string/constexpr_c_functions.h:227:5 in __constexpr_memmove<v8::Isolate::UseCounterFeature, const v8::Isolate::UseCounterFeature, 0>
+Shadow bytes around the buggy address:
+  0x50600000e800: 00 00 00 00 fa fa fa fa 00 00 00 00 00 00 00 00
+  0x50600000e880: fa fa fa fa 00 00 00 00 00 00 00 00 fa fa fa fa
+  0x50600000e900: fd fd fd fd fd fd fd fa fa fa fa fa fd fd fd fd
+  0x50600000e980: fd fd fd fa fa fa fa fa 00 00 00 00 00 00 07 fa
+  0x50600000ea00: fa fa fa fa fd fd fd fd fd fd fd fd fa fa fa fa
+=>0x50600000ea80:[fd]fd fd fd fd fd fd fd fa fa fa fa 00 00 00 00
+  0x50600000eb00: 00 00 00 fa fa fa fa fa fd fd fd fd fd fd fd fd
+  0x50600000eb80: fa fa fa fa 00 00 00 00 00 00 00 fa fa fa fa fa
+  0x50600000ec00: 00 00 00 00 00 00 00 fa fa fa fa fa 00 00 00 00
+  0x50600000ec80: 00 00 00 fa fa fa fa fa 00 00 00 00 00 00 00 fa
+  0x50600000ed00: fa fa fa fa fd fd fd fd fd fd fd fd fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==12204==ABORTING
+
+=== exit code ===
+1

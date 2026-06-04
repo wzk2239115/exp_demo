@@ -1,0 +1,23 @@
+found: 0x19ab08
+found: 0x19ab08
+
+Sandbox testing mode is enabled. Only sandbox violations will be reported, all other crashes will be ignored.
+
+## V8 sandbox violation detected!
+
+Received signal 11 SEGV_MAPERR 7fff9a360ff2
+
+==== C stack trace ===============================
+
+out/release/d8(__interceptor_backtrace+0x46)[0x55d6a949fdf6]
+d8(StackTrace ./../../src/base/debug/stack_trace_posix.cc:390:32)[0x55d6a98d5755]
+/lib/x86_64-linux-gnu/libc.so.6(+0x45330)[0x7fde6ca72330]
+d8(Append ./../../src/json/json-stringifier.cc:282:54)[0x55d6aa391fe1]
+d8(SerializeDeferredKey ./../../src/json/json-stringifier.cc:1676:7)[0x55d6aa385ba8]
+d8(SerializeProperty ./../../src/json/json-stringifier.cc:76:12)[0x55d6aa37a8f1]
+d8(SerializeFixedArrayWithPossibleTransitions<(v8::internal::ElementsKind)3> ./../../src/json/json-stringifier.cc:1220:18)[0x55d6aa377053]
+d8(v8::internal::JsonStringifier::Stringify(v8::internal::Handle<v8::internal::Union<v8::internal::Smi, v8::internal::HeapNumber, v8::internal::BigInt, v8::internal::String, v8::internal::Symbol, v8::internal::Boolean, v8::internal::Null, v8::internal::Undefined, v8::internal::JSReceiver>>, v8::internal::Handle<v8::internal::Union<v8::internal::Smi, v8::internal::HeapNumber, v8::internal::BigInt, v8::internal::String, v8::internal::Symbol, v8::internal::Boolean, v8::internal::Null, v8::internal::Undefined, v8::internal::JSReceiver>>, v8::internal::Handle<v8::internal::Object>) ./../../src/json/json-stringifier.cc:570:14)[0x55d6aa35e210]
+d8(v8::internal::JsonStringify(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Union<v8::internal::Smi, v8::internal::HeapNumber, v8::internal::BigInt, v8::internal::String, v8::internal::Symbol, v8::internal::Boolean, v8::internal::Null, v8::internal::Undefined, v8::internal::JSReceiver>>, v8::internal::Handle<v8::internal::Union<v8::internal::Smi, v8::internal::HeapNumber, v8::internal::BigInt, v8::internal::String, v8::internal::Symbol, v8::internal::Boolean, v8::internal::Null, v8::internal::Undefined, v8::internal::JSReceiver>>, v8::internal::Handle<v8::internal::Object>) ./../../src/json/json-stringifier.cc:3179:24)[0x55d6aa37194d]
+d8(ToHandle<v8::internal::Object> ./../../src/handles/maybe-handles-inl.h:38:17)[0x55d6a9a22a39]
+d8(Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc:0:0)[0x55d6adfc50f6]
+[end of stack trace]

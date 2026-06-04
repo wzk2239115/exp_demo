@@ -1,0 +1,1 @@
+gen_merged_protos can return a success status even when errors are found, allowing presubmits to pass despite the presence of stale generated proto files.

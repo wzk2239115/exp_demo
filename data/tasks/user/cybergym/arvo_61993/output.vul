@@ -1,0 +1,23 @@
+Accepting input from '/tmp/poc'
+Usage for fuzzing: honggfuzz -P [flags] -- /out/php-fuzz-tracing-jit
+=================================================================
+==7==ERROR: AddressSanitizer: negative-size-param: (size=-1)
+SCARINESS: 10 (negative-size-param)
+    #0 0x681abe in __asan_memcpy /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3
+    #1 0xb3d247 in php_fgetcsv /src/php-src/ext/standard/file.c:2150:4
+    #2 0xbd6b6c in zif_str_getcsv /src/php-src/ext/standard/string.c:5145:22
+    #3 0xf219b9 in execute_internal /src/php-src/Zend/zend_execute.c:3858:2
+    #4 0x1325b90 in fuzzer_execute_internal /src/php-src/sapi/fuzzer/fuzzer-execute-common.h:95:2
+    #5 0xfe5645 in ZEND_DO_FCALL_SPEC_RETVAL_UNUSED_HANDLER /src/php-src/Zend/zend_vm_execute.h
+    #6 0x1325658 in fuzzer_execute_ex /src/php-src/sapi/fuzzer/fuzzer-execute-common.h:57:14
+    #7 0xf2c14c in zend_execute /src/php-src/Zend/zend_vm_execute.h:61583:2
+    #8 0x13267c2 in fuzzer_do_request_from_buffer /src/php-src/sapi/fuzzer/fuzzer-sapi.c:276:5
+    #9 0x1324dae in LLVMFuzzerTestOneInput /src/php-src/sapi/fuzzer/fuzzer-tracing-jit.c:34:2
+    #10 0x13279eb in main (/out/php-fuzz-tracing-jit+0x13279eb)
+    #11 0x7f6a67140082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #12 0x60135d in _start (/out/php-fuzz-tracing-jit+0x60135d)
+
+DEDUP_TOKEN: __asan_memcpy--php_fgetcsv--zif_str_getcsv
+Address 0x00000ba0226a is a wild pointer inside of access range of size 0x000000000001.
+SUMMARY: AddressSanitizer: negative-size-param /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3 in __asan_memcpy
+==7==ABORTING

@@ -1,0 +1,84 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3777482622
+INFO: Loaded 1 modules   (252753 inline 8-bit counters): 252753 [0x3a6fb40, 0x3aad691), 
+INFO: Loaded 1 PC tables (252753 PCs): 252753 [0x2b6c410,0x2f47920), 
+/out/fuzz_dwarf: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x6160000005b0 at pc 0x00000052f4e1 bp 0x7fffb05c6a60 sp 0x7fffb05c6230
+READ of size 2060 at 0x6160000005b0 thread T0
+SCARINESS: 26 (multi-byte-read-heap-buffer-overflow)
+    #0 0x52f4e0 in __asan_memcpy /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3
+    #1 0xbf8309 in coff_bigobj_swap_aux_in /src/binutils-gdb/bfd/./coffcode.h
+    #2 0xbf567a in fill_comdat_hash /src/binutils-gdb/bfd/./coffcode.h:963:8
+    #3 0xbf567a in handle_COMDAT /src/binutils-gdb/bfd/./coffcode.h:1103:11
+    #4 0xbf567a in styp_to_sec_flags /src/binutils-gdb/bfd/./coffcode.h:1312:9
+    #5 0xbd625f in make_a_section_from_file /src/binutils-gdb/bfd/coffgen.c:210:8
+    #6 0xbd625f in coff_real_object_p /src/binutils-gdb/bfd/coffgen.c:368:10
+    #7 0xbd821d in coff_object_p /src/binutils-gdb/bfd/coffgen.c:446:10
+    #8 0xa01fe2 in bfd_check_format_matches /src/binutils-gdb/bfd/format.c:431:17
+    #9 0xa01021 in bfd_check_format /src/binutils-gdb/bfd/format.c:94:10
+    #10 0x571804 in LLVMFuzzerTestOneInput /src/binutils-gdb/binutils/fuzz_dwarf.c:35:11
+    #11 0x43efc3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #12 0x42a722 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #13 0x42ffcc in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #14 0x459502 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #15 0x7f010752a082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #16 0x4208ed in _start (/out/fuzz_dwarf+0x4208ed)
+
+DEDUP_TOKEN: __asan_memcpy--coff_bigobj_swap_aux_in--fill_comdat_hash
+0x6160000005b0 is located 0 bytes to the right of 560-byte region [0x616000000380,0x6160000005b0)
+allocated by thread T0 here:
+    #0 0x530156 in __interceptor_malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:69:3
+    #1 0xa077e2 in bfd_malloc /src/binutils-gdb/bfd/libbfd.c:290:9
+    #2 0xbdfd95 in _bfd_malloc_and_read /src/binutils-gdb/bfd/./libbfd.h:913:9
+    #3 0xbdfd95 in _bfd_coff_get_external_symbols /src/binutils-gdb/bfd/coffgen.c:1718:10
+    #4 0xbf5213 in fill_comdat_hash /src/binutils-gdb/bfd/./coffcode.h:887:9
+    #5 0xbf5213 in handle_COMDAT /src/binutils-gdb/bfd/./coffcode.h:1103:11
+    #6 0xbf5213 in styp_to_sec_flags /src/binutils-gdb/bfd/./coffcode.h:1312:9
+    #7 0xbd625f in make_a_section_from_file /src/binutils-gdb/bfd/coffgen.c:210:8
+    #8 0xbd625f in coff_real_object_p /src/binutils-gdb/bfd/coffgen.c:368:10
+    #9 0xbd821d in coff_object_p /src/binutils-gdb/bfd/coffgen.c:446:10
+    #10 0xa01fe2 in bfd_check_format_matches /src/binutils-gdb/bfd/format.c:431:17
+    #11 0xa01021 in bfd_check_format /src/binutils-gdb/bfd/format.c:94:10
+    #12 0x571804 in LLVMFuzzerTestOneInput /src/binutils-gdb/binutils/fuzz_dwarf.c:35:11
+    #13 0x43efc3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #14 0x42a722 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #15 0x42ffcc in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #16 0x459502 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #17 0x7f010752a082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+
+DEDUP_TOKEN: __interceptor_malloc--bfd_malloc--_bfd_malloc_and_read
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3 in __asan_memcpy
+Shadow bytes around the buggy address:
+  0x0c2c7fff8060: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c2c7fff8070: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c2c7fff8080: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c2c7fff8090: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c2c7fff80a0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0c2c7fff80b0: 00 00 00 00 00 00[fa]fa fa fa fa fa fa fa fa fa
+  0x0c2c7fff80c0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c2c7fff80d0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c2c7fff80e0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c2c7fff80f0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c2c7fff8100: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

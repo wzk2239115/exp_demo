@@ -1,0 +1,20 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3270427789
+INFO: Loaded 1 modules   (2538 inline 8-bit counters): 2538 [0x7501f0, 0x750bda), 
+INFO: Loaded 1 PC tables (2538 PCs): 2538 [0x500150,0x509ff0), 
+/out/gif_target: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+gd.c:917:2: runtime error: index -1 out of bounds for type 'int [256]'
+    #0 0x4b35d9 in gdImageColorTransparent /src/libgd/src/gd.c:917:29
+    #1 0x4c5cd8 in gdImageCreateFromGifCtx /src/libgd/src/gd_gif_in.c:328:4
+    #2 0x4c5f0f in gdImageCreateFromGifPtr /src/libgd/src/gd_gif_in.c:186:7
+    #3 0x4b13a0 in LLVMFuzzerTestOneInput /src/parser_target.cc:24:21
+    #4 0x440863 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/out/gif_target+0x440863)
+    #5 0x42bfd2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #6 0x431c9e in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/out/gif_target+0x431c9e)
+    #7 0x45b572 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #8 0x7f9a0589e83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #9 0x407268 in _start (/out/gif_target+0x407268)
+
+DEDUP_TOKEN: gdImageColorTransparent--gdImageCreateFromGifCtx--gdImageCreateFromGifPtr
+SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior gd.c:917:2 in 

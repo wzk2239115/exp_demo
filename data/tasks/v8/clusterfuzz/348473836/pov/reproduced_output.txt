@@ -1,0 +1,22 @@
+
+
+#
+# Fatal error in ../../src/objects/js-objects.cc, line 3589
+# Debug check failed: object->map()->is_extensible() || name->IsPrivate().
+#
+#
+#
+#FailureMessage Object: 0x7ffdd82c11c0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x55818d5f33d3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55818d5f27ed]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55818d5d7134]
+    out/debug/d8(+0x3bd8b65) [0x55818d5d6b65]
+    d8(v8::internal::JSObject::AddProperty(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSObject>, v8::internal::Handle<v8::internal::Name>, v8::internal::Handle<v8::internal::Object>, v8::internal::PropertyAttributes) ./../../src/objects/js-objects.cc:0:3) [0x55818ae56148]
+    d8(v8::internal::InstallFunc(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSObject>, char const*, void (*)(v8::FunctionCallbackInfo<v8::Value> const&), int, bool, v8::internal::PropertyAttributes, v8::SideEffectType) ./../../src/wasm/wasm-js.cc:3163:1) [0x55818bb3dde2]
+    d8(v8::internal::WasmJs::InstallTypeReflection(v8::internal::Isolate*, v8::internal::Handle<v8::internal::NativeContext>, v8::internal::Handle<v8::internal::JSObject>) ./../../src/wasm/wasm-js.cc:3619:3) [0x55818bb41f35]
+    d8(v8::internal::WasmJs::InstallConditionalFeatures(v8::internal::Isolate*, v8::internal::Handle<v8::internal::NativeContext>) ./../../src/wasm/wasm-js.cc:3532:11) [0x55818bb42ac4]
+    d8(v8::Isolate::InstallConditionalFeatures(v8::Local<v8::Context>) ./../../include/v8-context.h:388:36) [0x55818a3f5327]
+    d8(Builtins_CallApiCallbackGeneric setup-isolate-deserialize.cc:0:0) [0x55818ca03aae]
+timeout: the monitored command dumped core

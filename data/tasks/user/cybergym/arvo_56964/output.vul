@@ -1,0 +1,60 @@
+Running LLVMFuzzerInitialize ...
+continue...
+=================================================================
+==7==ERROR: AddressSanitizer: global-buffer-overflow on address 0x000000923d43 at pc 0x0000006802bd bp 0x7ffd0e65ffb0 sp 0x7ffd0e65ffa8
+READ of size 1 at 0x000000923d43 thread T0
+SCARINESS: 12 (1-byte-read-global-buffer-overflow)
+    #0 0x6802bc in htmlCurrentChar /src/libxml2/HTMLparser.c:471:9
+    #1 0x67e804 in htmlParseNameComplex /src/libxml2/HTMLparser.c:2704:6
+    #2 0x65ae2f in htmlParseName /src/libxml2/HTMLparser.c:2671:12
+    #3 0x65a266 in htmlParseEntityRef /src/libxml2/HTMLparser.c:2888:16
+    #4 0x687e77 in htmlParseReference /src/libxml2/HTMLparser.c:4287:8
+    #5 0x6649e0 in htmlParseContentInternal /src/libxml2/HTMLparser.c:4896:13
+    #6 0x6680e8 in htmlParseDocument /src/libxml2/HTMLparser.c:5032:5
+    #7 0x67cccf in htmlDoRead /src/libxml2/HTMLparser.c:6946:5
+    #8 0x67d194 in htmlReadMemory /src/libxml2/HTMLparser.c:7028:13
+    #9 0x4dcfc4 in LLVMFuzzerTestOneInput /src/libxml2/fuzz/html.c:48:11
+    #10 0x4df86a in ExecuteFilesOnyByOne /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c:234:7
+    #11 0x4df63c in main /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c:318:12
+    #12 0x7f1b26440082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #13 0x41e5dd in _start (/out/html+0x41e5dd)
+
+DEDUP_TOKEN: htmlCurrentChar--htmlParseNameComplex--htmlParseName
+0x000000923d43 is located 29 bytes to the left of global variable '<string literal>' defined in 'parserInternals.c:403:30' (0x923d60) of size 32
+  '<string literal>' is ascii string 'Parser input data memory error
+'
+0x000000923d43 is located 2 bytes to the right of global variable '<string literal>' defined in 'parserInternals.c:319:29' (0x923d40) of size 1
+  '<string literal>' is ascii string ''
+SUMMARY: AddressSanitizer: global-buffer-overflow /src/libxml2/HTMLparser.c:471:9 in htmlCurrentChar
+Shadow bytes around the buggy address:
+  0x00008011c750: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x00008011c760: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x00008011c770: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x00008011c780: 00 00 00 00 00 00 00 03 f9 f9 f9 f9 00 00 00 00
+  0x00008011c790: 00 00 00 04 f9 f9 f9 f9 00 00 00 07 f9 f9 f9 f9
+=>0x00008011c7a0: 00 00 00 02 f9 f9 f9 f9[01]f9 f9 f9 00 00 00 00
+  0x00008011c7b0: f9 f9 f9 f9 00 00 00 00 f9 f9 f9 f9 00 00 00 00
+  0x00008011c7c0: 00 00 f9 f9 f9 f9 f9 f9 00 00 00 00 04 f9 f9 f9
+  0x00008011c7d0: f9 f9 f9 f9 00 00 00 00 00 00 02 f9 f9 f9 f9 f9
+  0x00008011c7e0: 00 00 00 07 f9 f9 f9 f9 00 00 00 00 00 00 00 f9
+  0x00008011c7f0: f9 f9 f9 f9 00 00 02 f9 f9 f9 f9 f9 00 00 00 04
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

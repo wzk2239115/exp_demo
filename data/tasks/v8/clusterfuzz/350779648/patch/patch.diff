@@ -1,0 +1,40 @@
+diff --git a/src/heap/heap.cc b/src/heap/heap.cc
+index 9ac09f636c4..75a24c57560 100644
+--- a/src/heap/heap.cc
++++ b/src/heap/heap.cc
+@@ -873,8 +873,11 @@ void Heap::DumpJSONHeapStatistics(std::stringstream& stream) {
+ 
+ void Heap::ReportStatisticsAfterGC() {
+   if (deferred_counters_.empty()) return;
+-  isolate()->CountUsage(base::VectorOf(deferred_counters_));
+-  deferred_counters_.clear();
++  // Move the contents into a new SmallVector first, in case
++  // {Isolate::CountUsage} puts the counters into {deferred_counters_} again.
++  decltype(deferred_counters_) to_report = std::move(deferred_counters_);
++  DCHECK(deferred_counters_.empty());
++  isolate()->CountUsage(base::VectorOf(to_report));
+ }
+ 
+ class Heap::AllocationTrackerForDebugging final
+diff --git a/test/mjsunit/regress/regress-350779648.js b/test/mjsunit/regress/regress-350779648.js
+new file mode 100644
+index 00000000000..33d39ab00ae
+--- /dev/null
++++ b/test/mjsunit/regress/regress-350779648.js
+@@ -0,0 +1,16 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --invoke-weak-callbacks --stress-background-compile
++// Flags: --parallel-compile-tasks-for-lazy
++
++function a() {};
++function b() {};
++function c() {};
++function d() {};
++function e() {};
++function f() {};
++function g() {};
++function h() {};
++function i() {};

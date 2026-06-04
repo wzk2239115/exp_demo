@@ -1,0 +1,101 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3828281160
+INFO: Loaded 1 modules   (248762 inline 8-bit counters): 248762 [0x3958e08, 0x39959c2), 
+INFO: Loaded 1 PC tables (248762 PCs): 248762 [0x328c008,0x3657ba8), 
+/out/fuzz_objdump_safe: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x72
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+BFD: /tmp/libfuzzer.7: unsupported relocation type 0x20
+
+/tmp/libfuzzer.7:     file format ecoff-littlealpha
+/tmp/libfuzzer.7
+
+Sections:
+Idx Name          Size      VMA               LMA               File off  Algn
+  0     ’^Y       2020ff2020202020  2020200020202020  000000002020ff20  2020200420202020  2**4
+                  CONTENTS, ALLOC, LOAD, RELOC
+  1               00000000  0000000000000000  0000000020202020  00000000  2**4
+                  ALLOC, LOAD
+  2               2020202020202020  2020202020202020  2020202020202020  2020202020202020  2**4
+                  CONTENTS, ALLOC, LOAD, RELOC, CODE
+  3               2020202020202020  2020202020202020  2020202020202020  2020202020202020  2**4
+                  CONTENTS, ALLOC, LOAD, RELOC, CODE
+  4               2020202020202020  2020202020202020  2020202020202020  2020202020202020  2**4
+                  CONTENTS, ALLOC, LOAD, RELOC, CODE
+  5               2020202020202020  2020202020202020  2020202020202020  2020202020202020  2**4
+                  CONTENTS, ALLOC, LOAD, RELOC, CODE
+  6               2020202020202020  2020202020202020  2020202020202020  2020202020202020  2**4
+                  CONTENTS, ALLOC, LOAD, RELOC, CODE
+  7 .dwframe      000000ff  2020202020202020  2020202020202020  00000020  2**4
+                  CONTENTS, ALLOC, LOAD, RELOC, CODE
+  8               2020202020202020  2020202020202020  2020202020202020  2020202020202020  2**4
+                  CONTENTS, ALLOC, LOAD, RELOC, CODE
+  9               2020202020202020  2020202020202020  2020202020202020  2020202020202020  2**4
+                  CONTENTS, ALLOC, LOAD, RELOC, CODE
+ 10               2020202020202020  2020202020202020  2020202020202020  2020202020202020  2**4
+                  CONTENTS, ALLOC, LOAD, RELOC, CODE
+ 11               2020202020202020  2020202020202020  2020202020202020  2020202020202020  2**4
+                  CONTENTS, ALLOC, LOAD, RELOC, CODE
+ 12               2020202020202020  2020202020202020  ff20202020202020  2020202020202020  2**4
+                  CONTENTS, ALLOC, LOAD, RELOC, CODE
+ 13               2020202020202020  2020202020202020  2020202020202020  2020202020202020  2**4
+                  CONTENTS, ALLOC, LOAD, RELOC, CODE
+ 14               2020202020202020  2020202020202020  202020202020ff20  2020202020202020  2**4
+                  CONTENTS, ALLOC, LOAD, RELOC, CODE
+ 15               2020202020202020  2020202020202020  2020202020202020  2020202020202020  2**4
+                  CONTENTS, ALLOC, LOAD, RELOC, CODE
+ 16               2020202020202020  2020202020202020  202020202020ff20  2020202020202020  2**4
+                  CONTENTS, ALLOC, LOAD, RELOC, CODE
+ 17               2020202020202020  2020202020202020  2020202020202020  2020202020202020  2**4
+                  CONTENTS, ALLOC, LOAD, RELOC, CODE
+MemorySanitizer:DEADLYSIGNAL
+==7==ERROR: MemorySanitizer: SEGV on unknown address 0x1000000000000 (pc 0x000000e355f6 bp 0x7ffd1ba175e0 sp 0x7ffd1ba175e0 T7)
+==7==The signal is caused by a READ memory access.
+    #0 0xe355f6 in bfd_getl32 /src/binutils-gdb/bfd/libbfd.c:838:7
+    #1 0x12abfd5 in alpha_ecoff_get_relocated_section_contents /src/binutils-gdb/bfd/coff-alpha.c:883:13
+    #2 0xe07b95 in bfd_get_relocated_section_contents /src/binutils-gdb/bfd/bfd.c:2342:10
+    #3 0xe4a926 in bfd_simple_get_relocated_section_contents /src/binutils-gdb/bfd/simple.c:276:14
+    #4 0x536912 in load_specific_debug_section /src/binutils-gdb/binutils/./fuzz_objdump.h:4252:13
+    #5 0x54d33d in dump_dwarf_section /src/binutils-gdb/binutils/./fuzz_objdump.h:4422:6
+    #6 0xe4859f in bfd_map_over_sections /src/binutils-gdb/bfd/section.c:1381:5
+    #7 0x54a4eb in dump_dwarf /src/binutils-gdb/binutils/./fuzz_objdump.h:4463:3
+    #8 0x543693 in dump_bfd /src/binutils-gdb/binutils/./fuzz_objdump.h:5667:5
+    #9 0x53ff03 in display_object_bfd /src/binutils-gdb/binutils/./fuzz_objdump.h
+    #10 0x53ff03 in display_any_bfd /src/binutils-gdb/binutils/./fuzz_objdump.h:5831:5
+    #11 0x53fb27 in display_file /src/binutils-gdb/binutils/./fuzz_objdump.h:5852:3
+    #12 0x53fb27 in LLVMFuzzerTestOneInput /src/binutils-gdb/binutils/fuzz_objdump.c:69:3
+    #13 0x43edf3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #14 0x42a552 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #15 0x42fdfc in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #16 0x459332 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #17 0x7fc8399c8082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #18 0x42071d in _start (/out/fuzz_objdump_safe+0x42071d)
+
+DEDUP_TOKEN: bfd_getl32--alpha_ecoff_get_relocated_section_contents--bfd_get_relocated_section_contents
+MemorySanitizer can not provide additional info.
+SUMMARY: MemorySanitizer: SEGV /src/binutils-gdb/bfd/libbfd.c:838:7 in bfd_getl32
+==7==ABORTING

@@ -1,0 +1,63 @@
+INFO: Seed: 3681114347
+INFO: Loaded 1 modules   (52962 inline 8-bit counters): 52962 [0x1272c30, 0x127fb12), 
+INFO: Loaded 1 PC tables (52962 PCs): 52962 [0xde76d0,0xeb64f0), 
+/out/encoder_xc_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x6020000001d1 at pc 0x00000047f1a4 bp 0x7ffc01f491d0 sp 0x7ffc01f48980
+READ of size 2 at 0x6020000001d1 thread T0
+SCARINESS: 14 (2-byte-read-heap-buffer-overflow)
+    #0 0x47f1a3 in __interceptor_strlen.part.32 /src/llvm/projects/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors.inc:343
+    #1 0x51d5db in basic_string /usr/local/bin/../include/c++/v1/string:1605:17
+    #2 0x51d5db in LLVMFuzzerTestOneInput /src/imagemagick/Magick++/fuzz/encoder_xc_fuzzer.cc:12
+    #3 0x5472c0 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:515:13
+    #4 0x51e3d9 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:280:6
+    #5 0x529d24 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:703:9
+    #6 0x51da7c in main /src/libfuzzer/FuzzerMain.cpp:20:10
+    #7 0x7f7e9c5e283f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #8 0x41d928 in _start (/out/encoder_xc_fuzzer+0x41d928)
+
+DEDUP_TOKEN: __interceptor_strlen.part.32--basic_string--LLVMFuzzerTestOneInput
+0x6020000001d1 is located 0 bytes to the right of 1-byte region [0x6020000001d0,0x6020000001d1)
+allocated by thread T0 here:
+    #0 0x519328 in operator new[](unsigned long) /src/llvm/projects/compiler-rt/lib/asan/asan_new_delete.cc:95
+    #1 0x5470a8 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:506:23
+    #2 0x51e3d9 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:280:6
+    #3 0x529d24 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:703:9
+    #4 0x51da7c in main /src/libfuzzer/FuzzerMain.cpp:20:10
+    #5 0x7f7e9c5e283f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: operator new[](unsigned long)--fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)--fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long)
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/llvm/projects/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors.inc:343 in __interceptor_strlen.part.32
+Shadow bytes around the buggy address:
+  0x0c047fff7fe0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c047fff7ff0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c047fff8000: fa fa fd fd fa fa fd fd fa fa fd fd fa fa fd fd
+  0x0c047fff8010: fa fa fd fa fa fa fd fd fa fa fd fd fa fa 00 00
+  0x0c047fff8020: fa fa 00 00 fa fa 00 02 fa fa 00 00 fa fa 00 fa
+=>0x0c047fff8030: fa fa 00 fa fa fa 00 fa fa fa[01]fa fa fa fa fa
+  0x0c047fff8040: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff8050: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff8060: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff8070: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff8080: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

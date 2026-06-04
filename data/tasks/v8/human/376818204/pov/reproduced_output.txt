@@ -1,0 +1,36 @@
+
+
+#
+# Fatal error in ../../src/compiler/js-native-context-specialization.cc, line 2980
+# Debug check failed: receiver == lookup_start_object (0x556b9e778870 vs. 0x556b9e779d10).
+#
+#
+#
+#FailureMessage Object: 0x7fffba80f580
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x556b6873e1b3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x556b6873d59d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x556b68721ef4]
+    out/debug/d8(+0x3ea6915) [0x556b68721915]
+    d8(v8::internal::compiler::JSNativeContextSpecialization::BuildPropertyLoad(v8::internal::compiler::Node*, v8::internal::compiler::Node*, v8::internal::compiler::Node*, v8::internal::compiler::Node*, v8::internal::compiler::Node*, v8::internal::compiler::Node*, v8::internal::compiler::NameRef, v8::internal::ZoneVector<v8::internal::compiler::Node*>*, v8::internal::compiler::PropertyAccessInfo const&) ./../../third_party/libc++/src/include/string:1884:12) [0x556b6707905c]
+    d8(v8::internal::compiler::JSNativeContextSpecialization::BuildPropertyAccess(v8::internal::compiler::Node*, v8::internal::compiler::Node*, v8::internal::compiler::Node*, v8::internal::compiler::Node*, v8::internal::compiler::Node*, v8::internal::compiler::Node*, v8::internal::compiler::Node*, v8::internal::compiler::NameRef, v8::internal::ZoneVector<v8::internal::compiler::Node*>*, v8::internal::compiler::PropertyAccessInfo const&, v8::internal::compiler::AccessMode) ./../../src/compiler/js-native-context-specialization.cc:3028:14) [0x556b67072f9b]
+    d8(v8::internal::compiler::JSNativeContextSpecialization::ReduceNamedAccess(v8::internal::compiler::Node*, v8::internal::compiler::Node*, v8::internal::compiler::NamedAccessFeedback const&, v8::internal::compiler::AccessMode, v8::internal::compiler::Node*) ./../../src/compiler/js-native-context-specialization.cc:1654:54) [0x556b670713b4]
+    d8(v8::internal::compiler::JSNativeContextSpecialization::ReducePropertyAccess(v8::internal::compiler::Node*, v8::internal::compiler::Node*, v8::internal::compiler::OptionalRef<v8::internal::compiler::NameRef>, v8::internal::compiler::Node*, v8::internal::compiler::FeedbackSource const&, v8::internal::compiler::AccessMode) ./../../src/compiler/js-native-context-specialization.cc:2566:7) [0x556b6707348a]
+    d8(v8::internal::compiler::JSNativeContextSpecialization::ReduceJSLoadNamedFromSuper(v8::internal::compiler::Node*) ./../../src/compiler/js-native-context-specialization.cc:0:10) [0x556b6706a1db]
+    d8(v8::internal::compiler::GraphReducer::Reduce(v8::internal::compiler::Node*) ./../../src/compiler/graph-reducer.cc:34:25) [0x556b66faec20]
+    d8(v8::internal::compiler::GraphReducer::ReduceTop() ./../../src/compiler/graph-reducer.h:39:47) [0x556b66fae856]
+    d8(v8::internal::compiler::GraphReducer::ReduceNode(v8::internal::compiler::Node*) ./../../third_party/libc++/src/include/deque:757:88) [0x556b66fae2b8]
+    d8(v8::internal::compiler::InliningPhase::Run(v8::internal::compiler::TFPipelineData*, v8::internal::Zone*) ./../../src/compiler/js-inlining-heuristic.h:60:12) [0x556b671689da]
+    d8(auto v8::internal::compiler::PipelineImpl::Run<v8::internal::compiler::InliningPhase>() ./../../src/logging/runtime-call-stats.h:794:9) [0x556b671238cd]
+    d8(v8::internal::compiler::PipelineImpl::CreateGraph() ./../../src/compiler/pipeline.cc:0:3) [0x556b6711eb18]
+    d8(v8::internal::compiler::PipelineCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/compiler/pipeline.cc:822:42) [0x556b6711e60f]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:486:22) [0x556b654c652d]
+    d8(v8::internal::OptimizingCompileDispatcher::CompileNext(v8::internal::TurbofanCompilationJob*, v8::internal::LocalIsolate*) ./../../src/compiler-dispatcher/optimizing-compile-dispatcher.cc:103:44) [0x556b65570a18]
+    d8(v8::internal::OptimizingCompileDispatcher::CompileTask::Run(v8::JobDelegate*) ./../../src/tracing/trace-event.h:568:9) [0x556b65572af1]
+    d8(v8::platform::DefaultJobState::Join() ./../../src/base/platform/mutex.h:331:30) [0x556b6873ef7d]
+    d8(v8::platform::DefaultJobHandle::Join() ./../../third_party/libc++/src/include/__utility/swap.h:45:7) [0x556b6873f433]
+    d8(void heap::base::Stack::SetMarkerAndCallbackImpl<void v8::internal::LocalHeap::ExecuteMainThreadWhileParked<v8::internal::OptimizingCompileDispatcher::AwaitCompileTasks()::$_0>(v8::internal::OptimizingCompileDispatcher::AwaitCompileTasks()::$_0)::'lambda'()>(heap::base::Stack*, void*, void const*) ./../../src/compiler-dispatcher/optimizing-compile-dispatcher.cc:0:33) [0x556b65572830]
+    d8(PushAllRegistersAndIterateStack push_registers_asm.cc:0:0) [0x556b66d1564b]
+timeout: the monitored command dumped core
+

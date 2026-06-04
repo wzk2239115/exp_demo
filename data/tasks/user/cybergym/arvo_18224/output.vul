@@ -1,0 +1,59 @@
+======================= INFO =========================
+This binary is built for AFL-fuzz.
+To run the target function on individual input(s) execute this:
+  /out/fuzz_disassemble < INPUT_FILE
+or
+  /out/fuzz_disassemble INPUT_FILE1 [INPUT_FILE2 ... ]
+To fuzz with afl-fuzz execute this:
+  afl-fuzz [afl-flags] /out/fuzz_disassemble [-N]
+afl-fuzz will run N iterations before re-spawning the process (default: 1000)
+======================================================
+Reading 13 bytes from /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: global-buffer-overflow on address 0x000001c0ae80 at pc 0x0000006559e9 bp 0x7ffcc10bb470 sp 0x7ffcc10bb468
+READ of size 8 at 0x000001c0ae80 thread T0
+SCARINESS: 23 (8-byte-read-global-buffer-overflow)
+    #0 0x6559e8 in print_insn_rx /src/binutils-gdb/opcodes/rx-dis.c:288:21
+    #1 0x4c907b in LLVMFuzzerTestOneInput /src/binutils-gdb/fuzz/fuzz_disassemble.c:71:13
+    #2 0x4c98fe in ExecuteFilesOnyByOne /src/libfuzzer/afl/afl_driver.cpp:216:5
+    #3 0x4c98fe in main /src/libfuzzer/afl/afl_driver.cpp:253:12
+    #4 0x7fd8ceb7783f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #5 0x41e478 in _start (/out/fuzz_disassemble+0x41e478)
+
+DEDUP_TOKEN: print_insn_rx--LLVMFuzzerTestOneInput--ExecuteFilesOnyByOne
+0x000001c0ae80 is located 32 bytes to the left of global variable 'double_condition_names' defined in 'rx-dis.c:127:21' (0x1c0aea0) of size 56
+0x000001c0ae80 is located 0 bytes to the right of global variable 'double_control_register_names' defined in 'rx-dis.c:122:21' (0x1c0ae60) of size 32
+SUMMARY: AddressSanitizer: global-buffer-overflow /src/binutils-gdb/opcodes/rx-dis.c:288:21 in print_insn_rx
+Shadow bytes around the buggy address:
+  0x000080379580: 00 00 00 00 00 00 00 00 00 00 00 f9 f9 f9 f9 f9
+  0x000080379590: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0000803795a0: f9 f9 f9 f9 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0000803795b0: 00 00 00 00 f9 f9 f9 f9 00 00 00 00 00 00 00 00
+  0x0000803795c0: 00 00 00 00 00 00 00 00 f9 f9 f9 f9 00 00 00 00
+=>0x0000803795d0:[f9]f9 f9 f9 00 00 00 00 00 00 00 f9 f9 f9 f9 f9
+  0x0000803795e0: 06 f9 f9 f9 f9 f9 f9 f9 03 f9 f9 f9 f9 f9 f9 f9
+  0x0000803795f0: 03 f9 f9 f9 f9 f9 f9 f9 03 f9 f9 f9 f9 f9 f9 f9
+  0x000080379600: 03 f9 f9 f9 f9 f9 f9 f9 03 f9 f9 f9 f9 f9 f9 f9
+  0x000080379610: 03 f9 f9 f9 f9 f9 f9 f9 03 f9 f9 f9 f9 f9 f9 f9
+  0x000080379620: 03 f9 f9 f9 f9 f9 f9 f9 03 f9 f9 f9 f9 f9 f9 f9
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==7==ABORTING

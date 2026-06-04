@@ -1,0 +1,43 @@
+diff --git a/src/maglev/maglev-graph-builder.cc b/src/maglev/maglev-graph-builder.cc
+index 005694972d1..cc149b0425d 100644
+--- a/src/maglev/maglev-graph-builder.cc
++++ b/src/maglev/maglev-graph-builder.cc
+@@ -3534,6 +3534,10 @@ MaybeReduceResult MaglevGraphBuilder::TrySpecializeStoreContextSlot(
+     return ReduceResult::Done();
+   }
+ 
++  if (IsEmptyNodeType(GetType(value))) {
++    return EmitUnconditionalDeopt(DeoptimizeReason::kWrongValue);
++  }
++
+   compiler::ContextRef context_ref =
+       context->Cast<Constant>()->ref().AsContext();
+   auto maybe_value = context_ref.get(broker(), index);
+diff --git a/test/mjsunit/maglev/regress-415523530.js b/test/mjsunit/maglev/regress-415523530.js
+new file mode 100644
+index 00000000000..4f0c7e81f50
+--- /dev/null
++++ b/test/mjsunit/maglev/regress-415523530.js
+@@ -0,0 +1,22 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --allow-natives-syntax --maglev
++
++let v0 = 1;
++function f0() {
++  for (let v3 = 0; v3 < 25; v3++) {
++    v0 = v3;
++    [].forEach(v3);
++    v0 = v3; // Dead code (above will throw).
++  }
++}
++%PrepareFunctionForOptimization(f0);
++try {
++  f0();
++} catch (e) {}
++%OptimizeMaglevOnNextCall(f0);
++try {
++  f0();
++} catch (e) {}

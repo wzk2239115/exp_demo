@@ -1,0 +1,1 @@
+A vulnerability exists where TupleVariationData is accessed directly instead of through a blob, leading to unsanitized var_data.

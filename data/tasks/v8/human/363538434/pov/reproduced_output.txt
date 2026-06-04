@@ -1,0 +1,24 @@
+
+
+#
+# Fatal error in ../../src/parsing/parser.cc, line 1117
+# Debug check failed: class_info.static_elements_function_id == initializer_id (3 vs. 2).
+#
+#
+#
+#FailureMessage Object: 0x7fff34b76df0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x55d4ad9e6313]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55d4ad9e572d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55d4ad9ca154]
+    out/debug/d8(+0x3c09b85) [0x55d4ad9c9b85]
+    d8(v8::internal::Parser::ParseClassForMemberInitialization(v8::internal::FunctionKind, int, int, int, v8::internal::AstRawString const*) ./../../third_party/libc++/src/include/string:1809:12) [0x55d4ab414503]
+    d8(v8::internal::Parser::ParseFunction(v8::internal::Isolate*, v8::internal::ParseInfo*, v8::internal::Handle<v8::internal::SharedFunctionInfo>) ./../../src/parsing/parser.cc:0:0) [0x55d4ab413d55]
+    d8(v8::internal::parsing::ParseFunction(v8::internal::ParseInfo*, v8::internal::Handle<v8::internal::SharedFunctionInfo>, v8::internal::Isolate*, v8::internal::parsing::ReportStatisticsMode) ./../../src/parsing/parsing.cc:28:3) [0x55d4ab44e89f]
+    d8(v8::internal::(anonymous namespace)::RenderCallSite(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>, v8::internal::MessageLocation*, v8::internal::CallPrinter::ErrorHint*) ./../../src/execution/messages.cc:832:9) [0x55d4aabc4428]
+    d8(v8::internal::ErrorUtils::NewCalledNonCallableError(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>) ./../../src/execution/messages.cc:925:28) [0x55d4aabc542d]
+    d8(v8::internal::__RT_impl_Runtime_ThrowCalledNonCallable(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/handles/handles.h:160:22) [0x55d4ab59e966]
+    d8(v8::internal::Runtime_ThrowCalledNonCallable(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-internal.cc:537:1) [0x55d4ab59e5d0]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x55d4ad181afd]
+timeout: the monitored command dumped core

@@ -1,0 +1,1 @@
+The code does not perform the same cleanup after rendering annotations and acroforms as it does after processing the main page contents in the pdfi interpreter. This allows errors to result in extra gsave levels persisting after the interpreter exits, which can lead to crashes or other problems.

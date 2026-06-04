@@ -1,0 +1,1 @@
+A memory leak exists in objcopy due to not freeing symbols in delete_symbol_htabs in objcopy.c, not freeing strings and syms after writing in write_debugging_info in objcopy.c, not memset-ing the entire info struct in write_stabs_in_sections_debugging_info in wrstabs.c, not freeing hash tables before returning, and not freeing syms on error return.

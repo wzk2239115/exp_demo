@@ -1,0 +1,31 @@
+
+
+#
+# Fatal error in ../../src/maglev/maglev-reducer-inl.h, line 349
+# Check failed: ValueRepresentationIs(input->properties().value_representation(), NodeT::kInputTypes[i]).
+#
+#
+#
+#FailureMessage Object: 0x7f86b872c540
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x55a36dacb373]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55a36daca2cd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55a36daaff14]
+    d8(void v8::internal::maglev::MaglevReducer<v8::internal::maglev::MaglevPhiRepresentationSelector>::SetNodeInputsNoConversion<v8::internal::maglev::ChangeInt32ToFloat64, std::initializer_list<v8::internal::maglev::ValueNode*>>(v8::internal::maglev::ChangeInt32ToFloat64*, std::initializer_list<v8::internal::maglev::ValueNode*>) ./../../src/maglev/maglev-reducer-inl.h:347:7) [0x55a36b4fe48a]
+    d8(v8::internal::maglev::ChangeInt32ToFloat64* v8::internal::maglev::MaglevReducer<v8::internal::maglev::MaglevPhiRepresentationSelector>::AddUnbufferedNewNodeNoInputConversion<v8::internal::maglev::ChangeInt32ToFloat64>(v8::internal::maglev::BasicBlock*, std::initializer_list<v8::internal::maglev::ValueNode*>) ./../../src/maglev/maglev-reducer-inl.h:367:3) [0x55a36b4fe36d]
+    d8(v8::internal::maglev::ValueNode* v8::internal::maglev::MaglevPhiRepresentationSelector::GetReplacementForPhiInputConversion<v8::internal::maglev::ChangeInt32ToFloat64>(v8::internal::maglev::ValueNode*, v8::internal::maglev::Phi*, unsigned int) ./../../src/maglev/maglev-phi-representation-selector.cc:1125:25) [0x55a36b4f7007]
+    d8(v8::internal::maglev::MaglevPhiRepresentationSelector::ConvertTaggedPhiTo(v8::internal::maglev::Phi*, v8::internal::maglev::ValueRepresentation, v8::base::SmallVector<v8::internal::maglev::MaglevPhiRepresentationSelector::HoistType, 8ul, std::__Cr::allocator<v8::internal::maglev::MaglevPhiRepresentationSelector::HoistType>> const&) ./../../src/maglev/maglev-phi-representation-selector.cc:0:17) [0x55a36b4f54d8]
+    d8(v8::internal::maglev::MaglevPhiRepresentationSelector::ProcessPhi(v8::internal::maglev::Phi*) ./../../src/maglev/maglev-phi-representation-selector.cc:0:0) [0x55a36b4f4668]
+    d8(v8::internal::maglev::MaglevPhiRepresentationSelector::PreProcessBasicBlock(v8::internal::maglev::BasicBlock*) ./../../src/maglev/maglev-phi-representation-selector.cc:55:7) [0x55a36b4f2df5]
+    d8(v8::internal::maglev::GraphProcessor<v8::internal::maglev::MaglevPhiRepresentationSelector>::ProcessGraph(v8::internal::maglev::Graph*) ./../../src/maglev/maglev-graph-processor.h:153:7) [0x55a36b05db38]
+    d8(v8::internal::maglev::MaglevCompiler::Compile(v8::internal::LocalIsolate*, v8::internal::maglev::MaglevCompilationInfo*) ./../../src/flags/flags.h:47:31) [0x55a36b05b523]
+    d8(v8::internal::maglev::MaglevCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./gen/third_party/libc++/src/include/__memory/unique_ptr.h:277:12) [0x55a36b1e8f4a]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:451:22) [0x55a36a013e62]
+    d8(v8::internal::maglev::MaglevConcurrentDispatcher::JobTask::Run(v8::JobDelegate*) ./../../src/maglev/maglev-concurrent-dispatcher.cc:288:20) [0x55a36b1eb08c]
+    d8(v8::platform::DefaultJobWorker::Run() ./../../src/libplatform/default-job.cc:19:46) [0x55a36daccfaf]
+    d8(v8::platform::DefaultWorkerThreadsTaskRunner::WorkerThread::Run() ./../../src/libplatform/default-worker-threads-task-runner.cc:96:9) [0x55a36dad2883]
+    d8(v8::base::ThreadEntry(void*) ./../../src/base/platform/platform-posix.cc:1274:3) [0x55a36dac799f]
+    /lib/x86_64-linux-gnu/libc.so.6(+0x9caa4) [0x7f86c811eaa4]
+    /lib/x86_64-linux-gnu/libc.so.6(__clone+0x44) [0x7f86c81aba64]
+timeout: the monitored command dumped core

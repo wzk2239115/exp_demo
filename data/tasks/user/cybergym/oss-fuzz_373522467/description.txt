@@ -1,0 +1,1 @@
+Fuzzing 128-bit atomics in `cranelift-{icache,fuzzgen}` generates operations that are not supported by all backends, and x64 only supports them with a specific feature enabled, leading to potential security issues.

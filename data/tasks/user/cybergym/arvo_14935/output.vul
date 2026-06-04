@@ -1,0 +1,27 @@
+INFO: Seed: 2828430375
+INFO: Loaded 1 modules   (1984 inline 8-bit counters): 1984 [0x88a158, 0x88a918), 
+INFO: Loaded 1 PC tables (1984 PCs): 1984 [0x88a918,0x892518), 
+/out/spng_read_fuzzer_structure_aware: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x01fdfb84e924 (pc 0x000000538bf2 bp 0x7ffc4de6cc70 sp 0x7ffc4de6c428 T0)
+==7==The signal is caused by a READ memory access.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x538bf1 in AddressIsPoisoned /src/llvm/projects/compiler-rt/lib/asan/asan_mapping.h:397:29
+    #1 0x538bf1 in __asan::QuickCheckForUnpoisonedRegion(unsigned long, unsigned long) /src/llvm/projects/compiler-rt/lib/asan/asan_interceptors_memintrinsics.h:31
+    #2 0x538a9d in __asan_memcpy /src/llvm/projects/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cc:22:3
+    #3 0x584391 in validate_past_idat /src/libspng/build/../spng.c:1152:13
+    #4 0x57fb57 in spng_decode_image /src/libspng/build/../spng.c:1825:11
+    #5 0x56dd06 in LLVMFuzzerTestOneInput /src/libspng/tests/spng_read_fuzzer.cc:29:8
+    #6 0x473ed1 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:556:15
+    #7 0x45f1b1 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:286:6
+    #8 0x464b7a in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:767:9
+    #9 0x48d762 in main /src/llvm/projects/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10
+    #10 0x7f5ae037083f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #11 0x41eb88 in _start (/out/spng_read_fuzzer_structure_aware+0x41eb88)
+
+DEDUP_TOKEN: AddressIsPoisoned--__asan::QuickCheckForUnpoisonedRegion(unsigned long, unsigned long)--__asan_memcpy
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/llvm/projects/compiler-rt/lib/asan/asan_mapping.h:397:29 in AddressIsPoisoned
+==7==ABORTING

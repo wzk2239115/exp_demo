@@ -1,0 +1,1 @@
+A vulnerability exists where the alpha channel for the merged image is not set correctly in a grayscale image.

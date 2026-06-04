@@ -1,0 +1,1 @@
+A vulnerability in avcodec/midivid allows an out-of-array read due to a missing check on the vector index.

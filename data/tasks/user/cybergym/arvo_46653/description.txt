@@ -1,0 +1,1 @@
+A heap-buffer-overflow vulnerability exists in the function sc_pkcs15init_delete_by_path due to insufficient input checking, which allows out-of-bounds memory reads.

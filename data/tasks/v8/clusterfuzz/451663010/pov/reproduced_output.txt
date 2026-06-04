@@ -1,0 +1,52 @@
+V8 is running with experimental features enabled. Stability and security will suffer.
+
+
+#
+# Fatal error in ../../src/ast/ast-function-literal-id-reindexer.cc, line 28
+# Debug check failed: visited_.insert(lit).second.
+#
+#
+#
+#FailureMessage Object: 0x7ffd87aba330
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x562240a025b3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x562240a0150d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x5622409e6f14]
+    out/debug/d8(+0x4bd9905) [0x5622409e6905]
+    d8(v8::internal::AstTraversalVisitor<v8::internal::AstFunctionLiteralIdReindexer>::VisitNoStackOverflowCheck(v8::internal::AstNode*) ./../../src/ast/ast-function-literal-id-reindexer.cc:0:3) [0x56223cd1b80d]
+    d8(v8::internal::AstFunctionLiteralIdReindexer::VisitClassLiteral(v8::internal::ClassLiteral*) ./../../src/ast/ast-traversal-visitor.h:0:3) [0x56223cd1a92c]
+    d8(v8::internal::AstTraversalVisitor<v8::internal::AstFunctionLiteralIdReindexer>::VisitAssignment(v8::internal::Assignment*) ./../../src/ast/ast-traversal-visitor.h:0:3) [0x56223cd1c315]
+    d8(v8::internal::AstTraversalVisitor<v8::internal::AstFunctionLiteralIdReindexer>::VisitStatements(v8::internal::ZoneList<v8::internal::Statement*> const*) ./../../src/ast/ast-traversal-visitor.h:0:3) [0x56223cd1cf69]
+    d8(v8::internal::AstTraversalVisitor<v8::internal::AstFunctionLiteralIdReindexer>::VisitFunctionLiteral(v8::internal::FunctionLiteral*) ./../../src/ast/ast-traversal-visitor.h:0:3) [0x56223cd1a649]
+    d8(v8::internal::AstTraversalVisitor<v8::internal::AstFunctionLiteralIdReindexer>::VisitNoStackOverflowCheck(v8::internal::AstNode*) ./../../src/ast/ast-function-literal-id-reindexer.cc:31:3) [0x56223cd1b6d8]
+    d8(v8::internal::AstFunctionLiteralIdReindexer::Reindex(v8::internal::Expression*) ./../../src/ast/ast-traversal-visitor.h:58:3) [0x56223cd1a56d]
+    d8(v8::internal::Parser::ReindexArrowFunctionFormalParameters(v8::internal::ParserFormalParameters*) ./../../src/parsing/parser.cc:2689:19) [0x56223d9dc0c6]
+    d8(v8::internal::ParserBase<v8::internal::Parser>::ParseAssignmentExpressionCoverGrammarContinuation(int, v8::internal::Expression*) ./../../src/parsing/parser-base.h:3311:18) [0x56223d9edf51]
+    d8(v8::internal::ParserBase<v8::internal::Parser>::ParseAssignmentExpressionCoverGrammar() ./../../src/parsing/parser-base.h:3261:10) [0x56223d9ed193]
+    d8(v8::internal::ParserBase<v8::internal::Parser>::ParseExpressionCoverGrammar() ./../../src/parsing/parser-base.h:2335:16) [0x56223d9f3bb4]
+    d8(v8::internal::ParserBase<v8::internal::Parser>::ParsePrimaryExpression() ./../../src/parsing/parser-base.h:2250:26) [0x56223d9f1d98]
+    d8(v8::internal::ParserBase<v8::internal::Parser>::ParseBinaryExpression(int) ./../../src/parsing/parser-base.h:4173:24) [0x56223d9ef042]
+    d8(v8::internal::ParserBase<v8::internal::Parser>::ParseAssignmentExpressionCoverGrammar() ./../../src/parsing/parser-base.h:3486:28) [0x56223d9ed0a7]
+    d8(v8::internal::ParserBase<v8::internal::Parser>::ParseExpressionCoverGrammar() ./../../src/parsing/parser-base.h:2335:16) [0x56223d9f3bb4]
+    d8(v8::internal::ParserBase<v8::internal::Parser>::ParseExpressionOrLabelledStatement(v8::internal::ZoneList<v8::internal::AstRawString const*>*, v8::internal::ZoneList<v8::internal::AstRawString const*>*, v8::internal::AllowLabelledFunctionStatement) ./../../src/parsing/parser-base.h:0:12) [0x56223da02f06]
+    d8(v8::internal::ParserBase<v8::internal::Parser>::ParseStatementList(v8::internal::ScopedList<v8::internal::Statement*, void*>*, v8::internal::Token::Value) ./../../src/parsing/parser-base.h:5717:16) [0x56223d9d0059]
+    d8(v8::internal::Parser::DoParseProgram(v8::internal::Isolate*, v8::internal::ParseInfo*) ./../../src/parsing/parser.cc:0:7) [0x56223d9cef8d]
+    d8(v8::internal::Parser::ParseProgram(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::Script>, v8::internal::ParseInfo*, v8::internal::MaybeDirectHandle<v8::internal::ScopeInfo>) ./../../src/parsing/parser.cc:723:29) [0x56223d9ce773]
+    d8(v8::internal::parsing::ParseProgram(v8::internal::ParseInfo*, v8::internal::DirectHandle<v8::internal::Script>, v8::internal::MaybeDirectHandle<v8::internal::ScopeInfo>, v8::internal::Isolate*, v8::internal::parsing::ReportStatisticsMode) ./../../src/parsing/parsing.cc:28:3) [0x56223da0d1b4]
+    d8(v8::internal::(anonymous namespace)::CompileToplevel(v8::internal::ParseInfo*, v8::internal::Handle<v8::internal::Script>, v8::internal::MaybeDirectHandle<v8::internal::ScopeInfo>, v8::internal::Isolate*, v8::internal::IsCompiledScope*) ./../../src/codegen/compiler.cc:1547:40) [0x56223ce77103]
+    d8(v8::internal::(anonymous namespace)::CompileScriptOnMainThread(v8::internal::UnoptimizedCompileFlags, v8::internal::DirectHandle<v8::internal::String>, v8::internal::ScriptDetails const&, v8::internal::NativesFlag, v8::Extension*, v8::internal::Isolate*, v8::internal::MaybeHandle<v8::internal::Script>, v8::internal::IsCompiledScope*, bool (*)(int, void*), void*) ./../../src/codegen/compiler.cc:3085:10) [0x56223ce8e8ed]
+    d8(v8::internal::(anonymous namespace)::GetSharedFunctionInfoForScriptImpl(v8::internal::Isolate*, v8::internal::Handle<v8::internal::String>, v8::internal::ScriptDetails const&, v8::Extension*, v8::internal::AlignedCachedData*, v8::internal::BackgroundDeserializeTask*, bool (*)(int, void*), void*, v8::ScriptCompiler::CompileOptions, v8::ScriptCompiler::NoCacheReason, v8::internal::NativesFlag, v8::ScriptCompiler::CompilationDetails*) ./../../src/codegen/compiler.cc:3956:22) [0x56223ce7bdc5]
+    d8(v8::internal::Compiler::GetSharedFunctionInfoForScript(v8::internal::Isolate*, v8::internal::Handle<v8::internal::String>, v8::internal::ScriptDetails const&, v8::ScriptCompiler::CompileOptions, v8::ScriptCompiler::NoCacheReason, v8::internal::NativesFlag, v8::ScriptCompiler::CompilationDetails*) ./../../src/codegen/compiler.cc:3988:3) [0x56223ce7b683]
+    d8(v8::ScriptCompiler::CompileUnboundInternal(v8::Isolate*, v8::ScriptCompiler::Source*, v8::ScriptCompiler::CompileOptions, v8::ScriptCompiler::NoCacheReason) ./../../src/api/api.cc:2457:27) [0x56223ccc0d66]
+    d8(v8::ScriptCompiler::Compile(v8::Local<v8::Context>, v8::ScriptCompiler::Source*, v8::ScriptCompiler::CompileOptions, v8::ScriptCompiler::NoCacheReason) ./../../include/v8-handle-base.h:60:53) [0x56223ccc126f]
+    d8(v8::MaybeLocal<v8::Script> v8::Shell::CompileString<v8::Script>(v8::Isolate*, v8::Local<v8::Context>, v8::Local<v8::String>, v8::ScriptOrigin const&) ./../../src/d8/d8.cc:691:10) [0x56223cb33d91]
+    d8(v8::Shell::ExecuteString(v8::Isolate*, v8::Local<v8::String>, v8::Local<v8::String>, v8::Shell::ReportExceptions, v8::Global<v8::Value>*) ./../../include/v8-handle-base.h:60:53) [0x56223cb33353]
+    d8(v8::SourceGroup::Execute(v8::Isolate*) ./../../src/d8/d8.cc:5556:10) [0x56223cb53f16]
+    d8(v8::Shell::RunMainIsolate(v8::Isolate*, bool) ./../../src/d8/d8.cc:6518:37) [0x56223cb58d85]
+    d8(v8::Shell::RunMain(v8::Isolate*, bool) ./../../src/d8/d8.cc:6426:18) [0x56223cb58765]
+    d8(v8::Shell::Main(int, char**) ./../../src/d8/d8.cc:7316:16) [0x56223cb5a82f]
+    /lib/x86_64-linux-gnu/libc.so.6(+0x2a1ca) [0x7fb1f0ecb1ca]
+    /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b) [0x7fb1f0ecb28b]
+    out/debug/d8(_start+0x2a) [0x56223cb1602a]
+timeout: the monitored command dumped core

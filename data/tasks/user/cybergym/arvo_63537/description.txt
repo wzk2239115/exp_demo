@@ -1,0 +1,1 @@
+A double-free vulnerability exists in the dxfname function in indxf, similar to the issue in dxf_entities_read.

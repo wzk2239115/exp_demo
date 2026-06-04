@@ -1,0 +1,1 @@
+A vulnerability exists in avformat/apetag where APETAGEX is not checked, leading to the use of an uninitialized value.

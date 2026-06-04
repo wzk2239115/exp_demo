@@ -1,0 +1,1 @@
+A vulnerability exists in the function ChannelMaskTlv::GetChannelMask() within meshcop-tlv, where the function does not correctly retrieve the channel mask.

@@ -1,0 +1,26 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3155902788
+INFO: Loaded 1 modules   (52573 inline 8-bit counters): 52573 [0xa413b8, 0xa4e115), 
+INFO: Loaded 1 PC tables (52573 PCs): 52573 [0x707228,0x7d47f8), 
+/out/decompress_frame_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+UndefinedBehaviorSanitizer:DEADLYSIGNAL
+==7==ERROR: UndefinedBehaviorSanitizer: SEGV on unknown address 0xffffffffdc4b7cfc (pc 0x7fe7472d2268 bp 0x7ffdb48b9b00 sp 0x7ffdb48b9a18 T7)
+==7==The signal is caused by a READ memory access.
+    #0 0x7fe7472d2268  (/lib/x86_64-linux-gnu/libc.so.6+0x14e268)
+    #1 0x4f8912 in get_vlmeta_from_trailer /src/c-blosc2/blosc/frame.c:1421:5
+    #2 0x4f8912 in frame_get_vlmetalayers /src/c-blosc2/blosc/frame.c:1483:9
+    #3 0x4f9362 in frame_to_schunk /src/c-blosc2/blosc/frame.c:1700:8
+    #4 0x4f1962 in blosc2_schunk_from_buffer /src/c-blosc2/blosc/schunk.c:448:27
+    #5 0x4bb2b7 in LLVMFuzzerTestOneInput /src/c-blosc2/tests/fuzz/fuzz_decompress_frame.c:23:27
+    #6 0x44a2b1 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:599:15
+    #7 0x433f72 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #8 0x43a2c6 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9
+    #9 0x4642b2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #10 0x7fe7471a483f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #11 0x40e938 in _start (/out/decompress_frame_fuzzer+0x40e938)
+
+DEDUP_TOKEN: get_vlmeta_from_trailer--frame_get_vlmetalayers
+UndefinedBehaviorSanitizer can not provide additional info.
+SUMMARY: UndefinedBehaviorSanitizer: SEGV (/lib/x86_64-linux-gnu/libc.so.6+0x14e268) 
+==7==ABORTING

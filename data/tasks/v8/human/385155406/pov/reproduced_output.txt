@@ -1,0 +1,29 @@
+
+
+
+#
+# Fatal error in ../../src/compiler/verifier.cc, line 611
+# Check failed: func_info->parameter_count() == StateValuesAccess(state.parameters()).size() (0 vs. 65536).
+#
+#
+#
+#FailureMessage Object: 0x7ffef97f8480
+==== C stack trace ===============================
+
+    /build/v8/out/debug/libv8_libbase.so(v8::base::debug::StackTrace::StackTrace()+0x13) [0x7f60d47151c3]
+    /build/v8/out/debug/libv8_libplatform.so(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x7f60d46c31cd]
+    /build/v8/out/debug/libv8_libbase.so(V8_Fatal(char const*, int, char const*, ...)+0x194) [0x7f60d46f6e64]
+    /build/v8/out/debug/libv8.so(v8::internal::compiler::Verifier::Visitor::Check(v8::internal::compiler::Node*, v8::internal::compiler::AllNodes const&) ./../../src/base/logging.h:437:1) [0x7f60d8867ae7]
+    /build/v8/out/debug/libv8.so(v8::internal::compiler::Verifier::Run(v8::internal::compiler::Graph*, v8::internal::compiler::Verifier::Typing, v8::internal::compiler::Verifier::CheckInputs, v8::internal::compiler::Verifier::CodeType) ./../../src/compiler/verifier.cc:2046:19) [0x7f60d886856e]
+    /build/v8/out/debug/libv8.so(auto v8::internal::compiler::PipelineImpl::Run<v8::internal::compiler::VerifyGraphPhase, bool&>(bool&) ./../../src/logging/runtime-call-stats.h:796:9) [0x7f60d7f9ca52]
+    /build/v8/out/debug/libv8.so(v8::internal::compiler::PipelineImpl::CreateGraph(v8::internal::compiler::Linkage*) ./../../third_party/libc++/src/include/__memory/shared_ptr.h:628:70) [0x7f60d7f9830f]
+    /build/v8/out/debug/libv8.so(v8::internal::compiler::PipelineCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/compiler/pipeline.cc:822:42) [0x7f60d7f97da6]
+    /build/v8/out/debug/libv8.so(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*)+0x8d) [0x7f60d61a57cd]
+    /build/v8/out/debug/libv8.so(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1084:7) [0x7f60d61b4cb2]
+    /build/v8/out/debug/libv8.so(v8::internal::Compiler::CompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind)+0x253) [0x7f60d61b7a63]
+    /build/v8/out/debug/libv8.so(v8::internal::(anonymous namespace)::CompileOptimized(v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::Isolate*) ./../../src/handles/handles.h:197:22) [0x7f60d6f6b08e]
+    /build/v8/out/debug/libv8.so(v8::internal::__RT_impl_Runtime_OptimizeTurbofanEager(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/execution/isolate-data.h:313:44) [0x7f60d6f64bc2]
+    /build/v8/out/debug/libv8.so(v8::internal::Runtime_OptimizeTurbofanEager(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:225:1) [0x7f60d6f647f0]
+    /build/v8/out/debug/libv8.so(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x7f60d569b37d]
+Received signal 6
+timeout: the monitored command dumped core

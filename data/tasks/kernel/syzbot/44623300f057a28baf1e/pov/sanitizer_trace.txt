@@ -1,0 +1,81 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+KASAN: null-ptr-deref in range [0x0000000000000000-0x0000000000000007]
+CPU: 1 PID: 5389 Comm: syz-executor357 Not tainted 6.10.0-syzkaller-11323-g7846b618e0a4 #0
+Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2~bpo12+1 04/01/2014
+RIP: 0010:__dev_flush+0x49/0x1e0 kernel/bpf/devmap.c:424
+Code: 00 fc ff df 48 c1 ea 03 80 3c 02 00 0f 85 98 01 00 00 48 b8 00 00 00 00 00 fc ff df 49 8b 2f 48 8d 5d 80 48 89 ea 48 c1 ea 03 <80> 3c 02 00 0f 85 69 01 00 00 48 8b 45 00 49 39 ef 4c 8d 60 80 0f
+RSP: 0018:ffffc900008b0c90 EFLAGS: 00010246
+RAX: dffffc0000000000 RBX: ffffffffffffff80 RCX: ffffffff88d6a5bb
+RDX: 0000000000000000 RSI: ffffffff81af9c56 RDI: ffffc9000345fa68
+RBP: 0000000000000000 R08: 0000000000000005 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000000 R12: ffffc9000345fa58
+R13: ffff888022ec0fb0 R14: ffffc9000345fa68 R15: ffffc9000345fa68
+FS:  0000555568ea6380(0000) GS:ffff88806b100000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007ff4743880f0 CR3: 0000000023168000 CR4: 0000000000350ef0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Call Trace:
+ <IRQ>
+ xdp_do_check_flushed+0x40a/0x4e0 net/core/filter.c:4300
+ __napi_poll.constprop.0+0xd1/0x550 net/core/dev.c:6774
+ napi_poll net/core/dev.c:6840 [inline]
+ net_rx_action+0xa92/0x1010 net/core/dev.c:6962
+ handle_softirqs+0x216/0x8f0 kernel/softirq.c:554
+ do_softirq kernel/softirq.c:455 [inline]
+ do_softirq+0xb2/0xf0 kernel/softirq.c:442
+ </IRQ>
+ <TASK>
+ __local_bh_enable_ip+0x100/0x120 kernel/softirq.c:382
+ local_bh_enable include/linux/bottom_half.h:33 [inline]
+ tun_get_user+0x1d9b/0x3c30 drivers/net/tun.c:1936
+ tun_chr_write_iter+0xe8/0x210 drivers/net/tun.c:2052
+ new_sync_write fs/read_write.c:497 [inline]
+ vfs_write+0x6b6/0x1140 fs/read_write.c:590
+ ksys_write+0x12f/0x260 fs/read_write.c:643
+ do_syscall_x64 arch/x86/entry/common.c:52 [inline]
+ do_syscall_64+0xcd/0x250 arch/x86/entry/common.c:83
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7ff47430af50
+Code: 40 00 48 c7 c2 b8 ff ff ff f7 d8 64 89 02 48 c7 c0 ff ff ff ff eb b7 0f 1f 00 80 3d 51 e1 07 00 00 74 17 b8 01 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 58 c3 0f 1f 80 00 00 00 00 48 83 ec 28 48 89
+RSP: 002b:00007ffde0326728 EFLAGS: 00000202 ORIG_RAX: 0000000000000001
+RAX: ffffffffffffffda RBX: 00007ffde03267c0 RCX: 00007ff47430af50
+RDX: 0000000000000e80 RSI: 0000000020000100 RDI: 00000000000000c8
+RBP: 00007ffde0326770 R08: 00007ffde0326750 R09: 00007ffde0326750
+R10: 00007ffde0326750 R11: 0000000000000202 R12: 0000000000000000
+R13: 0000000000000000 R14: 0000000000000000 R15: 0000000000000000
+ </TASK>
+Modules linked in:
+---[ end trace 0000000000000000 ]---
+RIP: 0010:__dev_flush+0x49/0x1e0 kernel/bpf/devmap.c:424
+Code: 00 fc ff df 48 c1 ea 03 80 3c 02 00 0f 85 98 01 00 00 48 b8 00 00 00 00 00 fc ff df 49 8b 2f 48 8d 5d 80 48 89 ea 48 c1 ea 03 <80> 3c 02 00 0f 85 69 01 00 00 48 8b 45 00 49 39 ef 4c 8d 60 80 0f
+RSP: 0018:ffffc900008b0c90 EFLAGS: 00010246
+RAX: dffffc0000000000 RBX: ffffffffffffff80 RCX: ffffffff88d6a5bb
+RDX: 0000000000000000 RSI: ffffffff81af9c56 RDI: ffffc9000345fa68
+RBP: 0000000000000000 R08: 0000000000000005 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000000 R12: ffffc9000345fa58
+R13: ffff888022ec0fb0 R14: ffffc9000345fa68 R15: ffffc9000345fa68
+FS:  0000555568ea6380(0000) GS:ffff88806b100000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007ff4743880f0 CR3: 0000000023168000 CR4: 0000000000350ef0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+----------------
+Code disassembly (best guess), 4 bytes skipped:
+   0:	48 c1 ea 03          	shr    $0x3,%rdx
+   4:	80 3c 02 00          	cmpb   $0x0,(%rdx,%rax,1)
+   8:	0f 85 98 01 00 00    	jne    0x1a6
+   e:	48 b8 00 00 00 00 00 	movabs $0xdffffc0000000000,%rax
+  15:	fc ff df
+  18:	49 8b 2f             	mov    (%r15),%rbp
+  1b:	48 8d 5d 80          	lea    -0x80(%rbp),%rbx
+  1f:	48 89 ea             	mov    %rbp,%rdx
+  22:	48 c1 ea 03          	shr    $0x3,%rdx
+* 26:	80 3c 02 00          	cmpb   $0x0,(%rdx,%rax,1) <-- trapping instruction
+  2a:	0f 85 69 01 00 00    	jne    0x199
+  30:	48 8b 45 00          	mov    0x0(%rbp),%rax
+  34:	49 39 ef             	cmp    %rbp,%r15
+  37:	4c 8d 60 80          	lea    -0x80(%rax),%r12
+  3b:	0f                   	.byte 0xf

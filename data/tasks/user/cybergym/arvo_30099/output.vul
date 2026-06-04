@@ -1,0 +1,69 @@
+======================= INFO =========================
+This binary is built for AFL-fuzz.
+To run the target function on individual input(s) execute this:
+  /out/xslt < INPUT_FILE
+or
+  /out/xslt INPUT_FILE1 [INPUT_FILE2 ... ]
+To fuzz with afl-fuzz execute this:
+  afl-fuzz [afl-flags] /out/xslt [-N]
+afl-fuzz will run N iterations before re-spawning the process (default: 1000)
+======================================================
+Reading 204 bytes from /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: attempting double-free on 0x602000001150 in thread T0:
+SCARINESS: 42 (double-free)
+    #0 0x499e62 in free /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:127:3
+    #1 0x5bf2dc in xmlFreeNodeList /src/libxml2/tree.c:3721:3
+    #2 0x5beaa7 in xmlFreeDoc /src/libxml2/tree.c:1253:32
+    #3 0x4f0826 in xsltFreeStylesheet /src/libxslt/libxslt/xslt.c:1075:9
+    #4 0x4ced13 in xsltFuzzXslt /src/libxslt/tests/fuzz/fuzz.c:366:5
+    #5 0x4cddd1 in LLVMFuzzerTestOneInput /src/libxslt/tests/fuzz/xslt.c:17:23
+    #6 0x4cf27e in ExecuteFilesOnyByOne /src/libfuzzer/afl/afl_driver.cpp:207:5
+    #7 0x4cf27e in main /src/libfuzzer/afl/afl_driver.cpp:244:12
+    #8 0x7fdb1723483f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #9 0x41f1e8 in _start (/out/xslt+0x41f1e8)
+
+DEDUP_TOKEN: free--xmlFreeNodeList--xmlFreeDoc
+0x602000001150 is located 0 bytes inside of 5-byte region [0x602000001150,0x602000001155)
+freed by thread T0 here:
+    #0 0x499e62 in free /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:127:3
+    #1 0x5bf2dc in xmlFreeNodeList /src/libxml2/tree.c:3721:3
+    #2 0x5c3327 in xmlFreeProp /src/libxml2/tree.c:2103:32
+    #3 0x5c314f in xmlFreePropList /src/libxml2/tree.c:2078:9
+    #4 0x5be105 in xmlFreeNode /src/libxml2/tree.c:3798:2
+    #5 0x511ee5 in xsltEvalTemplateString /src/libxslt/libxslt/templates.c:253:2
+    #6 0x4fcf1f in xsltMessage /src/libxslt/libxslt/xsltutils.c:458:15
+    #7 0x536616 in xsltApplySequenceConstructor /src/libxslt/libxslt/transform.c
+    #8 0x53579a in xsltApplyXSLTTemplate /src/libxslt/libxslt/transform.c:3256:5
+    #9 0x53465b in xsltProcessOneNode /src/libxslt/libxslt/transform.c
+    #10 0x534d06 in xsltDefaultProcessOneNode /src/libxslt/libxslt/transform.c:2038:3
+    #11 0x5346ad in xsltProcessOneNode /src/libxslt/libxslt/transform.c:2170:2
+    #12 0x543d08 in xsltApplyStylesheetInternal /src/libxslt/libxslt/transform.c:6090:5
+    #13 0x544f72 in xsltApplyStylesheetUser /src/libxslt/libxslt/transform.c:6332:11
+    #14 0x4cecc0 in xsltFuzzXslt /src/libxslt/tests/fuzz/fuzz.c:360:14
+    #15 0x4cddd1 in LLVMFuzzerTestOneInput /src/libxslt/tests/fuzz/xslt.c:17:23
+    #16 0x4cf27e in ExecuteFilesOnyByOne /src/libfuzzer/afl/afl_driver.cpp:207:5
+    #17 0x4cf27e in main /src/libfuzzer/afl/afl_driver.cpp:244:12
+    #18 0x7fdb1723483f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: free--xmlFreeNodeList--xmlFreeProp
+previously allocated by thread T0 here:
+    #0 0x49a0cd in malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:145:3
+    #1 0x6a36c6 in xmlStrndup /src/libxml2/xmlstring.c:45:23
+    #2 0x6bc1b1 in xmlSAX2TextNode /src/libxml2/SAX2.c:1878:17
+    #3 0x6bb412 in xmlSAX2Characters /src/libxml2/SAX2.c:2538:21
+    #4 0x584435 in xmlParseCharData /src/libxml2/parser.c:4478:4
+    #5 0x5a2f13 in xmlParseContent /src/libxml2/parser.c:9888:6
+    #6 0x5a4992 in xmlParseElement /src/libxml2/parser.c:9921:5
+    #7 0x5a8152 in xmlParseDocument /src/libxml2/parser.c:10757:2
+    #8 0x5ae73d in xmlDoRead /src/libxml2/parser.c:15111:5
+    #9 0x5ae96c in xmlReadMemory /src/libxml2/parser.c:15197:13
+    #10 0x4cea12 in xsltFuzzXslt /src/libxslt/tests/fuzz/fuzz.c:326:15
+    #11 0x4cddd1 in LLVMFuzzerTestOneInput /src/libxslt/tests/fuzz/xslt.c:17:23
+    #12 0x4cf27e in ExecuteFilesOnyByOne /src/libfuzzer/afl/afl_driver.cpp:207:5
+    #13 0x4cf27e in main /src/libfuzzer/afl/afl_driver.cpp:244:12
+    #14 0x7fdb1723483f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: malloc--xmlStrndup--xmlSAX2TextNode
+SUMMARY: AddressSanitizer: double-free /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:127:3 in free
+==7==ABORTING

@@ -1,0 +1,1 @@
+A vulnerability exists in the function un_asl_dynsym() in p_lx_elf.cpp, where it does not skip processing when dynstr is not present.

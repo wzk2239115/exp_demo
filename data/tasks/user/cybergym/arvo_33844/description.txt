@@ -1,0 +1,1 @@
+A stack-buffer-overflow occurs in vms-lib.c at line 367 within the vms_traverse_index function due to not accounting for the vms_kbn size when performing sanity checks on keylen.

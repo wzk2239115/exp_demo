@@ -1,0 +1,30 @@
+
+
+#
+# Fatal error in ../../src/maglev/maglev-ir.h, line 1948
+# Debug check failed: id_ != kInvalidNodeId (0 vs. 0).
+#
+#
+#
+#FailureMessage Object: 0x7fff080ad470
+==== C stack trace ===============================
+
+    out/debug/d8(+0x3a2d173) [0x558793aab173]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x558793aaa58d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:204:10) [0x558793a8f0ee]
+    out/debug/d8(+0x3a10b35) [0x558793a8eb35]
+    d8(v8::internal::maglev::ValueNode::record_next_use(unsigned int, v8::internal::maglev::InputLocation*) ./../../third_party/libc++/src/include/string:1793:12) [0x558791986ea1]
+    d8(v8::internal::maglev::LiveRangeAndNextUseProcessor::MarkUse(v8::internal::maglev::ValueNode*, unsigned int, v8::internal::maglev::InputLocation*, v8::internal::maglev::LiveRangeAndNextUseProcessor::LoopUsedNodes*) ./../../src/maglev/maglev-compiler.cc:524:9) [0x558791986b99]
+    d8(void v8::internal::maglev::NodeBase::ForAllInputsInRegallocAssignmentOrder<void v8::internal::maglev::LiveRangeAndNextUseProcessor::MarkInputUses<v8::internal::maglev::CheckedNumberOrOddballToFloat64>(v8::internal::maglev::CheckedNumberOrOddballToFloat64*, v8::internal::maglev::ProcessingState const&)::'lambda'(v8::internal::maglev::NodeBase::InputAllocationPolicy, v8::internal::maglev::Input*)>(v8::internal::maglev::CheckedNumberOrOddballToFloat64&&)::'lambda'(v8::internal::maglev::NodeBase::InputAllocationPolicy)::operator()(v8::internal::maglev::NodeBase::InputAllocationPolicy) const ./../../src/maglev/maglev-compiler.cc:0:11) [0x5587919bc009]
+    d8(void v8::internal::maglev::LiveRangeAndNextUseProcessor::MarkInputUses<v8::internal::maglev::CheckedNumberOrOddballToFloat64>(v8::internal::maglev::CheckedNumberOrOddballToFloat64*, v8::internal::maglev::ProcessingState const&) ./../../src/maglev/maglev-ir.h:9480:3) [0x5587919bbe88]
+    d8(v8::internal::maglev::ProcessResult v8::internal::maglev::NodeMultiProcessor<v8::internal::maglev::LiveRangeAndNextUseProcessor, v8::internal::maglev::DecompressedUseMarkingProcessor>::Process<v8::internal::maglev::CheckedNumberOrOddballToFloat64>(v8::internal::maglev::CheckedNumberOrOddballToFloat64*, v8::internal::maglev::ProcessingState const&) ./../../src/base/logging.h:405:1) [0x5587919bbdb3]
+    d8(v8::internal::maglev::GraphProcessor<v8::internal::maglev::NodeMultiProcessor<v8::internal::maglev::DeadNodeSweepingProcessor, v8::internal::maglev::ValueLocationConstraintProcessor, v8::internal::maglev::MaxCallDepthProcessor, v8::internal::maglev::LiveRangeAndNextUseProcessor, v8::internal::maglev::DecompressedUseMarkingProcessor>, false>::ProcessGraph(v8::internal::maglev::Graph*) ./../../src/maglev/maglev-graph-processor.h:0:0) [0x558791916afc]
+    d8(v8::internal::maglev::MaglevCompiler::Compile(v8::internal::LocalIsolate*, v8::internal::maglev::MaglevCompilationInfo*) ./../../third_party/libc++/src/include/vector:490:18) [0x558791913fca]
+    d8(v8::internal::maglev::MaglevCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/maglev/maglev-concurrent-dispatcher.cc:0:8) [0x5587919d649a]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:482:22) [0x558790b99b3d]
+    d8(v8::internal::maglev::MaglevConcurrentDispatcher::JobTask::Run(v8::JobDelegate*) ./../../src/maglev/maglev-concurrent-dispatcher.cc:275:20) [0x5587919d8387]
+    d8(v8::platform::DefaultJobState::Join() ./../../src/base/platform/mutex.h:313:30) [0x558793aabefd]
+    d8(v8::platform::DefaultJobHandle::Join() ./../../third_party/libc++/src/include/__utility/swap.h:44:7) [0x558793aac3b3]
+    d8(void heap::base::Stack::SetMarkerAndCallbackImpl<void v8::internal::LocalHeap::BlockMainThreadWhileParked<v8::internal::maglev::MaglevConcurrentDispatcher::AwaitCompileJobs()::$_0>(v8::internal::maglev::MaglevConcurrentDispatcher::AwaitCompileJobs()::$_0)::'lambda'()>(heap::base::Stack*, void*, void const*) ./../../src/heap/local-heap.h:324:5) [0x5587919d8b1c]
+    d8(PushAllRegistersAndIterateStack push_registers_asm.cc:0:0) [0x55879213eb5b]
+timeout: the monitored command dumped core

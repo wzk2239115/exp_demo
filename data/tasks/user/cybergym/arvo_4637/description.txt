@@ -1,0 +1,1 @@
+A vulnerability exists in mle where the Route TLV length is not properly limited, potentially allowing more than 32 route entries and leading to a buffer overflow. The issue arises from not enforcing the expected maximum number of route entries in properly formed Route TLVs.

@@ -1,0 +1,71 @@
+INFO: Seed: 2761173893
+INFO: Loaded 1 modules   (22185 inline 8-bit counters): 22185 [0xbc6708, 0xbcbdb1), 
+INFO: Loaded 1 PC tables (22185 PCs): 22185 [0x8a1828,0x8f82b8), 
+/out/hb-shape-fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x7f76c68ca558 at pc 0x0000006225a5 bp 0x7ffd952919e0 sp 0x7ffd952919d8
+READ of size 4 at 0x7f76c68ca558 thread T0
+SCARINESS: 32 (4-byte-read-stack-buffer-overflow)
+    #0 0x6225a4 in hb_array_t<char const>::cmp(hb_array_t<char const> const&) const /src/harfbuzz/src/./hb-array.hh:100:18
+    #1 0x621f0b in OT::post::accelerator_t::cmp_key(void const*, void const*, void*) /src/harfbuzz/src/./hb-ot-post-table.hh:207:40
+    #2 0x621d78 in hb_bsearch_r(void const*, void const*, unsigned long, unsigned long, int (*)(void const*, void const*, void*), void*) /src/harfbuzz/src/./hb-dsalgs.hh:362:13
+    #3 0x6217fe in OT::post::accelerator_t::get_glyph_from_name(char const*, int, unsigned int*) const /src/harfbuzz/src/./hb-ot-post-table.hh:171:48
+    #4 0x602d27 in hb_ot_get_glyph_from_name(hb_font_t*, void*, char const*, int, unsigned int*, void*) /src/harfbuzz/src/hb-ot-font.cc:219:25
+    #5 0x530da9 in test_face(hb_face_t*, unsigned int) /src/harfbuzz/./test/fuzzing/../api/test-ot-face.c:62:3
+    #6 0x530ac5 in LLVMFuzzerTestOneInput /src/harfbuzz/./test/fuzzing/hb-shape-fuzzer.cc:41:3
+    #7 0x55c275 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:571:15
+    #8 0x531a9d in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:280:6
+    #9 0x53d2e6 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:713:9
+    #10 0x53111c in main /src/libfuzzer/FuzzerMain.cpp:20:10
+    #11 0x7f76c586b83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #12 0x41cfe8 in _start (/out/hb-shape-fuzzer+0x41cfe8)
+
+DEDUP_TOKEN: hb_array_t<char const>::cmp(hb_array_t<char const> const&) const--OT::post::accelerator_t::cmp_key(void const*, void const*, void*)--hb_bsearch_r(void const*, void const*, unsigned long, unsigned long, int (*)(void const*, void const*, void*), void*)
+Address 0x7f76c68ca558 is located in stack of thread T0 at offset 88 in frame
+    #0 0x530b8f in test_face(hb_face_t*, unsigned int) /src/harfbuzz/./test/fuzzing/../api/test-ot-face.c:38
+
+DEDUP_TOKEN: test_face(hb_face_t*, unsigned int)
+  This frame has 6 object(s):
+    [32, 36) 'g' (line 41)
+    [48, 52) 'x' (line 42)
+    [64, 68) 'y' (line 42)
+    [80, 85) 'buf' (line 43) <== Memory access at offset 88 overflows this variable
+    [112, 116) 'len' (line 44)
+    [128, 144) 'extents' (line 45)
+HINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork
+      (longjmp and C++ exceptions *are* supported)
+SUMMARY: AddressSanitizer: stack-buffer-overflow /src/harfbuzz/src/./hb-array.hh:100:18 in hb_array_t<char const>::cmp(hb_array_t<char const> const&) const
+Shadow bytes around the buggy address:
+  0x0fef58d11450: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x0fef58d11460: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x0fef58d11470: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x0fef58d11480: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x0fef58d11490: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+=>0x0fef58d114a0: f1 f1 f1 f1 04 f2 04 f2 04 f2 05[f2]f2 f2 04 f2
+  0x0fef58d114b0: 00 00 f3 f3 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0fef58d114c0: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x0fef58d114d0: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x0fef58d114e0: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+  0x0fef58d114f0: f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5 f5
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==7==ABORTING

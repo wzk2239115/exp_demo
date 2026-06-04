@@ -1,0 +1,1 @@
+A vulnerability exists where attempting to open a file with a filename string starting with a NULL character is not treated the same as a zero-length string. This leads to the creation of a broken file object, causing several operations to result in a segmentation fault. Additionally, memory allocated in preparing the gs stream object is not freed in the event of such an error.

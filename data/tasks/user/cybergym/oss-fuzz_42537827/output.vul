@@ -1,0 +1,24 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 4061739124
+INFO: Loaded 1 modules   (159605 inline 8-bit counters): 159605 [0x55e7d0908ba0, 0x55e7d092fb15), 
+INFO: Loaded 1 PC tables (159605 PCs): 159605 [0x55e7d092fb18,0x55e7d0b9f268), 
+/out/ffmpeg_IO_DEMUXER_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+Uninitialized bytes in strncmp at offset 0 inside [0x7ffde3960ea8, 1)
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x55e7cf54fbcb in ff_ape_parse_tag /src/ffmpeg/libavformat/apetag.c:125:9
+    #1 0x55e7cf8bc780 in tak_read_header /src/ffmpeg/libavformat/takdec.c:134:17
+    #2 0x55e7cf5fa7c4 in avformat_open_input /src/ffmpeg/libavformat/demux.c:305:20
+    #3 0x55e7cf54725a in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_dem_fuzzer.c:202:11
+    #4 0x55e7cf43c840 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #5 0x55e7cf427ab5 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #6 0x55e7cf42d54f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #7 0x55e7cf4587f2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #8 0x7f5c9e6e5082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+    #9 0x55e7cf41fc9d in _start (/out/ffmpeg_IO_DEMUXER_fuzzer+0x459c9d)
+
+  Uninitialized value was created by an allocation of 'buf' in the stack frame
+    #0 0x55e7cf54fb62 in ff_ape_parse_tag /src/ffmpeg/libavformat/apetag.c:115:5
+
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /src/ffmpeg/libavformat/apetag.c:125:9 in ff_ape_parse_tag
+Exiting

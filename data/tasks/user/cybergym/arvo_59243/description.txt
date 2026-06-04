@@ -1,0 +1,1 @@
+A vulnerability exists in linux-user where the loaddr computation for some ELF files incorrectly considers the file offset of the load segment, rather than only the beginning of the virtual address page. This can lead to incorrect program load addresses in elf.c.

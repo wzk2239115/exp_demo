@@ -1,0 +1,39 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3262961580
+INFO: Loaded 1 modules   (52693 inline 8-bit counters): 52693 [0x12cd0ac, 0x12d9e81), 
+INFO: Loaded 1 PC tables (52693 PCs): 52693 [0x12d9e88,0x13a7bd8), 
+/out/hb-subset-fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x526055 in trySubset(hb_face_t*, unsigned int const*, int, unsigned int) /work/build/../../src/harfbuzz/test/fuzzing/hb-subset-fuzzer.cc:36:11
+    #1 0x5257ab in LLVMFuzzerTestOneInput /work/build/../../src/harfbuzz/test/fuzzing/hb-subset-fuzzer.cc:66:3
+    #2 0x457e53 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:599:15
+    #3 0x443722 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #4 0x44932e in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9
+    #5 0x472ca2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #6 0x7f62b160b83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #7 0x41e9b8 in _start (/out/hb-subset-fuzzer+0x41e9b8)
+
+DEDUP_TOKEN: trySubset(hb_face_t*, unsigned int const*, int, unsigned int)--LLVMFuzzerTestOneInput--fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)
+  Uninitialized value was created by a heap allocation
+    #0 0x4d392d in malloc /src/llvm-project/compiler-rt/lib/msan/msan_interceptors.cpp:901:3
+    #1 0x5d2852 in hb_malloc_impl /work/build/../../src/harfbuzz/src/failing-alloc.c:41:31
+    #2 0x553c4f in _hb_face_builder_data_reference_blob(hb_face_builder_data_t*) /work/build/../../src/harfbuzz/src/hb-face.cc:678:24
+    #3 0x53e0a3 in _hb_face_builder_reference_table(hb_face_t*, unsigned int, void*) /work/build/../../src/harfbuzz/src/hb-face.cc:713:12
+    #4 0x53c600 in hb_face_t::reference_table(unsigned int) const /work/build/../../src/harfbuzz/src/hb-face.hh:77:12
+    #5 0x53c6e0 in hb_face_reference_blob /work/build/../../src/harfbuzz/src/hb-face.cc:412:16
+    #6 0x525c53 in trySubset(hb_face_t*, unsigned int const*, int, unsigned int) /work/build/../../src/harfbuzz/test/fuzzing/hb-subset-fuzzer.cc:29:23
+    #7 0x5257ab in LLVMFuzzerTestOneInput /work/build/../../src/harfbuzz/test/fuzzing/hb-subset-fuzzer.cc:66:3
+    #8 0x457e53 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:599:15
+    #9 0x443722 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #10 0x44932e in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9
+    #11 0x472ca2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #12 0x7f62b160b83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: malloc--hb_malloc_impl--_hb_face_builder_data_reference_blob(hb_face_builder_data_t*)
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /work/build/../../src/harfbuzz/test/fuzzing/hb-subset-fuzzer.cc:36:11 in trySubset(hb_face_t*, unsigned int const*, int, unsigned int)
+Unique heap origins: 130
+Stack depot allocated bytes: 16288
+Unique origin histories: 14
+History depot allocated bytes: 336
+Exiting

@@ -1,0 +1,1 @@
+A double free vulnerability exists in the cleanup code of gsicc_cache_new. If the 'full_wait' allocation fails, both result->lock and result are freed, but the destructor for result also frees result->lock, leading to a double free.

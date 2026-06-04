@@ -1,0 +1,1 @@
+A vulnerability exists in ArwDecoder where IOException's are caught, potentially suppressing important error conditions.

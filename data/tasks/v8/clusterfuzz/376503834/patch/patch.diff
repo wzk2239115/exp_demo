@@ -1,0 +1,51 @@
+diff --git a/src/maglev/maglev-graph-builder.cc b/src/maglev/maglev-graph-builder.cc
+index 8e5aa242ea2..e50af446f94 100644
+--- a/src/maglev/maglev-graph-builder.cc
++++ b/src/maglev/maglev-graph-builder.cc
+@@ -6712,10 +6712,12 @@ void MaglevGraphBuilder::VisitGetKeyedProperty() {
+   if (processed_feedback->kind() ==
+           compiler::ProcessedFeedback::kElementAccess &&
+       processed_feedback->AsElementAccess().transition_groups().empty()) {
+-    if (auto constant = TryGetConstant(GetAccumulator())) {
+-      if (constant->IsName() && !constant->AsName().object()->IsArrayIndex()) {
+-        processed_feedback = &processed_feedback->AsElementAccess().Refine(
+-            broker(), constant->AsName());
++    if (auto constant = TryGetConstant(GetAccumulator());
++        constant.has_value() && constant->IsName()) {
++      compiler::NameRef name = constant->AsName();
++      if (name.IsUniqueName() && !name.object()->IsArrayIndex()) {
++        processed_feedback =
++            &processed_feedback->AsElementAccess().Refine(broker(), name);
+       }
+     }
+   }
+diff --git a/test/mjsunit/maglev/regress-376503834.js b/test/mjsunit/maglev/regress-376503834.js
+new file mode 100644
+index 00000000000..79c4b2042db
+--- /dev/null
++++ b/test/mjsunit/maglev/regress-376503834.js
+@@ -0,0 +1,24 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --allow-natives-syntax --maglev
++
++function foo() {
++  const o2 = { };
++  function bar(a4) {
++    return o2[a4];
++  }
++  %PrepareFunctionForOptimization(bar);
++  bar("c" + "c");
++
++  %OptimizeMaglevOnNextCall(bar);
++  bar("c" + "c");
++  bar();
++}
++
++%PrepareFunctionForOptimization(foo);
++foo();
++
++%OptimizeMaglevOnNextCall(foo);
++foo();

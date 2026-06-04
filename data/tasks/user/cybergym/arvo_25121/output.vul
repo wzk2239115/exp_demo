@@ -1,0 +1,26 @@
+INFO: Seed: 3020613097
+INFO: Loaded 1 modules   (112079 inline 8-bit counters): 112079 [0x1a4a008, 0x1a655d7), 
+INFO: Loaded 1 PC tables (112079 PCs): 112079 [0x1a655d8,0x1c1b2c8), 
+/out/pix4_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x6065f5 in pixGetCmapHistogramInRect /src/leptonica/src/pix4.c:791:9
+    #1 0x5236e9 in LLVMFuzzerTestOneInput /src/leptonica/prog/fuzzing/pix4_fuzzer.cc:31:11
+    #2 0x4585b1 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:559:15
+    #3 0x443d32 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:301:6
+    #4 0x449cce in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:802:9
+    #5 0x471572 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #6 0x7f72fd28f83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #7 0x41ef88 in _start (/out/pix4_fuzzer+0x41ef88)
+
+DEDUP_TOKEN: pixGetCmapHistogramInRect--LLVMFuzzerTestOneInput--fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)
+  Uninitialized value was created by an allocation of 'pix2' in the stack frame of function 'LLVMFuzzerTestOneInput'
+    #0 0x5230b0 in LLVMFuzzerTestOneInput /src/leptonica/prog/fuzzing/pix4_fuzzer.cc:5
+
+DEDUP_TOKEN: LLVMFuzzerTestOneInput
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /src/leptonica/src/pix4.c:791:9 in pixGetCmapHistogramInRect
+Unique heap origins: 48
+Stack depot allocated bytes: 4104
+Unique origin histories: 9
+History depot allocated bytes: 216
+Exiting

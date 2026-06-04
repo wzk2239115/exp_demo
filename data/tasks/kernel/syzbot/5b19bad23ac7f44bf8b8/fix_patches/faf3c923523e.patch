@@ -1,0 +1,47 @@
+From faf3c923523e5c8fc3baaa413d62e913774ae52f Mon Sep 17 00:00:00 2001
+From: "Matthew Wilcox (Oracle)" <willy@infradead.org>
+Date: Fri, 28 Nov 2025 04:00:58 +0000
+Subject: mm: fix vma_start_write_killable() signal handling
+
+If we get a signal, we need to restore the vm_refcnt.  We don't think that
+the refcount can actually be decremented to zero here as it requires the
+VMA to be detached, and the vma_mark_detached() uses TASK_UNINTERRUPTIBLE.
+However, that's a bit subtle, so handle it as if the refcount was zero at
+the start of this function.
+
+Link: https://lkml.kernel.org/r/20251128040100.3022561-1-willy@infradead.org
+Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+
+Reported-by: syzbot+5b19bad23ac7f44bf8b8@syzkaller.appspotmail.com
+Fixes: 2197bb60f890 ("mm: add vma_start_write_killable()")
+Reviewed-by: Suren Baghdasaryan <surenb@google.com>
+Reviewed-by: Vlastimil Babka <vbabka@suse.cz>
+Reviewed-by: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+Reviewed-by: Liam R. Howlett <Liam.Howlett@oracle.com>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+ mm/mmap_lock.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/mm/mmap_lock.c b/mm/mmap_lock.c
+index e6e5570d1ec7b..7421b7ea80012 100644
+--- a/mm/mmap_lock.c
++++ b/mm/mmap_lock.c
+@@ -74,6 +74,14 @@ static inline int __vma_enter_locked(struct vm_area_struct *vma,
+ 		   refcount_read(&vma->vm_refcnt) == tgt_refcnt,
+ 		   state);
+ 	if (err) {
++		if (refcount_sub_and_test(VMA_LOCK_OFFSET, &vma->vm_refcnt)) {
++			/*
++			 * The wait failed, but the last reader went away
++			 * as well.  Tell the caller the VMA is detached.
++			 */
++			WARN_ON_ONCE(!detaching);
++			err = 0;
++		}
+ 		rwsem_release(&vma->vmlock_dep_map, _RET_IP_);
+ 		return err;
+ 	}
+-- 
+cgit 1.3-korg
+

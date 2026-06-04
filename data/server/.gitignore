@@ -1,0 +1,6 @@
+# Downloaded archives
+*.tar.gz
+
+# Built/extracted socat
+/socat
+/socat-*/

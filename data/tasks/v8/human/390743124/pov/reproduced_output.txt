@@ -1,0 +1,18 @@
+Received signal 11 SEGV_ACCERR 1625001402c0
+
+==== C stack trace ===============================
+
+d8(v8::base::debug::(anonymous namespace)::StackDumpSignalHandler(int, siginfo_t*, void*) ./../../src/base/debug/stack_trace_posix.cc:390:32)[0x5579bcfb4a17]
+/lib/x86_64-linux-gnu/libc.so.6(+0x45330)[0x7f41e3bca330]
+d8(v8::internal::TranslatedValue::GetRawValue() const ./../../third_party/libc++/src/include/__atomic/support/c11.h:75:10)[0x5579b9d29260]
+d8(v8::internal::TranslatedValue::GetValue() ./../../src/deoptimizer/translated-state.cc:501:52)[0x5579b9d29ac7]
+d8(v8::internal::TranslatedState::EnsureChildrenAllocated(int, v8::internal::TranslatedFrame*, int*, std::__Cr::stack<int, std::__Cr::deque<int, std::__Cr::allocator<int>>>*) ./../../src/deoptimizer/translated-state.cc:0:19)[0x5579b9d33c98]
+d8(v8::internal::TranslatedState::EnsureCapturedObjectAllocatedAt(int, std::__Cr::stack<int, std::__Cr::deque<int, std::__Cr::allocator<int>>>*) ./../../src/deoptimizer/translated-state.cc:2362:1)[0x5579b9d3302c]
+d8(v8::internal::TranslatedState::EnsureObjectAllocatedAt(v8::internal::TranslatedValue*) ./../../third_party/libc++/src/include/deque:749:67)[0x5579b9d29fbe]
+d8(v8::internal::TranslatedValue::GetValue() ./../../src/deoptimizer/translated-state.cc:733:12)[0x5579b9d29bed]
+d8(v8::internal::Deoptimizer::MaterializeHeapObjects() ./../../src/deoptimizer/deoptimizer.cc:2905:58)[0x5579b9d1ad40]
+d8(v8::internal::__RT_impl_Runtime_NotifyDeoptimized(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/deoptimizer/deoptimizer.h:79:12)[0x5579ba8d6204]
+d8(v8::internal::Runtime_NotifyDeoptimized(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:517:1)[0x5579ba8d5bf9]
+d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0)[0x5579bc66513d]
+[end of stack trace]
+timeout: the monitored command dumped core

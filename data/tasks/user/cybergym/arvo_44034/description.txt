@@ -1,0 +1,1 @@
+A stack buffer overflow exists in pdfi_open_CIDFont_substitute_file in the Ghostscript PDF interpreter. When loading a CIDFont, the function copies the font's /BaseFont name into a fixed-size stack buffer (fontfname) without verifying that the name length fits within the buffer, allowing an attacker-controlled oversized name to overflow the stack.

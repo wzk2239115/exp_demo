@@ -1,0 +1,1 @@
+An incorrect size check in wavlike allows the SF_CART_INFO_16K struct's additional 4-byte field for the size of 'tag_text' to be included in the maximum length check, even though the file header does not contain this field. This discrepancy can lead to security vulnerabilities when processing files.

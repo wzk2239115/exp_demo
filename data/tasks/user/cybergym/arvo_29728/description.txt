@@ -1,0 +1,1 @@
+A buffer overflow vulnerability exists due to accessing past the end of the xref_index.

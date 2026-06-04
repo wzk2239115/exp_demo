@@ -1,0 +1,20 @@
+
+
+#
+# Fatal error in ../../src/objects/js-duration-format.cc, line 299
+# Debug check failed: (isolate)->has_exception().
+#
+#
+#
+#FailureMessage Object: 0x7ffd84d3cb00
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:390:32) [0x5555a7f9a533]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x5555a7f9969d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x5555a7f7fdf4]
+    out/debug/d8(+0x45c67e5) [0x5555a7f7f7e5]
+    d8(v8::internal::JSDurationFormat::New(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::Map>, v8::internal::DirectHandle<v8::internal::Object>, v8::internal::DirectHandle<v8::internal::Object>) ./../../src/objects/js-duration-format.cc:0:3) [0x5555a5248850]
+    d8(v8::internal::Builtin_Impl_DurationFormatConstructor(v8::internal::BuiltinArguments, v8::internal::Isolate*) ./../../src/builtins/builtins-intl.cc:339:3) [0x5555a485c1f8]
+    d8(v8::internal::Builtin_DurationFormatConstructor(int, unsigned long*, v8::internal::Isolate*) ./../../src/builtins/builtins-intl.cc:411:1) [0x5555a485bd3d]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc:0:0) [0x5555a761b77d]
+timeout: the monitored command dumped core

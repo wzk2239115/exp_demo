@@ -1,0 +1,65 @@
+Bytecode mismatch found for function: anonymous
+Original bytecode:
+Parameter count 1
+Register count 5
+Frame size 40
+   22 S> 0x257000100d60 @    0 : 13 00             LdaConstant [0]
+         0x257000100d62 @    2 : ce                Star2
+         0x257000100d63 @    3 : 6e 01 00 f7 01 f6 CallRuntimeForPair [LoadLookupSlotForCall], r2-r2, r3-r4
+         0x257000100d69 @    9 : 63 f6 f5 01 00    CallAnyReceiver r3, r4-r4, [0]
+         0x257000100d6e @   14 : 0e                LdaUndefined
+         0x257000100d6f @   15 : b5                Return
+Constant pool (size = 1)
+0x257000100d2d: [TrustedFixedArray]
+ - map: 0x1fee00000605 <Map(TRUSTED_FIXED_ARRAY_TYPE)>
+ - length: 1
+           0: 0x1fee00067925 <String[3]: #foo>
+Handler Table (size = 0)
+Source Position Table (size = 8)
+0x257000100d71 <Other heap object (TRUSTED_BYTE_ARRAY_TYPE)>
+
+New bytecode:
+Parameter count 1
+Register count 1
+Frame size 8
+         0x257000100db4 @    0 : 23 00 00          LdaGlobal [0], [0]
+         0x257000100db7 @    3 : d0                Star0
+         0x257000100db8 @    4 : 69 f9 02          CallUndefinedReceiver0 r0, [2]
+         0x257000100dbb @    7 : 0e                LdaUndefined
+         0x257000100dbc @    8 : b5                Return
+Constant pool (size = 1)
+0x257000100d81: [TrustedFixedArray]
+ - map: 0x1fee00000605 <Map(TRUSTED_FIXED_ARRAY_TYPE)>
+ - length: 1
+           0: 0x1fee00067925 <String[3]: #foo>
+Handler Table (size = 0)
+Source Position Table (size = 0)
+
+
+#
+# Fatal error in ../../src/interpreter/interpreter.cc, line 242
+# Bytecode mismatch at offset 0
+
+#
+#
+#
+#FailureMessage Object: 0x7ffd58bf3f30
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:390:32) [0x562719c1f533]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x562719c1e69d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x562719c04df4]
+    d8(void v8::internal::interpreter::InterpreterCompilationJob::CheckAndPrintBytecodeMismatch<v8::internal::Isolate>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Script>, v8::internal::DirectHandle<v8::internal::BytecodeArray>) ./../../src/interpreter/interpreter.cc:0:0) [0x562716c87cc4]
+    d8(v8::internal::CompilationJob::Status v8::internal::interpreter::InterpreterCompilationJob::DoFinalizeJobImpl<v8::internal::Isolate>(v8::internal::DirectHandle<v8::internal::SharedFunctionInfo>, v8::internal::Isolate*) ./../../src/interpreter/interpreter.cc:0:3) [0x562716c85d85]
+    d8(v8::internal::interpreter::InterpreterCompilationJob::FinalizeJobImpl(v8::internal::DirectHandle<v8::internal::SharedFunctionInfo>, v8::internal::Isolate*) ./../../src/interpreter/interpreter.cc:253:10) [0x562716c85ba3]
+    d8(v8::internal::UnoptimizedCompilationJob::FinalizeJob(v8::internal::DirectHandle<v8::internal::SharedFunctionInfo>, v8::internal::Isolate*) ./../../src/codegen/compiler.cc:409:22) [0x56271658b3be]
+    d8(v8::internal::Compiler::CollectSourcePositions(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::SharedFunctionInfo>) ./../../src/codegen/compiler.cc:0:14) [0x562716597e41]
+    d8(v8::internal::SharedFunctionInfo::EnsureSourcePositionsAvailable(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::SharedFunctionInfo>) ./../../third_party/libc++/src/include/optional:299:9) [0x562717086b2f]
+    d8(v8::internal::(anonymous namespace)::ComputeLocation(v8::internal::Isolate*, v8::internal::MessageLocation*) ./../../src/execution/frames.h:447:57) [0x5627168046e1]
+    d8(v8::internal::(anonymous namespace)::RenderCallSite(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::Object>, v8::internal::MessageLocation*, v8::internal::CallPrinter::ErrorHint*) ./../../src/execution/messages.cc:888:7) [0x562716803ee8]
+    d8(v8::internal::ErrorUtils::NewCalledNonCallableError(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::Object>) ./../../src/execution/messages.cc:993:28) [0x562716805023]
+    d8(v8::internal::__RT_impl_Runtime_ThrowCalledNonCallable(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/handles/handles.h:202:22) [0x5627172ba4e6]
+    d8(v8::internal::Runtime_ThrowCalledNonCallable(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-internal.cc:534:1) [0x5627172ba120]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x5627192af87d]
+timeout: the monitored command dumped core
+

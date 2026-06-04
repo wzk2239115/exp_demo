@@ -1,0 +1,1 @@
+Fuzzers in tests/internal/fuzzers do not set flb_malloc_p to 0, which increases the likelihood of malloc failures and results in a large impact from denial of malloc.

@@ -1,0 +1,31 @@
+
+
+#
+# Fatal error in ../../src/compiler/js-graph.cc, line 56
+# Check failed: ref.IsSmi() || ref.IsHeapNumber() || ref.AsHeapObject().GetHeapObjectType(broker).hole_type() == HoleType::kNone.
+#
+#
+#
+#FailureMessage Object: 0x7fff99113a60
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:390:32) [0x561516212533]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x56151621169d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x5615161f7df4]
+    d8(v8::internal::compiler::JSGraph::ConstantNoHole(v8::internal::compiler::ObjectRef, v8::internal::compiler::JSHeapBroker*) ./../../src/objects/tagged-impl.h:138:5) [0x5615148f4852]
+    d8(v8::internal::compiler::JSContextSpecialization::ReduceJSLoadContextNoCell(v8::internal::compiler::Node*) ./../../src/compiler/js-context-specialization.cc:243:30) [0x5615148da4c9]
+    d8(v8::internal::compiler::GraphReducer::Reduce(v8::internal::compiler::Node*) ./../../src/compiler/graph-reducer.cc:34:25) [0x56151485c93a]
+    d8(v8::internal::compiler::GraphReducer::ReduceTop() ./../../src/compiler/graph-reducer.h:39:47) [0x56151485c556]
+    d8(v8::internal::compiler::GraphReducer::ReduceNode(v8::internal::compiler::Node*) ./../../third_party/libc++/src/include/deque:762:88) [0x56151485bfb8]
+    d8(v8::internal::compiler::InliningPhase::Run(v8::internal::compiler::TFPipelineData*, v8::internal::Zone*) ./../../src/compiler/js-inlining-heuristic.h:62:43) [0x561514a03c40]
+    d8(bool v8::internal::compiler::PipelineImpl::Run<v8::internal::compiler::InliningPhase>() ./../../src/compiler/pipeline.cc:3299:63) [0x5615149c18ff]
+    d8(v8::internal::compiler::PipelineImpl::CreateGraph(v8::internal::compiler::Linkage*) ./../../src/compiler/pipeline.cc:1975:3) [0x5615149bd748]
+    d8(v8::internal::compiler::PipelineCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/compiler/pipeline.cc:784:9) [0x5615149bd21a]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:471:22) [0x561512bf17e2]
+    d8(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1107:7) [0x561512c0197c]
+    d8(v8::internal::Compiler::CompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind) ./../../src/handles/maybe-handles-inl.h:40:17) [0x561512c0492c]
+    d8(v8::internal::(anonymous namespace)::CompileOptimized(v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::Isolate*) ./../../src/handles/handles.h:202:22) [0x5615138f6719]
+    d8(v8::internal::__RT_impl_Runtime_OptimizeTurbofanEager(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/common/ptr-compr-inl.h:74:18) [0x5615138efc82]
+    d8(v8::internal::Runtime_OptimizeTurbofanEager(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:224:1) [0x5615138ef870]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x5615158e383d]
+timeout: the monitored command dumped core

@@ -1,0 +1,21 @@
+INFO: Seed: 3925245582
+INFO: Loaded 1 modules   (477 inline 8-bit counters): 477 [0x9bdf98, 0x9be175), 
+INFO: Loaded 1 PC tables (477 PCs): 477 [0x761088,0x762e58), 
+/out/iccprofile_info: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+MemorySanitizer:DEADLYSIGNAL
+==7==ERROR: MemorySanitizer: SEGV on unknown address 0x00003f800000 (pc 0x0000004d4e72 bp 0x7ffe40b50790 sp 0x7ffe40b50770 T7)
+==7==The signal is caused by a READ memory access.
+    #0 0x4d4e71 in read_table_extents /src/skcms/fuzz/fuzz_iccprofile_info.c
+    #1 0x4d445f in LLVMFuzzerTestOneInput /src/skcms/fuzz/fuzz_iccprofile_info.c:47:35
+    #2 0x51cc23 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:517:13
+    #3 0x4d5fa3 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:280:6
+    #4 0x4e852f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:703:9
+    #5 0x4d50e1 in main /src/libfuzzer/FuzzerMain.cpp:20:10
+    #6 0x7f792958b83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #7 0x41ea38 in _start (/out/iccprofile_info+0x41ea38)
+
+DEDUP_TOKEN: read_table_extents--LLVMFuzzerTestOneInput--fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)
+MemorySanitizer can not provide additional info.
+SUMMARY: MemorySanitizer: SEGV /src/skcms/fuzz/fuzz_iccprofile_info.c in read_table_extents
+==7==ABORTING

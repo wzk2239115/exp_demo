@@ -1,0 +1,1 @@
+A vulnerability exists in the ORAN FH CUS Ext11 implementation where improper handling of the array index occurs if there are 0 bundles, potentially leading to out-of-bounds access.

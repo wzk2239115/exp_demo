@@ -1,0 +1,64 @@
+INFO: Seed: 3019452458
+INFO: Loaded 1 modules   (47628 inline 8-bit counters): 47628 [0x11d211c, 0x11ddb28), 
+INFO: Loaded 1 PC tables (47628 PCs): 47628 [0x11ddb28,0x1297be8), 
+/out/hb-subset-fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0xa03ac8 in bool OT::OffsetTo<OT::VariationStore, OT::IntType<unsigned int, 4u>, true>::serialize_subset<>(hb_subset_context_t*, OT::OffsetTo<OT::VariationStore, OT::IntType<unsigned int, 4u>, true> const&, void const*) /work/build/../../src/harfbuzz/src/hb-open-type.hh:329:9
+    #1 0xa01530 in OT::GDEF::subset(hb_subset_context_t*) const /work/build/../../src/harfbuzz/src/hb-ot-layout-gdef-table.hh:663:39
+    #2 0x94d3a2 in bool _subset<OT::GDEF const>(hb_subset_plan_t*) /work/build/../../src/harfbuzz/src/hb-subset.cc:93:26
+    #3 0x94317c in _subset_table(hb_subset_plan_t*, unsigned int) /work/build/../../src/harfbuzz/src/hb-subset.cc:215:31
+    #4 0x942740 in hb_subset /work/build/../../src/harfbuzz/src/hb-subset.cc:258:17
+    #5 0x524187 in trySubset(hb_face_t*, unsigned int const*, int, bool, bool, bool) /work/build/../../src/harfbuzz/test/fuzzing/hb-subset-fuzzer.cc:36:23
+    #6 0x523d4a in trySubset(hb_face_t*, unsigned int const*, int, unsigned char const*) /work/build/../../src/harfbuzz/test/fuzzing/hb-subset-fuzzer.cc:64:3
+    #7 0x523937 in LLVMFuzzerTestOneInput /work/build/../../src/harfbuzz/test/fuzzing/hb-subset-fuzzer.cc:88:3
+    #8 0x4589a1 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:559:15
+    #9 0x444142 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:301:6
+    #10 0x44a0dd in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:801:9
+    #11 0x4719c2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #12 0x7f5a7067d83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #13 0x41e8e8 in _start (/out/hb-subset-fuzzer+0x41e8e8)
+
+DEDUP_TOKEN: bool OT::OffsetTo<OT::VariationStore, OT::IntType<unsigned int, 4u>, true>::serialize_subset<>(hb_subset_context_t*, OT::OffsetTo<OT::VariationStore, OT::IntType<unsigned int, 4u>, true> const&, void const*)--OT::GDEF::subset(hb_subset_context_t*) const--bool _subset<OT::GDEF const>(hb_subset_plan_t*)
+  Uninitialized value was stored to memory at
+    #0 0xa38de9 in OT::VariationStore::subset(hb_subset_context_t*) const /work/build/../../src/harfbuzz/src/hb-ot-layout-common.hh:2540:5
+    #1 0xa37ec5 in decltype(fp.subset(this)) hb_subset_context_t::_dispatch<OT::VariationStore>(OT::VariationStore const&, hb_priority<1u>) /work/build/../../src/harfbuzz/src/hb-subset.hh:47:56
+    #2 0xa3795d in decltype(_dispatch(fp, (hb_priority<16u>)())) hb_subset_context_t::dispatch<OT::VariationStore>(OT::VariationStore const&) /work/build/../../src/harfbuzz/src/hb-subset.hh:54:39
+    #3 0xa03998 in bool OT::OffsetTo<OT::VariationStore, OT::IntType<unsigned int, 4u>, true>::serialize_subset<>(hb_subset_context_t*, OT::OffsetTo<OT::VariationStore, OT::IntType<unsigned int, 4u>, true> const&, void const*) /work/build/../../src/harfbuzz/src/hb-open-type.hh:327:19
+    #4 0xa01530 in OT::GDEF::subset(hb_subset_context_t*) const /work/build/../../src/harfbuzz/src/hb-ot-layout-gdef-table.hh:663:39
+    #5 0x94d3a2 in bool _subset<OT::GDEF const>(hb_subset_plan_t*) /work/build/../../src/harfbuzz/src/hb-subset.cc:93:26
+    #6 0x94317c in _subset_table(hb_subset_plan_t*, unsigned int) /work/build/../../src/harfbuzz/src/hb-subset.cc:215:31
+    #7 0x942740 in hb_subset /work/build/../../src/harfbuzz/src/hb-subset.cc:258:17
+    #8 0x524187 in trySubset(hb_face_t*, unsigned int const*, int, bool, bool, bool) /work/build/../../src/harfbuzz/test/fuzzing/hb-subset-fuzzer.cc:36:23
+    #9 0x523d4a in trySubset(hb_face_t*, unsigned int const*, int, unsigned char const*) /work/build/../../src/harfbuzz/test/fuzzing/hb-subset-fuzzer.cc:64:3
+    #10 0x523937 in LLVMFuzzerTestOneInput /work/build/../../src/harfbuzz/test/fuzzing/hb-subset-fuzzer.cc:88:3
+    #11 0x4589a1 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:559:15
+    #12 0x444142 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:301:6
+    #13 0x44a0dd in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:801:9
+    #14 0x4719c2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #15 0x7f5a7067d83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: OT::VariationStore::subset(hb_subset_context_t*) const--decltype(fp.subset(this)) hb_subset_context_t::_dispatch<OT::VariationStore>(OT::VariationStore const&, hb_priority<1u>)--decltype(_dispatch(fp, (hb_priority<16u>)())) hb_subset_context_t::dispatch<OT::VariationStore>(OT::VariationStore const&)
+  Uninitialized value was created by a heap allocation
+    #0 0x4d2390 in realloc /src/llvm-project/compiler-rt/lib/msan/msan_interceptors.cpp:878:3
+    #1 0x5bbd5f in hb_realloc_impl /work/build/../../src/harfbuzz/src/failing-alloc.c:51:31
+    #2 0x950e9c in hb_vector_t<char>::alloc(unsigned int) /work/build/../../src/harfbuzz/src/hb-vector.hh:202:28
+    #3 0x94d180 in bool _subset<OT::GDEF const>(hb_subset_plan_t*) /work/build/../../src/harfbuzz/src/hb-subset.cc:83:9
+    #4 0x94317c in _subset_table(hb_subset_plan_t*, unsigned int) /work/build/../../src/harfbuzz/src/hb-subset.cc:215:31
+    #5 0x942740 in hb_subset /work/build/../../src/harfbuzz/src/hb-subset.cc:258:17
+    #6 0x524187 in trySubset(hb_face_t*, unsigned int const*, int, bool, bool, bool) /work/build/../../src/harfbuzz/test/fuzzing/hb-subset-fuzzer.cc:36:23
+    #7 0x523d4a in trySubset(hb_face_t*, unsigned int const*, int, unsigned char const*) /work/build/../../src/harfbuzz/test/fuzzing/hb-subset-fuzzer.cc:64:3
+    #8 0x523937 in LLVMFuzzerTestOneInput /work/build/../../src/harfbuzz/test/fuzzing/hb-subset-fuzzer.cc:88:3
+    #9 0x4589a1 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:559:15
+    #10 0x444142 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:301:6
+    #11 0x44a0dd in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:801:9
+    #12 0x4719c2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #13 0x7f5a7067d83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: realloc--hb_realloc_impl--hb_vector_t<char>::alloc(unsigned int)
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /work/build/../../src/harfbuzz/src/hb-open-type.hh:329:9 in bool OT::OffsetTo<OT::VariationStore, OT::IntType<unsigned int, 4u>, true>::serialize_subset<>(hb_subset_context_t*, OT::OffsetTo<OT::VariationStore, OT::IntType<unsigned int, 4u>, true> const&, void const*)
+Unique heap origins: 122
+Stack depot allocated bytes: 17952
+Unique origin histories: 13
+History depot allocated bytes: 312
+Exiting

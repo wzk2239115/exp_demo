@@ -1,0 +1,117 @@
+Accepting input from '/tmp/poc'
+Usage for fuzzing: honggfuzz -P [flags] -- /out/date_format_fuzzer
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x62900000497c at pc 0x000000561e16 bp 0x7ffddc7b9f90 sp 0x7ffddc7b9f88
+READ of size 4 at 0x62900000497c thread T0
+SCARINESS: 27 (4-byte-read-heap-buffer-overflow-far-from-bounds)
+    #0 0x561e15 in getDayPeriodForHour /src/icu/icu4c/source/i18n/dayperiodrules.h:53:64
+    #1 0x561e15 in icu_74::SimpleDateFormat::subFormat(icu_74::UnicodeString&, char16_t, int, UDisplayContext, int, char16_t, icu_74::FieldPositionHandler&, icu_74::Calendar&, UErrorCode&) const /src/icu/icu4c/source/i18n/smpdtfmt.cpp:1981:35
+    #2 0x55e248 in icu_74::SimpleDateFormat::_format(icu_74::Calendar&, icu_74::UnicodeString&, icu_74::FieldPositionHandler&, UErrorCode&) const /src/icu/icu4c/source/i18n/smpdtfmt.cpp:1111:9
+    #3 0x55d684 in icu_74::SimpleDateFormat::format(icu_74::Calendar&, icu_74::UnicodeString&, icu_74::FieldPosition&) const /src/icu/icu4c/source/i18n/smpdtfmt.cpp:1030:10
+    #4 0x4ea03e in format /src/icu/icu4c/source/i18n/datefmt.cpp:286:17
+    #5 0x4ea03e in icu_74::DateFormat::format(double, icu_74::UnicodeString&) const /src/icu/icu4c/source/i18n/datefmt.cpp:320:12
+    #6 0x4ddab3 in LLVMFuzzerTestOneInput /src/icu/icu4c/source/test/fuzzer/date_format_fuzzer.cpp:42:13
+    #7 0x4de94b in main (/out/date_format_fuzzer+0x4de94b)
+    #8 0x7fc83353a082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #9 0x41eb6d in _start (/out/date_format_fuzzer+0x41eb6d)
+
+DEDUP_TOKEN: getDayPeriodForHour--icu_74::SimpleDateFormat::subFormat(icu_74::UnicodeString&, char16_t, int, UDisplayContext, int, char16_t, icu_74::FieldPositionHandler&, icu_74::Calendar&, UErrorCode&) const--icu_74::SimpleDateFormat::_format(icu_74::Calendar&, icu_74::UnicodeString&, icu_74::FieldPositionHandler&, UErrorCode&) const
+0x62900000497c is located 1916 bytes to the right of 16384-byte region [0x629000000200,0x629000004200)
+freed by thread T0 here:
+    #0 0x49fd02 in __interceptor_free /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:52:3
+    #1 0x9b4b5c in uprv_free_74 /src/icu/icu4c/source/common/cmemory.cpp:99:13
+    #2 0xa085d4 in releaseArray /src/icu/icu4c/source/common/cmemory.h:460:13
+    #3 0xa085d4 in resize /src/icu/icu4c/source/common/cmemory.h:521:13
+    #4 0xa085d4 in icu_74::UnicodeString* icu_74::MemoryPool<icu_74::UnicodeString, 8>::create<icu_74::UnicodeString&>(icu_74::UnicodeString&) /src/icu/icu4c/source/common/cmemory.h:799:19
+    #5 0xa074da in addByValue /src/icu/icu4c/source/common/uniquecharstr.h:92:39
+    #6 0xa074da in icu_74::XLikelySubtagsData::readLSREncodedStrings(icu_74::ResourceTable const&, char const*, icu_74::ResourceValue&, icu_74::ResourceArray const&, icu_74::LocalMemory<int>&, int&, UErrorCode&) /src/icu/icu4c/source/common/loclikelysubtags.cpp:328:43
+    #7 0x9fce2a in icu_74::XLikelySubtagsData::load(UErrorCode&) /src/icu/icu4c/source/common/loclikelysubtags.cpp:97:18
+    #8 0x9faeb5 in icu_74::XLikelySubtags::initLikelySubtags(UErrorCode&) /src/icu/icu4c/source/common/loclikelysubtags.cpp:395:10
+    #9 0x9ffd11 in umtx_initOnce /src/icu/icu4c/source/common/umutex.h:141:9
+    #10 0x9ffd11 in icu_74::XLikelySubtags::getSingleton(UErrorCode&) /src/icu/icu4c/source/common/loclikelysubtags.cpp:411:5
+    #11 0x9f6a8c in _uloc_addLikelySubtags /src/icu/icu4c/source/common/loclikely.cpp:482:52
+    #12 0x9f6a8c in _ulocimp_addLikelySubtags /src/icu/icu4c/source/common/loclikely.cpp:693:16
+    #13 0x9f6a8c in ulocimp_addLikelySubtags_74 /src/icu/icu4c/source/common/loclikely.cpp:703:5
+    #14 0x9f9598 in ulocimp_getRegionForSupplementalData_74 /src/icu/icu4c/source/common/loclikely.cpp:849:17
+    #15 0x5feee5 in icu_74::getCalendarTypeForLocale(char const*) /src/icu/icu4c/source/i18n/calendar.cpp:285:11
+    #16 0x5f9a96 in icu_74::Calendar::makeInstance(icu_74::Locale const&, UErrorCode&) /src/icu/icu4c/source/i18n/calendar.cpp:895:36
+    #17 0x5f96af in icu_74::LocaleCacheKey<icu_74::SharedCalendar>::createObject(void const*, UErrorCode&) const /src/icu/icu4c/source/i18n/calendar.cpp:217:26
+    #18 0xb3629c in icu_74::UnifiedCache::_get(icu_74::CacheKeyBase const&, icu_74::SharedObject const*&, void const*, UErrorCode&) const /src/icu/icu4c/source/common/unifiedcache.cpp:394:17
+    #19 0x627a44 in void icu_74::UnifiedCache::get<icu_74::SharedCalendar>(icu_74::CacheKey<icu_74::SharedCalendar> const&, void const*, icu_74::SharedCalendar const*&, UErrorCode&) const /src/icu/icu4c/source/common/unifiedcache.h:234:8
+    #20 0x5ff89b in get<icu_74::SharedCalendar> /src/icu/icu4c/source/common/unifiedcache.h:206:8
+    #21 0x5ff89b in void icu_74::UnifiedCache::getByLocale<icu_74::SharedCalendar>(icu_74::Locale const&, icu_74::SharedCalendar const*&, UErrorCode&) /src/icu/icu4c/source/common/unifiedcache.h:274:15
+    #22 0x5fd7f8 in icu_74::Calendar::createInstance(icu_74::TimeZone*, icu_74::Locale const&, UErrorCode&) /src/icu/icu4c/source/i18n/calendar.cpp:983:5
+    #23 0x550777 in initializeCalendar /src/icu/icu4c/source/i18n/smpdtfmt.cpp:931:21
+    #24 0x550777 in icu_74::SimpleDateFormat::construct(icu_74::DateFormat::EStyle, icu_74::DateFormat::EStyle, icu_74::Locale const&, UErrorCode&) /src/icu/icu4c/source/i18n/smpdtfmt.cpp:668:5
+    #25 0x55a21f in icu_74::SimpleDateFormat::SimpleDateFormat(icu_74::DateFormat::EStyle, icu_74::DateFormat::EStyle, icu_74::Locale const&, UErrorCode&) /src/icu/icu4c/source/i18n/smpdtfmt.cpp:481:5
+    #26 0x4eb441 in icu_74::DateFormat::create(icu_74::DateFormat::EStyle, icu_74::DateFormat::EStyle, icu_74::Locale const&) /src/icu/icu4c/source/i18n/datefmt.cpp:528:31
+    #27 0x4eb19b in icu_74::DateFormat::createDateTimeInstance(icu_74::DateFormat::EStyle, icu_74::DateFormat::EStyle, icu_74::Locale const&) /src/icu/icu4c/source/i18n/datefmt.cpp:413:11
+    #28 0x4dd8eb in LLVMFuzzerTestOneInput /src/icu/icu4c/source/test/fuzzer/date_format_fuzzer.cpp:33:9
+    #29 0x4de94b in main (/out/date_format_fuzzer+0x4de94b)
+
+DEDUP_TOKEN: __interceptor_free--uprv_free_74--releaseArray
+previously allocated by thread T0 here:
+    #0 0x49ffa6 in malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:69:3
+    #1 0x9b49a8 in uprv_malloc_74 /src/icu/icu4c/source/common/cmemory.cpp:58:20
+    #2 0xa084b0 in resize /src/icu/icu4c/source/common/cmemory.h:510:19
+    #3 0xa084b0 in icu_74::UnicodeString* icu_74::MemoryPool<icu_74::UnicodeString, 8>::create<icu_74::UnicodeString&>(icu_74::UnicodeString&) /src/icu/icu4c/source/common/cmemory.h:799:19
+    #4 0xa074da in addByValue /src/icu/icu4c/source/common/uniquecharstr.h:92:39
+    #5 0xa074da in icu_74::XLikelySubtagsData::readLSREncodedStrings(icu_74::ResourceTable const&, char const*, icu_74::ResourceValue&, icu_74::ResourceArray const&, icu_74::LocalMemory<int>&, int&, UErrorCode&) /src/icu/icu4c/source/common/loclikelysubtags.cpp:328:43
+    #6 0x9fce2a in icu_74::XLikelySubtagsData::load(UErrorCode&) /src/icu/icu4c/source/common/loclikelysubtags.cpp:97:18
+    #7 0x9faeb5 in icu_74::XLikelySubtags::initLikelySubtags(UErrorCode&) /src/icu/icu4c/source/common/loclikelysubtags.cpp:395:10
+    #8 0x9ffd11 in umtx_initOnce /src/icu/icu4c/source/common/umutex.h:141:9
+    #9 0x9ffd11 in icu_74::XLikelySubtags::getSingleton(UErrorCode&) /src/icu/icu4c/source/common/loclikelysubtags.cpp:411:5
+    #10 0x9f6a8c in _uloc_addLikelySubtags /src/icu/icu4c/source/common/loclikely.cpp:482:52
+    #11 0x9f6a8c in _ulocimp_addLikelySubtags /src/icu/icu4c/source/common/loclikely.cpp:693:16
+    #12 0x9f6a8c in ulocimp_addLikelySubtags_74 /src/icu/icu4c/source/common/loclikely.cpp:703:5
+    #13 0x9f9598 in ulocimp_getRegionForSupplementalData_74 /src/icu/icu4c/source/common/loclikely.cpp:849:17
+    #14 0x5feee5 in icu_74::getCalendarTypeForLocale(char const*) /src/icu/icu4c/source/i18n/calendar.cpp:285:11
+    #15 0x5f9a96 in icu_74::Calendar::makeInstance(icu_74::Locale const&, UErrorCode&) /src/icu/icu4c/source/i18n/calendar.cpp:895:36
+    #16 0x5f96af in icu_74::LocaleCacheKey<icu_74::SharedCalendar>::createObject(void const*, UErrorCode&) const /src/icu/icu4c/source/i18n/calendar.cpp:217:26
+    #17 0xb3629c in icu_74::UnifiedCache::_get(icu_74::CacheKeyBase const&, icu_74::SharedObject const*&, void const*, UErrorCode&) const /src/icu/icu4c/source/common/unifiedcache.cpp:394:17
+    #18 0x627a44 in void icu_74::UnifiedCache::get<icu_74::SharedCalendar>(icu_74::CacheKey<icu_74::SharedCalendar> const&, void const*, icu_74::SharedCalendar const*&, UErrorCode&) const /src/icu/icu4c/source/common/unifiedcache.h:234:8
+    #19 0x5ff89b in get<icu_74::SharedCalendar> /src/icu/icu4c/source/common/unifiedcache.h:206:8
+    #20 0x5ff89b in void icu_74::UnifiedCache::getByLocale<icu_74::SharedCalendar>(icu_74::Locale const&, icu_74::SharedCalendar const*&, UErrorCode&) /src/icu/icu4c/source/common/unifiedcache.h:274:15
+    #21 0x5fd7f8 in icu_74::Calendar::createInstance(icu_74::TimeZone*, icu_74::Locale const&, UErrorCode&) /src/icu/icu4c/source/i18n/calendar.cpp:983:5
+    #22 0x550777 in initializeCalendar /src/icu/icu4c/source/i18n/smpdtfmt.cpp:931:21
+    #23 0x550777 in icu_74::SimpleDateFormat::construct(icu_74::DateFormat::EStyle, icu_74::DateFormat::EStyle, icu_74::Locale const&, UErrorCode&) /src/icu/icu4c/source/i18n/smpdtfmt.cpp:668:5
+    #24 0x55a21f in icu_74::SimpleDateFormat::SimpleDateFormat(icu_74::DateFormat::EStyle, icu_74::DateFormat::EStyle, icu_74::Locale const&, UErrorCode&) /src/icu/icu4c/source/i18n/smpdtfmt.cpp:481:5
+    #25 0x4eb441 in icu_74::DateFormat::create(icu_74::DateFormat::EStyle, icu_74::DateFormat::EStyle, icu_74::Locale const&) /src/icu/icu4c/source/i18n/datefmt.cpp:528:31
+    #26 0x4eb19b in icu_74::DateFormat::createDateTimeInstance(icu_74::DateFormat::EStyle, icu_74::DateFormat::EStyle, icu_74::Locale const&) /src/icu/icu4c/source/i18n/datefmt.cpp:413:11
+    #27 0x4dd8eb in LLVMFuzzerTestOneInput /src/icu/icu4c/source/test/fuzzer/date_format_fuzzer.cpp:33:9
+    #28 0x4de94b in main (/out/date_format_fuzzer+0x4de94b)
+
+DEDUP_TOKEN: malloc--uprv_malloc_74--resize
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/icu/icu4c/source/i18n/dayperiodrules.h:53:64 in getDayPeriodForHour
+Shadow bytes around the buggy address:
+  0x0c527fff88d0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c527fff88e0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c527fff88f0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c527fff8900: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c527fff8910: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+=>0x0c527fff8920: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa[fa]
+  0x0c527fff8930: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c527fff8940: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c527fff8950: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c527fff8960: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c527fff8970: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

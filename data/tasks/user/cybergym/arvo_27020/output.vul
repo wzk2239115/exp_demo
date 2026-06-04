@@ -1,0 +1,45 @@
+INFO: Seed: 3066771020
+INFO: Loaded 1 modules   (27492 inline 8-bit counters): 27492 [0xbcba6f, 0xbd25d3), 
+INFO: Loaded 1 PC tables (27492 PCs): 27492 [0x8e6728,0x951d68), 
+/out/fuzzer-wolfssl-client-randomize: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+Uninitialized bytes in __interceptor_fwrite at offset 40 inside [0x707000000070, 56)
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x522ee9 in memory_test /src/wolf-ssl-ssh-fuzzers/oss-fuzz/projects/wolf-ssl-ssh/fuzzers/include/fuzzers/shared.h:230:5
+    #1 0x522fb2 in fuzzer_send /src/wolf-ssl-ssh-fuzzers/oss-fuzz/projects/wolf-ssl-ssh/fuzzers/include/fuzzers/shared.h:248:13
+    #2 0x80b26a in SendBuffered /src/wolf-ssl-ssh-fuzzers/oss-fuzz/projects/wolf-ssl-ssh/fuzzers/wolfssl/wolfssl/src/internal.c:8062:20
+    #3 0x7f7e79 in SendAlert /src/wolf-ssl-ssh-fuzzers/oss-fuzz/projects/wolf-ssl-ssh/fuzzers/wolfssl/wolfssl/src/internal.c:18077:11
+    #4 0x827b75 in GetRecordHeader /src/wolf-ssl-ssh-fuzzers/oss-fuzz/projects/wolf-ssl-ssh/fuzzers/wolfssl/wolfssl/src/internal.c:8386:17
+    #5 0x820ff8 in ProcessReply /src/wolf-ssl-ssh-fuzzers/oss-fuzz/projects/wolf-ssl-ssh/fuzzers/wolfssl/wolfssl/src/internal.c:15054:19
+    #6 0x672be0 in wolfSSL_connect_TLSv13 /src/wolf-ssl-ssh-fuzzers/oss-fuzz/projects/wolf-ssl-ssh/fuzzers/wolfssl/wolfssl/src/tls13.c:7501:35
+    #7 0x55db8c in wolfSSL_connect /src/wolf-ssl-ssh-fuzzers/oss-fuzz/projects/wolf-ssl-ssh/fuzzers/wolfssl/wolfssl/src/ssl.c
+    #8 0x524d96 in LLVMFuzzerTestOneInput /src/wolf-ssl-ssh-fuzzers/oss-fuzz/projects/wolf-ssl-ssh/fuzzers/wolfssl/wolfssl/wolfssl-fuzzers/client.c:69:10
+    #9 0x458471 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:595:15
+    #10 0x443542 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #11 0x4495fe in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:852:9
+    #12 0x4715e2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #13 0x7f3f9e6df83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #14 0x41e818 in _start (/out/fuzzer-wolfssl-client-randomize+0x41e818)
+
+DEDUP_TOKEN: memory_test--fuzzer_send--SendBuffered
+  Uninitialized value was created by a heap allocation
+    #0 0x4d174d in malloc /src/llvm-project/compiler-rt/lib/msan/msan_interceptors.cpp:901:3
+    #1 0x523d91 in wolfCrypt_custom_malloc /src/wolf-ssl-ssh-fuzzers/oss-fuzz/projects/wolf-ssl-ssh/fuzzers/include/fuzzers/shared.h:180:39
+    #2 0x52b859 in wolfSSL_Malloc /src/wolf-ssl-ssh-fuzzers/oss-fuzz/projects/wolf-ssl-ssh/fuzzers/wolfssl/wolfssl/wolfcrypt/src/memory.c:135:15
+    #3 0x80c83b in GrowOutputBuffer /src/wolf-ssl-ssh-fuzzers/oss-fuzz/projects/wolf-ssl-ssh/fuzzers/wolfssl/wolfssl/src/internal.c:8149:18
+    #4 0x8079e9 in CheckAvailableSize /src/wolf-ssl-ssh-fuzzers/oss-fuzz/projects/wolf-ssl-ssh/fuzzers/wolfssl/wolfssl/src/internal.c:8296:13
+    #5 0x7f777a in SendAlert /src/wolf-ssl-ssh-fuzzers/oss-fuzz/projects/wolf-ssl-ssh/fuzzers/wolfssl/wolfssl/src/internal.c:18020:16
+    #6 0x827b75 in GetRecordHeader /src/wolf-ssl-ssh-fuzzers/oss-fuzz/projects/wolf-ssl-ssh/fuzzers/wolfssl/wolfssl/src/internal.c:8386:17
+    #7 0x820ff8 in ProcessReply /src/wolf-ssl-ssh-fuzzers/oss-fuzz/projects/wolf-ssl-ssh/fuzzers/wolfssl/wolfssl/src/internal.c:15054:19
+    #8 0x672be0 in wolfSSL_connect_TLSv13 /src/wolf-ssl-ssh-fuzzers/oss-fuzz/projects/wolf-ssl-ssh/fuzzers/wolfssl/wolfssl/src/tls13.c:7501:35
+    #9 0x55db8c in wolfSSL_connect /src/wolf-ssl-ssh-fuzzers/oss-fuzz/projects/wolf-ssl-ssh/fuzzers/wolfssl/wolfssl/src/ssl.c
+    #10 0x524d96 in LLVMFuzzerTestOneInput /src/wolf-ssl-ssh-fuzzers/oss-fuzz/projects/wolf-ssl-ssh/fuzzers/wolfssl/wolfssl/wolfssl-fuzzers/client.c:69:10
+    #11 0x458471 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:595:15
+    #12 0x443542 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #13 0x4495fe in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:852:9
+    #14 0x4715e2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #15 0x7f3f9e6df83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: malloc--wolfCrypt_custom_malloc--wolfSSL_Malloc
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /src/wolf-ssl-ssh-fuzzers/oss-fuzz/projects/wolf-ssl-ssh/fuzzers/include/fuzzers/shared.h:230:5 in memory_test
+Exiting

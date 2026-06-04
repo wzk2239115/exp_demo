@@ -1,0 +1,1 @@
+A vulnerability exists where the variable sess is not set to NULL after being freed, which can lead to use-after-free issues.

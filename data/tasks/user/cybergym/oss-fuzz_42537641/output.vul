@@ -1,0 +1,23 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 4044586994
+INFO: Loaded 1 modules   (60415 inline 8-bit counters): 60415 [0x560b70bf6f88, 0x560b70c05b87), 
+INFO: Loaded 1 PC tables (60415 PCs): 60415 [0x560b70c05b88,0x560b70cf1b78), 
+/out/ffmpeg_BSF_VP9_METADATA_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x560b705a7d01 in cbs_vp9_split_fragment /src/ffmpeg/libavcodec/cbs_vp9.c:400:17
+    #1 0x560b703cebf6 in cbs_read_data /src/ffmpeg/libavcodec/cbs.c:279:11
+    #2 0x560b703742bf in ff_cbs_bsf_generic_filter /src/ffmpeg/libavcodec/cbs_bsf.c:75:11
+    #3 0x560b7036eb57 in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_bsf_fuzzer.c:155:16
+    #4 0x560b702635e0 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #5 0x560b7024e855 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #6 0x560b702542ef in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #7 0x560b7027f592 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #8 0x7fac5942f082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+    #9 0x560b70246a3d in _start (/out/ffmpeg_BSF_VP9_METADATA_fuzzer+0x1dfa3d)
+
+  Uninitialized value was created by an allocation of 'sfi' in the stack frame
+    #0 0x560b705a688b in cbs_vp9_split_fragment /src/ffmpeg/libavcodec/cbs_vp9.c:378:9
+
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /src/ffmpeg/libavcodec/cbs_vp9.c:400:17 in cbs_vp9_split_fragment
+Exiting

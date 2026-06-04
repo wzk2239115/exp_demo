@@ -1,0 +1,1 @@
+A vulnerability exists in the ECDSA signature parsing logic from ASN.1, where the parsing is not handled in a separate function, potentially leading to security issues.

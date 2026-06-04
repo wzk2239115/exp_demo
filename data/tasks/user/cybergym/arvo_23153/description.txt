@@ -1,0 +1,1 @@
+stb_image does not reject fractional JPEG component subsampling ratios. The component resamplers are not written to support this, and such ratios can appear in crafted JPEG files, leading to potential issues.

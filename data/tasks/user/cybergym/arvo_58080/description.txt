@@ -1,0 +1,1 @@
+The parse_ini_string() function uses uninitialized memory, which can lead to unpredictable behavior and potential security vulnerabilities.

@@ -1,0 +1,88 @@
+diff --git a/src/flags/flag-definitions.h b/src/flags/flag-definitions.h
+index 8615a674756..4437fa16c59 100644
+--- a/src/flags/flag-definitions.h
++++ b/src/flags/flag-definitions.h
+@@ -995,6 +995,8 @@ DEFINE_BOOL(trace_generalization, false, "trace map generalization")
+ DEFINE_BOOL(reuse_scope_infos, false,
+             "reuse scope infos from previous compiles")
+ 
++DEFINE_IMPLICATION(fuzzing, reuse_scope_infos)
++
+ // Flags for Sparkplug
+ #undef FLAG
+ #if V8_ENABLE_SPARKPLUG
+diff --git a/src/parsing/parser-base.h b/src/parsing/parser-base.h
+index 0f91580fb71..bd9265765ca 100644
+--- a/src/parsing/parser-base.h
++++ b/src/parsing/parser-base.h
+@@ -6097,7 +6097,7 @@ typename ParserBase<Impl>::StatementT ParserBase<Impl>::ParseWithStatement(
+   StatementT body = impl()->NullStatement();
+   {
+     BlockState block_state(&scope_, with_scope);
+-    with_scope->set_start_position(end_position());
++    with_scope->set_start_position(position());
+     body = ParseStatement(labels, nullptr);
+     with_scope->set_end_position(end_position());
+   }
+diff --git a/test/cctest/test-debug.cc b/test/cctest/test-debug.cc
+index fd266706cd6..ab736c9b4d9 100644
+--- a/test/cctest/test-debug.cc
++++ b/test/cctest/test-debug.cc
+@@ -3150,7 +3150,7 @@ class DebugScopingListener : public v8::debug::DebugDelegate {
+ 
+     auto scopes = stack_traces->GetScopeIterator();
+     CHECK_EQ(v8::debug::ScopeIterator::ScopeTypeWith, scopes->GetType());
+-    CHECK_EQ(20, scopes->GetStartLocation().GetColumnNumber());
++    CHECK_EQ(19, scopes->GetStartLocation().GetColumnNumber());
+     CHECK_EQ(31, scopes->GetEndLocation().GetColumnNumber());
+ 
+     scopes->Advance();
+diff --git a/test/mjsunit/regress-352402518.js b/test/mjsunit/regress-352402518.js
+new file mode 100644
+index 00000000000..a712fbc4cfc
+--- /dev/null
++++ b/test/mjsunit/regress-352402518.js
+@@ -0,0 +1,7 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --reuse-scope-infos
++
++with({}){function h(){}}
+diff --git a/test/unittests/parser/parsing-unittest.cc b/test/unittests/parser/parsing-unittest.cc
+index 4b48fcbc573..d7026f67cd6 100644
+--- a/test/unittests/parser/parsing-unittest.cc
++++ b/test/unittests/parser/parsing-unittest.cc
+@@ -1507,24 +1507,24 @@ TEST_F(ParsingTest, ScopePositions) {
+   };
+ 
+   const SourceData source_data[] = {
+-      {"  with ({})", "{ block; }", " more;", i::WITH_SCOPE,
++      {"  with ({}", "){ block; }", " more;", i::WITH_SCOPE,
+        i::LanguageMode::kSloppy},
+-      {"  with ({})", "{ block; }", "; more;", i::WITH_SCOPE,
++      {"  with ({}", "){ block; }", "; more;", i::WITH_SCOPE,
+        i::LanguageMode::kSloppy},
+-      {"  with ({})",
+-       "{\n"
++      {"  with ({}",
++       "){\n"
+        "    block;\n"
+        "  }",
+        "\n"
+        "  more;",
+        i::WITH_SCOPE, i::LanguageMode::kSloppy},
+-      {"  with ({})", "statement;", " more;", i::WITH_SCOPE,
++      {"  with ({}", ")statement;", " more;", i::WITH_SCOPE,
+        i::LanguageMode::kSloppy},
+-      {"  with ({})", "statement",
++      {"  with ({}", ")statement",
+        "\n"
+        "  more;",
+        i::WITH_SCOPE, i::LanguageMode::kSloppy},
+-      {"  with ({})", "statement;",
++      {"  with ({}", ")statement;",
+        "\n"
+        "  more;",
+        i::WITH_SCOPE, i::LanguageMode::kSloppy},

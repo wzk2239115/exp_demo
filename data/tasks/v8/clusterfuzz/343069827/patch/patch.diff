@@ -1,0 +1,43 @@
+diff --git a/src/maglev/maglev-graph-builder.cc b/src/maglev/maglev-graph-builder.cc
+index b00b50a9d9f..48a33b1b34a 100644
+--- a/src/maglev/maglev-graph-builder.cc
++++ b/src/maglev/maglev-graph-builder.cc
+@@ -6885,6 +6885,12 @@ ReduceResult MaglevGraphBuilder::TryReduceArrayIteratorPrototypeNext(
+     if (iterated_object->Cast<InlinedAllocation>()->IsEscaping()) {
+       FAIL("allocation is escaping, map could have been changed");
+     }
++    // TODO(victorgomes): This effectively disable the optimization for `for-of`
++    // loops. We need to figure it out a way to re-enable this.
++    if (bytecode_analysis().GetLoopOffsetFor(iterator_.current_offset()) !=
++        -1) {
++      FAIL("we're inside a loop, iterated object map could change");
++    }
+     if (!maybe_array) {
+       FAIL("not a valid iterated object");
+     }
+diff --git a/test/mjsunit/maglev/maglev-343069827.js b/test/mjsunit/maglev/maglev-343069827.js
+new file mode 100644
+index 00000000000..1469f2e1fd1
+--- /dev/null
++++ b/test/mjsunit/maglev/maglev-343069827.js
+@@ -0,0 +1,20 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --allow-natives-syntax --no-lazy-feedback-allocation
++
++function foo() {
++  for (let v1 = 0; v1 < 5; v1++) {
++      const v3 = [1];
++      for (const v4 of v3) {
++          v3[2033] = 1;
++      }
++  }
++}
++
++%PrepareFunctionForOptimization(foo);
++foo();
++foo();
++%OptimizeMaglevOnNextCall(foo);
++foo();

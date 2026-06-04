@@ -1,0 +1,62 @@
+Accepting input from '/tmp/poc'
+Usage for fuzzing: honggfuzz -P [flags] -- /out/fuzz_pkcs15init
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x502000008b73 at pc 0x55891ef5ae02 bp 0x7ffd551cb7b0 sp 0x7ffd551caf70
+READ of size 128 at 0x502000008b73 thread T0
+    #0 0x55891ef5ae01 in __asan_memcpy /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:63:3
+    #1 0x55891f4da1b4 in openpgp_generate_key_rsa /src/opensc/src/pkcs15init/pkcs15-openpgp.c:259:2
+    #2 0x55891f4d6d10 in openpgp_generate_key /src/opensc/src/pkcs15init/pkcs15-openpgp.c:378:7
+    #3 0x55891efb349d in sc_pkcs15init_generate_key /src/opensc/src/tests/fuzzing/../../../src/pkcs15init/pkcs15-lib.c:1617:6
+    #4 0x55891efe224d in do_generate_key /src/opensc/src/tests/fuzzing/fuzz_pkcs15init.c:207:9
+    #5 0x55891efe339d in LLVMFuzzerTestOneInput /src/opensc/src/tests/fuzzing/fuzz_pkcs15init.c:337:5
+    #6 0x55891eff763f in main (/out/fuzz_pkcs15init+0x22863f)
+    #7 0x7f4fccf38082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+    #8 0x55891eec3efd in _start (/out/fuzz_pkcs15init+0xf4efd)
+
+0x502000008b73 is located 0 bytes after 3-byte region [0x502000008b70,0x502000008b73)
+allocated by thread T0 here:
+    #0 0x55891ef5cf0f in malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:68:3
+    #1 0x55891f14e851 in pgp_parse_and_set_pubkey_output /src/opensc/src/libopensc/card-openpgp.c:2942:30
+    #2 0x55891f147873 in pgp_gen_key /src/opensc/src/libopensc/card-openpgp.c:3099:2
+    #3 0x55891f135ba0 in pgp_card_ctl /src/opensc/src/libopensc/card-openpgp.c:3602:7
+    #4 0x55891f047cc7 in sc_card_ctl /src/opensc/src/libopensc/card.c:1122:7
+    #5 0x55891f4d9e1c in openpgp_generate_key_rsa /src/opensc/src/pkcs15init/pkcs15-openpgp.c:250:6
+    #6 0x55891f4d6d10 in openpgp_generate_key /src/opensc/src/pkcs15init/pkcs15-openpgp.c:378:7
+    #7 0x55891efb349d in sc_pkcs15init_generate_key /src/opensc/src/tests/fuzzing/../../../src/pkcs15init/pkcs15-lib.c:1617:6
+    #8 0x55891efe224d in do_generate_key /src/opensc/src/tests/fuzzing/fuzz_pkcs15init.c:207:9
+    #9 0x55891efe339d in LLVMFuzzerTestOneInput /src/opensc/src/tests/fuzzing/fuzz_pkcs15init.c:337:5
+    #10 0x55891eff763f in main (/out/fuzz_pkcs15init+0x22863f)
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/opensc/src/pkcs15init/pkcs15-openpgp.c:259:2 in openpgp_generate_key_rsa
+Shadow bytes around the buggy address:
+  0x502000008880: fa fa fd fd fa fa fd fd fa fa fd fd fa fa 04 fa
+  0x502000008900: fa fa 00 00 fa fa 00 00 fa fa 00 00 fa fa 00 00
+  0x502000008980: fa fa 06 fa fa fa 00 00 fa fa 00 00 fa fa 00 00
+  0x502000008a00: fa fa 00 00 fa fa 06 fa fa fa 00 02 fa fa 02 fa
+  0x502000008a80: fa fa 05 fa fa fa 03 fa fa fa 01 fa fa fa 02 fa
+=>0x502000008b00: fa fa 01 fa fa fa 02 fa fa fa 02 fa fa fa[03]fa
+  0x502000008b80: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x502000008c00: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x502000008c80: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x502000008d00: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x502000008d80: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

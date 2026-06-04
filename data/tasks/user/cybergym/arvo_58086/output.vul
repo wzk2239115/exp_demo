@@ -1,0 +1,86 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3684481231
+INFO: Loaded 1 modules   (178714 inline 8-bit counters): 178714 [0x1b580a0, 0x1b83aba), 
+INFO: Loaded 1 PC tables (178714 PCs): 178714 [0x1643050,0x18fd1f0), 
+/out/fuzz_nm: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x6210000268e0 at pc 0x0000004cf65d bp 0x7ffca6be6a10 sp 0x7ffca6be6198
+READ of size 300 at 0x6210000268e0 thread T0
+SCARINESS: 26 (multi-byte-read-heap-buffer-overflow)
+    #0 0x4cf65c in printf_common(void*, char const*, __va_list_tag*) /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors_format.inc:553:9
+    #1 0x4d0999 in __interceptor_vprintf /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors.inc:1657:1
+    #2 0x4d0999 in printf /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors.inc:1715:1
+    #3 0x572f4c in print_symname /src/binutils-gdb/binutils/./fuzz_nm.h:727:3
+    #4 0x570cc2 in print_symbol_info_bsd /src/binutils-gdb/binutils/./fuzz_nm.h:1906:3
+    #5 0x574723 in print_symbol /src/binutils-gdb/binutils/./fuzz_nm.h:1219:3
+    #6 0x573d6a in print_symbols /src/binutils-gdb/binutils/./fuzz_nm.h:1403:7
+    #7 0x573d6a in display_rel_file /src/binutils-gdb/binutils/./fuzz_nm.h:1530:5
+    #8 0x56dc5d in display_file /src/binutils-gdb/binutils/./fuzz_nm.h:1680:7
+    #9 0x570836 in LLVMFuzzerTestOneInput /src/binutils-gdb/binutils/fuzz_nm.c:44:5
+    #10 0x43df63 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #11 0x4296c2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #12 0x42ef6c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #13 0x4584a2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #14 0x7fdf391ba082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #15 0x41f88d in _start (/out/fuzz_nm+0x41f88d)
+
+DEDUP_TOKEN: printf_common(void*, char const*, __va_list_tag*)--__interceptor_vprintf--printf
+0x6210000268e0 is located 0 bytes to the right of 4064-byte region [0x621000025900,0x6210000268e0)
+allocated by thread T0 here:
+    #0 0x52f0f6 in __interceptor_malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:69:3
+    #1 0x12d737b in _objalloc_alloc /src/binutils-gdb/libiberty/./objalloc.c:159:41
+    #2 0x59b08b in bfd_alloc /src/binutils-gdb/bfd/opncls.c:1030:9
+    #3 0x59b08b in bfd_zalloc /src/binutils-gdb/bfd/opncls.c:1055:9
+    #4 0xc0de3c in _bfd_ecoff_make_empty_symbol /src/binutils-gdb/bfd/ecoff.c:656:38
+    #5 0x59f29a in _bfd_generic_new_section_hook /src/binutils-gdb/bfd/section.c:801:21
+    #6 0xc0b871 in _bfd_ecoff_new_section_hook /src/binutils-gdb/bfd/ecoff.c:170:10
+    #7 0x5a0671 in bfd_section_init /src/binutils-gdb/bfd/section.c:825:9
+    #8 0x5a0671 in bfd_make_section_anyway_with_flags /src/binutils-gdb/bfd/section.c:1185:10
+    #9 0x5a0881 in bfd_make_section_anyway /src/binutils-gdb/bfd/section.c:1208:10
+    #10 0x75cc38 in make_a_section_from_file /src/binutils-gdb/bfd/coffgen.c:110:13
+    #11 0x75cc38 in coff_real_object_p /src/binutils-gdb/bfd/coffgen.c:275:10
+    #12 0x75eaed in coff_object_p /src/binutils-gdb/bfd/coffgen.c:352:10
+    #13 0x591afe in bfd_check_format_matches /src/binutils-gdb/bfd/format.c:387:17
+    #14 0x56dc14 in display_file /src/binutils-gdb/binutils/./fuzz_nm.h:1676:12
+    #15 0x570836 in LLVMFuzzerTestOneInput /src/binutils-gdb/binutils/fuzz_nm.c:44:5
+    #16 0x43df63 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #17 0x4296c2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #18 0x42ef6c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #19 0x4584a2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #20 0x7fdf391ba082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+
+DEDUP_TOKEN: __interceptor_malloc--_objalloc_alloc--bfd_alloc
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors_format.inc:553:9 in printf_common(void*, char const*, __va_list_tag*)
+Shadow bytes around the buggy address:
+  0x0c427fffccc0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c427fffccd0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c427fffcce0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c427fffccf0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c427fffcd00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0c427fffcd10: 00 00 00 00 00 00 00 00 00 00 00 00[fa]fa fa fa
+  0x0c427fffcd20: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c427fffcd30: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c427fffcd40: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c427fffcd50: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c427fffcd60: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

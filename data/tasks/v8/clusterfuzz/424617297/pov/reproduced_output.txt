@@ -1,0 +1,32 @@
+
+
+#
+# Fatal error in ../../src/compiler/node-properties.h, line 261
+# Debug check failed: IsTyped(node).
+#
+#
+#
+#FailureMessage Object: 0x7ffc067c0400
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x55752968fc23]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55752968ed8d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x557529674e14]
+    out/debug/d8(+0x461a805) [0x557529674805]
+    d8(v8::internal::compiler::RedundancyElimination::ReduceSpeculativeNumberComparison(v8::internal::compiler::Node*) ./../../src/compiler/node.h:278:30) [0x557527e21d8a]
+    d8(v8::internal::compiler::GraphReducer::Reduce(v8::internal::compiler::Node*) ./../../src/compiler/graph-reducer.cc:34:25) [0x557527c6f07a]
+    d8(v8::internal::compiler::GraphReducer::ReduceTop() ./../../src/compiler/graph-reducer.h:39:47) [0x557527c6ec96]
+    d8(v8::internal::compiler::GraphReducer::ReduceNode(v8::internal::compiler::Node*) ./../../third_party/libc++/src/include/deque:767:88) [0x557527c6e6f8]
+    d8(v8::internal::compiler::EarlyOptimizationPhase::Run(v8::internal::compiler::TFPipelineData*, v8::internal::Zone*) ./../../src/compiler/pipeline.cc:1279:3) [0x557527e1e955]
+    d8(bool v8::internal::compiler::PipelineImpl::Run<v8::internal::compiler::EarlyOptimizationPhase>() ./../../src/compiler/pipeline.cc:3325:63) [0x557527dd8cab]
+    d8(v8::internal::compiler::PipelineImpl::OptimizeTurbofanGraph(v8::internal::compiler::Linkage*) ./../../src/compiler/pipeline.cc:2099:3) [0x557527dd4476]
+    d8(v8::internal::compiler::PipelineCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/compiler/pipeline.cc:0:20) [0x557527dd3661]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:472:22) [0x557525f93ee2]
+    d8(v8::internal::(anonymous namespace)::CompileTurbofan(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::DirectHandle<v8::internal::SharedFunctionInfo>, v8::internal::ConcurrencyMode, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1108:7) [0x557525fb6ea2]
+    d8(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1421:12) [0x557525fa4528]
+    d8(v8::internal::Compiler::CompileOptimizedOSR(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::BytecodeOffset, v8::internal::ConcurrencyMode, v8::internal::CodeKind) ./../../src/handles/maybe-handles.h:86:43) [0x557525fab8fe]
+    d8(v8::internal::(anonymous namespace)::CompileOptimizedOSR(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::CodeKind, v8::internal::BytecodeOffset) ./../../src/handles/maybe-handles-inl.h:40:17) [0x557526ca4d3f]
+    d8(v8::internal::__RT_impl_Runtime_CompileOptimizedOSR(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:680:10) [0x557526ca1d61]
+    d8(v8::internal::Runtime_CompileOptimizedOSR(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:671:1) [0x557526ca1959]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x557528d4373d]
+timeout: the monitored command dumped core

@@ -1,0 +1,1 @@
+The error handling for ddsi_type_ref_proxy in the type object test in test_typeobj.c is insufficient, potentially leading to security vulnerabilities.

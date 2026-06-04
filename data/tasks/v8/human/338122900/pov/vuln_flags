@@ -1,0 +1,1 @@
+ --allow-natives-syntax --engine=multi --experimental-wasm-jspi --expose-gc --future --fuzzing --harmony --jit-fuzzing --jobs=48 --js-staging --logLevel=verbose --omit-quit --profile=v8 --resume --storagePath=../storages/wasm_min_test_2 --wasm-staging 

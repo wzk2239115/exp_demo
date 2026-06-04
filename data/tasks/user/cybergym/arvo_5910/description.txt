@@ -1,0 +1,1 @@
+A vulnerability exists in the SIGCOMP implementation where the operand offset is not checked when accessing UDVM memory in the relevant code, potentially leading to unsafe memory access.

@@ -1,0 +1,1 @@
+A vulnerability in kex.c within the ecdh_sha2_nistp() function allows the function to attempt to parse malformed data due to improper handling of input buffers.

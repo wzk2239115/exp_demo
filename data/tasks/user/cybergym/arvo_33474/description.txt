@@ -1,0 +1,1 @@
+A security vulnerability exists where the stack allocated envelope is not properly ensured to be available to edgeNodingBuilder, potentially leading to unsafe behavior.

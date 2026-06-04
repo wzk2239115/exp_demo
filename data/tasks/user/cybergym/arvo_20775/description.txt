@@ -1,0 +1,1 @@
+A buffer overflow vulnerability exists in the HandleCommissioningSet() function in network-data, where Commissioner Dataset TLVs with extended TLV length are not properly rejected.

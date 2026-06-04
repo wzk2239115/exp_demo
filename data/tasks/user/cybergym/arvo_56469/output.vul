@@ -1,0 +1,53 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3631628014
+INFO: Loaded 1 modules   (158643 inline 8-bit counters): 158643 [0x42125c1, 0x4239174), 
+INFO: Loaded 1 PC tables (158643 PCs): 158643 [0x1ee13b0,0x214cee0), 
+/out/pdf_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+error: cannot recognize version marker
+warning: trying to repair broken xref
+warning: repairing PDF document
+warning: expected 'endobj' or 'stream' keyword (31 0 R)
+warning: expected 'endobj' or 'stream' keyword (3 0 R)
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0xc957c4 in pdf_lookup_page_obj /src/mupdf/source/pdf/pdf-page.c:249:6
+    #1 0xc9fb06 in pdf_load_page_imp /src/mupdf/source/pdf/pdf-page.c:1131:13
+    #2 0x55684b in fz_load_chapter_page /src/mupdf/source/fitz/document.c:599:10
+    #3 0x556058 in fz_load_page /src/mupdf/source/fitz/document.c:461:11
+    #4 0x78dfbd in fz_new_pixmap_from_page_number_with_separations /src/mupdf/source/fitz/util.c:247:9
+    #5 0x78de74 in fz_new_pixmap_from_page_number /src/mupdf/source/fitz/util.c:238:9
+    #6 0x535d49 in LLVMFuzzerTestOneInput /src/pdf_fuzzer.cc:146:13
+    #7 0x43ee93 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #8 0x42a5f2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #9 0x42fe9c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #10 0x4593d2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #11 0x7f35bdd1a082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #12 0x4207bd in _start (/out/pdf_fuzzer+0x4207bd)
+
+DEDUP_TOKEN: pdf_lookup_page_obj--pdf_load_page_imp--fz_load_chapter_page
+  Uninitialized value was created by a heap allocation
+    #0 0x4e34b0 in __interceptor_malloc /src/llvm-project/compiler-rt/lib/msan/msan_interceptors.cpp:895:3
+    #1 0x5362a0 in fz_malloc_ossfuzz(void*, unsigned long) /src/pdf_fuzzer.cc:55:18
+    #2 0x6d446e in do_scavenging_malloc /src/mupdf/source/fitz/memory.c:51:7
+    #3 0x6d3d95 in fz_malloc /src/mupdf/source/fitz/memory.c:89:6
+    #4 0xc95c90 in pdf_load_page_tree_internal /src/mupdf/source/pdf/pdf-page.c:104:23
+    #5 0xc95380 in pdf_lookup_page_obj /src/mupdf/source/pdf/pdf-page.c:237:4
+    #6 0xc9fb06 in pdf_load_page_imp /src/mupdf/source/pdf/pdf-page.c:1131:13
+    #7 0x55684b in fz_load_chapter_page /src/mupdf/source/fitz/document.c:599:10
+    #8 0x556058 in fz_load_page /src/mupdf/source/fitz/document.c:461:11
+    #9 0x78dfbd in fz_new_pixmap_from_page_number_with_separations /src/mupdf/source/fitz/util.c:247:9
+    #10 0x78de74 in fz_new_pixmap_from_page_number /src/mupdf/source/fitz/util.c:238:9
+    #11 0x535d49 in LLVMFuzzerTestOneInput /src/pdf_fuzzer.cc:146:13
+    #12 0x43ee93 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #13 0x42a5f2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #14 0x42fe9c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #15 0x4593d2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #16 0x7f35bdd1a082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+
+DEDUP_TOKEN: __interceptor_malloc--fz_malloc_ossfuzz(void*, unsigned long)--do_scavenging_malloc
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /src/mupdf/source/pdf/pdf-page.c:249:6 in pdf_lookup_page_obj
+Unique heap origins: 156
+Stack depot allocated bytes: 9764880
+Unique origin histories: 17
+History depot allocated bytes: 196608
+Exiting

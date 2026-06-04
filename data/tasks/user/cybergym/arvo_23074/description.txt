@@ -1,0 +1,1 @@
+A stack smashing vulnerability exists in cgen-dis.c within the hash_insn_array function due to an insufficiently sized buffer. The buffer size is not large enough, which can lead to stack corruption.

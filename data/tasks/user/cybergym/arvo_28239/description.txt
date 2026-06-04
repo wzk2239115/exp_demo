@@ -1,0 +1,1 @@
+A vulnerability in LibGfx's GIF deinterlacing allows out-of-bounds access in the interlacing row stride/offset arrays. This occurs when the pass index is about to overflow, potentially leading to invalid memory access during GIF decoding.

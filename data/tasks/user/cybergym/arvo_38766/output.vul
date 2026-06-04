@@ -1,0 +1,31 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3288986821
+INFO: Loaded 1 modules   (68925 inline 8-bit counters): 68925 [0xcb6170, 0xcc6ead), 
+INFO: Loaded 1 PC tables (68925 PCs): 68925 [0xad9878,0xbe6c48), 
+/out/libarchive_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x632000030000 (pc 0x7f80b5ba1c31 bp 0x62c000010200 sp 0x7ffc3ab2a390 T0)
+==7==The signal is caused by a READ memory access.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x7f80b5ba1c31  (/lib/x86_64-linux-gnu/liblzma.so.5+0x14c31)
+    #1 0x7f80b5b9cea4  (/lib/x86_64-linux-gnu/liblzma.so.5+0xfea4)
+    #2 0x7f80b5b970b6  (/lib/x86_64-linux-gnu/liblzma.so.5+0xa0b6)
+    #3 0x7f80b5b90a4b in lzma_code (/lib/x86_64-linux-gnu/liblzma.so.5+0x3a4b)
+    #4 0x6202d0 in zip_read_data_zipx_lzma_alone /src/libarchive/libarchive/archive_read_support_format_zip.c:1854:11
+    #5 0x614cb6 in archive_read_format_zip_read_data /src/libarchive/libarchive/archive_read_support_format_zip.c:2855:7
+    #6 0x5673d0 in _archive_read_data_block /src/libarchive/libarchive/archive_read.c:998:9
+    #7 0x642645 in archive_read_data_block /src/libarchive/libarchive/archive_virtual.c:162:10
+    #8 0x563168 in archive_read_data /src/libarchive/libarchive/archive_read.c:852:8
+    #9 0x55eee4 in LLVMFuzzerTestOneInput /src/libarchive_fuzzer.cc:55:17
+    #10 0x458083 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) cxa_noexception.cpp
+    #11 0x4439e2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #12 0x44945d in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) cxa_noexception.cpp
+    #13 0x4723d2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #14 0x7f80b57d0082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)
+    #15 0x420bed in _start (/out/libarchive_fuzzer+0x420bed)
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV (/lib/x86_64-linux-gnu/liblzma.so.5+0x14c31) 
+==7==ABORTING

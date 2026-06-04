@@ -1,0 +1,1 @@
+A vulnerability exists where the chain length is not checked to be nonzero before examining the last entry in add_link(). It is possible to reach add_link() without visiting an intermediate node first, and the check for a duplicate entry can then cause a crash.

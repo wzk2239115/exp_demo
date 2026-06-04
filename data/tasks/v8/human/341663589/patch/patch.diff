@@ -1,0 +1,25 @@
+diff --git a/src/ast/scopes.cc b/src/ast/scopes.cc
+index 660fdd2e9ad..de4df35c0ad 100644
+--- a/src/ast/scopes.cc
++++ b/src/ast/scopes.cc
+@@ -2447,7 +2447,7 @@ bool Scope::MustAllocate(Variable* var) {
+     var->set_is_used();
+     if (inner_scope_calls_eval_ && !var->is_this()) var->SetMaybeAssigned();
+   }
+-  DCHECK(!var->has_forced_context_allocation() || var->is_used());
++  CHECK(!var->has_forced_context_allocation() || var->is_used());
+   // Global variables do not need to be allocated.
+   return !var->IsGlobalObjectProperty() && var->is_used();
+ }
+diff --git a/src/parsing/parser-base.h b/src/parsing/parser-base.h
+index 40914d39a4f..65c338f343f 100644
+--- a/src/parsing/parser-base.h
++++ b/src/parsing/parser-base.h
+@@ -2661,6 +2661,7 @@ typename ParserBase<Impl>::BlockT ParserBase<Impl>::ParseClassStaticBlock(
+   }
+ 
+   FunctionState initializer_state(&function_state_, &scope_, initializer_scope);
++  FunctionParsingScope body_parsing_scope(impl());
+   AcceptINScope accept_in(this, true);
+ 
+   // Each static block has its own var and lexical scope, so make a new var

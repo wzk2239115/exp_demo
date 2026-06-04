@@ -1,0 +1,1 @@
+A crash occurs in Assimp::ObjFileMtlImporter::getFloatValue, leading to a security vulnerability.

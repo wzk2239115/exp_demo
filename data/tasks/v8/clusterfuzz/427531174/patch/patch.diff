@@ -1,0 +1,45 @@
+diff --git a/src/maglev/maglev-graph-builder.cc b/src/maglev/maglev-graph-builder.cc
+index 29ee20b7a1d..b1656d9a520 100644
+--- a/src/maglev/maglev-graph-builder.cc
++++ b/src/maglev/maglev-graph-builder.cc
+@@ -3201,7 +3201,12 @@ bool MaglevGraphBuilder::TryReduceCompareEqualAgainstConstant() {
+   }
+   if (!maybe_constant) return false;
+ 
+-  DCHECK(!IsEmptyNodeType(GetType(other)));
++  // TODO(marja): We should detect empty types earlier, but that would require
++  // GetFloat64ForToNumber returning a ReduceResult which would require
++  // AddNewNode return a ReduceResult.
++  if (IsEmptyNodeType(GetType(other))) {
++    return false;
++  }
+ 
+   if (CheckType(other, NodeType::kBoolean)) {
+     auto CompareOtherWith = [&](bool constant) {
+diff --git a/test/mjsunit/maglev/regress-427531174.js b/test/mjsunit/maglev/regress-427531174.js
+new file mode 100644
+index 00000000000..18808257bda
+--- /dev/null
++++ b/test/mjsunit/maglev/regress-427531174.js
+@@ -0,0 +1,21 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax
++
++const v24 = new Int32Array(3433);
++function f27() {
++  return v24;
++}
++%PrepareFunctionForOptimization(f27);
++function f54() {
++  const v56 = Symbol.constructor;
++  let v57 = new f27();
++  v57[2952] = v57;
++  v56 == v57;
++}
++%PrepareFunctionForOptimization(f54);
++f54();
++%OptimizeMaglevOnNextCall(f54);
++f54();

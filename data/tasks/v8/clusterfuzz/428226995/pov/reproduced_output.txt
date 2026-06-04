@@ -1,0 +1,28 @@
+
+
+#
+# Fatal error in ../../src/maglev/maglev-ir.h, line 2542
+# Debug check failed: state_ == State::kNull || state_ == State::kOwner.
+#
+#
+#
+#FailureMessage Object: 0x7ffdf52b4400
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x55cd997a0c23]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55cd9979fd8d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55cd99785e14]
+    out/debug/d8(+0x4634805) [0x55cd99785805]
+    d8(v8::internal::maglev::ProcessResult v8::internal::maglev::NodeMultiProcessor<v8::internal::maglev::DeadNodeSweepingProcessor, v8::internal::maglev::ValueLocationConstraintProcessor, v8::internal::maglev::MaxCallDepthProcessor, v8::internal::maglev::LiveRangeAndNextUseProcessor, v8::internal::maglev::DecompressedUseMarkingProcessor>::Process<v8::internal::maglev::Phi>(v8::internal::maglev::Phi*, v8::internal::maglev::ProcessingState const&) ./../../src/maglev/maglev-ir.h:0:7) [0x55cd97182097]
+    d8(v8::internal::maglev::GraphProcessor<v8::internal::maglev::NodeMultiProcessor<v8::internal::maglev::DeadNodeSweepingProcessor, v8::internal::maglev::ValueLocationConstraintProcessor, v8::internal::maglev::MaxCallDepthProcessor, v8::internal::maglev::LiveRangeAndNextUseProcessor, v8::internal::maglev::DecompressedUseMarkingProcessor>, false>::ProcessGraph(v8::internal::maglev::Graph*) ./../../src/maglev/maglev-graph-processor.h:172:9) [0x55cd970f02a2]
+    d8(v8::internal::maglev::MaglevCompiler::Compile(v8::internal::LocalIsolate*, v8::internal::maglev::MaglevCompilationInfo*) ./../../third_party/libc++/src/include/__vector/vector.h:250:18) [0x55cd970ed166]
+    d8(v8::internal::maglev::MaglevCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../third_party/libc++/src/include/__memory/unique_ptr.h:277:12) [0x55cd971ed0da]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:472:22) [0x55cd960b8e72]
+    d8(v8::internal::(anonymous namespace)::CompileMaglev(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1325:16) [0x55cd960dcd55]
+    d8(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:0:0) [0x55cd960c94ef]
+    d8(v8::internal::Compiler::CompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind) ./../../src/handles/maybe-handles-inl.h:40:17) [0x55cd960cb239]
+    d8(v8::internal::(anonymous namespace)::CompileOptimized(v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::Isolate*) ./../../src/handles/handles.h:202:22) [0x55cd96dca875]
+    d8(v8::internal::__RT_impl_Runtime_OptimizeMaglevEager(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/common/ptr-compr-inl.h:74:18) [0x55cd96dc3852]
+    d8(v8::internal::Runtime_OptimizeMaglevEager(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:214:1) [0x55cd96dc3440]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x55cd98e538bd]
+timeout: the monitored command dumped core

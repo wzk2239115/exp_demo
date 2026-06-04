@@ -1,0 +1,1 @@
+A vulnerability exists in p_lx_elf.cpp where unpacking ELF files does not require e_phnum to be at least 2.

@@ -1,0 +1,1 @@
+A vulnerability exists in the TLS dissector where it can be called via multiple entry points, such as directly (e.g., EAP-TTLS/EAP-PEAP with an explicit dissector name) or through dissector tables. The TCP and SCTP dissectors pass a data parameter of a different type, leading to type confusion and resulting in crashes.

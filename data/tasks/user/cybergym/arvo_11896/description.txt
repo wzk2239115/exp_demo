@@ -1,0 +1,1 @@
+A vulnerability exists in the ReadTIFFImage() function where the opacity channel is not assured to be initialized in the RGBAStrippedMethod case.

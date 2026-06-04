@@ -1,0 +1,1645 @@
+diff --git a/src/compiler/turboshaft/maglev-graph-building-phase.cc b/src/compiler/turboshaft/maglev-graph-building-phase.cc
+index afcc2a3e583..8a028bcadeb 100644
+--- a/src/compiler/turboshaft/maglev-graph-building-phase.cc
++++ b/src/compiler/turboshaft/maglev-graph-building-phase.cc
+@@ -304,15 +304,25 @@ class GraphBuilder {
+     return maglev::ProcessResult::kContinue;
+   }
+ 
+-  maglev::ProcessResult Process(maglev::AllocateRaw* node,
+-                                const maglev::ProcessingState& state) {
+-    SetMap(node, __ FinishInitialization(__ Allocate<HeapObject>(
+-                     node->size(), node->allocation_type())));
++  maglev::ProcessResult Process(maglev::AllocationBlock* node,
++                                const maglev::ProcessingState& state) {
++    if (!node->is_used()) return maglev::ProcessResult::kRemove;
++    int size = 0;
++    for (auto alloc : node->allocation_list()) {
++      if (alloc->HasEscaped()) {
++        alloc->set_offset(size);
++        size += alloc->size();
++      }
++    }
++    node->set_size(size);
++    SetMap(node, __ FinishInitialization(
++                     __ Allocate<HeapObject>(size, node->allocation_type())));
+     return maglev::ProcessResult::kContinue;
+   }
+-  maglev::ProcessResult Process(maglev::FoldedAllocation* node,
++  maglev::ProcessResult Process(maglev::InlinedAllocation* node,
+                                 const maglev::ProcessingState& state) {
+-    V<HeapObject> alloc = Map(node->raw_allocation());
++    if (!node->HasEscaped()) return maglev::ProcessResult::kRemove;
++    V<HeapObject> alloc = Map(node->allocation_block());
+     SetMap(node, __ BitcastWordPtrToHeapObject(__ WordPtrAdd(
+                      __ BitcastHeapObjectToWordPtr(alloc), node->offset())));
+     return maglev::ProcessResult::kContinue;
+diff --git a/src/maglev/arm/maglev-ir-arm.cc b/src/maglev/arm/maglev-ir-arm.cc
+index 05278a43fc4..647a814afad 100644
+--- a/src/maglev/arm/maglev-ir-arm.cc
++++ b/src/maglev/arm/maglev-ir-arm.cc
+@@ -136,14 +136,21 @@ void BuiltinStringPrototypeCharCodeOrCodePointAt::GenerateCode(
+   __ bind(&done);
+ }
+ 
+-void FoldedAllocation::SetValueLocationConstraints() {
+-  UseRegister(raw_allocation());
+-  DefineAsRegister(this);
++void InlinedAllocation::SetValueLocationConstraints() {
++  UseRegister(allocation_block());
++  if (offset() == 0) {
++    DefineSameAsFirst(this);
++  } else {
++    DefineAsRegister(this);
++  }
+ }
+ 
+-void FoldedAllocation::GenerateCode(MaglevAssembler* masm,
+-                                    const ProcessingState& state) {
+-  __ add(ToRegister(result()), ToRegister(raw_allocation()), Operand(offset()));
++void InlinedAllocation::GenerateCode(MaglevAssembler* masm,
++                                     const ProcessingState& state) {
++  if (offset() != 0) {
++    __ add(ToRegister(result()), ToRegister(allocation_block()),
++           Operand(offset()));
++  }
+ }
+ 
+ int CheckedObjectToIndex::MaxCallStackArgs() const { return 0; }
+diff --git a/src/maglev/arm64/maglev-ir-arm64.cc b/src/maglev/arm64/maglev-ir-arm64.cc
+index 03016cda6dd..c45fdf31e22 100644
+--- a/src/maglev/arm64/maglev-ir-arm64.cc
++++ b/src/maglev/arm64/maglev-ir-arm64.cc
+@@ -142,14 +142,20 @@ void BuiltinStringPrototypeCharCodeOrCodePointAt::GenerateCode(
+   __ Bind(&done);
+ }
+ 
+-void FoldedAllocation::SetValueLocationConstraints() {
+-  UseRegister(raw_allocation());
+-  DefineAsRegister(this);
++void InlinedAllocation::SetValueLocationConstraints() {
++  UseRegister(allocation_block());
++  if (offset() == 0) {
++    DefineSameAsFirst(this);
++  } else {
++    DefineAsRegister(this);
++  }
+ }
+ 
+-void FoldedAllocation::GenerateCode(MaglevAssembler* masm,
+-                                    const ProcessingState& state) {
+-  __ Add(ToRegister(result()), ToRegister(raw_allocation()), offset());
++void InlinedAllocation::GenerateCode(MaglevAssembler* masm,
++                                     const ProcessingState& state) {
++  if (offset() != 0) {
++    __ Add(ToRegister(result()), ToRegister(allocation_block()), offset());
++  }
+ }
+ 
+ int CheckedObjectToIndex::MaxCallStackArgs() const { return 0; }
+diff --git a/src/maglev/maglev-code-generator.cc b/src/maglev/maglev-code-generator.cc
+index adca80e1a10..1d4082b728b 100644
+--- a/src/maglev/maglev-code-generator.cc
++++ b/src/maglev/maglev-code-generator.cc
+@@ -1039,7 +1039,8 @@ class MaglevFrameTranslationBuilder {
+       : local_isolate_(local_isolate),
+         masm_(masm),
+         translation_array_builder_(translation_array_builder),
+-        deopt_literals_(deopt_literals) {}
++        deopt_literals_(deopt_literals),
++        object_ids_(10) {}
+ 
+   void BuildEagerDeopt(EagerDeoptInfo* deopt_info) {
+     BuildBeginDeopt(deopt_info);
+@@ -1098,6 +1099,7 @@ class MaglevFrameTranslationBuilder {
+   }
+ 
+   void BuildBeginDeopt(DeoptInfo* deopt_info) {
++    object_ids_.clear();
+     auto [frame_count, jsframe_count] = GetFrameCount(&deopt_info->top_frame());
+     deopt_info->set_translation_index(
+         translation_array_builder_->BeginTranslation(
+@@ -1313,9 +1315,137 @@ class MaglevFrameTranslationBuilder {
+     }
+   }
+ 
++  int GetDuplicatedId(int id) {
++    for (int idx = 0; idx < static_cast<int>(object_ids_.size()); idx++) {
++      if (object_ids_[idx] == id) {
++        // Although this is not technically necessary, the translated state
++        // machinery assign ids to duplicates, so we need to push something to
++        // get fresh ids.
++        object_ids_.push_back(id);
++        return idx;
++      }
++    }
++    object_ids_.push_back(id);
++    return kNotDuplicated;
++  }
++
++  void BuildHeapNumber(Float64 number) {
++    Handle<Object> value =
++        local_isolate_->factory()->NewHeapNumberFromBits<AllocationType::kOld>(
++            number.get_bits());
++    translation_array_builder_->StoreLiteral(GetDeoptLiteral(*value));
++  }
++
++  void BuildFastObject(const FastObject& object) {
++    int dup_id = GetDuplicatedId(object.id);
++    if (dup_id != kNotDuplicated) {
++      translation_array_builder_->DuplicateObject(dup_id);
++      return;
++    }
++    translation_array_builder_->BeginCapturedObject(object.instance_size /
++                                                    kTaggedSize);
++    translation_array_builder_->StoreLiteral(
++        GetDeoptLiteral(*object.map.object()));
++    translation_array_builder_->StoreLiteral(
++        GetDeoptLiteral(ReadOnlyRoots(local_isolate_).empty_fixed_array()));
++    BuildFastFixedArray(object.elements);
++    if (object.js_array_length.has_value()) {
++      translation_array_builder_->StoreLiteral(
++          GetDeoptLiteral(*object.js_array_length->object()));
++    }
++    for (int i = 0; i < object.inobject_properties; i++) {
++      BuildFieldValue(object.fields[i]);
++    }
++  }
++
++  void BuildFieldValue(const FastField value) {
++    switch (value.type) {
++      case FastField::kUninitialized:
++        translation_array_builder_->StoreLiteral(GetDeoptLiteral(
++            ReadOnlyRoots(local_isolate_).one_pointer_filler_map()));
++        break;
++      case FastField::kObject:
++        BuildFastObject(value.object);
++        break;
++      case FastField::kMutableDouble:
++        BuildHeapNumber(value.mutable_double_value);
++        break;
++      case FastField::kConstant:
++        translation_array_builder_->StoreLiteral(
++            GetDeoptLiteral(*value.constant_value.object()));
++        break;
++    }
++  }
++
++  void BuildFastFixedArray(const FastFixedArray array) {
++    switch (array.type) {
++      case FastFixedArray::kEmpty:
++        translation_array_builder_->StoreLiteral(
++            GetDeoptLiteral(ReadOnlyRoots(local_isolate_).empty_fixed_array()));
++        break;
++      case FastFixedArray::kCoW:
++        translation_array_builder_->StoreLiteral(
++            GetDeoptLiteral(*array.cow_value.object()));
++        break;
++      case FastFixedArray::kTagged: {
++        int dup_id = GetDuplicatedId(array.id);
++        if (dup_id != kNotDuplicated) {
++          translation_array_builder_->DuplicateObject(dup_id);
++          return;
++        }
++        translation_array_builder_->BeginCapturedObject(array.length + 2);
++        translation_array_builder_->StoreLiteral(
++            GetDeoptLiteral(*local_isolate_->factory()->fixed_array_map()));
++        translation_array_builder_->StoreLiteral(
++            GetDeoptLiteral(Smi::FromInt(array.length)));
++        for (int i = 0; i < array.length; i++) {
++          BuildFieldValue(array.values[i]);
++        }
++        break;
++      }
++      case FastFixedArray::kDouble: {
++        int dup_id = GetDuplicatedId(array.id);
++        if (dup_id != kNotDuplicated) {
++          translation_array_builder_->DuplicateObject(dup_id);
++          return;
++        }
++        translation_array_builder_->BeginCapturedObject(array.length + 2);
++        translation_array_builder_->StoreLiteral(GetDeoptLiteral(
++            *local_isolate_->factory()->fixed_double_array_map()));
++        translation_array_builder_->StoreLiteral(
++            GetDeoptLiteral(Smi::FromInt(array.length)));
++        for (int i = 0; i < array.length; i++) {
++          BuildHeapNumber(array.double_values[i]);
++        }
++        break;
++      }
++    }
++  }
++
++  void BuildDeoptObject(const DeoptObject value) {
++    switch (value.type) {
++      case DeoptObject::kObject:
++        BuildFastObject(value.object);
++        break;
++      case DeoptObject::kFixedArray:
++        BuildFastFixedArray(value.fixed_array);
++        break;
++      case DeoptObject::kNumber:
++        BuildHeapNumber(value.number);
++        break;
++    }
++  }
++
+   void BuildDeoptFrameSingleValue(const ValueNode* value,
+                                   const InputLocation*& input_location) {
+     DCHECK(!value->Is<Identity>());
++    if (const InlinedAllocation* alloc = value->TryCast<InlinedAllocation>()) {
++      if (!alloc->HasEscaped()) {
++        BuildDeoptObject(alloc->value());
++        input_location++;
++        return;
++      }
++    }
+     if (input_location->operand().IsConstant()) {
+       translation_array_builder_->StoreLiteral(
+           GetDeoptLiteral(*value->Reify(local_isolate_)));
+@@ -1337,9 +1467,10 @@ class MaglevFrameTranslationBuilder {
+       const CompactInterpreterFrameState* checkpoint_state,
+       const ValueNode* closure, const InputLocation*& input_location,
+       interpreter::Register result_location, int result_size) {
+-    // TODO(leszeks): The input locations array happens to be in the same order
+-    // as closure+parameters+context+locals+accumulator are accessed here. We
+-    // should make this clearer and guard against this invariant failing.
++    // TODO(leszeks): The input locations array happens to be in the same
++    // order as closure+parameters+context+locals+accumulator are accessed
++    // here. We should make this clearer and guard against this invariant
++    // failing.
+ 
+     // Closure
+     BuildDeoptFrameSingleValue(closure, input_location);
+@@ -1414,6 +1545,9 @@ class MaglevFrameTranslationBuilder {
+   MaglevAssembler* masm_;
+   FrameTranslationBuilder* translation_array_builder_;
+   IdentityMap<int, base::DefaultAllocationPolicy>* deopt_literals_;
++
++  static const int kNotDuplicated = -1;
++  std::vector<int> object_ids_;
+ };
+ 
+ }  // namespace
+diff --git a/src/maglev/maglev-compiler.cc b/src/maglev/maglev-compiler.cc
+index ef6462251bf..1a269ff394d 100644
+--- a/src/maglev/maglev-compiler.cc
++++ b/src/maglev/maglev-compiler.cc
+@@ -167,12 +167,28 @@ class MaxCallDepthProcessor {
+ 
+ thread_local MaglevGraphLabeller* labeller_;
+ 
++template <typename NodeT>
++constexpr bool CanBeStoreToNonEscapedObject() {
++  return std::is_same_v<NodeT, StoreMap> ||
++         std::is_same_v<NodeT, StoreTaggedFieldWithWriteBarrier> ||
++         std::is_same_v<NodeT, StoreTaggedFieldNoWriteBarrier> ||
++         std::is_same_v<NodeT, StoreFloat64>;
++}
++
+ class AnyUseMarkingProcessor {
+  public:
+   void PreProcessGraph(Graph* graph) {}
+-  void PostProcessGraph(Graph* graph) {}
+   void PreProcessBasicBlock(BasicBlock* block) {}
+ 
++  ProcessResult Process(InlinedAllocation* node, const ProcessingState& state) {
++    if (!node->HasEscaped()) {
++      node->input(0).node()->remove_use();
++      return ProcessResult::kRemove;
++    }
++    escaped_allocations_.push_back(node);
++    return ProcessResult::kContinue;
++  }
++
+   template <typename NodeT>
+   ProcessResult Process(NodeT* node, const ProcessingState& state) {
+     if constexpr (IsValueNode(Node::opcode_of<NodeT>) &&
+@@ -184,23 +200,54 @@ class AnyUseMarkingProcessor {
+         return ProcessResult::kRemove;
+       }
+     }
++
++    if constexpr (CanBeStoreToNonEscapedObject<NodeT>()) {
++      if (InlinedAllocation* object =
++              node->input(0).node()->template TryCast<InlinedAllocation>()) {
++        if (!object->HasEscaped()) {
++          // Make sure to remove the uses of the other inputs.
++          for (int i = 1; i < node->input_count(); i++) {
++            DropInputUses(node->Node::input(i));
++          }
++          return ProcessResult::kRemove;
++        }
++      }
++    }
++
+     return ProcessResult::kContinue;
+   }
+ 
++  void PostProcessGraph(Graph* graph) {
++    // Somes escaped allocation might have been marked as non-escaping.
++    // Fix the AllocationBlock usages. They will be removed in the
++    // DeadNodeSweepingProcessor.
++    for (InlinedAllocation* alloc : escaped_allocations_) {
++      if (!alloc->HasEscaped()) {
++        alloc->allocation_block().node()->remove_use();
++      }
++    }
++  }
++
+  private:
++  void DropInputUses(Input& input) {
++    ValueNode* input_node = input.node();
++    if (input_node->properties().is_required_when_unused()) return;
++    input_node->remove_use();
++    if (!input_node->is_used() && !input_node->unused_inputs_were_visited()) {
++      DropInputUses(input_node);
++    }
++  }
++
+   void DropInputUses(ValueNode* node) {
+     for (Input& input : *node) {
+-      ValueNode* input_node = input.node();
+-      if (input_node->properties().is_required_when_unused()) continue;
+-      input_node->remove_use();
+-      if (!input_node->is_used() && !input_node->unused_inputs_were_visited()) {
+-        DropInputUses(input_node);
+-      }
++      DropInputUses(input);
+     }
+     DCHECK(!node->properties().can_eager_deopt());
+     DCHECK(!node->properties().can_lazy_deopt());
+     node->mark_unused_inputs_visited();
+   }
++
++  std::vector<InlinedAllocation*> escaped_allocations_;
+ };
+ 
+ class DeadNodeSweepingProcessor {
+@@ -209,21 +256,61 @@ class DeadNodeSweepingProcessor {
+   void PostProcessGraph(Graph* graph) {}
+   void PreProcessBasicBlock(BasicBlock* block) {}
+ 
+-  ProcessResult Process(NodeBase* node, const ProcessingState& state) {
++  ProcessResult Process(AllocationBlock* node, const ProcessingState& state) {
++    if (!node->is_used()) return ProcessResult::kRemove;
++    // All non-escaped InlinedAllocations were already removed. We can now set
++    // the offsets of the escaped ones.
++    // Note: this need to be done before ValueLocationConstraintProcessor, since
++    // it access the allocation offsets.
++    int size = 0;
++    for (auto alloc : node->allocation_list()) {
++      if (alloc->HasEscaped()) {
++        alloc->set_offset(size);
++        size += alloc->size();
++      }
++    }
++    // ... and update its size.
++    node->set_size(size);
+     return ProcessResult::kContinue;
+   }
+ 
+-  ProcessResult Process(ValueNode* node, const ProcessingState& state) {
+-    if (!node->is_used() && !node->properties().is_required_when_unused()) {
+-      // The UseMarkingProcessor will clear dead forward jump Phis eagerly, so
+-      // the only dead phis that should remain are loop and exception phis.
+-      DCHECK_IMPLIES(node->Is<Phi>(),
+-                     node->Cast<Phi>()->is_loop_phi() ||
+-                         node->Cast<Phi>()->is_exception_phi());
++  ProcessResult Process(InlinedAllocation* node, const ProcessingState& state) {
++    // Remove inlined allocation that became non-escaping.
++    if (!node->HasEscaped()) {
+       return ProcessResult::kRemove;
+     }
+     return ProcessResult::kContinue;
+   }
++
++  template <typename NodeT>
++  ProcessResult Process(NodeT* node, const ProcessingState& state) {
++    if constexpr (IsValueNode(Node::opcode_of<NodeT>) &&
++                  !NodeT::kProperties.is_required_when_unused()) {
++      if (!node->is_used()) {
++        if constexpr (std::is_same_v<NodeT, Phi>) {
++          // The UseMarkingProcessor will clear dead forward jump Phis eagerly,
++          // so the only dead phis that should remain are loop and exception
++          // phis.
++          DCHECK(node->is_loop_phi() || node->is_exception_phi());
++        }
++        return ProcessResult::kRemove;
++      }
++      return ProcessResult::kContinue;
++    }
++
++    if constexpr (CanBeStoreToNonEscapedObject<NodeT>()) {
++      if (InlinedAllocation* object =
++              node->input(0).node()->template TryCast<InlinedAllocation>()) {
++        if (!object->HasEscaped()) {
++          // We might still have stores that have not been cleared for
++          // allocations that were initially escaping and then became
++          // non-escaping.
++          return ProcessResult::kRemove;
++        }
++      }
++    }
++    return ProcessResult::kContinue;
++  }
+ };
+ 
+ class LiveRangeAndNextUseProcessor {
+@@ -394,6 +481,13 @@ class LiveRangeAndNextUseProcessor {
+   void MarkUse(ValueNode* node, uint32_t use_id, InputLocation* input,
+                LoopUsedNodes* loop_used_nodes) {
+     DCHECK(!node->Is<Identity>());
++    if (InlinedAllocation* alloc = node->TryCast<InlinedAllocation>()) {
++      if (!alloc->HasEscaped()) {
++        // No need to mark use. The allocation has survived as a deopt input.
++        return;
++      }
++    }
++
+     node->record_next_use(use_id, input);
+ 
+     // If we are in a loop, loop_used_nodes is non-null. In this case, check if
+diff --git a/src/maglev/maglev-graph-builder.cc b/src/maglev/maglev-graph-builder.cc
+index 098c38c2924..f907ad0651b 100644
+--- a/src/maglev/maglev-graph-builder.cc
++++ b/src/maglev/maglev-graph-builder.cc
+@@ -297,7 +297,8 @@ class V8_NODISCARD MaglevGraphBuilder::DeoptFrameScope {
+         data_(DeoptFrame::BuiltinContinuationFrameData{
+             continuation, {}, builder->GetContext(), maybe_js_target}) {
+     builder_->current_deopt_scope_ = this;
+-    data_.get<DeoptFrame::BuiltinContinuationFrameData>().context->add_use();
++    builder_->AddDeoptUse(
++        data_.get<DeoptFrame::BuiltinContinuationFrameData>().context);
+     DCHECK(data_.get<DeoptFrame::BuiltinContinuationFrameData>()
+                .parameters.empty());
+   }
+@@ -311,10 +312,11 @@ class V8_NODISCARD MaglevGraphBuilder::DeoptFrameScope {
+             continuation, builder->zone()->CloneVector(parameters),
+             builder->GetContext(), maybe_js_target}) {
+     builder_->current_deopt_scope_ = this;
+-    data_.get<DeoptFrame::BuiltinContinuationFrameData>().context->add_use();
++    builder_->AddDeoptUse(
++        data_.get<DeoptFrame::BuiltinContinuationFrameData>().context);
+     for (ValueNode* node :
+          data_.get<DeoptFrame::BuiltinContinuationFrameData>().parameters) {
+-      node->add_use();
++      builder_->AddDeoptUse(node);
+     }
+   }
+ 
+@@ -325,8 +327,10 @@ class V8_NODISCARD MaglevGraphBuilder::DeoptFrameScope {
+             *builder->compilation_unit(), builder->current_source_position_,
+             receiver, builder->GetContext()}) {
+     builder_->current_deopt_scope_ = this;
+-    data_.get<DeoptFrame::ConstructInvokeStubFrameData>().receiver->add_use();
+-    data_.get<DeoptFrame::ConstructInvokeStubFrameData>().context->add_use();
++    builder_->AddDeoptUse(
++        data_.get<DeoptFrame::ConstructInvokeStubFrameData>().receiver);
++    builder_->AddDeoptUse(
++        data_.get<DeoptFrame::ConstructInvokeStubFrameData>().context);
+   }
+ 
+   ~DeoptFrameScope() {
+@@ -1014,9 +1018,9 @@ DeoptFrame* MaglevGraphBuilder::GetParentDeoptFrame() {
+       parent_deopt_frame_ = zone()->New<InlinedArgumentsDeoptFrame>(
+           *compilation_unit_, caller_bytecode_offset_, GetClosure(),
+           *inlined_arguments_, parent_deopt_frame_);
+-      GetClosure()->add_use();
++      AddDeoptUse(GetClosure());
+       for (ValueNode* arg : *inlined_arguments_) {
+-        arg->add_use();
++        AddDeoptUse(arg);
+       }
+     }
+   }
+@@ -1037,8 +1041,8 @@ DeoptFrame MaglevGraphBuilder::GetLatestCheckpointedFrame() {
+ 
+     latest_checkpointed_frame_->as_interpreted().frame_state()->ForEachValue(
+         *compilation_unit_,
+-        [](ValueNode* node, interpreter::Register) { node->add_use(); });
+-    latest_checkpointed_frame_->as_interpreted().closure()->add_use();
++        [&](ValueNode* node, interpreter::Register) { AddDeoptUse(node); });
++    AddDeoptUse(latest_checkpointed_frame_->as_interpreted().closure());
+ 
+     if (current_deopt_scope_ != nullptr) {
+       // Support exactly one eager deopt builtin continuation. This can be
+@@ -1099,15 +1103,15 @@ DeoptFrame MaglevGraphBuilder::GetDeoptFrameForLazyDeoptHelper(
+         GetClosure(), BytecodeOffset(iterator_.current_offset()),
+         current_source_position_, GetParentDeoptFrame());
+     ret.frame_state()->ForEachValue(
+-        *compilation_unit_, [result_location, result_size](
++        *compilation_unit_, [this, result_location, result_size](
+                                 ValueNode* node, interpreter::Register reg) {
+           if (result_size == 0 ||
+               !base::IsInRange(reg.index(), result_location.index(),
+                                result_location.index() + result_size - 1)) {
+-            node->add_use();
++            AddDeoptUse(node);
+           }
+         });
+-    ret.closure()->add_use();
++    AddDeoptUse(ret.closure());
+     return ret;
+   }
+ 
+@@ -1165,8 +1169,8 @@ InterpretedDeoptFrame MaglevGraphBuilder::GetDeoptFrameForEntryStackCheck() {
+       .frame_state()
+       ->ForEachValue(
+           *compilation_unit_,
+-          [](ValueNode* node, interpreter::Register) { node->add_use(); });
+-  (*entry_stack_check_frame_).closure()->add_use();
++          [&](ValueNode* node, interpreter::Register) { AddDeoptUse(node); });
++  AddDeoptUse((*entry_stack_check_frame_).closure());
+   return *entry_stack_check_frame_;
+ }
+ 
+@@ -3036,8 +3040,8 @@ NodeType StaticTypeForNode(compiler::JSHeapBroker* broker,
+       return NodeType::kNumber;
+     case Opcode::kHoleyFloat64ToTagged:
+       return NodeType::kNumberOrOddball;
+-    case Opcode::kAllocateRaw:
+-    case Opcode::kFoldedAllocation:
++    case Opcode::kAllocationBlock:
++    case Opcode::kInlinedAllocation:
+       return NodeType::kAnyHeapObject;
+     case Opcode::kRootConstant: {
+       RootConstant* constant = node->Cast<RootConstant>();
+@@ -3547,12 +3551,12 @@ ReduceResult MaglevGraphBuilder::BuildTransitionElementsKindAndCompareMaps(
+ }
+ 
+ namespace {
+-AllocateRaw* GetAllocation(ValueNode* object) {
+-  if (object->Is<FoldedAllocation>()) {
+-    object = object->Cast<FoldedAllocation>()->input(0).node();
++AllocationBlock* GetAllocation(ValueNode* object) {
++  if (object->Is<InlinedAllocation>()) {
++    object = object->Cast<InlinedAllocation>()->input(0).node();
+   }
+-  if (object->Is<AllocateRaw>()) {
+-    return object->Cast<AllocateRaw>();
++  if (object->Is<AllocationBlock>()) {
++    return object->Cast<AllocationBlock>();
+   }
+   return nullptr;
+ }
+@@ -3566,7 +3570,7 @@ bool MaglevGraphBuilder::CanElideWriteBarrier(ValueNode* object,
+ 
+   // No need for a write barrier if both object and value are part of the same
+   // folded young allocation.
+-  AllocateRaw* allocation = GetAllocation(object);
++  AllocationBlock* allocation = GetAllocation(object);
+   if (allocation != nullptr &&
+       allocation->allocation_type() == AllocationType::kYoung &&
+       allocation == GetAllocation(value)) {
+@@ -3576,6 +3580,14 @@ bool MaglevGraphBuilder::CanElideWriteBarrier(ValueNode* object,
+   return false;
+ }
+ 
++void MaglevGraphBuilder::BuildInitializeStoreTaggedField(
++    InlinedAllocation* object, ValueNode* value, int offset) {
++  if (InlinedAllocation* inlined_value = value->TryCast<InlinedAllocation>()) {
++    inlined_value->DependOn(object);
++  }
++  BuildStoreTaggedField(object, value, offset);
++}
++
+ void MaglevGraphBuilder::BuildStoreTaggedField(ValueNode* object,
+                                                ValueNode* value, int offset) {
+   if (CanElideWriteBarrier(object, value)) {
+@@ -5723,9 +5735,10 @@ bool MaglevGraphBuilder::TryBuildFindNonDefaultConstructorOrConstruct(
+             HasValidInitialMap(new_target_function->AsJSFunction(),
+                                current_function)) {
+           object = BuildAllocateFastObject(
+-              FastObject(new_target_function->AsJSFunction(), zone(), broker()),
++              FastObject(NewObjectId(), new_target_function->AsJSFunction(),
++                         zone(), broker()),
+               AllocationType::kYoung);
+-          ClearCurrentRawAllocation();
++          ClearCurrentAllocationBlock();
+         } else {
+           object = BuildCallBuiltin<Builtin::kFastNewObject>(
+               {GetConstant(current_function), new_target});
+@@ -5733,7 +5746,7 @@ bool MaglevGraphBuilder::TryBuildFindNonDefaultConstructorOrConstruct(
+           // has to store result.second. Also mark result.first as being used,
+           // since the lazy deopt frame won't have marked it since it used to be
+           // a result register.
+-          current_interpreter_frame_.get(result.first)->add_use();
++          AddDeoptUse(current_interpreter_frame_.get(result.first));
+           object->lazy_deopt_info()->UpdateResultLocation(result.second, 1);
+         }
+         StoreRegister(result.second, object);
+@@ -8173,10 +8186,11 @@ ReduceResult MaglevGraphBuilder::ReduceConstruct(
+         compiler::MapRef map = function.initial_map(broker());
+         if (map.GetConstructor(broker()).equals(feedback_target)) {
+           implicit_receiver = BuildAllocateFastObject(
+-              FastObject(function, zone(), broker()), AllocationType::kYoung);
++              FastObject(NewObjectId(), function, zone(), broker()),
++              AllocationType::kYoung);
+           // TODO(leszeks): Don't eagerly clear the raw allocation, have the
+           // next side effect clear it.
+-          ClearCurrentRawAllocation();
++          ClearCurrentAllocationBlock();
+         }
+       }
+       if (implicit_receiver == nullptr) {
+@@ -8827,9 +8841,9 @@ void FastObject::ClearFields() {
+   }
+ }
+ 
+-FastObject::FastObject(compiler::JSFunctionRef constructor, Zone* zone,
++FastObject::FastObject(int id, compiler::JSFunctionRef constructor, Zone* zone,
+                        compiler::JSHeapBroker* broker)
+-    : map(constructor.initial_map(broker)) {
++    : id(id), map(constructor.initial_map(broker)) {
+   compiler::SlackTrackingPrediction prediction =
+       broker->dependencies()->DependOnInitialMapInstanceSizePrediction(
+           constructor);
+@@ -8911,12 +8925,12 @@ void MaglevGraphBuilder::VisitCreateEmptyArrayLiteral() {
+   // property count. The array stays uninitialized, but it is later accessed in
+   // BuildAllocateFastObject
+   SBXCHECK_EQ(map.GetInObjectProperties(), 0);
+-  FastObject literal(map, zone(), {});
++  FastObject literal(NewObjectId(), map, zone(), {});
+   literal.js_array_length = MakeRef(broker(), Object::cast(Smi::zero()));
+   SetAccumulator(BuildAllocateFastObject(literal, AllocationType::kYoung));
+   // TODO(leszeks): Don't eagerly clear the raw allocation, have the next side
+   // effect clear it.
+-  ClearCurrentRawAllocation();
++  ClearCurrentAllocationBlock();
+ }
+ 
+ base::Optional<FastObject> MaglevGraphBuilder::TryReadBoilerplateForFastLiteral(
+@@ -8983,7 +8997,7 @@ base::Optional<FastObject> MaglevGraphBuilder::TryReadBoilerplateForFastLiteral(
+       boilerplate, JSObject::kElementsOffset, boilerplate_elements);
+   int const elements_length = boilerplate_elements.length();
+ 
+-  FastObject fast_literal(boilerplate_map, zone(), {});
++  FastObject fast_literal(NewObjectId(), boilerplate_map, zone(), {});
+ 
+   // Compute the in-object properties to store first.
+   int index = 0;
+@@ -9078,7 +9092,8 @@ base::Optional<FastObject> MaglevGraphBuilder::TryReadBoilerplateForFastLiteral(
+     if (boilerplate_elements.IsFixedDoubleArray()) {
+       int const size = FixedDoubleArray::SizeFor(elements_length);
+       if (size > kMaxRegularHeapObjectSize) return {};
+-      fast_literal.elements = FastFixedArray(elements_length, zone(), double{});
++      fast_literal.elements =
++          FastFixedArray(NewObjectId(), elements_length, zone(), double{});
+ 
+       compiler::FixedDoubleArrayRef elements =
+           boilerplate_elements.AsFixedDoubleArray();
+@@ -9089,7 +9104,8 @@ base::Optional<FastObject> MaglevGraphBuilder::TryReadBoilerplateForFastLiteral(
+     } else {
+       int const size = FixedArray::SizeFor(elements_length);
+       if (size > kMaxRegularHeapObjectSize) return {};
+-      fast_literal.elements = FastFixedArray(elements_length, zone());
++      fast_literal.elements =
++          FastFixedArray(NewObjectId(), elements_length, zone());
+ 
+       compiler::FixedArrayRef elements = boilerplate_elements.AsFixedArray();
+       for (int i = 0; i < elements_length; ++i) {
+@@ -9118,30 +9134,31 @@ base::Optional<FastObject> MaglevGraphBuilder::TryReadBoilerplateForFastLiteral(
+   return fast_literal;
+ }
+ 
+-ValueNode* MaglevGraphBuilder::ExtendOrReallocateCurrentRawAllocation(
+-    int size, AllocationType allocation_type) {
+-  if (!current_raw_allocation_ ||
+-      current_raw_allocation_->allocation_type() != allocation_type ||
++InlinedAllocation* MaglevGraphBuilder::ExtendOrReallocateCurrentAllocationBlock(
++    int size, AllocationType allocation_type, DeoptObject value) {
++  DCHECK_LT(size, kMaxRegularHeapObjectSize);
++  if (!current_allocation_block_ ||
++      current_allocation_block_->allocation_type() != allocation_type ||
+       !v8_flags.inline_new) {
+-    current_raw_allocation_ =
+-        AddNewNode<AllocateRaw>({}, allocation_type, size);
+-    return current_raw_allocation_;
++    current_allocation_block_ =
++        AddNewNode<AllocationBlock>({}, allocation_type);
+   }
+ 
+-  int current_size = current_raw_allocation_->size();
++  int current_size = current_allocation_block_->size();
+   if (current_size + size > kMaxRegularHeapObjectSize) {
+-    return current_raw_allocation_ =
+-               AddNewNode<AllocateRaw>({}, allocation_type, size);
++    current_allocation_block_ =
++        AddNewNode<AllocationBlock>({}, allocation_type);
+   }
+ 
+-  DCHECK_GT(current_size, 0);
+-  int previous_end = current_size;
+-  current_raw_allocation_->extend(size);
+-  return AddNewNode<FoldedAllocation>({current_raw_allocation_}, previous_end);
++  DCHECK_GE(current_size, 0);
++  InlinedAllocation* allocation =
++      AddNewNode<InlinedAllocation>({current_allocation_block_}, size, value);
++  current_allocation_block_->Add(allocation);
++  return allocation;
+ }
+ 
+-void MaglevGraphBuilder::ClearCurrentRawAllocation() {
+-  current_raw_allocation_ = nullptr;
++void MaglevGraphBuilder::ClearCurrentAllocationBlock() {
++  current_allocation_block_ = nullptr;
+ }
+ 
+ bool FastField::IsInitialized() {
+@@ -9151,6 +9168,35 @@ bool FastField::IsInitialized() {
+   return type != kUninitialized;
+ }
+ 
++void MaglevGraphBuilder::AddNonEscapingUses(InlinedAllocation* allocation,
++                                            int use_count) {
++  // TODO(victorgomes): Support materializing objects in catch blocks.
++  // If we are inside a try-catch block, always escape the objects, ie, do not
++  // add non escaping use.
++  if (catch_block_stack_.size() > 0) return;
++  if (is_inline()) {
++    // If we inline a constructor, {allocation} could be the implicit receiver.
++    // In that case, do not mark the use as non-escaping, since we could have a
++    // call to a builtin that iterate the stack and the object needs to be
++    // materialized there.
++    // Walk the deopt frame scope looking for the implicit receiver.
++    // TODO(victorgomes): Another possible solution is to have a way to mark the
++    // constructor as escaping if the inlined function is not a leaf.
++    const MaglevGraphBuilder* builder = parent();
++    while (builder != nullptr) {
++      const DeoptFrameScope* scope = builder->current_deopt_scope();
++      if (scope && scope->data().tag() ==
++                       DeoptFrame::FrameType::kConstructInvokeStubFrame) {
++        auto& frame =
++            scope->data().get<DeoptFrame::ConstructInvokeStubFrameData>();
++        if (allocation == frame.receiver) return;
++      }
++      builder = builder->parent();
++    }
++  }
++  allocation->AddNonEscapingUses(use_count);
++}
++
+ ValueNode* MaglevGraphBuilder::BuildAllocateFastObject(
+     FastObject object, AllocationType allocation_type) {
+   SmallZoneVector<ValueNode*, 8> properties(object.inobject_properties, zone());
+@@ -9162,27 +9208,31 @@ ValueNode* MaglevGraphBuilder::BuildAllocateFastObject(
+ 
+   DCHECK(object.map.IsJSObjectMap());
+   // TODO(leszeks): Fold allocations.
+-  ValueNode* allocation = ExtendOrReallocateCurrentRawAllocation(
+-      object.instance_size, allocation_type);
++  InlinedAllocation* allocation = ExtendOrReallocateCurrentAllocationBlock(
++      object.instance_size, allocation_type, DeoptObject(object));
++  AddNonEscapingUses(allocation, object.inobject_properties + 3);
+   BuildStoreReceiverMap(allocation, object.map);
+   AddNewNode<StoreTaggedFieldNoWriteBarrier>(
+       {allocation, GetRootConstant(RootIndex::kEmptyFixedArray)},
+       JSObject::kPropertiesOrHashOffset);
+   if (object.js_array_length.has_value()) {
+-    BuildStoreTaggedField(allocation, GetConstant(*object.js_array_length),
+-                          JSArray::kLengthOffset);
++    BuildInitializeStoreTaggedField(allocation,
++                                    GetConstant(*object.js_array_length),
++                                    JSArray::kLengthOffset);
++    AddNonEscapingUses(allocation, 1);
+     RecordKnownProperty(allocation, broker()->length_string(),
+                         GetConstant(*object.js_array_length), false,
+                         compiler::AccessMode::kLoad);
+   }
+-  BuildStoreTaggedField(allocation, elements, JSObject::kElementsOffset);
++  BuildInitializeStoreTaggedField(allocation, elements,
++                                  JSObject::kElementsOffset);
+   RecordKnownProperty(allocation,
+                       KnownNodeAspects::LoadedPropertyMapKey::Elements(),
+                       elements, false, compiler::AccessMode::kLoad);
+   int number_of_own_descriptors = object.map.NumberOfOwnDescriptors();
+   for (int i = 0; i < object.inobject_properties; ++i) {
+-    BuildStoreTaggedField(allocation, properties[i],
+-                          object.map.GetInObjectPropertyOffset(i));
++    BuildInitializeStoreTaggedField(allocation, properties[i],
++                                    object.map.GetInObjectPropertyOffset(i));
+     if (i < number_of_own_descriptors && object.fields[i].IsInitialized()) {
+       compiler::NameRef name =
+           object.map.GetPropertyKey(broker(), InternalIndex(i));
+@@ -9210,8 +9260,10 @@ ValueNode* MaglevGraphBuilder::BuildAllocateFastObject(
+     case FastField::kObject:
+       return BuildAllocateFastObject(value.object, allocation_type);
+     case FastField::kMutableDouble: {
+-      ValueNode* new_alloc = ExtendOrReallocateCurrentRawAllocation(
+-          sizeof(HeapNumber), allocation_type);
++      InlinedAllocation* new_alloc = ExtendOrReallocateCurrentAllocationBlock(
++          sizeof(HeapNumber), allocation_type,
++          DeoptObject(value.mutable_double_value));
++      AddNonEscapingUses(new_alloc, 2);
+       AddNewNode<StoreMap>(
+           {new_alloc},
+           MakeRefAssumeMemoryFence(
+@@ -9223,7 +9275,6 @@ ValueNode* MaglevGraphBuilder::BuildAllocateFastObject(
+       EnsureType(new_alloc, NodeType::kNumber);
+       return new_alloc;
+     }
+-
+     case FastField::kConstant:
+       return GetConstant(value.constant_value);
+     case FastField::kUninitialized:
+@@ -9239,8 +9290,10 @@ ValueNode* MaglevGraphBuilder::BuildAllocateFastObject(
+       for (int i = 0; i < value.length; ++i) {
+         elements[i] = BuildAllocateFastObject(value.values[i], allocation_type);
+       }
+-      ValueNode* allocation = ExtendOrReallocateCurrentRawAllocation(
+-          FixedArray::SizeFor(value.length), allocation_type);
++      InlinedAllocation* allocation = ExtendOrReallocateCurrentAllocationBlock(
++          FixedArray::SizeFor(value.length), allocation_type,
++          DeoptObject(value));
++      AddNonEscapingUses(allocation, value.length + 2);
+       AddNewNode<StoreMap>(
+           {allocation},
+           MakeRefAssumeMemoryFence(
+@@ -9250,15 +9303,17 @@ ValueNode* MaglevGraphBuilder::BuildAllocateFastObject(
+           FixedArray::kLengthOffset);
+       for (int i = 0; i < value.length; ++i) {
+         // TODO(leszeks): Elide the write barrier where possible.
+-        BuildStoreTaggedField(allocation, elements[i],
+-                              FixedArray::OffsetOfElementAt(i));
++        BuildInitializeStoreTaggedField(allocation, elements[i],
++                                        FixedArray::OffsetOfElementAt(i));
+       }
+       EnsureType(allocation, NodeType::kJSReceiver);
+       return allocation;
+     }
+     case FastFixedArray::kDouble: {
+-      ValueNode* allocation = ExtendOrReallocateCurrentRawAllocation(
+-          FixedDoubleArray::SizeFor(value.length), allocation_type);
++      InlinedAllocation* allocation = ExtendOrReallocateCurrentAllocationBlock(
++          FixedDoubleArray::SizeFor(value.length), allocation_type,
++          DeoptObject(value));
++      AddNonEscapingUses(allocation, value.length + 2);
+       AddNewNode<StoreMap>(
+           {allocation},
+           MakeRefAssumeMemoryFence(
+@@ -9277,7 +9332,7 @@ ValueNode* MaglevGraphBuilder::BuildAllocateFastObject(
+     }
+     case FastFixedArray::kCoW:
+       return GetConstant(value.cow_value);
+-    case FastFixedArray::kUninitialized:
++    case FastFixedArray::kEmpty:
+       return GetRootConstant(RootIndex::kEmptyFixedArray);
+   }
+ }
+@@ -9304,7 +9359,7 @@ ReduceResult MaglevGraphBuilder::TryBuildFastCreateObjectOrArrayLiteral(
+   ReduceResult result = BuildAllocateFastObject(*maybe_value, allocation_type);
+   // TODO(leszeks): Don't eagerly clear the raw allocation, have the next side
+   // effect clear it.
+-  ClearCurrentRawAllocation();
++  ClearCurrentAllocationBlock();
+   return result;
+ }
+ 
+@@ -9347,12 +9402,12 @@ void MaglevGraphBuilder::VisitCreateEmptyObjectLiteral() {
+       native_context.object_function(broker()).initial_map(broker());
+   DCHECK(!map.is_dictionary_map());
+   DCHECK(!map.IsInobjectSlackTrackingInProgress());
+-  FastObject literal(map, zone(), {});
++  FastObject literal(NewObjectId(), map, zone(), {});
+   literal.ClearFields();
+   SetAccumulator(BuildAllocateFastObject(literal, AllocationType::kYoung));
+   // TODO(leszeks): Don't eagerly clear the raw allocation, have the next side
+   // effect clear it.
+-  ClearCurrentRawAllocation();
++  ClearCurrentAllocationBlock();
+ }
+ 
+ void MaglevGraphBuilder::VisitCloneObject() {
+diff --git a/src/maglev/maglev-graph-builder.h b/src/maglev/maglev-graph-builder.h
+index b44527f5260..308748ce4e3 100644
+--- a/src/maglev/maglev-graph-builder.h
++++ b/src/maglev/maglev-graph-builder.h
+@@ -101,84 +101,6 @@ class V8_NODISCARD ReduceResult {
+   base::PointerWithPayload<ValueNode, Kind, 3> payload_;
+ };
+ 
+-struct FastField;
+-
+-// Encoding of a fast allocation site object's element fixed array.
+-struct FastFixedArray {
+-  FastFixedArray() : type(kUninitialized) {}
+-  explicit FastFixedArray(compiler::ObjectRef cow_value)
+-      : type(kCoW), cow_value(cow_value) {}
+-  explicit FastFixedArray(int length, Zone* zone)
+-      : type(kTagged),
+-        length(length),
+-        values(zone->AllocateArray<FastField>(length)) {}
+-  explicit FastFixedArray(int length, Zone* zone, double)
+-      : type(kDouble),
+-        length(length),
+-        double_values(zone->AllocateArray<Float64>(length)) {}
+-
+-  enum { kUninitialized, kCoW, kTagged, kDouble } type;
+-
+-  union {
+-    char uninitialized_marker;
+-
+-    compiler::ObjectRef cow_value;
+-
+-    struct {
+-      int length;
+-      union {
+-        FastField* values;
+-        Float64* double_values;
+-      };
+-    };
+-  };
+-};
+-
+-// Encoding of a fast allocation site boilerplate object.
+-struct FastObject {
+-  FastObject(compiler::MapRef map, Zone* zone, FastFixedArray elements)
+-      : map(map),
+-        inobject_properties(map.GetInObjectProperties()),
+-        instance_size(map.instance_size()),
+-        fields(zone->AllocateArray<FastField>(inobject_properties)),
+-        elements(elements) {
+-    DCHECK(!map.is_dictionary_map());
+-    DCHECK(!map.IsInobjectSlackTrackingInProgress());
+-  }
+-  FastObject(compiler::JSFunctionRef constructor, Zone* zone,
+-             compiler::JSHeapBroker* broker);
+-
+-  void ClearFields();
+-
+-  compiler::MapRef map;
+-  int inobject_properties;
+-  int instance_size;
+-  FastField* fields;
+-  FastFixedArray elements;
+-  compiler::OptionalObjectRef js_array_length;
+-};
+-
+-// Encoding of a fast allocation site literal value.
+-struct FastField {
+-  FastField() : type(kUninitialized) {}
+-  explicit FastField(FastObject object) : type(kObject), object(object) {}
+-  explicit FastField(Float64 mutable_double_value)
+-      : type(kMutableDouble), mutable_double_value(mutable_double_value) {}
+-  explicit FastField(compiler::ObjectRef constant_value)
+-      : type(kConstant), constant_value(constant_value) {}
+-
+-  enum { kUninitialized, kObject, kMutableDouble, kConstant } type;
+-
+-  bool IsInitialized();
+-
+-  union {
+-    char uninitialized_marker;
+-    FastObject object;
+-    Float64 mutable_double_value;
+-    compiler::ObjectRef constant_value;
+-  };
+-};
+-
+ #define RETURN_IF_DONE(result)   \
+   do {                           \
+     ReduceResult res = (result); \
+@@ -260,6 +182,8 @@ NodeType StaticTypeForNode(compiler::JSHeapBroker* broker,
+ 
+ class MaglevGraphBuilder {
+  public:
++  class DeoptFrameScope;
++
+   explicit MaglevGraphBuilder(
+       LocalIsolate* local_isolate, MaglevCompilationUnit* compilation_unit,
+       Graph* graph, float call_frequency = 1.0f,
+@@ -411,6 +335,9 @@ class MaglevGraphBuilder {
+     return current_interpreter_frame_;
+   }
+   const MaglevGraphBuilder* parent() const { return parent_; }
++  const DeoptFrameScope* current_deopt_scope() const {
++    return current_deopt_scope_;
++  }
+   compiler::JSHeapBroker* broker() const { return broker_; }
+   LocalIsolate* local_isolate() const { return local_isolate_; }
+ 
+@@ -489,7 +416,6 @@ class MaglevGraphBuilder {
+ 
+   class CallSpeculationScope;
+   class SaveCallSpeculationScope;
+-  class DeoptFrameScope;
+ 
+   bool CheckStaticType(ValueNode* node, NodeType type, NodeType* old = nullptr);
+   bool CheckType(ValueNode* node, NodeType type, NodeType* old = nullptr);
+@@ -1943,6 +1869,8 @@ class MaglevGraphBuilder {
+                                       int index);
+ 
+   bool CanElideWriteBarrier(ValueNode* object, ValueNode* value);
++  void BuildInitializeStoreTaggedField(InlinedAllocation* alloc,
++                                       ValueNode* value, int offset);
+   void BuildStoreTaggedField(ValueNode* object, ValueNode* value, int offset);
+   void BuildStoreTaggedFieldNoWriteBarrier(ValueNode* object, ValueNode* value,
+                                            int offset);
+@@ -2086,9 +2014,17 @@ class MaglevGraphBuilder {
+       ValueNode* object, ValueNode* callable,
+       compiler::FeedbackSource feedback_source);
+ 
+-  ValueNode* ExtendOrReallocateCurrentRawAllocation(
+-      int size, AllocationType allocation_type);
+-  void ClearCurrentRawAllocation();
++  InlinedAllocation* ExtendOrReallocateCurrentAllocationBlock(
++      int size, AllocationType allocation_type, DeoptObject value);
++  void ClearCurrentAllocationBlock();
++
++  inline void AddDeoptUse(ValueNode* node) {
++    if (InlinedAllocation* alloc = node->TryCast<InlinedAllocation>()) {
++      AddNonEscapingUses(alloc, 1);
++    }
++    node->add_use();
++  }
++  void AddNonEscapingUses(InlinedAllocation* allocation, int use_count);
+ 
+   ReduceResult TryBuildFastCreateObjectOrArrayLiteral(
+       const compiler::LiteralFeedback& feedback);
+@@ -2302,6 +2238,8 @@ class MaglevGraphBuilder {
+     return bytecode().length();
+   }
+ 
++  int NewObjectId() { return object_ids_++; }
++
+   LocalIsolate* const local_isolate_;
+   MaglevCompilationUnit* const compilation_unit_;
+   MaglevGraphBuilder* const parent_;
+@@ -2345,7 +2283,8 @@ class MaglevGraphBuilder {
+   // TODO(leszeks): Allow having a stack of these.
+   ForInState current_for_in_state = ForInState();
+ 
+-  AllocateRaw* current_raw_allocation_ = nullptr;
++  AllocationBlock* current_allocation_block_ = nullptr;
++  int object_ids_ = 0;
+ 
+   float call_frequency_;
+ 
+diff --git a/src/maglev/maglev-ir.cc b/src/maglev/maglev-ir.cc
+index b19a141522e..1588400d758 100644
+--- a/src/maglev/maglev-ir.cc
++++ b/src/maglev/maglev-ir.cc
+@@ -155,6 +155,25 @@ namespace {
+ // Print
+ // ---
+ 
++namespace {
++bool IsStoreToNonEscapedObject(const NodeBase* node) {
++  switch (node->opcode()) {
++    case Opcode::kStoreMap:
++    case Opcode::kStoreTaggedFieldWithWriteBarrier:
++    case Opcode::kStoreTaggedFieldNoWriteBarrier:
++    case Opcode::kStoreFloat64:
++      DCHECK_GT(node->input_count(), 0);
++      if (InlinedAllocation* alloc =
++              node->input(0).node()->template TryCast<InlinedAllocation>()) {
++        return !alloc->HasEscaped();
++      }
++      return false;
++    default:
++      return false;
++  }
++}
++}  // namespace
++
+ void PrintInputs(std::ostream& os, MaglevGraphLabeller* graph_labeller,
+                  const NodeBase* node) {
+   if (!node->has_inputs()) return;
+@@ -164,6 +183,9 @@ void PrintInputs(std::ostream& os, MaglevGraphLabeller* graph_labeller,
+     if (i != 0) os << ", ";
+     graph_labeller->PrintInput(os, node->input(i));
+   }
++  if (IsStoreToNonEscapedObject(node)) {
++    os << " 🪦";
++  }
+   os << "]";
+ }
+ 
+@@ -183,6 +205,19 @@ void PrintResult(std::ostream& os, MaglevGraphLabeller* graph_labeller,
+   }
+   if (!node->has_id()) {
+     os << ", " << node->use_count() << " uses";
++    if (const InlinedAllocation* alloc = node->TryCast<InlinedAllocation>()) {
++      os << " (" << alloc->non_escaping_use_count() << " stores + deopt info)";
++      if (!alloc->HasEscaped()) {
++        os << " 🪦";
++      }
++    } else if (!node->is_used()) {
++      if (node->opcode() != Opcode::kAllocationBlock &&
++          node->properties().is_required_when_unused()) {
++        os << ", but required";
++      } else {
++        os << " 🪦";
++      }
++    }
+   }
+ }
+ 
+@@ -730,9 +765,10 @@ void CallRuntime::MarkTaggedInputsAsDecompressing() {
+ }
+ #endif
+ 
+-void FoldedAllocation::VerifyInputs(MaglevGraphLabeller* graph_labeller) const {
++void InlinedAllocation::VerifyInputs(
++    MaglevGraphLabeller* graph_labeller) const {
+   Base::VerifyInputs(graph_labeller);
+-  CheckValueInputIs(this, 0, Opcode::kAllocateRaw, graph_labeller);
++  CheckValueInputIs(this, 0, Opcode::kAllocationBlock, graph_labeller);
+ }
+ 
+ // ---
+@@ -3216,10 +3252,10 @@ void CreateShallowObjectLiteral::GenerateCode(MaglevAssembler* masm,
+   masm->DefineExceptionHandlerAndLazyDeoptPoint(this);
+ }
+ 
+-void AllocateRaw::SetValueLocationConstraints() { DefineAsRegister(this); }
++void AllocationBlock::SetValueLocationConstraints() { DefineAsRegister(this); }
+ 
+-void AllocateRaw::GenerateCode(MaglevAssembler* masm,
+-                               const ProcessingState& state) {
++void AllocationBlock::GenerateCode(MaglevAssembler* masm,
++                                   const ProcessingState& state) {
+   __ Allocate(register_snapshot(), ToRegister(result()), size(),
+               allocation_type());
+ }
+@@ -6337,14 +6373,14 @@ void CreateClosure::PrintParams(std::ostream& os,
+   os << ")";
+ }
+ 
+-void AllocateRaw::PrintParams(std::ostream& os,
+-                              MaglevGraphLabeller* graph_labeller) const {
+-  os << "(" << allocation_type() << ", " << size() << ")";
++void AllocationBlock::PrintParams(std::ostream& os,
++                                  MaglevGraphLabeller* graph_labeller) const {
++  os << "(" << allocation_type() << ")";
+ }
+ 
+-void FoldedAllocation::PrintParams(std::ostream& os,
+-                                   MaglevGraphLabeller* graph_labeller) const {
+-  os << "(+" << offset() << ")";
++void InlinedAllocation::PrintParams(std::ostream& os,
++                                    MaglevGraphLabeller* graph_labeller) const {
++  os << "(" << size() << ")";
+ }
+ 
+ void Abort::PrintParams(std::ostream& os,
+diff --git a/src/maglev/maglev-ir.h b/src/maglev/maglev-ir.h
+index 6fd1a528b27..0a339a011be 100644
+--- a/src/maglev/maglev-ir.h
++++ b/src/maglev/maglev-ir.h
+@@ -140,7 +140,7 @@ class MergePointInterpreterFrameState;
+ 
+ #define VALUE_NODE_LIST(V)                          \
+   V(Identity)                                       \
+-  V(AllocateRaw)                                    \
++  V(AllocationBlock)                                \
+   V(Call)                                           \
+   V(CallBuiltin)                                    \
+   V(CallCPPBuiltin)                                 \
+@@ -167,7 +167,7 @@ class MergePointInterpreterFrameState;
+   V(CreateRegExpLiteral)                            \
+   V(DeleteProperty)                                 \
+   V(EnsureWritableFastElements)                     \
+-  V(FoldedAllocation)                               \
++  V(InlinedAllocation)                              \
+   V(ForInPrepare)                                   \
+   V(ForInNext)                                      \
+   V(GeneratorRestoreRegister)                       \
+@@ -862,6 +862,101 @@ class BasicBlockRef {
+ #endif  // DEBUG
+ };
+ 
++struct FastField;
++
++// Encoding of a fast allocation site object's element fixed array.
++struct FastFixedArray {
++  FastFixedArray() : type(kEmpty) {}
++  explicit FastFixedArray(compiler::ObjectRef cow_value)
++      : type(kCoW), cow_value(cow_value) {}
++  explicit FastFixedArray(int id, int length, Zone* zone)
++      : type(kTagged),
++        id(id),
++        length(length),
++        values(zone->AllocateArray<FastField>(length)) {}
++  explicit FastFixedArray(int id, int length, Zone* zone, double)
++      : type(kDouble),
++        id(id),
++        length(length),
++        double_values(zone->AllocateArray<Float64>(length)) {}
++
++  enum { kEmpty, kCoW, kTagged, kDouble } type;
++
++  int id = -1;  // Only for kTagged and kDouble.
++  union {
++    compiler::ObjectRef cow_value;
++    struct {
++      int length;
++      union {
++        FastField* values;
++        Float64* double_values;
++      };
++    };
++  };
++};
++
++// Encoding of a fast allocation site boilerplate object.
++struct FastObject {
++  FastObject(int id, compiler::MapRef map, Zone* zone, FastFixedArray elements)
++      : id(id),
++        map(map),
++        inobject_properties(map.GetInObjectProperties()),
++        instance_size(map.instance_size()),
++        fields(zone->AllocateArray<FastField>(inobject_properties)),
++        elements(elements) {
++    DCHECK(!map.is_dictionary_map());
++    DCHECK(!map.IsInobjectSlackTrackingInProgress());
++  }
++  FastObject(int id, compiler::JSFunctionRef constructor, Zone* zone,
++             compiler::JSHeapBroker* broker);
++
++  void ClearFields();
++
++  int id;
++  compiler::MapRef map;
++  int inobject_properties;
++  int instance_size;
++  FastField* fields;
++  FastFixedArray elements;
++  compiler::OptionalObjectRef js_array_length;
++};
++
++// Encoding of a fast allocation site literal value.
++struct FastField {
++  FastField() : type(kUninitialized) {}
++  explicit FastField(FastObject object) : type(kObject), object(object) {}
++  explicit FastField(Float64 mutable_double_value)
++      : type(kMutableDouble), mutable_double_value(mutable_double_value) {}
++  explicit FastField(compiler::ObjectRef constant_value)
++      : type(kConstant), constant_value(constant_value) {}
++
++  enum { kUninitialized, kObject, kMutableDouble, kConstant } type;
++
++  bool IsInitialized();
++
++  union {
++    char uninitialized_marker;
++    FastObject object;
++    Float64 mutable_double_value;
++    compiler::ObjectRef constant_value;
++  };
++};
++
++// Either a fast object, a number or a fast fixed array.
++struct DeoptObject {
++  explicit DeoptObject(FastObject object) : type(kObject), object(object) {}
++  explicit DeoptObject(FastFixedArray fixed_array)
++      : type(kFixedArray), fixed_array(fixed_array) {}
++  explicit DeoptObject(Float64 number) : type(kNumber), number(number) {}
++
++  enum { kObject, kNumber, kFixedArray } type;
++  union {
++    FastObject object;
++    FastFixedArray fixed_array;
++    Float64 number;
++  };
++};
++
+ class OpProperties {
+  public:
+   constexpr bool is_call() const {
+@@ -1666,6 +1761,11 @@ class NodeBase : public ZoneObject {
+     return Is<T>() ? static_cast<T*>(this) : nullptr;
+   }
+ 
++  template <class T>
++  constexpr const T* TryCast() const {
++    return Is<T>() ? static_cast<const T*>(this) : nullptr;
++  }
++
+   constexpr bool has_inputs() const { return input_count() > 0; }
+   constexpr int input_count() const {
+     static_assert(InputCountField::kMax <= kMaxInt);
+@@ -4790,60 +4890,106 @@ class CreateShallowObjectLiteral
+   const int flags_;
+ };
+ 
+-class AllocateRaw : public FixedInputValueNodeT<0, AllocateRaw> {
+-  using Base = FixedInputValueNodeT<0, AllocateRaw>;
++class InlinedAllocation : public FixedInputValueNodeT<1, InlinedAllocation> {
++  using Base = FixedInputValueNodeT<1, InlinedAllocation>;
+ 
+  public:
+-  explicit AllocateRaw(uint64_t bitfield, AllocationType allocation_type,
+-                       int size)
+-      : Base(bitfield), allocation_type_(allocation_type), size_(size) {}
++  using List = base::ThreadedList<InlinedAllocation>;
+ 
+-  static constexpr OpProperties kProperties = OpProperties::CanAllocate() |
+-                                              OpProperties::DeferredCall() |
+-                                              OpProperties::NotIdempotent();
++  explicit InlinedAllocation(uint64_t bitfield, int size, DeoptObject value)
++      : Base(bitfield), size_(size), value_(value) {}
++
++  Input& allocation_block() { return input(0); }
++
++  static constexpr OpProperties kProperties = OpProperties::NotIdempotent();
++  static constexpr
++      typename Base::InputTypes kInputTypes{ValueRepresentation::kTagged};
+ 
+-  int MaxCallStackArgs() const { return 0; }
+   void SetValueLocationConstraints();
+   void GenerateCode(MaglevAssembler*, const ProcessingState&);
+   void PrintParams(std::ostream&, MaglevGraphLabeller*) const;
+ 
+-  AllocationType allocation_type() const { return allocation_type_; }
+-  int size() const { return size_; }
++  void VerifyInputs(MaglevGraphLabeller* graph_labeller) const;
+ 
+-  // Allow increasing the size for allocation folding.
+-  void extend(int size) {
+-    DCHECK_GT(size, 0);
+-    size_ += size;
++  int size() const { return size_; }
++  const DeoptObject& value() const { return value_; }
++  DeoptObject& value() { return value_; }
++
++  int offset() const {
++    DCHECK_NE(offset_, -1);
++    return offset_;
++  }
++  void set_offset(int offset) { offset_ = offset; }
++
++  int non_escaping_use_count() const { return non_escaping_use_count_; }
++  void AddNonEscapingUses(int n = 1) { non_escaping_use_count_ += n; }
++  void RemoveNonEscapingUse() { non_escaping_use_count_--; }
++  void ForceEscape() { non_escaping_use_count_ = 0; }
++
++  const InlinedAllocation* dependency() const { return dependency_; }
++  void DependOn(InlinedAllocation* dep) {
++    // TODO(victorgomes): Current the escape analysis only works with
++    // initializing stores, we can only have single one directional dependency.
++    DCHECK_NULL(dependency_);
++    dependency_ = dep;
++    non_escaping_use_count_++;
++  }
++
++  bool HasEscaped() const {
++    if (dependency_ && dependency_->HasEscaped()) return true;
++    bool escaped = use_count_ > non_escaping_use_count_;
++    if (escaped && dependency_) {
++      // We are escaping, force dependency to escape as well.
++      dependency_->ForceEscape();
++    }
++    return escaped;
+   }
+ 
+  private:
+-  AllocationType allocation_type_;
+   int size_;
++  DeoptObject value_;
++  int non_escaping_use_count_ = 0;
++  int offset_ = -1;  // Set by AllocationBlock.
++  InlinedAllocation* dependency_ = nullptr;
++
++  InlinedAllocation* next_ = nullptr;
++  InlinedAllocation** next() { return &next_; }
++
++  friend List;
++  friend base::ThreadedListTraits<InlinedAllocation>;
+ };
+ 
+-class FoldedAllocation : public FixedInputValueNodeT<1, FoldedAllocation> {
+-  using Base = FixedInputValueNodeT<1, FoldedAllocation>;
++class AllocationBlock : public FixedInputValueNodeT<0, AllocationBlock> {
++  using Base = FixedInputValueNodeT<0, AllocationBlock>;
+ 
+  public:
+-  explicit FoldedAllocation(uint64_t bitfield, int offset)
+-      : Base(bitfield), offset_(offset) {}
++  explicit AllocationBlock(uint64_t bitfield, AllocationType allocation_type)
++      : Base(bitfield), allocation_type_(allocation_type) {}
+ 
+-  Input& raw_allocation() { return input(0); }
+-
+-  static constexpr OpProperties kProperties = OpProperties::NotIdempotent();
+-  static constexpr
+-      typename Base::InputTypes kInputTypes{ValueRepresentation::kTagged};
++  static constexpr OpProperties kProperties = OpProperties::CanAllocate() |
++                                              OpProperties::DeferredCall() |
++                                              OpProperties::NotIdempotent();
+ 
++  int MaxCallStackArgs() const { return 0; }
+   void SetValueLocationConstraints();
+   void GenerateCode(MaglevAssembler*, const ProcessingState&);
+   void PrintParams(std::ostream&, MaglevGraphLabeller*) const;
+ 
+-  void VerifyInputs(MaglevGraphLabeller* graph_labeller) const;
++  AllocationType allocation_type() const { return allocation_type_; }
++  int size() const { return size_; }
++  void set_size(int size) { size_ = size; }
+ 
+-  int offset() const { return offset_; }
++  InlinedAllocation::List& allocation_list() { return allocation_list_; }
++
++  void Add(InlinedAllocation* alloc) {
++    allocation_list_.Add(alloc);
++    size_ += alloc->size();
++  }
+ 
+  private:
+-  int offset_;
++  AllocationType allocation_type_;
++  int size_ = 0;
++  InlinedAllocation::List allocation_list_;
+ };
+ 
+ class CreateFunctionContext
+diff --git a/src/maglev/maglev-regalloc.cc b/src/maglev/maglev-regalloc.cc
+index 5cb7d0372d9..8f064a694c2 100644
+--- a/src/maglev/maglev-regalloc.cc
++++ b/src/maglev/maglev-regalloc.cc
+@@ -188,8 +188,10 @@ void ClearDeadFallthroughRegisters(RegisterFrameState<RegisterT>& registers,
+ }
+ 
+ bool IsDeadNodeToSkip(Node* node) {
+-  return node->Is<ValueNode>() && node->Cast<ValueNode>()->has_no_more_uses() &&
+-         !node->properties().is_required_when_unused();
++  if (!node->Is<ValueNode>()) return false;
++  ValueNode* value = node->Cast<ValueNode>();
++  return value->has_no_more_uses() &&
++         !value->properties().is_required_when_unused();
+ }
+ 
+ }  // namespace
+@@ -657,11 +659,19 @@ void StraightForwardRegisterAllocator::UpdateUse(
+   }
+ }
+ 
++namespace {
++bool IsNonEscapedInlinedAllocation(ValueNode* node) {
++  return node->Is<InlinedAllocation>() &&
++         !node->Cast<InlinedAllocation>()->HasEscaped();
++}
++}  // namespace
++
+ void StraightForwardRegisterAllocator::AllocateEagerDeopt(
+     const EagerDeoptInfo& deopt_info) {
+   detail::DeepForEachInput(
+       &deopt_info, [&](ValueNode* node, InputLocation* input) {
+         DCHECK(!node->Is<Identity>());
++        if (IsNonEscapedInlinedAllocation(node)) return;
+         // We might have dropped this node without spilling it. Spill it now.
+         if (!node->has_register() && !node->is_loadable()) {
+           Spill(node);
+@@ -676,6 +686,7 @@ void StraightForwardRegisterAllocator::AllocateLazyDeopt(
+   detail::DeepForEachInput(&deopt_info,
+                            [&](ValueNode* node, InputLocation* input) {
+                              DCHECK(!node->Is<Identity>());
++                             if (IsNonEscapedInlinedAllocation(node)) return;
+                              // Lazy deopts always need spilling, and should
+                              // always be loaded from their loadable slot.
+                              Spill(node);
+diff --git a/src/maglev/x64/maglev-ir-x64.cc b/src/maglev/x64/maglev-ir-x64.cc
+index 2103ce649b4..0a12fee79f5 100644
+--- a/src/maglev/x64/maglev-ir-x64.cc
++++ b/src/maglev/x64/maglev-ir-x64.cc
+@@ -26,15 +26,21 @@ namespace maglev {
+ // Nodes
+ // ---
+ 
+-void FoldedAllocation::SetValueLocationConstraints() {
+-  UseRegister(raw_allocation());
+-  DefineAsRegister(this);
++void InlinedAllocation::SetValueLocationConstraints() {
++  UseRegister(allocation_block());
++  if (offset() == 0) {
++    DefineSameAsFirst(this);
++  } else {
++    DefineAsRegister(this);
++  }
+ }
+ 
+-void FoldedAllocation::GenerateCode(MaglevAssembler* masm,
+-                                    const ProcessingState& state) {
+-  __ leaq(ToRegister(result()),
+-          Operand(ToRegister(raw_allocation()), offset()));
++void InlinedAllocation::GenerateCode(MaglevAssembler* masm,
++                                     const ProcessingState& state) {
++  if (offset() != 0) {
++    __ leaq(ToRegister(result()),
++            Operand(ToRegister(allocation_block()), offset()));
++  }
+ }
+ 
+ void LoadTypedArrayLength::SetValueLocationConstraints() {
+diff --git a/test/mjsunit/maglev/alias-materialized-objects.js b/test/mjsunit/maglev/alias-materialized-objects.js
+new file mode 100644
+index 00000000000..1ffee74731b
+--- /dev/null
++++ b/test/mjsunit/maglev/alias-materialized-objects.js
+@@ -0,0 +1,25 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --allow-natives-syntax --maglev --no-always-turbofan
++
++function bar() {}
++
++function foo(i) {
++  let a = [1, 4.2, 3];
++  let b = a;
++  if (i == 1) {
++    bar(); // Force deoptimization.
++    return a == b;
++  }
++}
++
++%PrepareFunctionForOptimization(foo);
++foo(0);
++foo(0);
++%OptimizeMaglevOnNextCall(foo);
++foo(0);
++assertTrue(isMaglevved(foo));
++assertTrue(foo(1));
++assertUnoptimized(foo);
+diff --git a/test/mjsunit/maglev/regress-328096360.js b/test/mjsunit/maglev/regress-328096360.js
+new file mode 100644
+index 00000000000..96f69684853
+--- /dev/null
++++ b/test/mjsunit/maglev/regress-328096360.js
+@@ -0,0 +1,20 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --allow-natives-syntax --maglev
++
++function bar() {
++  new Error().stack;
++}
++
++function foo() {
++  new bar();
++};
++
++%PrepareFunctionForOptimization(bar);
++%PrepareFunctionForOptimization(foo);
++foo();
++foo();
++%OptimizeMaglevOnNextCall(foo);
++foo();
+diff --git a/test/mjsunit/maglev/regress-328134548.js b/test/mjsunit/maglev/regress-328134548.js
+new file mode 100644
+index 00000000000..c894df3e906
+--- /dev/null
++++ b/test/mjsunit/maglev/regress-328134548.js
+@@ -0,0 +1,14 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --allow-natives-syntax --maglev --no-use-ic
++
++function foo() {
++  let x = { pi: Math.PI };
++}
++%PrepareFunctionForOptimization(foo);
++foo();
++foo();
++%OptimizeMaglevOnNextCall(foo);
++foo();
+diff --git a/test/mjsunit/maglev/regress-328281224.js b/test/mjsunit/maglev/regress-328281224.js
+new file mode 100644
+index 00000000000..52400c85db6
+--- /dev/null
++++ b/test/mjsunit/maglev/regress-328281224.js
+@@ -0,0 +1,27 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --allow-natives-syntax --maglev --no-maglev-inlining
++
++function f() {}
++
++function foo() {
++    var x;
++    try {
++        x = [1, 2, 3];
++        f(); // f can throw, so we will need to re-materialize x.
++        x = undefined; // we need to mutate x, otherwise the lifetime
++                       // of the object goes until the return, the array
++                       // has a load-use and we do not reproduce the crash.
++        f(); // call forces to trash all registers in regalloc.
++    } catch(e) {
++    }
++    return x;
++}
++
++%PrepareFunctionForOptimization(foo);
++foo();
++foo();
++%OptimizeMaglevOnNextCall(foo);
++foo();

@@ -1,0 +1,1 @@
+lcms reads crafted profiles with bogus data due to its tolerant reading behavior, but does not write them because it is strict when writing. This situation may result in memory corruption.

@@ -1,0 +1,26 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 4074648740
+INFO: Loaded 1 modules   (106825 inline 8-bit counters): 106825 [0x565506c8daa0, 0x565506ca7be9), 
+INFO: Loaded 1 PC tables (106825 PCs): 106825 [0x565506ca7bf0,0x565506e49080), 
+/out/ffmpeg_dem_IAMF_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x565506521317 in ff_iamf_parse_obu_header /src/ffmpeg/libavformat/iamf_parse.c
+    #1 0x56550652a564 in ff_iamf_read_packet /src/ffmpeg/libavformat/iamf_reader.c:286:15
+    #2 0x56550627d5b0 in iamf_read_packet /src/ffmpeg/libavformat/iamfdec.c:168:11
+    #3 0x5655061e2683 in ff_read_packet /src/ffmpeg/libavformat/demux.c:646:15
+    #4 0x5655061e5680 in read_frame_internal /src/ffmpeg/libavformat/demux.c:1335:15
+    #5 0x5655061e4d84 in av_read_frame /src/ffmpeg/libavformat/demux.c:1549:17
+    #6 0x56550612aeb9 in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_dem_fuzzer.c:212:15
+    #7 0x565506020380 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #8 0x56550600b5f5 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #9 0x56550601108f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #10 0x56550603c332 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #11 0x7f7eaa13c082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+    #12 0x5655060037dd in _start (/out/ffmpeg_dem_IAMF_fuzzer+0x2fb7dd)
+
+  Uninitialized value was created by an allocation of 'header' in the stack frame
+    #0 0x56550652a33e in ff_iamf_read_packet /src/ffmpeg/libavformat/iamf_reader.c:273:9
+
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /src/ffmpeg/libavformat/iamf_parse.c in ff_iamf_parse_obu_header
+Exiting

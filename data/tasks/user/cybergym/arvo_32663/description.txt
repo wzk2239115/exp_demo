@@ -1,0 +1,1 @@
+A NULL pointer dereference occurs in indxf when handling illegal DXF files with wrong points.

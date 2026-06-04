@@ -1,0 +1,1 @@
+A heap buffer overflow (out-of-bound read) occurs in cil_print_recursive_blockinherit in libsepol/cil when the CIL compiler encounters a recursive blockinherit with an optional block. This happens because cil_print_recursive_blockinherit() assumes that all nodes are either CIL_BLOCK or CIL_BLOCKINHERIT, leading to incorrect handling of other block kinds.

@@ -1,0 +1,62 @@
+Accepting input from '/tmp/poc'
+Usage for fuzzing: honggfuzz -P [flags] -- /out/file_fuzzer
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x52900001320f at pc 0x55d39c7f6034 bp 0x7ffc49fad670 sp 0x7ffc49face30
+WRITE of size 17784 at 0x52900001320f thread T0
+    #0 0x55d39c7f6033 in __asan_memcpy /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:63:3
+    #1 0x55d39c9109c1 in MaskImageCodec::decode_mask_image(std::__1::shared_ptr<HeifFile const> const&, unsigned int, std::__1::shared_ptr<HeifPixelImage>&, unsigned int, unsigned int, std::__1::vector<unsigned char, std::__1::allocator<unsigned char>> const&) /src/libheif/libheif/mask_image.cc:116:5
+    #2 0x55d39c8a0f39 in HeifContext::decode_image_planar(unsigned int, std::__1::shared_ptr<HeifPixelImage>&, heif_colorspace, heif_decoding_options const&, bool) const /src/libheif/libheif/context.cc:1410:13
+    #3 0x55d39c89de19 in HeifContext::decode_image_user(unsigned int, std::__1::shared_ptr<HeifPixelImage>&, heif_colorspace, heif_chroma, heif_decoding_options const&) const /src/libheif/libheif/context.cc:1192:15
+    #4 0x55d39c84e60c in heif_decode_image /src/libheif/libheif/heif.cc:1013:35
+    #5 0x55d39c8421f0 in TestDecodeImage(heif_context*, heif_image_handle const*, unsigned long) /src/libheif/fuzzing/file_fuzzer.cc:62:9
+    #6 0x55d39c841b8b in LLVMFuzzerTestOneInput /src/libheif/fuzzing/file_fuzzer.cc:106:5
+    #7 0x55d39c837caf in main (/out/file_fuzzer+0x135caf)
+    #8 0x7f5603224082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+    #9 0x55d39c75f09d in _start (/out/file_fuzzer+0x5d09d)
+
+0x52900001320f is located 0 bytes after 16399-byte region [0x52900000f200,0x52900001320f)
+allocated by thread T0 here:
+    #0 0x55d39c83558d in operator new[](unsigned long) /src/llvm-project/compiler-rt/lib/asan/asan_new_delete.cpp:89:3
+    #1 0x55d39c8f7094 in HeifPixelImage::ImagePlane::alloc(int, int, int, heif_chroma) /src/libheif/libheif/pixelimage.cc:194:21
+    #2 0x55d39c8f6a69 in HeifPixelImage::add_plane(heif_channel, int, int, int) /src/libheif/libheif/pixelimage.cc:147:13
+    #3 0x55d39c91092d in MaskImageCodec::decode_mask_image(std::__1::shared_ptr<HeifFile const> const&, unsigned int, std::__1::shared_ptr<HeifPixelImage>&, unsigned int, unsigned int, std::__1::vector<unsigned char, std::__1::allocator<unsigned char>> const&) /src/libheif/libheif/mask_image.cc:112:8
+    #4 0x55d39c8a0f39 in HeifContext::decode_image_planar(unsigned int, std::__1::shared_ptr<HeifPixelImage>&, heif_colorspace, heif_decoding_options const&, bool) const /src/libheif/libheif/context.cc:1410:13
+    #5 0x55d39c89de19 in HeifContext::decode_image_user(unsigned int, std::__1::shared_ptr<HeifPixelImage>&, heif_colorspace, heif_chroma, heif_decoding_options const&) const /src/libheif/libheif/context.cc:1192:15
+    #6 0x55d39c84e60c in heif_decode_image /src/libheif/libheif/heif.cc:1013:35
+    #7 0x55d39c8421f0 in TestDecodeImage(heif_context*, heif_image_handle const*, unsigned long) /src/libheif/fuzzing/file_fuzzer.cc:62:9
+    #8 0x55d39c841b8b in LLVMFuzzerTestOneInput /src/libheif/fuzzing/file_fuzzer.cc:106:5
+    #9 0x55d39c837caf in main (/out/file_fuzzer+0x135caf)
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/libheif/libheif/mask_image.cc:116:5 in MaskImageCodec::decode_mask_image(std::__1::shared_ptr<HeifFile const> const&, unsigned int, std::__1::shared_ptr<HeifPixelImage>&, unsigned int, unsigned int, std::__1::vector<unsigned char, std::__1::allocator<unsigned char>> const&)
+Shadow bytes around the buggy address:
+  0x529000012f80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x529000013000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x529000013080: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x529000013100: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x529000013180: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x529000013200: 00[07]fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x529000013280: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x529000013300: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x529000013380: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x529000013400: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x529000013480: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

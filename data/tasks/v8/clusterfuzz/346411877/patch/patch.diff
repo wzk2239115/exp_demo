@@ -1,0 +1,40 @@
+diff --git a/src/objects/map-updater.cc b/src/objects/map-updater.cc
+index a95c1d209c2..d589fb0c306 100644
+--- a/src/objects/map-updater.cc
++++ b/src/objects/map-updater.cc
+@@ -1286,7 +1286,9 @@ void MapUpdater::UpdateFieldType(Isolate* isolate, DirectHandle<Map> map,
+       continue;
+     }
+ 
+-    MaybeObjectHandle wrapped_type(Map::WrapFieldType(new_type));
++    DCHECK_IMPLIES(IsClass(*cur_new_type),
++                   cur_new_representation.IsHeapObject());
++    MaybeObjectHandle wrapped_type(Map::WrapFieldType(cur_new_type));
+     Descriptor d = Descriptor::DataField(
+         name, descriptors->GetFieldIndex(descriptor), details.attributes(),
+         cur_new_constness, cur_new_representation, wrapped_type);
+diff --git a/test/mjsunit/regress-346411877.js b/test/mjsunit/regress-346411877.js
+new file mode 100644
+index 00000000000..daa106c9cfe
+--- /dev/null
++++ b/test/mjsunit/regress-346411877.js
+@@ -0,0 +1,19 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++for (let v0 = 0; v0 < 5; v0++) {
++    const o2 = {
++    };
++    const o3 = {
++        "c": 3.0,
++    };
++    function f5(a6, a7) {
++        Object.defineProperty(o2, "c", { configurable: true, enumerable: true, value: o3 });
++        const o10 = {
++            ...a7,
++        };
++    }
++    const v11 = f5(undefined, o2);
++    f5();
++}

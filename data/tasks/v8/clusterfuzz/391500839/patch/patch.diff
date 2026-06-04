@@ -1,0 +1,128 @@
+diff --git a/src/compiler/turboshaft/string-escape-analysis-reducer.cc b/src/compiler/turboshaft/string-escape-analysis-reducer.cc
+index b253b536cc0..4f6c32924d6 100644
+--- a/src/compiler/turboshaft/string-escape-analysis-reducer.cc
++++ b/src/compiler/turboshaft/string-escape-analysis-reducer.cc
+@@ -29,23 +29,59 @@ void StringEscapeAnalyzer::Run() {
+   ComputeFrameStatesToReconstruct();
+ }
+ 
++void StringEscapeAnalyzer::MarkNextFrameStateInputAsEscaping(
++    FrameStateData::Iterator* it) {
++  switch (it->current_instr()) {
++    using Instr = FrameStateData::Instr;
++    case Instr::kInput: {
++      MachineType type;
++      OpIndex input;
++      it->ConsumeInput(&type, &input);
++      MarkAsEscaping(input);
++      return;
++    }
++    case Instr::kArgumentsElements:
++    case Instr::kArgumentsLength:
++    case Instr::kRestLength:
++    case Instr::kDematerializedObjectReference:
++    case Instr::kDematerializedObject:
++    case Instr::kDematerializedStringConcat:
++    case Instr::kDematerializedStringConcatReference:
++    case Instr::kUnusedRegister:
++      return;
++  }
++}
++
++void StringEscapeAnalyzer::ProcessFrameState(V<FrameState> index,
++                                             const FrameStateOp& framestate) {
++  max_frame_state_input_count_ =
++      std::max<uint32_t>(max_frame_state_input_count_, framestate.input_count);
++  for (V<Any> input_idx : framestate.inputs()) {
++    if (graph_.Get(input_idx).Is<StringConcatOp>()) {
++      // This FrameState has a StringConcat as input, so we might need to
++      // recreate it in the reducer.
++      maybe_to_reconstruct_frame_states_.push_back(index);
++      break;
++    }
++  }
++
++  // We need to mark the Function and the Receiver as escaping. See
++  // https://crbug.com/40059369.
++  auto it = framestate.data->iterator(framestate.state_values());
++  // Function
++  MarkNextFrameStateInputAsEscaping(&it);
++  // 1st parameter = receiver
++  MarkNextFrameStateInputAsEscaping(&it);
++
++  // Other FrameState uses are not considered as escaping.
++}
++
+ void StringEscapeAnalyzer::ProcessBlock(const Block& block) {
+   for (V<Any> index : base::Reversed(graph_.OperationIndices(block))) {
+     const Operation& op = graph_.Get(index);
+     switch (op.opcode) {
+       case Opcode::kFrameState:
+-        // FrameState uses are not considered as escaping.
+-        max_frame_state_input_count_ =
+-            std::max<uint32_t>(max_frame_state_input_count_, op.input_count);
+-        for (V<Any> input_idx : op.inputs()) {
+-          if (graph_.Get(input_idx).Is<StringConcatOp>()) {
+-            // This FrameState has a StringConcat as input, so we might need to
+-            // recreate it in the reducer.
+-            maybe_to_reconstruct_frame_states_.push_back(
+-                V<FrameState>::Cast(index));
+-            break;
+-          }
+-        }
++        ProcessFrameState(V<FrameState>::Cast(index), op.Cast<FrameStateOp>());
+         break;
+       case Opcode::kStringConcat:
+         // The inputs of a StringConcat are only escaping if the StringConcat
+diff --git a/src/compiler/turboshaft/string-escape-analysis-reducer.h b/src/compiler/turboshaft/string-escape-analysis-reducer.h
+index 95fb93d00f0..5cea31a1c9f 100644
+--- a/src/compiler/turboshaft/string-escape-analysis-reducer.h
++++ b/src/compiler/turboshaft/string-escape-analysis-reducer.h
+@@ -53,6 +53,8 @@ class StringEscapeAnalyzer {
+   Zone* zone_;
+ 
+   void ProcessBlock(const Block& block);
++  void ProcessFrameState(V<FrameState> index, const FrameStateOp& framestate);
++  void MarkNextFrameStateInputAsEscaping(FrameStateData::Iterator* it);
+   void MarkAllInputsAsEscaping(const Operation& op);
+   void RecursivelyMarkAllStringConcatInputsAsEscaping(
+       const StringConcatOp* concat);
+diff --git a/test/mjsunit/turboshaft/regress-391500839.js b/test/mjsunit/turboshaft/regress-391500839.js
+new file mode 100644
+index 00000000000..0aeca6ba0fe
+--- /dev/null
++++ b/test/mjsunit/turboshaft/regress-391500839.js
+@@ -0,0 +1,33 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++//
++// Flags: --allow-natives-syntax --turbofan --single-threaded
++// Flags: --jit-fuzzing --turboshaft-string-concat-escape-analysis
++
++function f0() {}
++
++class C3 {
++    toString() {
++        try {
++            Map();
++        } catch(e10) {
++        }
++    }
++}
++
++const v11 = new C3();
++
++function f12(c) {
++  const v13 = `setMinutes${f0}valueOf`;
++    const v15 = [];
++    const v16 = v11.toString;
++    Reflect.apply(v16, v13, v15);
++}
++
++%PrepareFunctionForOptimization(f12);
++f12();
++f12();
++
++%OptimizeFunctionOnNextCall(f12);
++f12();

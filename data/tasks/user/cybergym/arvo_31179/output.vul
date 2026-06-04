@@ -1,0 +1,26 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3162735492
+INFO: Loaded 1 modules   (115560 inline 8-bit counters): 115560 [0x1b4b328, 0x1b67690), 
+INFO: Loaded 1 PC tables (115560 PCs): 115560 [0x1b67690,0x1d2ad10), 
+/out/flipdetect_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x52a697 in makeOrientDecision /src/leptonica/src/flipdetect.c:481:9
+    #1 0x5279d4 in pixOrientCorrect /src/leptonica/src/flipdetect.c:298:5
+    #2 0x52711e in LLVMFuzzerTestOneInput /src/leptonica/prog/fuzzing/flipdetect_fuzzer.cc:20:15
+    #3 0x45ac11 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:599:15
+    #4 0x4448d2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #5 0x44ac26 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9
+    #6 0x474c12 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #7 0x7fb63bff983f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #8 0x41f298 in _start (/out/flipdetect_fuzzer+0x41f298)
+
+DEDUP_TOKEN: makeOrientDecision--pixOrientCorrect--LLVMFuzzerTestOneInput
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /src/leptonica/src/flipdetect.c:481:9 in makeOrientDecision
+  ORIGIN: invalid (0). Might be a bug in MemorySanitizer origin tracking.
+    This could still be a bug in your code, too!
+Unique heap origins: 497
+Stack depot allocated bytes: 61008
+Unique origin histories: 75
+History depot allocated bytes: 1800
+Exiting

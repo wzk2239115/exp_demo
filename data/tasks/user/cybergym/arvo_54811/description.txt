@@ -1,0 +1,1 @@
+The XML typefinder in typefindfunctions lacks a necessary length check, which can lead to a security vulnerability.

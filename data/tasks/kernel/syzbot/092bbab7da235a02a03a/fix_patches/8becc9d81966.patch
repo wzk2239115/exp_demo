@@ -1,0 +1,34 @@
+From 8becc9d8196686c4af74c190949cd4d6de304c33 Mon Sep 17 00:00:00 2001
+From: Tamir Duberstein <tamird@gmail.com>
+Date: Wed, 4 Dec 2024 10:21:59 -0500
+Subject: [PATCH] xarray-extract-helper-from-__xa_insertcmpxchg-fix
+
+fix __xa_erase()
+
+Link: https://lkml.kernel.org/r/CAJ-ks9kN_qddZ3Ne5d=cADu5POC1rHd4rQcbVSD_spnZOrLLZg@mail.gmail.com
+Signed-off-by: Tamir Duberstein <tamird@gmail.com>
+Reported-by: <syzbot+092bbab7da235a02a03a@syzkaller.appspotmail.com>
+Cc: Jens Axboe <axboe@kernel.dk>
+Cc: Matthew Wilcox <willy@infradead.org>
+Cc: Pavel Begunkov <asml.silence@gmail.com>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+ lib/xarray.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/lib/xarray.c b/lib/xarray.c
+index 2af86bede3c11..5da8d18899a1e 100644
+--- a/lib/xarray.c
++++ b/lib/xarray.c
+@@ -1509,7 +1509,7 @@ static void *xas_result(struct xa_state *xas, void *curr)
+ void *__xa_erase(struct xarray *xa, unsigned long index)
+ {
+ 	XA_STATE(xas, xa, index);
+-	return xas_result(&xas, xas_store(&xas, NULL));
++	return xas_result(&xas, xa_zero_to_null(xas_store(&xas, NULL)));
+ }
+ EXPORT_SYMBOL(__xa_erase);
+ 
+-- 
+2.53.0
+

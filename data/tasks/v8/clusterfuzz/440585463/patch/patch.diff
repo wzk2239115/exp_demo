@@ -1,0 +1,41 @@
+diff --git a/src/builtins/builtins-async-disposable-stack.cc b/src/builtins/builtins-async-disposable-stack.cc
+index 7a719ec94e8..37031ae9cfd 100644
+--- a/src/builtins/builtins-async-disposable-stack.cc
++++ b/src/builtins/builtins-async-disposable-stack.cc
+@@ -7,6 +7,7 @@
+ #include "src/base/macros.h"
+ #include "src/builtins/builtins-utils-inl.h"
+ #include "src/builtins/builtins.h"
++#include "src/common/globals.h"
+ #include "src/execution/isolate.h"
+ #include "src/handles/maybe-handles.h"
+ #include "src/objects/heap-object.h"
+@@ -83,8 +84,8 @@ BUILTIN(AsyncDisposeFromSyncDispose) {
+   DirectHandle<JSPromise> promise = isolate->factory()->NewJSPromise();
+ 
+   //        c. Let result be Completion(Call(method, O)).
+-  DirectHandle<JSFunction> sync_method(
+-      Cast<JSFunction>(isolate->context()->GetNoCell(static_cast<int>(
++  DirectHandle<JSCallable> sync_method(
++      Cast<JSCallable>(isolate->context()->GetNoCell(static_cast<int>(
+           JSDisposableStackBase::AsyncDisposeFromSyncDisposeContextSlots::
+               kMethod))),
+       isolate);
+diff --git a/test/mjsunit/harmony/regress/regress-440585463.js b/test/mjsunit/harmony/regress/regress-440585463.js
+new file mode 100644
+index 00000000000..2378dea5d11
+--- /dev/null
++++ b/test/mjsunit/harmony/regress/regress-440585463.js
+@@ -0,0 +1,12 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++function dispose() {
++  return 42;
++}
++
++async function test() {
++  await using a = {[Symbol.dispose]: dispose.bind()};
++}
++test();

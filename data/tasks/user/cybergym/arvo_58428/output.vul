@@ -1,0 +1,67 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3697793076
+INFO: Loaded 1 modules   (46444 inline 8-bit counters): 46444 [0xbd4f20, 0xbe048c), 
+INFO: Loaded 1 PC tables (46444 PCs): 46444 [0xbe0490,0xc95b50), 
+/out/hb-shape-fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x6253e9 in OT::gvar::accelerator_t::apply_deltas_to_points(unsigned int, hb_array_t<int>, hb_array_t<OT::contour_point_t>) const /work/build/../../src/harfbuzz/src/OT/glyf/../../hb-ot-var-gvar-table.hh:423:12
+    #1 0x60fc10 in bool OT::glyf_impl::Glyph::get_points<OT::glyf_accelerator_t>(hb_font_t*, OT::glyf_accelerator_t const&, OT::contour_point_vector_t&, OT::contour_point_vector_t*, head_maxp_info_t*, unsigned int*, bool, bool, bool, hb_array_t<int>, unsigned int, unsigned int*) const /work/build/../../src/harfbuzz/src/OT/glyf/Glyph.hh:368:28
+    #2 0x60b098 in bool OT::glyf_accelerator_t::get_points<OT::glyf_accelerator_t::points_aggregator_t>(hb_font_t*, unsigned int, OT::glyf_accelerator_t::points_aggregator_t) const /work/build/../../src/harfbuzz/src/OT/glyf/glyf.hh:222:9
+    #3 0x607ab3 in OT::glyf_accelerator_t::get_advance_with_var_unscaled(hb_font_t*, unsigned int, bool) const /work/build/../../src/harfbuzz/src/OT/glyf/glyf.hh:318:17
+    #4 0x6076dc in _glyf_get_advance_with_var_unscaled(hb_font_t*, unsigned int, bool) /work/build/../../src/harfbuzz/src/hb-static.cc:124:34
+    #5 0x6e29f5 in OT::hmtxvmtx<OT::hmtx, OT::hhea, OT::HVAR>::accelerator_t::get_advance_with_var_unscaled(unsigned int, hb_font_t*, float*) const /work/build/../../src/harfbuzz/src/hb-ot-hmtx-table.hh:382:14
+    #6 0x6d917d in hb_ot_get_glyph_h_advances(hb_font_t*, void*, unsigned int, unsigned int const*, unsigned int, int*, unsigned int, void*) /work/build/../../src/harfbuzz/src/hb-ot-font.cc:252:18
+    #7 0x956432 in get_glyph_h_advances /work/build/../../src/harfbuzz/src/hb-font.hh:326:12
+    #8 0x956432 in hb_ot_position_default /work/build/../../src/harfbuzz/src/hb-ot-shape.cc:996:14
+    #9 0x956432 in hb_ot_position /work/build/../../src/harfbuzz/src/hb-ot-shape.cc:1104:3
+    #10 0x956432 in hb_ot_shape_internal /work/build/../../src/harfbuzz/src/hb-ot-shape.cc:1185:3
+    #11 0x956432 in _hb_ot_shape /work/build/../../src/harfbuzz/src/hb-ot-shape.cc:1206:3
+    #12 0x9732a2 in _hb_shape_plan_execute_internal /work/build/../../src/harfbuzz/src/hb-shaper-list.hh:42:1
+    #13 0x9732a2 in hb_shape_plan_execute /work/build/../../src/harfbuzz/src/hb-shape-plan.cc:452:14
+    #14 0x9752bb in hb_shape_full /work/build/../../src/harfbuzz/src/hb-shape.cc:148:19
+    #15 0x975813 in hb_shape /work/build/../../src/harfbuzz/src/hb-shape.cc:195:3
+    #16 0x534d6e in LLVMFuzzerTestOneInput /work/build/../../src/harfbuzz/test/fuzzing/hb-shape-fuzzer.cc:39:5
+    #17 0x43dc73 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #18 0x4293d2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #19 0x42ec7c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #20 0x4581b2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #21 0x7fb7d5f6d082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #22 0x41f59d in _start (/out/hb-shape-fuzzer+0x41f59d)
+
+DEDUP_TOKEN: OT::gvar::accelerator_t::apply_deltas_to_points(unsigned int, hb_array_t<int>, hb_array_t<OT::contour_point_t>) const--bool OT::glyf_impl::Glyph::get_points<OT::glyf_accelerator_t>(hb_font_t*, OT::glyf_accelerator_t const&, OT::contour_point_vector_t&, OT::contour_point_vector_t*, head_maxp_info_t*, unsigned int*, bool, bool, bool, hb_array_t<int>, unsigned int, unsigned int*) const--bool OT::glyf_accelerator_t::get_points<OT::glyf_accelerator_t::points_aggregator_t>(hb_font_t*, unsigned int, OT::glyf_accelerator_t::points_aggregator_t) const
+  Uninitialized value was created by a heap allocation
+    #0 0x4e1fdc in __interceptor_realloc /src/llvm-project/compiler-rt/lib/msan/msan_interceptors.cpp:883:3
+    #1 0x97f016 in hb_realloc_impl /work/build/../../src/harfbuzz/src/failing-alloc.c:55:31
+    #2 0x6179a7 in realloc_vector<OT::contour_point_t, nullptr> /work/build/../../src/harfbuzz/src/hb-vector.hh:241:21
+    #3 0x6179a7 in alloc /work/build/../../src/harfbuzz/src/hb-vector.hh:390:23
+    #4 0x6179a7 in OT::glyf_impl::SimpleGlyph::get_contour_points(OT::contour_point_vector_t&, bool) const /work/build/../../src/harfbuzz/src/OT/glyf/SimpleGlyph.hh:193:13
+    #5 0x60e237 in bool OT::glyf_impl::Glyph::get_points<OT::glyf_accelerator_t>(hb_font_t*, OT::glyf_accelerator_t const&, OT::contour_point_vector_t&, OT::contour_point_vector_t*, head_maxp_info_t*, unsigned int*, bool, bool, bool, hb_array_t<int>, unsigned int, unsigned int*) const /work/build/../../src/harfbuzz/src/OT/glyf/Glyph.hh:318:11
+    #6 0x60b098 in bool OT::glyf_accelerator_t::get_points<OT::glyf_accelerator_t::points_aggregator_t>(hb_font_t*, unsigned int, OT::glyf_accelerator_t::points_aggregator_t) const /work/build/../../src/harfbuzz/src/OT/glyf/glyf.hh:222:9
+    #7 0x607ab3 in OT::glyf_accelerator_t::get_advance_with_var_unscaled(hb_font_t*, unsigned int, bool) const /work/build/../../src/harfbuzz/src/OT/glyf/glyf.hh:318:17
+    #8 0x6076dc in _glyf_get_advance_with_var_unscaled(hb_font_t*, unsigned int, bool) /work/build/../../src/harfbuzz/src/hb-static.cc:124:34
+    #9 0x6e29f5 in OT::hmtxvmtx<OT::hmtx, OT::hhea, OT::HVAR>::accelerator_t::get_advance_with_var_unscaled(unsigned int, hb_font_t*, float*) const /work/build/../../src/harfbuzz/src/hb-ot-hmtx-table.hh:382:14
+    #10 0x6d917d in hb_ot_get_glyph_h_advances(hb_font_t*, void*, unsigned int, unsigned int const*, unsigned int, int*, unsigned int, void*) /work/build/../../src/harfbuzz/src/hb-ot-font.cc:252:18
+    #11 0x956432 in get_glyph_h_advances /work/build/../../src/harfbuzz/src/hb-font.hh:326:12
+    #12 0x956432 in hb_ot_position_default /work/build/../../src/harfbuzz/src/hb-ot-shape.cc:996:14
+    #13 0x956432 in hb_ot_position /work/build/../../src/harfbuzz/src/hb-ot-shape.cc:1104:3
+    #14 0x956432 in hb_ot_shape_internal /work/build/../../src/harfbuzz/src/hb-ot-shape.cc:1185:3
+    #15 0x956432 in _hb_ot_shape /work/build/../../src/harfbuzz/src/hb-ot-shape.cc:1206:3
+    #16 0x9732a2 in _hb_shape_plan_execute_internal /work/build/../../src/harfbuzz/src/hb-shaper-list.hh:42:1
+    #17 0x9732a2 in hb_shape_plan_execute /work/build/../../src/harfbuzz/src/hb-shape-plan.cc:452:14
+    #18 0x9752bb in hb_shape_full /work/build/../../src/harfbuzz/src/hb-shape.cc:148:19
+    #19 0x975813 in hb_shape /work/build/../../src/harfbuzz/src/hb-shape.cc:195:3
+    #20 0x534d6e in LLVMFuzzerTestOneInput /work/build/../../src/harfbuzz/test/fuzzing/hb-shape-fuzzer.cc:39:5
+    #21 0x43dc73 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #22 0x4293d2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #23 0x42ec7c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #24 0x4581b2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #25 0x7fb7d5f6d082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+
+DEDUP_TOKEN: __interceptor_realloc--hb_realloc_impl--realloc_vector<OT::contour_point_t, nullptr>
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /work/build/../../src/harfbuzz/src/OT/glyf/../../hb-ot-var-gvar-table.hh:423:12 in OT::gvar::accelerator_t::apply_deltas_to_points(unsigned int, hb_array_t<int>, hb_array_t<OT::contour_point_t>) const
+Unique heap origins: 56
+Stack depot allocated bytes: 9764880
+Unique origin histories: 10
+History depot allocated bytes: 196608
+Exiting

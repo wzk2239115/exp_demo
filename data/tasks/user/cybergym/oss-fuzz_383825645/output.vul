@@ -1,0 +1,48 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3989447016
+INFO: Loaded 1 modules   (107366 inline 8-bit counters): 107366 [0x55c74deaae00, 0x55c74dec5166), 
+INFO: Loaded 1 PC tables (107366 PCs): 107366 [0x55c74dec5168,0x55c74e0687c8), 
+/out/ffmpeg_dem_WTV_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x55c74d59b7e3 in ff_parse_mpeg2_descriptor /src/ffmpeg/libavformat/mpegts.c:2026:13
+    #1 0x55c74d6fcf90 in parse_chunks /src/ffmpeg/libavformat/wtvdec.c:852:17
+    #2 0x55c74d6f34df in read_header /src/ffmpeg/libavformat/wtvdec.c:993:11
+    #3 0x55c74d3ec3b4 in avformat_open_input /src/ffmpeg/libavformat/demux.c:308:20
+    #4 0x55c74d338c6c in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_dem_fuzzer.c:202:11
+    #5 0x55c74d22e1a0 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #6 0x55c74d219415 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #7 0x55c74d21eeaf in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #8 0x55c74d24a152 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #9 0x7f96c31a9082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+    #10 0x55c74d2115fd in _start (/out/ffmpeg_dem_WTV_fuzzer+0x2fe5fd)
+
+  Uninitialized value was stored to memory at
+    #0 0x55c74d59b7dc in ff_parse_mpeg2_descriptor /src/ffmpeg/libavformat/mpegts.c:2026:55
+    #1 0x55c74d6fcf90 in parse_chunks /src/ffmpeg/libavformat/wtvdec.c:852:17
+    #2 0x55c74d6f34df in read_header /src/ffmpeg/libavformat/wtvdec.c:993:11
+    #3 0x55c74d3ec3b4 in avformat_open_input /src/ffmpeg/libavformat/demux.c:308:20
+    #4 0x55c74d338c6c in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_dem_fuzzer.c:202:11
+    #5 0x55c74d22e1a0 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #6 0x55c74d219415 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #7 0x55c74d21eeaf in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #8 0x55c74d24a152 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #9 0x7f96c31a9082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+
+  Uninitialized value was stored to memory at
+    #0 0x55c74d59b2cd in ff_parse_mpeg2_descriptor /src/ffmpeg/libavformat/mpegts.c:2023:33
+    #1 0x55c74d6fcf90 in parse_chunks /src/ffmpeg/libavformat/wtvdec.c:852:17
+    #2 0x55c74d6f34df in read_header /src/ffmpeg/libavformat/wtvdec.c:993:11
+    #3 0x55c74d3ec3b4 in avformat_open_input /src/ffmpeg/libavformat/demux.c:308:20
+    #4 0x55c74d338c6c in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_dem_fuzzer.c:202:11
+    #5 0x55c74d22e1a0 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #6 0x55c74d219415 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #7 0x55c74d21eeaf in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #8 0x55c74d24a152 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #9 0x7f96c31a9082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+
+  Uninitialized value was created by an allocation of 'buf' in the stack frame
+    #0 0x55c74d6fcd96 in parse_chunks /src/ffmpeg/libavformat/wtvdec.c:836:17
+
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /src/ffmpeg/libavformat/mpegts.c:2026:13 in ff_parse_mpeg2_descriptor
+Exiting

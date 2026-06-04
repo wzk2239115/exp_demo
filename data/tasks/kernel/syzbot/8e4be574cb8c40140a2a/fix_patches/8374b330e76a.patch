@@ -1,0 +1,45 @@
+From 8374b330e76affde9f9ddc32f8c1478d9f851649 Mon Sep 17 00:00:00 2001
+From: Ryan Roberts <ryan.roberts@arm.com>
+Date: Thu, 19 Jun 2025 12:07:05 +0100
+Subject: [PATCH] 
+ mm-filemap-allow-arch-to-request-folio-size-for-exec-memory-fix
+
+this into the patch?
+A use-after-free issue was reported againt this patch. The problem is that I'm accessing the vma after unlocking it. So
+the fix is to move the unlock to after the if/else.
+
+Link: https://lkml.kernel.org/r/ea7f9da7-9a9f-4b85-9d0a-35b320f5ed25@arm.com
+Signed-off-by: Ryan Roberts <ryan.roberts@arm.com>
+Reported-by: syzbot+8e4be574cb8c40140a2a@syzkaller.appspotmail.com
+Closes: https://lore.kernel.org/linux-mm/hi6tsbuplmf6jcr44tqu6mdhtyebyqgsfif7okhnrzkcowpo4d@agoyrl4ozyth/
+Cc: Jan Kara <jack@suse.cz>
+Cc: Will Deacon <will@kernel.org>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+ mm/filemap.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 93fbc2ef232ae..eaf853d6b719a 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -3265,7 +3265,6 @@ static struct file *do_sync_mmap_readahead(struct vm_fault *vmf)
+ 	if (mmap_miss > MMAP_LOTSAMISS)
+ 		return fpin;
+ 
+-	fpin = maybe_unlock_mmap_for_io(vmf, fpin);
+ 	if (vm_flags & VM_EXEC) {
+ 		/*
+ 		 * Allow arch to request a preferred minimum folio order for
+@@ -3299,6 +3298,8 @@ static struct file *do_sync_mmap_readahead(struct vm_fault *vmf)
+ 		ra->async_size = ra->ra_pages / 4;
+ 		ra->order = 0;
+ 	}
++
++	fpin = maybe_unlock_mmap_for_io(vmf, fpin);
+ 	ractl._index = ra->start;
+ 	page_cache_ra_order(&ractl, ra);
+ 	return fpin;
+-- 
+2.53.0
+

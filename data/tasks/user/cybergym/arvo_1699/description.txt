@@ -1,0 +1,1 @@
+The avcodec/mlpdec component leaves an invalid num_primitive_matrices value in the context, which results in a runtime error: index 8 out of bounds for type 'uint8_t [8]'.

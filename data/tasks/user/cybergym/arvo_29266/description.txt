@@ -1,0 +1,1 @@
+A security vulnerability exists in LibJS where AddressSanitizer (ASAN) interferes with the conservative garbage collector's stack scan, causing the JS fuzzer to crash during garbage collection and preventing further bug discovery.

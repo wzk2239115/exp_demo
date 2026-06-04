@@ -1,0 +1,123 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+==================================================================
+BUG: KASAN: stack-out-of-bounds in __bpf_get_stack+0x5a3/0xaa0 kernel/bpf/stackmap.c:493
+Write of size 168 at addr ffffc900030e73a8 by task syz.1.44/6108
+
+CPU: 0 UID: 0 PID: 6108 Comm: syz.1.44 Not tainted syzkaller #0 PREEMPT(full) 
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 10/02/2025
+Call Trace:
+ <TASK>
+ dump_stack_lvl+0x189/0x250 lib/dump_stack.c:120
+ print_address_description mm/kasan/report.c:378 [inline]
+ print_report+0xca/0x240 mm/kasan/report.c:482
+ kasan_report+0x118/0x150 mm/kasan/report.c:595
+ check_region_inline mm/kasan/generic.c:-1 [inline]
+ kasan_check_range+0x2b0/0x2c0 mm/kasan/generic.c:200
+ __asan_memcpy+0x40/0x70 mm/kasan/shadow.c:106
+ __bpf_get_stack+0x5a3/0xaa0 kernel/bpf/stackmap.c:493
+ ____bpf_get_stack kernel/bpf/stackmap.c:517 [inline]
+ bpf_get_stack+0x33/0x50 kernel/bpf/stackmap.c:514
+ ____bpf_get_stack_raw_tp kernel/trace/bpf_trace.c:1653 [inline]
+ bpf_get_stack_raw_tp+0x1a9/0x220 kernel/trace/bpf_trace.c:1643
+ bpf_prog_4b3f8e3d902f6f0d+0x41/0x49
+ bpf_dispatcher_nop_func include/linux/bpf.h:1364 [inline]
+ __bpf_prog_run include/linux/filter.h:721 [inline]
+ bpf_prog_run include/linux/filter.h:728 [inline]
+ __bpf_trace_run kernel/trace/bpf_trace.c:2075 [inline]
+ bpf_trace_run2+0x284/0x4b0 kernel/trace/bpf_trace.c:2116
+ __traceiter_kfree+0x2e/0x50 include/trace/events/kmem.h:97
+ __do_trace_kfree include/trace/events/kmem.h:97 [inline]
+ trace_kfree include/trace/events/kmem.h:97 [inline]
+ kfree+0x62f/0x6d0 mm/slub.c:6824
+ compute_scc+0x9a6/0xa20 kernel/bpf/verifier.c:25021
+ bpf_check+0x5df2/0x1c210 kernel/bpf/verifier.c:25162
+ bpf_prog_load+0x13ba/0x1a10 kernel/bpf/syscall.c:3095
+ __sys_bpf+0x507/0x860 kernel/bpf/syscall.c:6171
+ __do_sys_bpf kernel/bpf/syscall.c:6281 [inline]
+ __se_sys_bpf kernel/bpf/syscall.c:6279 [inline]
+ __x64_sys_bpf+0x7c/0x90 kernel/bpf/syscall.c:6279
+ do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
+ do_syscall_64+0xfa/0xfa0 arch/x86/entry/syscall_64.c:94
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7fc4d8b8f6c9
+Code: ff ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 40 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 a8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007ffcd2851bb8 EFLAGS: 00000246 ORIG_RAX: 0000000000000141
+RAX: ffffffffffffffda RBX: 00007fc4d8de5fa0 RCX: 00007fc4d8b8f6c9
+RDX: 0000000000000094 RSI: 00002000000000c0 RDI: 0000000000000005
+RBP: 00007fc4d8c11f91 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000246 R12: 0000000000000000
+R13: 00007fc4d8de5fa0 R14: 00007fc4d8de5fa0 R15: 0000000000000003
+ </TASK>
+
+The buggy address belongs to stack of task syz.1.44/6108
+ and is located at offset 296 in frame:
+ __bpf_get_stack+0x0/0xaa0 include/linux/mmap_lock.h:-1
+
+This frame has 1 object:
+ [32, 36) 'rctx.i'
+
+The buggy address belongs to a 8-page vmalloc region starting at 0xffffc900030e0000 allocated at copy_process+0x54b/0x3c00 kernel/fork.c:2012
+The buggy address belongs to the physical page:
+page: refcount:1 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x572fb
+memcg:ffff88803037aa02
+flags: 0xfff00000000000(node=0|zone=1|lastcpupid=0x7ff)
+raw: 00fff00000000000 0000000000000000 dead000000000122 0000000000000000
+raw: 0000000000000000 0000000000000000 00000001ffffffff ffff88803037aa02
+page dumped because: kasan: bad access detected
+page_owner tracks the page as allocated
+page last allocated via order 0, migratetype Unmovable, gfp_mask 0x2dc2(GFP_KERNEL|__GFP_HIGHMEM|__GFP_ZERO|__GFP_NOWARN), pid 1340, tgid 1340 (kworker/u8:6), ts 107851542040, free_ts 101175357499
+ set_page_owner include/linux/page_owner.h:32 [inline]
+ post_alloc_hook+0x240/0x2a0 mm/page_alloc.c:1850
+ prep_new_page mm/page_alloc.c:1858 [inline]
+ get_page_from_freelist+0x2365/0x2440 mm/page_alloc.c:3884
+ __alloc_frozen_pages_noprof+0x181/0x370 mm/page_alloc.c:5183
+ alloc_pages_mpol+0x232/0x4a0 mm/mempolicy.c:2416
+ alloc_frozen_pages_noprof mm/mempolicy.c:2487 [inline]
+ alloc_pages_noprof+0xa9/0x190 mm/mempolicy.c:2507
+ vm_area_alloc_pages mm/vmalloc.c:3647 [inline]
+ __vmalloc_area_node mm/vmalloc.c:3724 [inline]
+ __vmalloc_node_range_noprof+0x96c/0x12d0 mm/vmalloc.c:3897
+ __vmalloc_node_noprof+0xc2/0x110 mm/vmalloc.c:3960
+ alloc_thread_stack_node kernel/fork.c:311 [inline]
+ dup_task_struct+0x3d4/0x830 kernel/fork.c:881
+ copy_process+0x54b/0x3c00 kernel/fork.c:2012
+ kernel_clone+0x21e/0x840 kernel/fork.c:2609
+ user_mode_thread+0xdd/0x140 kernel/fork.c:2685
+ call_usermodehelper_exec_sync kernel/umh.c:132 [inline]
+ call_usermodehelper_exec_work+0x9c/0x230 kernel/umh.c:163
+ process_one_work kernel/workqueue.c:3263 [inline]
+ process_scheduled_works+0xae1/0x17b0 kernel/workqueue.c:3346
+ worker_thread+0x8a0/0xda0 kernel/workqueue.c:3427
+ kthread+0x711/0x8a0 kernel/kthread.c:463
+ ret_from_fork+0x4bc/0x870 arch/x86/kernel/process.c:158
+page last free pid 5918 tgid 5918 stack trace:
+ reset_page_owner include/linux/page_owner.h:25 [inline]
+ free_pages_prepare mm/page_alloc.c:1394 [inline]
+ __free_frozen_pages+0xbc4/0xd30 mm/page_alloc.c:2906
+ vfree+0x25a/0x400 mm/vmalloc.c:3440
+ kcov_put kernel/kcov.c:439 [inline]
+ kcov_close+0x28/0x50 kernel/kcov.c:535
+ __fput+0x44c/0xa70 fs/file_table.c:468
+ task_work_run+0x1d4/0x260 kernel/task_work.c:227
+ exit_task_work include/linux/task_work.h:40 [inline]
+ do_exit+0x6b5/0x2300 kernel/exit.c:966
+ do_group_exit+0x21c/0x2d0 kernel/exit.c:1107
+ get_signal+0x1285/0x1340 kernel/signal.c:3034
+ arch_do_signal_or_restart+0xa0/0x790 arch/x86/kernel/signal.c:337
+ exit_to_user_mode_loop+0x72/0x130 kernel/entry/common.c:40
+ exit_to_user_mode_prepare include/linux/irq-entry-common.h:225 [inline]
+ syscall_exit_to_user_mode_work include/linux/entry-common.h:175 [inline]
+ syscall_exit_to_user_mode include/linux/entry-common.h:210 [inline]
+ do_syscall_64+0x2bd/0xfa0 arch/x86/entry/syscall_64.c:100
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+Memory state around the buggy address:
+ ffffc900030e7300: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+ ffffc900030e7380: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+>ffffc900030e7400: f1 f1 f1 f1 00 00 f2 f2 00 00 f3 f3 00 00 00 00
+                   ^
+ ffffc900030e7480: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+ ffffc900030e7500: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+==================================================================

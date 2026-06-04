@@ -1,0 +1,1 @@
+The vulnerability occurs because the length is used before it is validated, rather than validating the length before use. This improper order can lead to security issues.

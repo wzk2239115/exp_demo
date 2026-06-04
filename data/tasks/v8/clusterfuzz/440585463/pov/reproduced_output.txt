@@ -1,0 +1,19 @@
+
+
+#
+# Fatal error in ../../src/builtins/builtins-async-disposable-stack.cc, line 87
+# Debug check failed: Holder<To> v8::internal::TrustedCast(Holder<From>, SourceLocation) [To = v8::internal::JSFunction, From = v8::internal::Object, Holder = v8::internal::Tagged].
+#
+#
+#
+#FailureMessage Object: 0x7fffae07c7a0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x55bd024f9f73]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55bd024f90cd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55bd024dede4]
+    out/debug/d8(+0x48097e5) [0x55bd024de7e5]
+    d8(v8::internal::Builtin_Impl_AsyncDisposeFromSyncDispose(v8::internal::BuiltinArguments, v8::internal::Isolate*) ./../../src/objects/casting.h:0:3) [0x55bcfeca2320]
+    d8(v8::internal::Builtin_AsyncDisposeFromSyncDispose(int, unsigned long*, v8::internal::Isolate*) ./../../src/builtins/builtins-async-disposable-stack.cc:73:1) [0x55bcfeca1ddd]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc:0:0) [0x55bd01baac7d]
+timeout: the monitored command dumped core

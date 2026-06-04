@@ -1,0 +1,67 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3097450874
+INFO: Loaded 1 modules   (43817 inline 8-bit counters): 43817 [0x87c6ec0, 0x87d19e9), 
+INFO: Loaded 1 PC tables (43817 PCs): 43817 [0x8724b7c,0x877a4c4), 
+/out/decompress_frame_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+Error: problems retrieving a chunk offset=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0xf2d01e1c at pc 0x0820af28 bp 0xff9ac238 sp 0xff9ac230
+READ of size 1 at 0xf2d01e1c thread T0
+SCARINESS: 12 (1-byte-read-heap-buffer-overflow)
+    #0 0x820af27 in blosc_run_decompression_with_context /src/c-blosc2/blosc/blosc2.c:2147:13
+    #1 0x820b59c in blosc2_decompress_ctx /src/c-blosc2/blosc/blosc2.c:2179:12
+    #2 0x824188f in frame_decompress_chunk /src/c-blosc2/blosc/frame.c:1675:23
+    #3 0x822e9b7 in blosc2_schunk_decompress_chunk /src/c-blosc2/blosc/schunk.c:540:17
+    #4 0x81ac6c2 in LLVMFuzzerTestOneInput /src/c-blosc2/tests/fuzz/fuzz_decompress_frame.c:33:15
+    #5 0x80a7eb1 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:599:15
+    #6 0x809252e in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #7 0x809845b in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned int)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9
+    #8 0x80c1b67 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #9 0xf7d55646 in __libc_start_main (/lib32/libc.so.6+0x18646)
+    #10 0x806cfd8 in _start (/out/decompress_frame_fuzzer+0x806cfd8)
+
+DEDUP_TOKEN: blosc_run_decompression_with_context--blosc2_decompress_ctx--frame_decompress_chunk
+0xf2d01e1c is located 4 bytes to the left of 89-byte region [0xf2d01e20,0xf2d01e79)
+allocated by thread T0 here:
+    #0 0x8175f15 in malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:145:3
+    #1 0x8086d14 in operator new(unsigned int) (/out/decompress_frame_fuzzer+0x8086d14)
+    #2 0x809252e in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #3 0x809845b in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned int)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9
+    #4 0x80c1b67 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #5 0xf7d55646 in __libc_start_main (/lib32/libc.so.6+0x18646)
+
+DEDUP_TOKEN: malloc--operator new(unsigned int)--fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int)
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/c-blosc2/blosc/blosc2.c:2147:13 in blosc_run_decompression_with_context
+Shadow bytes around the buggy address:
+  0x3e5a0370: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3e5a0380: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3e5a0390: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3e5a03a0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3e5a03b0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+=>0x3e5a03c0: fa fa fa[fa]00 00 00 00 00 00 00 00 00 00 00 01
+  0x3e5a03d0: fa fa fa fa 00 00 00 00 00 00 00 00 00 00 00 01
+  0x3e5a03e0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3e5a03f0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3e5a0400: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3e5a0410: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==7==ABORTING

@@ -1,0 +1,1 @@
+A buffer overread occurs when parsing Intel custom statistics in the ofp-port component.

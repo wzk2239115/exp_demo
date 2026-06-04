@@ -1,0 +1,1 @@
+The krb5_chpw_message() function processes messages by normalizing them as UTF-8 strings instead of only validating them, which may introduce a security vulnerability related to improper UTF-8 handling.

@@ -1,0 +1,1 @@
+A vulnerability exists in frame_get_vlmetalayers where an unknown read occurs if content_len is less than 0.

@@ -1,0 +1,55 @@
+diff --git a/src/maglev/maglev-basic-block.h b/src/maglev/maglev-basic-block.h
+index a6e8a7266c1..3736c1bb35f 100644
+--- a/src/maglev/maglev-basic-block.h
++++ b/src/maglev/maglev-basic-block.h
+@@ -180,8 +180,9 @@ class BasicBlock {
+ 
+     BasicBlock* current = this;
+     while (true) {
+-      if (!current->nodes_.is_empty() || current->HasPhisOrRegisterMerges() ||
+-          current->is_loop()) {
++      if (!current->nodes_.is_empty() || current->is_loop() ||
++          current->is_exception_handler_block() ||
++          current->HasPhisOrRegisterMerges()) {
+         break;
+       }
+       Jump* control = current->control_node()->TryCast<Jump>();
+diff --git a/test/mjsunit/regress/regress-346617164.js b/test/mjsunit/regress/regress-346617164.js
+new file mode 100644
+index 00000000000..6b5090a029b
+--- /dev/null
++++ b/test/mjsunit/regress/regress-346617164.js
+@@ -0,0 +1,33 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax --no-lazy-feedback-allocation
++
++function callFun(fun) {
++    fun();
++}
++var iterable = {};
++iterable[Symbol.iterator] = () => ({
++  next: () => ({}),
++  return: () => {
++  }
++});
++function* iterateAndThrow() {
++  for (let x of iterable) {
++    throw 42;
++  }
++}
++%PrepareFunctionForOptimization(iterateAndThrow);
++
++try {
++  callFun(() => iterateAndThrow().next());
++} catch (e) {}
++
++iterateAndThrow();
++%OptimizeMaglevOnNextCall(iterateAndThrow);
++
++try {
++  iterateAndThrow().next();
++} catch {
++}

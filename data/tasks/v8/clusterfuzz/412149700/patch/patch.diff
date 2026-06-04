@@ -1,0 +1,267 @@
+diff --git a/src/objects/js-break-iterator.cc b/src/objects/js-break-iterator.cc
+index ab6e5766a59..e42cccd1301 100644
+--- a/src/objects/js-break-iterator.cc
++++ b/src/objects/js-break-iterator.cc
+@@ -43,13 +43,12 @@ MaybeDirectHandle<JSV8BreakIterator> JSV8BreakIterator::New(
+   MAYBE_RETURN(maybe_locale_matcher, MaybeDirectHandle<JSV8BreakIterator>());
+   Intl::MatcherOption matcher = maybe_locale_matcher.FromJust();
+ 
+-  Maybe<Intl::ResolvedLocale> maybe_resolve_locale =
+-      Intl::ResolveLocale(isolate, JSV8BreakIterator::GetAvailableLocales(),
+-                          requested_locales, matcher, {});
+-  if (maybe_resolve_locale.IsNothing()) {
++  Intl::ResolvedLocale r;
++  if (!Intl::ResolveLocale(isolate, JSV8BreakIterator::GetAvailableLocales(),
++                           requested_locales, matcher, {})
++           .To(&r)) {
+     THROW_NEW_ERROR(isolate, NewRangeError(MessageTemplate::kIcuError));
+   }
+-  Intl::ResolvedLocale r = maybe_resolve_locale.FromJust();
+ 
+   // Extract type from options
+   enum class Type { CHARACTER, WORD, SENTENCE, LINE };
+diff --git a/src/objects/js-collator.cc b/src/objects/js-collator.cc
+index b57a13692ad..4e1794e1ccb 100644
+--- a/src/objects/js-collator.cc
++++ b/src/objects/js-collator.cc
+@@ -358,18 +358,16 @@ MaybeHandle<JSCollator> JSCollator::New(Isolate* isolate, DirectHandle<Map> map,
+   // https://tc39.github.io/ecma402/#sec-intl-collator-internal-slots
+   //
+   // 16. Let relevantExtensionKeys be %Collator%.[[RelevantExtensionKeys]].
+-  std::set<std::string> relevant_extension_keys{"co", "kn", "kf"};
+ 
+   // 17. Let r be ResolveLocale(%Collator%.[[AvailableLocales]],
+   // requestedLocales, opt, %Collator%.[[RelevantExtensionKeys]],
+   // localeData).
+-  Maybe<Intl::ResolvedLocale> maybe_resolve_locale =
+-      Intl::ResolveLocale(isolate, JSCollator::GetAvailableLocales(),
+-                          requested_locales, matcher, relevant_extension_keys);
+-  if (maybe_resolve_locale.IsNothing()) {
++  Intl::ResolvedLocale r;
++  if (!Intl::ResolveLocale(isolate, JSCollator::GetAvailableLocales(),
++                           requested_locales, matcher, {"co", "kn", "kf"})
++           .To(&r)) {
+     THROW_NEW_ERROR(isolate, NewRangeError(MessageTemplate::kIcuError));
+   }
+-  Intl::ResolvedLocale r = maybe_resolve_locale.FromJust();
+ 
+   // 18. Set collator.[[Locale]] to r.[[locale]].
+   icu::Locale icu_locale = r.icu_locale;
+diff --git a/src/objects/js-date-time-format.cc b/src/objects/js-date-time-format.cc
+index d9c97a9e783..3846bfe88a7 100644
+--- a/src/objects/js-date-time-format.cc
++++ b/src/objects/js-date-time-format.cc
+@@ -2056,20 +2056,19 @@ MaybeDirectHandle<JSDateTimeFormat> JSDateTimeFormat::CreateDateTimeFormat(
+   // ecma402/#sec-intl.datetimeformat-internal-slots
+   // The value of the [[RelevantExtensionKeys]] internal slot is
+   // « "ca", "nu", "hc" ».
+-  std::set<std::string> relevant_extension_keys = {"nu", "ca", "hc"};
+ 
+   // 10. Let localeData be %DateTimeFormat%.[[LocaleData]].
+   // 11. Let r be ResolveLocale( %DateTimeFormat%.[[AvailableLocales]],
+   //     requestedLocales, opt, %DateTimeFormat%.[[RelevantExtensionKeys]],
+   //     localeData).
+   //
+-  Maybe<Intl::ResolvedLocale> maybe_resolve_locale = Intl::ResolveLocale(
+-      isolate, JSDateTimeFormat::GetAvailableLocales(), requested_locales,
+-      locale_matcher, relevant_extension_keys);
+-  if (maybe_resolve_locale.IsNothing()) {
++  Intl::ResolvedLocale r;
++  if (!Intl::ResolveLocale(isolate, JSDateTimeFormat::GetAvailableLocales(),
++                           requested_locales, locale_matcher,
++                           {"nu", "ca", "hc"})
++           .To(&r)) {
+     THROW_NEW_ERROR(isolate, NewRangeError(MessageTemplate::kIcuError));
+   }
+-  Intl::ResolvedLocale r = maybe_resolve_locale.FromJust();
+ 
+   icu::Locale icu_locale = r.icu_locale;
+   DCHECK(!icu_locale.isBogus());
+diff --git a/src/objects/js-display-names.cc b/src/objects/js-display-names.cc
+index 487b4c9b1f6..b45170cf662 100644
+--- a/src/objects/js-display-names.cc
++++ b/src/objects/js-display-names.cc
+@@ -436,16 +436,14 @@ MaybeDirectHandle<JSDisplayNames> JSDisplayNames::New(
+   // ecma402/#sec-Intl.DisplayNames-internal-slots
+   // The value of the [[RelevantExtensionKeys]] internal slot is
+   // «  ».
+-  std::set<std::string> relevant_extension_keys = {};
+   // 9. Let r be ResolveLocale(%DisplayNames%.[[AvailableLocales]],
+   //     requestedLocales, opt, %DisplayNames%.[[RelevantExtensionKeys]]).
+-  Maybe<Intl::ResolvedLocale> maybe_resolve_locale =
+-      Intl::ResolveLocale(isolate, JSDisplayNames::GetAvailableLocales(),
+-                          requested_locales, matcher, relevant_extension_keys);
+-  if (maybe_resolve_locale.IsNothing()) {
++  Intl::ResolvedLocale r;
++  if (!Intl::ResolveLocale(isolate, JSDisplayNames::GetAvailableLocales(),
++                           requested_locales, matcher, {})
++           .To(&r)) {
+     THROW_NEW_ERROR(isolate, NewRangeError(MessageTemplate::kIcuError));
+   }
+-  Intl::ResolvedLocale r = maybe_resolve_locale.FromJust();
+ 
+   icu::Locale icu_locale = r.icu_locale;
+ 
+diff --git a/src/objects/js-duration-format.cc b/src/objects/js-duration-format.cc
+index 667eccc220f..71e874814f8 100644
+--- a/src/objects/js-duration-format.cc
++++ b/src/objects/js-duration-format.cc
+@@ -290,13 +290,12 @@ MaybeDirectHandle<JSDurationFormat> JSDurationFormat::New(
+   // 9. Let r be ResolveLocale(%DurationFormat%.[[AvailableLocales]],
+   // requestedLocales, opt, %DurationFormat%.[[RelevantExtensionKeys]],
+   // %DurationFormat%.[[LocaleData]]).
+-  std::set<std::string> relevant_extension_keys{"nu"};
+   Intl::ResolvedLocale r;
+-  MAYBE_ASSIGN_RETURN_ON_EXCEPTION_VALUE(
+-      isolate, r,
+-      Intl::ResolveLocale(isolate, JSDurationFormat::GetAvailableLocales(),
+-                          requested_locales, matcher, relevant_extension_keys),
+-      DirectHandle<JSDurationFormat>());
++  if (!Intl::ResolveLocale(isolate, JSDurationFormat::GetAvailableLocales(),
++                           requested_locales, matcher, {"nu"})
++           .To(&r)) {
++    THROW_NEW_ERROR(isolate, NewRangeError(MessageTemplate::kIcuError));
++  }
+ 
+   // 10. Let locale be r.[[locale]].
+   icu::Locale r_locale = r.icu_locale;
+diff --git a/src/objects/js-list-format.cc b/src/objects/js-list-format.cc
+index 898ece55be4..410abcf01cf 100644
+--- a/src/objects/js-list-format.cc
++++ b/src/objects/js-list-format.cc
+@@ -87,13 +87,13 @@ MaybeDirectHandle<JSListFormat> JSListFormat::New(
+ 
+   // 10. Let r be ResolveLocale(%ListFormat%.[[AvailableLocales]],
+   // requestedLocales, opt, undefined, localeData).
+-  Maybe<Intl::ResolvedLocale> maybe_resolve_locale =
+-      Intl::ResolveLocale(isolate, JSListFormat::GetAvailableLocales(),
+-                          requested_locales, matcher, {});
+-  if (maybe_resolve_locale.IsNothing()) {
++  Intl::ResolvedLocale r;
++  if (!Intl::ResolveLocale(isolate, JSListFormat::GetAvailableLocales(),
++                           requested_locales, matcher, {})
++           .To(&r)) {
+     THROW_NEW_ERROR(isolate, NewRangeError(MessageTemplate::kIcuError));
+   }
+-  Intl::ResolvedLocale r = maybe_resolve_locale.FromJust();
++
+   DirectHandle<String> locale_str =
+       isolate->factory()->NewStringFromAsciiChecked(r.locale.c_str());
+ 
+diff --git a/src/objects/js-number-format.cc b/src/objects/js-number-format.cc
+index 01e1079af48..930b6a546e1 100644
+--- a/src/objects/js-number-format.cc
++++ b/src/objects/js-number-format.cc
+@@ -1108,14 +1108,12 @@ MaybeDirectHandle<JSNumberFormat> JSNumberFormat::New(
+   // 10. Let r be ResolveLocale(%NumberFormat%.[[AvailableLocales]],
+   // requestedLocales, opt,  %NumberFormat%.[[RelevantExtensionKeys]],
+   // localeData).
+-  std::set<std::string> relevant_extension_keys{"nu"};
+-  Maybe<Intl::ResolvedLocale> maybe_resolve_locale =
+-      Intl::ResolveLocale(isolate, JSNumberFormat::GetAvailableLocales(),
+-                          requested_locales, matcher, relevant_extension_keys);
+-  if (maybe_resolve_locale.IsNothing()) {
++  Intl::ResolvedLocale r;
++  if (!Intl::ResolveLocale(isolate, JSNumberFormat::GetAvailableLocales(),
++                           requested_locales, matcher, {"nu"})
++           .To(&r)) {
+     THROW_NEW_ERROR(isolate, NewRangeError(MessageTemplate::kIcuError));
+   }
+-  Intl::ResolvedLocale r = maybe_resolve_locale.FromJust();
+ 
+   icu::Locale icu_locale = r.icu_locale;
+   UErrorCode status = U_ZERO_ERROR;
+diff --git a/src/objects/js-plural-rules.cc b/src/objects/js-plural-rules.cc
+index ca94ee0d7bc..787d4179f17 100644
+--- a/src/objects/js-plural-rules.cc
++++ b/src/objects/js-plural-rules.cc
+@@ -107,13 +107,12 @@ MaybeDirectHandle<JSPluralRules> JSPluralRules::New(
+   // 11. Let r be ResolveLocale(%PluralRules%.[[AvailableLocales]],
+   // requestedLocales, opt, %PluralRules%.[[RelevantExtensionKeys]],
+   // localeData).
+-  Maybe<Intl::ResolvedLocale> maybe_resolve_locale =
+-      Intl::ResolveLocale(isolate, JSPluralRules::GetAvailableLocales(),
+-                          requested_locales, matcher, {});
+-  if (maybe_resolve_locale.IsNothing()) {
++  Intl::ResolvedLocale r;
++  if (!Intl::ResolveLocale(isolate, JSPluralRules::GetAvailableLocales(),
++                           requested_locales, matcher, {})
++           .To(&r)) {
+     THROW_NEW_ERROR(isolate, NewRangeError(MessageTemplate::kIcuError));
+   }
+-  Intl::ResolvedLocale r = maybe_resolve_locale.FromJust();
+   DirectHandle<String> locale_str =
+       isolate->factory()->NewStringFromAsciiChecked(r.locale.c_str());
+ 
+diff --git a/src/objects/js-relative-time-format.cc b/src/objects/js-relative-time-format.cc
+index a72f20bba7a..50f4ba6abfd 100644
+--- a/src/objects/js-relative-time-format.cc
++++ b/src/objects/js-relative-time-format.cc
+@@ -110,13 +110,12 @@ MaybeDirectHandle<JSRelativeTimeFormat> JSRelativeTimeFormat::New(
+   // ResolveLocale(%RelativeTimeFormat%.[[AvailableLocales]],
+   //               requestedLocales, opt,
+   //               %RelativeTimeFormat%.[[RelevantExtensionKeys]], localeData).
+-  Maybe<Intl::ResolvedLocale> maybe_resolve_locale =
+-      Intl::ResolveLocale(isolate, JSRelativeTimeFormat::GetAvailableLocales(),
+-                          requested_locales, matcher, {"nu"});
+-  if (maybe_resolve_locale.IsNothing()) {
++  Intl::ResolvedLocale r;
++  if (!Intl::ResolveLocale(isolate, JSRelativeTimeFormat::GetAvailableLocales(),
++                           requested_locales, matcher, {"nu"})
++           .To(&r)) {
+     THROW_NEW_ERROR(isolate, NewRangeError(MessageTemplate::kIcuError));
+   }
+-  Intl::ResolvedLocale r = maybe_resolve_locale.FromJust();
+ 
+   UErrorCode status = U_ZERO_ERROR;
+ 
+diff --git a/src/objects/js-segmenter.cc b/src/objects/js-segmenter.cc
+index 1123c17c46c..ae894b23365 100644
+--- a/src/objects/js-segmenter.cc
++++ b/src/objects/js-segmenter.cc
+@@ -53,13 +53,12 @@ MaybeDirectHandle<JSSegmenter> JSSegmenter::New(
+ 
+   // 11. Let r be ResolveLocale(%Segmenter%.[[AvailableLocales]],
+   // requestedLocales, opt, %Segmenter%.[[RelevantExtensionKeys]]).
+-  Maybe<Intl::ResolvedLocale> maybe_resolve_locale =
+-      Intl::ResolveLocale(isolate, JSSegmenter::GetAvailableLocales(),
+-                          requested_locales, matcher, {});
+-  if (maybe_resolve_locale.IsNothing()) {
++  Intl::ResolvedLocale r;
++  if (!Intl::ResolveLocale(isolate, JSSegmenter::GetAvailableLocales(),
++                           requested_locales, matcher, {})
++           .To(&r)) {
+     THROW_NEW_ERROR(isolate, NewRangeError(MessageTemplate::kIcuError));
+   }
+-  Intl::ResolvedLocale r = maybe_resolve_locale.FromJust();
+ 
+   // 12. Set segmenter.[[Locale]] to the value of r.[[locale]].
+   DirectHandle<String> locale_str =
+diff --git a/test/intl/regress-412149700.js b/test/intl/regress-412149700.js
+new file mode 100644
+index 00000000000..f355a913ecc
+--- /dev/null
++++ b/test/intl/regress-412149700.js
+@@ -0,0 +1,22 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++assertThrows("let a = new Intl.DateTimeFormat('de-u-22300-true-x-true')",
++    RangeError, "Internal error. Icu error.");
++assertThrows("let a = new Intl.NumberFormat('de-u-22300-true-x-true')",
++    RangeError, "Internal error. Icu error.");
++assertThrows("let a = new Intl.Collator('de-u-22300-true-x-true')",
++    RangeError, "Internal error. Icu error.");
++assertThrows("let a = new Intl.PluralRules('de-u-22300-true-x-true')",
++    RangeError, "Internal error. Icu error.");
++assertThrows("let a = new Intl.RelativeTimeFormat('de-u-22300-true-x-true')",
++    RangeError, "Internal error. Icu error.");
++assertThrows("let a = new Intl.ListFormat('de-u-22300-true-x-true')",
++    RangeError, "Internal error. Icu error.");
++assertThrows("let a = new Intl.DisplayNames('de-u-22300-true-x-true')",
++    RangeError, "Internal error. Icu error.");
++assertThrows("let a = new Intl.Segmenter('de-u-22300-true-x-true')",
++    RangeError, "Internal error. Icu error.");
++assertThrows("let a = new Intl.DurationFormat('de-u-22300-true-x-true')",
++    RangeError, "Internal error. Icu error.");

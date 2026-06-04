@@ -1,0 +1,1 @@
+A vulnerability exists where zero width or height images are not checked, potentially leading to issues when processing such images.

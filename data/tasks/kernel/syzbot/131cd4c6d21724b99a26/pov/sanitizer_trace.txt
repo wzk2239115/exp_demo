@@ -1,0 +1,129 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+==================================================================
+BUG: KASAN: stack-out-of-bounds in jhash2 include/linux/jhash.h:138 [inline]
+BUG: KASAN: stack-out-of-bounds in __xfrm6_addr_hash net/xfrm/xfrm_hash.h:16 [inline]
+BUG: KASAN: stack-out-of-bounds in __xfrm6_daddr_saddr_hash net/xfrm/xfrm_hash.h:29 [inline]
+BUG: KASAN: stack-out-of-bounds in __xfrm_dst_hash net/xfrm/xfrm_hash.h:95 [inline]
+BUG: KASAN: stack-out-of-bounds in xfrm_dst_hash net/xfrm/xfrm_state.c:64 [inline]
+BUG: KASAN: stack-out-of-bounds in xfrm_state_find+0x6792/0x6e10 net/xfrm/xfrm_state.c:1159
+Read of size 4 at addr ffffc900001e0af0 by task dhcpcd/4659
+
+CPU: 1 PID: 4659 Comm: dhcpcd Not tainted 6.3.0-rc4-next-20230331-syzkaller #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 03/02/2023
+Call Trace:
+ <IRQ>
+ __dump_stack lib/dump_stack.c:88 [inline]
+ dump_stack_lvl+0xd9/0x150 lib/dump_stack.c:106
+ print_address_description.constprop.0+0x2c/0x3c0 mm/kasan/report.c:351
+ print_report mm/kasan/report.c:462 [inline]
+ kasan_report+0x11c/0x130 mm/kasan/report.c:572
+ jhash2 include/linux/jhash.h:138 [inline]
+ __xfrm6_addr_hash net/xfrm/xfrm_hash.h:16 [inline]
+ __xfrm6_daddr_saddr_hash net/xfrm/xfrm_hash.h:29 [inline]
+ __xfrm_dst_hash net/xfrm/xfrm_hash.h:95 [inline]
+ xfrm_dst_hash net/xfrm/xfrm_state.c:64 [inline]
+ xfrm_state_find+0x6792/0x6e10 net/xfrm/xfrm_state.c:1159
+ xfrm_tmpl_resolve_one net/xfrm/xfrm_policy.c:2467 [inline]
+ xfrm_tmpl_resolve+0x2f3/0xd60 net/xfrm/xfrm_policy.c:2512
+ xfrm_resolve_and_create_bundle+0x123/0x2230 net/xfrm/xfrm_policy.c:2805
+ xfrm_bundle_lookup net/xfrm/xfrm_policy.c:3040 [inline]
+ xfrm_lookup_with_ifid+0x448/0x1d40 net/xfrm/xfrm_policy.c:3171
+ xfrm_lookup net/xfrm/xfrm_policy.c:3268 [inline]
+ xfrm_lookup_route+0x3a/0x200 net/xfrm/xfrm_policy.c:3279
+ ip_route_output_flow+0x118/0x150 net/ipv4/route.c:2880
+ ip_route_output_ports include/net/route.h:177 [inline]
+ igmpv3_newpack+0x29d/0x11a0 net/ipv4/igmp.c:369
+ add_grhead+0x266/0x300 net/ipv4/igmp.c:440
+ add_grec+0xea5/0x1100 net/ipv4/igmp.c:574
+ igmpv3_send_cr net/ipv4/igmp.c:711 [inline]
+ igmp_ifc_timer_expire+0x636/0xff0 net/ipv4/igmp.c:810
+ call_timer_fn+0x1a0/0x580 kernel/time/timer.c:1700
+ expire_timers+0x234/0x330 kernel/time/timer.c:1751
+ __run_timers kernel/time/timer.c:2022 [inline]
+ __run_timers kernel/time/timer.c:1995 [inline]
+ run_timer_softirq+0x326/0x910 kernel/time/timer.c:2035
+ __do_softirq+0x1d4/0x905 kernel/softirq.c:571
+ invoke_softirq kernel/softirq.c:445 [inline]
+ __irq_exit_rcu+0x114/0x190 kernel/softirq.c:650
+ irq_exit_rcu+0x9/0x20 kernel/softirq.c:662
+ sysvec_apic_timer_interrupt+0x97/0xc0 arch/x86/kernel/apic/apic.c:1107
+ </IRQ>
+ <TASK>
+ asm_sysvec_apic_timer_interrupt+0x1a/0x20 arch/x86/include/asm/idtentry.h:645
+RIP: 0010:__sanitizer_cov_trace_pc+0x0/0x70 kernel/kcov.c:200
+Code: 26 aa 8e 02 66 0f 1f 44 00 00 f3 0f 1e fa 48 8b be a8 01 00 00 e8 b0 ff ff ff 31 c0 c3 66 66 2e 0f 1f 84 00 00 00 00 00 66 90 <f3> 0f 1e fa 65 8b 05 ad aa 80 7e 89 c1 48 8b 34 24 81 e1 00 01 00
+RSP: 0018:ffffc900034ff1a8 EFLAGS: 00000246
+RAX: 0000000000000000 RBX: 0000000000000000 RCX: ffffffff843db78c
+RDX: ffff88801e9e8000 RSI: 0000000000000000 RDI: 0000000000000005
+RBP: ffff88802b845dc0 R08: 0000000000000005 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000094001 R12: 0000000000000007
+R13: 0000000000000000 R14: 0000000000000003 R15: ffff88814a214000
+ skb_tailroom include/linux/skbuff.h:2680 [inline]
+ nla_put+0x65/0x140 lib/nlattr.c:1064
+ nla_put_string include/net/netlink.h:1527 [inline]
+ rtnl_fill_ifinfo+0x4bf/0x4850 net/core/rtnetlink.c:1800
+ rtnl_dump_ifinfo+0xaa1/0x14c0 net/core/rtnetlink.c:2235
+ netlink_dump+0x570/0xc50 net/netlink/af_netlink.c:2294
+ netlink_recvmsg+0xc33/0xec0 net/netlink/af_netlink.c:2023
+ sock_recvmsg_nosec net/socket.c:1017 [inline]
+ sock_recvmsg+0xe2/0x160 net/socket.c:1038
+ ____sys_recvmsg+0x210/0x5a0 net/socket.c:2720
+ ___sys_recvmsg+0xf2/0x180 net/socket.c:2762
+ __sys_recvmsg+0xf4/0x1c0 net/socket.c:2792
+ do_syscall_x64 arch/x86/entry/common.c:50 [inline]
+ do_syscall_64+0x39/0xb0 arch/x86/entry/common.c:80
+ entry_SYSCALL_64_after_hwframe+0x63/0xcd
+RIP: 0033:0x7fcccf09b003
+Code: 8b 15 79 fe 0b 00 f7 d8 64 89 02 48 c7 c0 ff ff ff ff eb b5 0f 1f 00 64 8b 04 25 18 00 00 00 85 c0 75 14 b8 2f 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 55 c3 0f 1f 40 00 48 83 ec 28 89 54 24 1c 48
+RSP: 002b:00007ffe217b3698 EFLAGS: 00000246 ORIG_RAX: 000000000000002f
+RAX: ffffffffffffffda RBX: 00007ffe217b47d0 RCX: 00007fcccf09b003
+RDX: 0000000000000000 RSI: 00007ffe217b46f0 RDI: 0000000000000018
+RBP: 00007ffe217b4760 R08: 0000000000000000 R09: 00007fcccf15ba60
+R10: 0000000000000062 R11: 0000000000000246 R12: 00007ffe217b46f0
+R13: 00007ffe217b46d4 R14: 00007ffe217b46e0 R15: 0000000000000eec
+ </TASK>
+
+The buggy address belongs to the virtual mapping at
+ [ffffc900001d9000, ffffc900001e2000) created by:
+ map_irq_stack arch/x86/kernel/irq_64.c:48 [inline]
+ irq_init_percpu_irqstack+0x1d0/0x320 arch/x86/kernel/irq_64.c:75
+
+The buggy address belongs to the physical page:
+page:ffffea0002e64240 refcount:1 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0xb9909
+flags: 0xfff00000001000(reserved|node=0|zone=1|lastcpupid=0x7ff)
+page_type: 0xffffffff()
+raw: 00fff00000001000 ffffea0002e64248 ffffea0002e64248 0000000000000000
+raw: 0000000000000000 0000000000000000 00000001ffffffff 0000000000000000
+page dumped because: kasan: bad access detected
+page_owner info is not present (never set?)
+
+Memory state around the buggy address:
+ ffffc900001e0980: 00 f2 f2 00 00 f3 f3 00 00 00 00 00 00 00 00 00
+ ffffc900001e0a00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+>ffffc900001e0a80: 00 00 f1 f1 f1 f1 00 00 00 00 00 00 00 00 f3 f3
+                                                             ^
+ ffffc900001e0b00: f3 f3 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+ ffffc900001e0b80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+==================================================================
+----------------
+Code disassembly (best guess):
+   0:	26 aa                	es stos %al,%es:(%rdi)
+   2:	8e 02                	mov    (%rdx),%es
+   4:	66 0f 1f 44 00 00    	nopw   0x0(%rax,%rax,1)
+   a:	f3 0f 1e fa          	endbr64
+   e:	48 8b be a8 01 00 00 	mov    0x1a8(%rsi),%rdi
+  15:	e8 b0 ff ff ff       	callq  0xffffffca
+  1a:	31 c0                	xor    %eax,%eax
+  1c:	c3                   	retq
+  1d:	66 66 2e 0f 1f 84 00 	data16 nopw %cs:0x0(%rax,%rax,1)
+  24:	00 00 00 00
+  28:	66 90                	xchg   %ax,%ax
+* 2a:	f3 0f 1e fa          	endbr64 <-- trapping instruction
+  2e:	65 8b 05 ad aa 80 7e 	mov    %gs:0x7e80aaad(%rip),%eax        # 0x7e80aae2
+  35:	89 c1                	mov    %eax,%ecx
+  37:	48 8b 34 24          	mov    (%rsp),%rsi
+  3b:	81                   	.byte 0x81
+  3c:	e1 00                	loope  0x3e
+  3e:	01 00                	add    %eax,(%rax)

@@ -1,0 +1,8 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+/out/instantiate: Running 1 inputs 1 time(s) each.
+Running: /tmp/trigger.input
+
+thread '<unnamed>' panicked at /src/wasmtime/crates/runtime/src/cow.rs:583:43:
+called `Result::unwrap()` on an `Err` value: Invalid argument (os error 22)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+bash: line 1: 72502 Aborted                 /out/instantiate -handle_segv=0 -handle_abrt=0 -verbosity=0 /tmp/trigger.input 2>&1

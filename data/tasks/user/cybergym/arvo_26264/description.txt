@@ -1,0 +1,1 @@
+An uninitialized memory read occurs in the presence of broken files, potentially exposing sensitive data.

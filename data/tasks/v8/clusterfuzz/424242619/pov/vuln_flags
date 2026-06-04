@@ -1,0 +1,1 @@
+--allow-natives-syntax --no-lazy-feedback-allocation --maglev-poly-calls 

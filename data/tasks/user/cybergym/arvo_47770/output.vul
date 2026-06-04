@@ -1,0 +1,44 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3473292315
+INFO: Loaded 3 modules   (186007 inline 8-bit counters): 13708 [0x7f2d33b199e0, 0x7f2d33b1cf6c), 959 [0x7f2d33b7aa40, 0x7f2d33b7adff), 171340 [0x31600e0, 0x3189e2c), 
+INFO: Loaded 3 PC tables (186007 PCs): 13708 [0x7f2d33b1cf70,0x7f2d33b52830), 959 [0x7f2d33b7ae00,0x7f2d33b7e9f0), 171340 [0x24f1bf0,0x278f0b0), 
+/out/gstoraster_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address (pc 0x0000008ade78 bp 0x7ffddb744b70 sp 0x7ffddb744b40 T0)
+==7==The signal is caused by a READ memory access.
+==7==Hint: this fault was caused by a dereference of a high value address (see register values below).  Disassemble the provided pc to learn which register was used.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x8ade78 in gs_closedevice /src/ghostpdl/./base/gsdevice.c:786:16
+    #1 0x8ade78 in gx_device_finalize /src/ghostpdl/./base/gsdevice.c:56:5
+    #2 0xe0f4f5 in restore_finalize /src/ghostpdl/./psi/isave.c:954:13
+    #3 0xe0f4f5 in alloc_restore_step_in /src/ghostpdl/./psi/isave.c:759:9
+    #4 0xd85d08 in dorestore /src/ghostpdl/./psi/zvmem.c:193:16
+    #5 0xceed28 in z2restore /src/ghostpdl/./psi/zdevice2.c:373:12
+    #6 0xd0edab in interp /src/ghostpdl/./psi/interp.c:1725:40
+    #7 0xd0edab in gs_call_interp /src/ghostpdl/./psi/interp.c:522:12
+    #8 0xd0edab in gs_interpret /src/ghostpdl/./psi/interp.c:479:12
+    #9 0x56793a in gs_main_interpret /src/ghostpdl/./psi/imain.c:257:12
+    #10 0x56793a in gs_main_run_string_end /src/ghostpdl/./psi/imain.c:945:12
+    #11 0x56793a in gs_main_run_string_with_length /src/ghostpdl/./psi/imain.c:889:12
+    #12 0x562de2 in gs_main_run_string /src/ghostpdl/./psi/imain.c:870:12
+    #13 0x1044ff1 in run_string /src/ghostpdl/./psi/imainarg.c:1169:12
+    #14 0x1040ff9 in swproc /src/ghostpdl/./psi/imainarg.c:367:20
+    #15 0x103dede in gs_main_init_with_args01 /src/ghostpdl/./psi/imainarg.c:224:24
+    #16 0x1044d79 in gs_main_init_with_args /src/ghostpdl/./psi/imainarg.c:289:16
+    #17 0xcf7404 in psapi_init_with_args /src/ghostpdl/./psi/psapi.c:281:12
+    #18 0x55f23c in gsapi_init_with_args /src/ghostpdl/./psi/iapi.c:253:12
+    #19 0x55e3d0 in gs_to_raster_fuzz /src/gstoraster_fuzzer.cc:97:8
+    #20 0x55e3d0 in LLVMFuzzerTestOneInput /src/gstoraster_fuzzer.cc:114:2
+    #21 0x456543 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #22 0x4421d2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #23 0x447a1c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #24 0x470612 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #25 0x7f2d33513082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)
+    #26 0x4209fd in _start (/out/gstoraster_fuzzer+0x4209fd)
+
+DEDUP_TOKEN: gs_closedevice--gx_device_finalize--restore_finalize
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/ghostpdl/./base/gsdevice.c:786:16 in gs_closedevice
+==7==ABORTING

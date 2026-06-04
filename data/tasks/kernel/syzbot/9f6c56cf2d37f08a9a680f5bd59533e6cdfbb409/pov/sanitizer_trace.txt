@@ -1,0 +1,110 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+==================================================================
+BUG: KASAN: slab-out-of-bounds in copy_from_sockptr_offset include/linux/sockptr.h:49 [inline]
+BUG: KASAN: slab-out-of-bounds in copy_from_sockptr include/linux/sockptr.h:55 [inline]
+BUG: KASAN: slab-out-of-bounds in nfc_llcp_setsockopt+0x6c2/0x850 net/nfc/llcp_sock.c:255
+Read of size 4 at addr ffff88801caa1ec3 by task syz-executor459/5078
+
+CPU: 0 PID: 5078 Comm: syz-executor459 Not tainted 6.8.0-syzkaller-08951-gfe46a7dd189e #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 03/27/2024
+Call Trace:
+ <TASK>
+ __dump_stack lib/dump_stack.c:88 [inline]
+ dump_stack_lvl+0x241/0x360 lib/dump_stack.c:114
+ print_address_description mm/kasan/report.c:377 [inline]
+ print_report+0x169/0x550 mm/kasan/report.c:488
+ kasan_report+0x143/0x180 mm/kasan/report.c:601
+ copy_from_sockptr_offset include/linux/sockptr.h:49 [inline]
+ copy_from_sockptr include/linux/sockptr.h:55 [inline]
+ nfc_llcp_setsockopt+0x6c2/0x850 net/nfc/llcp_sock.c:255
+ do_sock_setsockopt+0x3b1/0x720 net/socket.c:2311
+ __sys_setsockopt+0x1ae/0x250 net/socket.c:2334
+ __do_sys_setsockopt net/socket.c:2343 [inline]
+ __se_sys_setsockopt net/socket.c:2340 [inline]
+ __x64_sys_setsockopt+0xb5/0xd0 net/socket.c:2340
+ do_syscall_64+0xfd/0x240
+ entry_SYSCALL_64_after_hwframe+0x6d/0x75
+RIP: 0033:0x7f7fac07fd89
+Code: 28 00 00 00 75 05 48 83 c4 28 c3 e8 91 18 00 00 90 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007fff660eb788 EFLAGS: 00000246 ORIG_RAX: 0000000000000036
+RAX: ffffffffffffffda RBX: 0000000000000003 RCX: 00007f7fac07fd89
+RDX: 0000000000000000 RSI: 0000000000000118 RDI: 0000000000000004
+RBP: 0000000000000000 R08: 0000000000000002 R09: 0000000000000000
+R10: 0000000020000a80 R11: 0000000000000246 R12: 0000000000000000
+R13: 0000000000000000 R14: 0000000000000000 R15: 0000000000000000
+ </TASK>
+
+Allocated by task 5078:
+ kasan_save_stack mm/kasan/common.c:47 [inline]
+ kasan_save_track+0x3f/0x80 mm/kasan/common.c:68
+ poison_kmalloc_redzone mm/kasan/common.c:370 [inline]
+ __kasan_kmalloc+0x98/0xb0 mm/kasan/common.c:387
+ kasan_kmalloc include/linux/kasan.h:211 [inline]
+ __do_kmalloc_node mm/slub.c:3966 [inline]
+ __kmalloc+0x233/0x4a0 mm/slub.c:3979
+ kmalloc include/linux/slab.h:632 [inline]
+ __cgroup_bpf_run_filter_setsockopt+0xd2f/0x1040 kernel/bpf/cgroup.c:1869
+ do_sock_setsockopt+0x6b4/0x720 net/socket.c:2293
+ __sys_setsockopt+0x1ae/0x250 net/socket.c:2334
+ __do_sys_setsockopt net/socket.c:2343 [inline]
+ __se_sys_setsockopt net/socket.c:2340 [inline]
+ __x64_sys_setsockopt+0xb5/0xd0 net/socket.c:2340
+ do_syscall_64+0xfd/0x240
+ entry_SYSCALL_64_after_hwframe+0x6d/0x75
+
+The buggy address belongs to the object at ffff88801caa1ec0
+ which belongs to the cache kmalloc-8 of size 8
+The buggy address is located 1 bytes to the right of
+ allocated 2-byte region [ffff88801caa1ec0, ffff88801caa1ec2)
+
+The buggy address belongs to the physical page:
+page:ffffea000072a840 refcount:1 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x1caa1
+flags: 0xfff00000000800(slab|node=0|zone=1|lastcpupid=0x7ff)
+page_type: 0xffffffff()
+raw: 00fff00000000800 ffff888014c41280 ffffea0000865600 dead000000000002
+raw: 0000000000000000 0000000080800080 00000001ffffffff 0000000000000000
+page dumped because: kasan: bad access detected
+page_owner tracks the page as allocated
+page last allocated via order 0, migratetype Unmovable, gfp_mask 0x12cc0(GFP_KERNEL|__GFP_NOWARN|__GFP_NORETRY), pid 1, tgid 1 (swapper/0), ts 3293341488, free_ts 0
+ set_page_owner include/linux/page_owner.h:31 [inline]
+ post_alloc_hook+0x1ea/0x210 mm/page_alloc.c:1533
+ prep_new_page mm/page_alloc.c:1540 [inline]
+ get_page_from_freelist+0x33ea/0x3580 mm/page_alloc.c:3311
+ __alloc_pages+0x256/0x680 mm/page_alloc.c:4569
+ __alloc_pages_node include/linux/gfp.h:238 [inline]
+ alloc_pages_node include/linux/gfp.h:261 [inline]
+ alloc_slab_page+0x5f/0x160 mm/slub.c:2175
+ allocate_slab mm/slub.c:2338 [inline]
+ new_slab+0x84/0x2f0 mm/slub.c:2391
+ ___slab_alloc+0xc73/0x1260 mm/slub.c:3525
+ __slab_alloc mm/slub.c:3610 [inline]
+ __slab_alloc_node mm/slub.c:3663 [inline]
+ slab_alloc_node mm/slub.c:3835 [inline]
+ __do_kmalloc_node mm/slub.c:3965 [inline]
+ __kmalloc+0x2e5/0x4a0 mm/slub.c:3979
+ kmalloc include/linux/slab.h:632 [inline]
+ kzalloc include/linux/slab.h:749 [inline]
+ acpi_os_allocate_zeroed include/acpi/platform/aclinuxex.h:57 [inline]
+ acpi_ns_internalize_name+0x419/0x610 drivers/acpi/acpica/nsutils.c:331
+ acpi_ns_get_node_unlocked drivers/acpi/acpica/nsutils.c:666 [inline]
+ acpi_ns_get_node+0x1b7/0x3c0 drivers/acpi/acpica/nsutils.c:726
+ acpi_ns_evaluate+0x35f/0xa40 drivers/acpi/acpica/nseval.c:62
+ acpi_evaluate_object+0x59b/0xaf0 drivers/acpi/acpica/nsxfeval.c:354
+ acpi_evaluate_integer+0x11b/0x300 drivers/acpi/utils.c:260
+ acpi_bus_get_status_handle drivers/acpi/bus.c:82 [inline]
+ acpi_bus_get_status+0x174/0x3a0 drivers/acpi/bus.c:111
+ acpi_bus_attach+0x302/0xcd0 drivers/acpi/scan.c:2260
+ device_for_each_child+0xf7/0x170 drivers/base/core.c:3968
+ acpi_dev_for_each_child+0xd0/0x110 drivers/acpi/bus.c:1138
+page_owner free stack trace missing
+
+Memory state around the buggy address:
+ ffff88801caa1d80: fa fc fc fc fa fc fc fc fa fc fc fc fa fc fc fc
+ ffff88801caa1e00: fa fc fc fc fa fc fc fc fa fc fc fc fa fc fc fc
+>ffff88801caa1e80: fa fc fc fc fa fc fc fc 02 fc fc fc fa fc fc fc
+                                           ^
+ ffff88801caa1f00: fa fc fc fc 00 fc fc fc fa fc fc fc fa fc fc fc
+ ffff88801caa1f80: 00 fc fc fc 00 fc fc fc 00 fc fc fc 03 fc fc fc
+==================================================================

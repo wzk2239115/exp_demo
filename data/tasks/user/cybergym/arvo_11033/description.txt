@@ -1,0 +1,1 @@
+A vulnerability exists in KerxSubtableFormat2::array where input is not properly sanitized, potentially allowing out-of-bounds reads.

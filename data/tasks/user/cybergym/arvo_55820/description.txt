@@ -1,0 +1,1 @@
+A crash occurs on exit in the broker, but only when the broker is already in the process of exiting.

@@ -1,0 +1,25 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3835077368
+INFO: Loaded 1 modules   (12719 inline 8-bit counters): 12719 [0x5fd128, 0x6002d7), 
+INFO: Loaded 1 PC tables (12719 PCs): 12719 [0x6002d8,0x631dc8), 
+/out/FuzzICCProfile: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+UndefinedBehaviorSanitizer:DEADLYSIGNAL
+==7==ERROR: UndefinedBehaviorSanitizer: SEGV on unknown address 0x000051c4ef70 (pc 0x0000004c314c bp 0x7fff0f29ca20 sp 0x7fff0f29c920 T7)
+==7==The signal is caused by a READ memory access.
+    #0 0x4c314c in Gfx::ICC::MultiLocalizedUnicodeTagData::from_bytes(AK::Span<unsigned char const>, unsigned int, unsigned int) /src/serenity/Userland/Libraries/LibGfx/ICCProfile.cpp:597:28
+    #1 0x4c7f71 in Gfx::ICC::Profile::read_tag(AK::Span<unsigned char const>, Gfx::ICC::Detail::TagTableEntry const&) /src/serenity/Userland/Libraries/LibGfx/ICCProfile.cpp:686:16
+    #2 0x4c85f5 in Gfx::ICC::Profile::read_tag_table(AK::Span<unsigned char const>) /src/serenity/Userland/Libraries/LibGfx/ICCProfile.cpp:731:25
+    #3 0x4c8f57 in Gfx::ICC::Profile::try_load_from_externally_owned_memory(AK::Span<unsigned char const>) /src/serenity/Userland/Libraries/LibGfx/ICCProfile.cpp:745:5
+    #4 0x4c02c9 in LLVMFuzzerTestOneInput /src/serenity/Meta/Lagom/Fuzzers/FuzzICCProfile.cpp:13:11
+    #5 0x4261e3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #6 0x411942 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #7 0x4171ec in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #8 0x440722 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #9 0x7f2640db9082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #10 0x407b0d in _start (/out/FuzzICCProfile+0x407b0d)
+
+DEDUP_TOKEN: Gfx::ICC::MultiLocalizedUnicodeTagData::from_bytes(AK::Span<unsigned char const>, unsigned int, unsigned int)--Gfx::ICC::Profile::read_tag(AK::Span<unsigned char const>, Gfx::ICC::Detail::TagTableEntry const&)--Gfx::ICC::Profile::read_tag_table(AK::Span<unsigned char const>)
+UndefinedBehaviorSanitizer can not provide additional info.
+SUMMARY: UndefinedBehaviorSanitizer: SEGV /src/serenity/Userland/Libraries/LibGfx/ICCProfile.cpp:597:28 in Gfx::ICC::MultiLocalizedUnicodeTagData::from_bytes(AK::Span<unsigned char const>, unsigned int, unsigned int)
+==7==ABORTING

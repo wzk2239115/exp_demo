@@ -1,0 +1,67 @@
+
+
+#
+# Fatal error in ../../src/compiler/js-inlining.cc, line 258
+# Check failed: argument_count_with_receiver <= kMaxUInt16 (65536 vs. 65535).
+#
+#
+#
+#FailureMessage Object: 0x7ffe074d9e20
+
+#
+# Fatal error in ../../src/compiler/js-inlining.cc, line 258
+# Check failed: argument_count_with_receiver <= kMaxUInt16 (65536 vs. 65535).
+#
+#
+#
+#FailureMessage Object: 0x7f90c7ffd320
+==== C stack trace ===============================
+
+
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:390:32) [0x56167a3d61b3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x56167a3d559d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x56167a3bb134]
+    d8(v8::internal::compiler::JSInliner::CreateArtificialFrameState(v8::internal::compiler::Node*, v8::internal::compiler::FrameState, int, v8::internal::compiler::FrameStateType, v8::internal::compiler::SharedFunctionInfoRef, v8::internal::compiler::OptionalRef<v8::internal::compiler::BytecodeArrayRef>, v8::internal::compiler::Node*, v8::internal::compiler::Node*) ./../../src/base/logging.h:442:1) [0x561678bc61a4]
+    d8(v8::internal::compiler::JSInliner::ReduceJSCall(v8::internal::compiler::Node*) ./../../src/compiler/js-inlining.cc:957:19) [0x561678bc989d]
+    d8(v8::internal::compiler::JSInliningHeuristic::InlineCandidate(v8::internal::compiler::JSInliningHeuristic::Candidate const&, bool) ./../../src/compiler/graph-reducer.h:39:47) [0x561678bc0cd4]
+    d8(v8::internal::compiler::JSInliningHeuristic::Reduce(v8::internal::compiler::Node*) ./../../src/compiler/js-inlining-heuristic.cc:271:5) [0x561678bc09ac]
+    d8(v8::internal::compiler::GraphReducer::Reduce(v8::internal::compiler::Node*) ./../../src/compiler/graph-reducer.cc:34:25) [0x561678b1860a]
+    d8(v8::internal::compiler::GraphReducer::ReduceTop() ./../../src/compiler/graph-reducer.h:39:47) [0x561678b18226]
+    d8(v8::internal::compiler::GraphReducer::ReduceNode(v8::internal::compiler::Node*) ./../../third_party/libc++/src/include/deque:761:88) [0x561678b17c88]
+    d8(v8::internal::compiler::InliningPhase::Run(v8::internal::compiler::TFPipelineData*, v8::internal::Zone*) ./../../src/compiler/js-inlining-heuristic.h:60:12) [0x561678cc212a]
+    d8(auto v8::internal::compiler::PipelineImpl::Run<v8::internal::compiler::InliningPhase>() ./../../src/logging/runtime-call-stats.h:797:9) [0x561678c7cb6d]
+    d8(v8::internal::compiler::PipelineImpl::CreateGraph(v8::internal::compiler::Linkage*) ./../../src/compiler/pipeline.cc:0:3) [0x561678c78f40]
+    d8(v8::internal::compiler::PipelineCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/compiler/pipeline.cc:800:42) [0x561678c78a31]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:470:22) [0x561676ec46ed]
+    d8(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1103:7) [0x561676ed277d]
+    d8(v8::internal::Compiler::CompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind) ./../../src/handles/maybe-handles-inl.h:38:17) [0x561676ed5793]
+    d8(v8::internal::(anonymous namespace)::CompileOptimized(v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::Isolate*) ./../../src/handles/handles.h:197:22) [0x561677bb5a6e]
+    d8(v8::internal::__RT_impl_Runtime_OptimizeTurbofanEager(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/execution/isolate-data.h:313:44) [0x561677baeda2]
+    d8(v8::internal::Runtime_OptimizeTurbofanEager(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:226:1) [0x561677bae9d0]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x561679a86c3d]
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:390:32) [0x56167a3d61b3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x56167a3d559d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x56167a3bb134]
+    d8(v8::internal::compiler::JSInliner::CreateArtificialFrameState(v8::internal::compiler::Node*, v8::internal::compiler::FrameState, int, v8::internal::compiler::FrameStateType, v8::internal::compiler::SharedFunctionInfoRef, v8::internal::compiler::OptionalRef<v8::internal::compiler::BytecodeArrayRef>, v8::internal::compiler::Node*, v8::internal::compiler::Node*) ./../../src/base/logging.h:442:1) [0x561678bc61a4]
+    d8(v8::internal::compiler::JSInliner::ReduceJSCall(v8::internal::compiler::Node*) ./../../src/compiler/js-inlining.cc:957:19) [0x561678bc989d]
+    d8(v8::internal::compiler::JSInliningHeuristic::InlineCandidate(v8::internal::compiler::JSInliningHeuristic::Candidate const&, bool) ./../../src/compiler/graph-reducer.h:39:47) [0x561678bc0cd4]
+    d8(v8::internal::compiler::JSInliningHeuristic::Reduce(v8::internal::compiler::Node*) ./../../src/compiler/js-inlining-heuristic.cc:271:5) [0x561678bc09ac]
+    d8(v8::internal::compiler::GraphReducer::Reduce(v8::internal::compiler::Node*) ./../../src/compiler/graph-reducer.cc:34:25) [0x561678b1860a]
+    d8(v8::internal::compiler::GraphReducer::ReduceTop() ./../../src/compiler/graph-reducer.h:39:47) [0x561678b18226]
+    d8(v8::internal::compiler::GraphReducer::ReduceNode(v8::internal::compiler::Node*) ./../../third_party/libc++/src/include/deque:761:88) [0x561678b17c88]
+    d8(v8::internal::compiler::InliningPhase::Run(v8::internal::compiler::TFPipelineData*, v8::internal::Zone*) ./../../src/compiler/js-inlining-heuristic.h:60:12) [0x561678cc212a]
+    d8(auto v8::internal::compiler::PipelineImpl::Run<v8::internal::compiler::InliningPhase>() ./../../src/logging/runtime-call-stats.h:797:9) [0x561678c7cb6d]
+    d8(v8::internal::compiler::PipelineImpl::CreateGraph(v8::internal::compiler::Linkage*) ./../../src/compiler/pipeline.cc:0:3) [0x561678c78f40]
+    d8(v8::internal::compiler::PipelineCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/compiler/pipeline.cc:800:42) [0x561678c78a31]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:470:22) [0x561676ec46ed]
+    d8(v8::internal::OptimizingCompileDispatcher::CompileNext(v8::internal::TurbofanCompilationJob*, v8::internal::LocalIsolate*) ./../../src/compiler-dispatcher/optimizing-compile-dispatcher.cc:171:52) [0x561676f70d18]
+    d8(v8::internal::OptimizingCompileDispatcher::CompileTask::RunCompilationJob(v8::internal::Isolate*, v8::internal::LocalIsolate&, v8::internal::TurbofanCompilationJob*) ./../../src/logging/runtime-call-stats.h:797:9) [0x561676f721d3]
+    d8(v8::internal::OptimizingCompileDispatcher::CompileTask::Run(v8::JobDelegate*) ./../../src/compiler-dispatcher/optimizing-compile-dispatcher.cc:58:36) [0x561676f71ce6]
+    d8(v8::platform::DefaultJobWorker::Run() ./../../src/libplatform/default-job.cc:19:46) [0x56167a3d7af9]
+    d8(v8::platform::DefaultWorkerThreadsTaskRunner::WorkerThread::Run() ./../../src/libplatform/default-worker-threads-task-runner.cc:96:9) [0x56167a3dd29c]
+    d8(v8::base::ThreadEntry(void*) ./../../src/base/platform/platform-posix.cc:1232:3) [0x56167a3d2d56]
+    /lib/x86_64-linux-gnu/libc.so.6(+0x9caa4) [0x7f90eab05aa4]
+    /lib/x86_64-linux-gnu/libc.so.6(__clone+0x44) [0x7f90eab92a64]
+timeout: the monitored command dumped core

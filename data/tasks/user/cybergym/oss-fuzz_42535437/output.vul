@@ -1,0 +1,30 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 4007736587
+INFO: Loaded 1 modules   (17950 inline 8-bit counters): 17950 [0x55f1964a4d08, 0x55f1964a9326), 
+INFO: Loaded 1 PC tables (17950 PCs): 17950 [0x55f1964a9328,0x55f1964ef508), 
+/out/fuzz-TFTP_Packet: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address (pc 0x55f19619c628 bp 0x7f1e3f0aaa70 sp 0x7f1e3f0aa7d8 T0)
+==7==The signal is caused by a READ memory access.
+==7==Hint: this fault was caused by a dereference of a high value address (see register values below).  Disassemble the provided pc to learn which register was used.
+    #0 0x55f19619c628 in spicy::rt::accept_input() /src/spicy/spicy/runtime/src/parser.cc:32:9
+    #1 0x55f196161110 in __on_0x25_done /src/spicy/build/ci/fuzz/TFTP_Packet_TFTP.cc:823:12
+    #2 0x55f196161110 in __hlt_TFTP_Packet::TFTP::Request::__parse_TFTP__Request_2_stage2(hilti::rt::ValueReference<hilti::rt::Stream>&, hilti::rt::stream::SafeConstIterator const&, hilti::rt::stream::View, hilti::rt::Bool, SafeInt<long, hilti::rt::integer::detail::SafeIntException>, hilti::rt::stream::SafeConstIterator, std::__1::optional<hilti::rt::RecoverableFailure>) /src/spicy/build/ci/fuzz/TFTP_Packet_TFTP.cc:907:15
+    #3 0x55f19615250c in __hlt_TFTP_Packet::TFTP::Request::__parse_stage1(hilti::rt::ValueReference<hilti::rt::Stream>&, hilti::rt::stream::SafeConstIterator const&, hilti::rt::stream::View, hilti::rt::Bool, SafeInt<long, hilti::rt::integer::detail::SafeIntException>, hilti::rt::stream::SafeConstIterator, std::__1::optional<hilti::rt::RecoverableFailure>) /src/spicy/build/ci/fuzz/TFTP_Packet_TFTP.cc:928:34
+    #4 0x55f19615389a in __hlt_TFTP_Packet::TFTP::Packet::__parse_switch_case_2_stage1(hilti::rt::ValueReference<hilti::rt::Stream>&, hilti::rt::stream::SafeConstIterator const&, hilti::rt::stream::View, hilti::rt::Bool, SafeInt<long, hilti::rt::integer::detail::SafeIntException>, hilti::rt::stream::SafeConstIterator, std::__1::optional<hilti::rt::RecoverableFailure>) /src/spicy/build/ci/fuzz/TFTP_Packet_TFTP.cc:625:94
+    #5 0x55f19614ce31 in __hlt_TFTP_Packet::TFTP::Packet::__parse_switch_stage1(hilti::rt::ValueReference<hilti::rt::Stream>&, hilti::rt::stream::SafeConstIterator const&, hilti::rt::stream::View, hilti::rt::Bool, SafeInt<long, hilti::rt::integer::detail::SafeIntException>, hilti::rt::stream::SafeConstIterator, std::__1::optional<hilti::rt::RecoverableFailure>) /src/spicy/build/ci/fuzz/TFTP_Packet_TFTP.cc:717:61
+    #6 0x55f19614b557 in __hlt_TFTP_Packet::TFTP::Packet::__parse_TFTP__Packet_stage2(hilti::rt::ValueReference<hilti::rt::Stream>&, hilti::rt::stream::SafeConstIterator const&, hilti::rt::stream::View, hilti::rt::Bool, SafeInt<long, hilti::rt::integer::detail::SafeIntException>, hilti::rt::stream::SafeConstIterator, std::__1::optional<hilti::rt::RecoverableFailure>) /src/spicy/build/ci/fuzz/TFTP_Packet_TFTP.cc:550:57
+    #7 0x55f19614f9e6 in __hlt_TFTP_Packet::TFTP::Packet::__parse_stage1(hilti::rt::ValueReference<hilti::rt::Stream>&, hilti::rt::stream::SafeConstIterator const&, hilti::rt::stream::View, hilti::rt::Bool, SafeInt<long, hilti::rt::integer::detail::SafeIntException>, hilti::rt::stream::SafeConstIterator, std::__1::optional<hilti::rt::RecoverableFailure>) /src/spicy/build/ci/fuzz/TFTP_Packet_TFTP.cc:576:34
+    #8 0x55f196158e36 in __hlt_TFTP_Packet::TFTP::Packet::parse1(hilti::rt::ValueReference<hilti::rt::Stream>&, std::__1::optional<hilti::rt::stream::View> const&, std::__1::optional<spicy::rt::UnitContext> const&) /src/spicy/build/ci/fuzz/TFTP_Packet_TFTP.cc:769:67
+    #9 0x55f19618568e in operator() /src/spicy/build/ci/fuzz/TFTP_Packet_TFTP.cc:994:16
+    #10 0x55f19618568e in operator() /src/spicy/hilti/runtime/include/hilti/rt/fiber.h:134:22
+    #11 0x55f19618568e in hilti::rt::detail::Callback::Callback<hlt_TFTP_Packet::TFTP::Packet::parse1(hilti::rt::ValueReference<hilti::rt::Stream>&, std::__1::optional<hilti::rt::stream::View> const&, std::__1::optional<spicy::rt::UnitContext> const&)::$_0>(hlt_TFTP_Packet::TFTP::Packet::parse1(hilti::rt::ValueReference<hilti::rt::Stream>&, std::__1::optional<hilti::rt::stream::View> const&, std::__1::optional<spicy::rt::UnitContext> const&)::$_0)::'lambda'(linb::any const&, hilti::rt::detail::Fiber*)::__invoke(linb::any const&, hilti::rt::detail::Fiber*) /src/spicy/hilti/runtime/include/hilti/rt/fiber.h:133:37
+    #12 0x55f1961b8b85 in hilti::rt::detail::Callback::operator()(hilti::rt::detail::Fiber*) const /src/spicy/hilti/runtime/include/hilti/rt/fiber.h:143:68
+    #13 0x55f1961b8b85 in __fiber_run_trampoline /src/spicy/hilti/runtime/src/fiber.cc:95:30
+    #14 0x55f196280368 in fiber_asm_invoke crtstuff.c
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/spicy/spicy/runtime/src/parser.cc:32:9 in spicy::rt::accept_input()
+==7==ABORTING

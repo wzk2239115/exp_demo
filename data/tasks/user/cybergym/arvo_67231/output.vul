@@ -1,0 +1,145 @@
+oss-fuzzshark: disabling: ip
+oss-fuzzshark: disabling: udplite
+oss-fuzzshark: disabling: ospf
+oss-fuzzshark: disabling: bgp
+oss-fuzzshark: disabling: dhcp
+oss-fuzzshark: disabling: json
+oss-fuzzshark: disabling: snort
+oss-fuzzshark: configured for dissector: udp in table: ip.proto
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3913105078
+INFO: Loaded 1 modules   (401261 inline 8-bit counters): 401261 [0x10be97d0, 0x10c4b73d), 
+INFO: Loaded 1 PC tables (401261 PCs): 401261 [0x10c4b740,0x1126ae10), 
+/out/fuzzshark_ip_proto-udp: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x60200010b172 at pc 0x0000008a4f1b bp 0x7ffe051adb70 sp 0x7ffe051adb68
+READ of size 1 at 0x60200010b172 thread T0
+SCARINESS: 12 (1-byte-read-heap-buffer-overflow)
+    #0 0x8a4f1a in add_address_to_hash /src/wireshark/epan/address.h:339:21
+    #1 0x8a4f1a in conversation_hash_element_list /src/wireshark/epan/conversation.c:359:24
+    #2 0x2df4472 in wmem_map_lookup /src/wireshark/wsutil/wmem/wmem_map.c:264:23
+    #3 0x8a7faa in conversation_lookup_hashtable /src/wireshark/epan/conversation.c:1047:36
+    #4 0x8a7faa in conversation_lookup_exact /src/wireshark/epan/conversation.c:1099:12
+    #5 0x8a7faa in find_conversation /src/wireshark/epan/conversation.c:1234:24
+    #6 0x8ae620 in find_conversation_pinfo /src/wireshark/epan/conversation.c:1809:21
+    #7 0x130b2a6 in find_wlan_conversation_pinfo /src/wireshark/epan/dissectors/packet-ieee80211.c:22457:10
+    #8 0x130b2a6 in determine_mic_len /src/wireshark/epan/dissectors/packet-ieee80211.c:22472:34
+    #9 0x12e073d in dissect_fast_bss_transition /src/wireshark/epan/dissectors/packet-ieee80211.c:22548:17
+    #10 0x71cea7 in call_dissector_through_handle /src/wireshark/epan/packet.c:858:9
+    #11 0x71cea7 in call_dissector_work /src/wireshark/epan/packet.c:944:9
+    #12 0x71c942 in dissector_try_uint_new /src/wireshark/epan/packet.c:1591:8
+    #13 0x12c67db in add_tagged_field_with_validation /src/wireshark/epan/dissectors/packet-ieee80211.c:30564:8
+    #14 0x13093b7 in add_tagged_field /src/wireshark/epan/dissectors/packet-ieee80211.c:30404:10
+    #15 0x13093b7 in ieee_80211_add_tagged_parameters /src/wireshark/epan/dissectors/packet-ieee80211.c:36216:19
+    #16 0x130a473 in dissect_mgt_action /src/wireshark/epan/dissectors/packet-ieee80211.c:36299:5
+    #17 0x12f957b in dissect_pv1_management /src/wireshark/epan/dissectors/packet-ieee80211.c
+    #18 0x12f957b in dissect_ieee80211_pv1 /src/wireshark/epan/dissectors/packet-ieee80211.c:38642:14
+    #19 0x12f957b in dissect_ieee80211_common /src/wireshark/epan/dissectors/packet-ieee80211.c:40532:5
+    #20 0x12ca599 in dissect_ieee80211_withoutfcs /src/wireshark/epan/dissectors/packet-ieee80211.c:40599:3
+    #21 0x71cea7 in call_dissector_through_handle /src/wireshark/epan/packet.c:858:9
+    #22 0x71cea7 in call_dissector_work /src/wireshark/epan/packet.c:944:9
+    #23 0x7196da in call_dissector_only /src/wireshark/epan/packet.c:3515:8
+    #24 0x7196da in call_dissector_with_data /src/wireshark/epan/packet.c:3528:8
+    #25 0x15651ba in dissect_lwapp /src/wireshark/epan/dissectors/packet-lwapp.c:453:9
+    #26 0x71cea7 in call_dissector_through_handle /src/wireshark/epan/packet.c:858:9
+    #27 0x71cea7 in call_dissector_work /src/wireshark/epan/packet.c:944:9
+    #28 0x71d47f in dissector_try_uint_new /src/wireshark/epan/packet.c:1591:8
+    #29 0x71d47f in dissector_try_uint /src/wireshark/epan/packet.c:1615:9
+    #30 0x1f19189 in decode_udp_ports /src/wireshark/epan/dissectors/packet-udp.c:684:27
+    #31 0x1f1e522 in dissect /src/wireshark/epan/dissectors/packet-udp.c:1281:9
+    #32 0x1f1b3bc in dissect_udp /src/wireshark/epan/dissectors/packet-udp.c:1287:5
+    #33 0x71cea7 in call_dissector_through_handle /src/wireshark/epan/packet.c:858:9
+    #34 0x71cea7 in call_dissector_work /src/wireshark/epan/packet.c:944:9
+    #35 0x7270ef in call_dissector_only /src/wireshark/epan/packet.c:3515:8
+    #36 0x7270ef in call_all_postdissectors /src/wireshark/epan/packet.c:3978:3
+    #37 0x1074a33 in dissect_frame /src/wireshark/epan/dissectors/packet-frame.c:1436:5
+    #38 0x71cea7 in call_dissector_through_handle /src/wireshark/epan/packet.c:858:9
+    #39 0x71cea7 in call_dissector_work /src/wireshark/epan/packet.c:944:9
+    #40 0x7196da in call_dissector_only /src/wireshark/epan/packet.c:3515:8
+    #41 0x7196da in call_dissector_with_data /src/wireshark/epan/packet.c:3528:8
+    #42 0x718d94 in dissect_record /src/wireshark/epan/packet.c:662:3
+    #43 0x70adc4 in epan_dissect_run /src/wireshark/epan/epan.c:635:2
+    #44 0x56eea0 in LLVMFuzzerTestOneInput /src/wireshark/fuzz/fuzzshark.c:382:2
+    #45 0x4406a3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #46 0x42be02 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #47 0x4316ac in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #48 0x45abe2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #49 0x7f4228e75082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #50 0x421fcd in _start (/out/fuzzshark_ip_proto-udp+0x421fcd)
+
+DEDUP_TOKEN: add_address_to_hash--conversation_hash_element_list--wmem_map_lookup
+0x60200010b172 is located 0 bytes to the right of 2-byte region [0x60200010b170,0x60200010b172)
+allocated by thread T0 here:
+    #0 0x531836 in malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:69:3
+    #1 0x2ecab88 in g_malloc (/out/fuzzshark_ip_proto-udp+0x2ecab88)
+    #2 0x2dea3aa in wmem_alloc /src/wireshark/wsutil/wmem/wmem_core.c:44:12
+    #3 0x2dea3aa in wmem_alloc0 /src/wireshark/wsutil/wmem/wmem_core.c:52:11
+    #4 0x12f892e in set_sid_addr_cols /src/wireshark/epan/dissectors/packet-ieee80211.c:38171:19
+    #5 0x12f892e in dissect_ieee80211_pv1 /src/wireshark/epan/dissectors/packet-ieee80211.c:38573:5
+    #6 0x12f892e in dissect_ieee80211_common /src/wireshark/epan/dissectors/packet-ieee80211.c:40532:5
+    #7 0x12ca599 in dissect_ieee80211_withoutfcs /src/wireshark/epan/dissectors/packet-ieee80211.c:40599:3
+    #8 0x71cea7 in call_dissector_through_handle /src/wireshark/epan/packet.c:858:9
+    #9 0x71cea7 in call_dissector_work /src/wireshark/epan/packet.c:944:9
+    #10 0x7196da in call_dissector_only /src/wireshark/epan/packet.c:3515:8
+    #11 0x7196da in call_dissector_with_data /src/wireshark/epan/packet.c:3528:8
+    #12 0x15651ba in dissect_lwapp /src/wireshark/epan/dissectors/packet-lwapp.c:453:9
+    #13 0x71cea7 in call_dissector_through_handle /src/wireshark/epan/packet.c:858:9
+    #14 0x71cea7 in call_dissector_work /src/wireshark/epan/packet.c:944:9
+    #15 0x71d47f in dissector_try_uint_new /src/wireshark/epan/packet.c:1591:8
+    #16 0x71d47f in dissector_try_uint /src/wireshark/epan/packet.c:1615:9
+    #17 0x1f19189 in decode_udp_ports /src/wireshark/epan/dissectors/packet-udp.c:684:27
+    #18 0x1f1e522 in dissect /src/wireshark/epan/dissectors/packet-udp.c:1281:9
+    #19 0x1f1b3bc in dissect_udp /src/wireshark/epan/dissectors/packet-udp.c:1287:5
+    #20 0x71cea7 in call_dissector_through_handle /src/wireshark/epan/packet.c:858:9
+    #21 0x71cea7 in call_dissector_work /src/wireshark/epan/packet.c:944:9
+    #22 0x7270ef in call_dissector_only /src/wireshark/epan/packet.c:3515:8
+    #23 0x7270ef in call_all_postdissectors /src/wireshark/epan/packet.c:3978:3
+    #24 0x1074a33 in dissect_frame /src/wireshark/epan/dissectors/packet-frame.c:1436:5
+    #25 0x71cea7 in call_dissector_through_handle /src/wireshark/epan/packet.c:858:9
+    #26 0x71cea7 in call_dissector_work /src/wireshark/epan/packet.c:944:9
+    #27 0x7196da in call_dissector_only /src/wireshark/epan/packet.c:3515:8
+    #28 0x7196da in call_dissector_with_data /src/wireshark/epan/packet.c:3528:8
+    #29 0x718d94 in dissect_record /src/wireshark/epan/packet.c:662:3
+    #30 0x70adc4 in epan_dissect_run /src/wireshark/epan/epan.c:635:2
+    #31 0x56eea0 in LLVMFuzzerTestOneInput /src/wireshark/fuzz/fuzzshark.c:382:2
+    #32 0x4406a3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #33 0x42be02 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #34 0x4316ac in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #35 0x45abe2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #36 0x7f4228e75082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+
+DEDUP_TOKEN: malloc--g_malloc--wmem_alloc
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/wireshark/epan/address.h:339:21 in add_address_to_hash
+Shadow bytes around the buggy address:
+  0x0c04800195d0: fa fa 00 00 fa fa 00 00 fa fa 00 00 fa fa 00 fa
+  0x0c04800195e0: fa fa 00 fa fa fa 00 fa fa fa 00 00 fa fa 06 fa
+  0x0c04800195f0: fa fa 04 fa fa fa 04 fa fa fa 04 fa fa fa 06 fa
+  0x0c0480019600: fa fa 06 fa fa fa 00 00 fa fa 00 00 fa fa 00 00
+  0x0c0480019610: fa fa 00 00 fa fa 04 fa fa fa 00 00 fa fa 04 fa
+=>0x0c0480019620: fa fa 00 00 fa fa 00 00 fa fa 00 00 fa fa[02]fa
+  0x0c0480019630: fa fa 00 00 fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c0480019640: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c0480019650: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c0480019660: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c0480019670: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

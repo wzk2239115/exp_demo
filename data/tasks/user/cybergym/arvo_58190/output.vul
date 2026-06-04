@@ -1,0 +1,78 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3687644529
+INFO: Loaded 1 modules   (10713 inline 8-bit counters): 10713 [0x8425100, 0x8427ad9), 
+INFO: Loaded 1 PC tables (10713 PCs): 10713 [0x8399ab4,0x83ae97c), 
+/out/mvc_dec_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0xf71ff000 at pc 0x0825566c bp 0xffd20bb8 sp 0xffd20bb0
+READ of size 4 at 0xf71ff000 thread T0
+SCARINESS: 17 (4-byte-read-heap-buffer-overflow)
+    #0 0x825566b in ih264d_get_bits_h264 /src/libavc/decoder/ih264d_bitstrm.c:94:9
+    #1 0x82f24c0 in ih264d_parse_fgc /src/libavc/decoder/ih264d_sei.c:860:34
+    #2 0x82f2e1c in ih264d_parse_sei_payload /src/libavc/decoder/ih264d_sei.c:1009:25
+    #3 0x82f35b2 in ih264d_parse_sei_message /src/libavc/decoder/ih264d_sei.c:1081:21
+    #4 0x82b18ae in ih264d_parse_nal_unit /src/libavc/decoder/ih264d_parse_headers.c:1322:36
+    #5 0x81d2ed1 in imvcd_view_decode /src/libavc/decoder/mvc/imvcd_api.c:815:17
+    #6 0x81d2ed1 in imvcd_decode /src/libavc/decoder/mvc/imvcd_api.c:1230:20
+    #7 0x81d2ed1 in imvcd_api_function /src/libavc/decoder/mvc/imvcd_api.c:1592:20
+    #8 0x81ced51 in Codec::decodeFrame(unsigned char const*, unsigned int, unsigned int*) /src/libavc/fuzzer/mvc_dec_fuzzer.cpp:339:11
+    #9 0x81cfda9 in LLVMFuzzerTestOneInput /src/libavc/fuzzer/mvc_dec_fuzzer.cpp:400:43
+    #10 0x808d8ee in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #11 0x807884e in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #12 0x807e450 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned int)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #13 0x80a8037 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #14 0xf7bf4ed4 in __libc_start_main (/lib32/libc.so.6+0x1aed4) (BuildId: d56935956a210bf85f6592f3178b979ad4f7b35f)
+    #15 0x806f995 in _start (/out/mvc_dec_fuzzer+0x806f995)
+
+DEDUP_TOKEN: ih264d_get_bits_h264--ih264d_parse_fgc--ih264d_parse_sei_payload
+0xf71ff000 is located 0 bytes to the right of 256000-byte region [0xf71c0800,0xf71ff000)
+allocated by thread T0 here:
+    #0 0x8189f9a in posix_memalign /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:145:3
+    #1 0x81ccfb2 in mvcd_aligned_malloc(void*, int, int) /src/libavc/fuzzer/mvc_dec_fuzzer.cpp:61:13
+    #2 0x81dd55d in imvcd_bitstream_buf_alloc /src/libavc/decoder/mvc/imvcd_api_utils.c:381:9
+    #3 0x81d2a2e in imvcd_view_decode /src/libavc/decoder/mvc/imvcd_api.c:701:16
+    #4 0x81d2a2e in imvcd_decode /src/libavc/decoder/mvc/imvcd_api.c:1230:20
+    #5 0x81d2a2e in imvcd_api_function /src/libavc/decoder/mvc/imvcd_api.c:1592:20
+    #6 0x81ced51 in Codec::decodeFrame(unsigned char const*, unsigned int, unsigned int*) /src/libavc/fuzzer/mvc_dec_fuzzer.cpp:339:11
+    #7 0x81cfda9 in LLVMFuzzerTestOneInput /src/libavc/fuzzer/mvc_dec_fuzzer.cpp:400:43
+    #8 0x808d8ee in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #9 0x807884e in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #10 0x807e450 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned int)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #11 0x80a8037 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #12 0xf7bf4ed4 in __libc_start_main (/lib32/libc.so.6+0x1aed4) (BuildId: d56935956a210bf85f6592f3178b979ad4f7b35f)
+
+DEDUP_TOKEN: posix_memalign--mvcd_aligned_malloc(void*, int, int)--imvcd_bitstream_buf_alloc
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/libavc/decoder/ih264d_bitstrm.c:94:9 in ih264d_get_bits_h264
+Shadow bytes around the buggy address:
+  0x3ee3fdb0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x3ee3fdc0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x3ee3fdd0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x3ee3fde0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x3ee3fdf0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x3ee3fe00:[fa]fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3ee3fe10: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3ee3fe20: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3ee3fe30: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3ee3fe40: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x3ee3fe50: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

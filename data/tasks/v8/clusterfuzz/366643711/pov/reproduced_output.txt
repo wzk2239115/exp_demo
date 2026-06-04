@@ -1,0 +1,24 @@
+V8 is running with experimental features enabled. Stability and security will suffer.
+
+
+#
+# Fatal error in ../../src/objects/waiter-queue-node.cc, line 107
+# Debug check failed: count > 0 (0 vs. 0).
+#
+#
+#
+#FailureMessage Object: 0x7ffc21dc2a30
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x55564a0ec9b3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55564a0ebdcd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55564a0d0644]
+    out/debug/d8(+0x3e52075) [0x55564a0d0075]
+    d8(v8::internal::detail::WaiterQueueNode::Split(v8::internal::detail::WaiterQueueNode**, unsigned int) ./../../third_party/libc++/src/include/string:1881:12) [0x55564796a322]
+    d8(unsigned int std::__Cr::__function::__policy_invoker<unsigned int (v8::internal::detail::WaiterQueueNode**)>::__call_impl<std::__Cr::__function::__default_alloc_func<v8::internal::JSAtomicsCondition::Notify(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSAtomicsCondition>, unsigned int)::$_0, unsigned int (v8::internal::detail::WaiterQueueNode**)>>(std::__Cr::__function::__policy_storage const*, v8::internal::detail::WaiterQueueNode**) ./../../src/objects/js-atomics-synchronization.cc:1240:22) [0x555647701d19]
+    d8(v8::internal::JSAtomicsCondition::DequeueExplicit(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSAtomicsCondition>, std::__Cr::atomic<unsigned int>*, std::__Cr::function<unsigned int (v8::internal::detail::WaiterQueueNode**)> const&) ./../../third_party/libc++/src/include/__functional/function.h:716:12) [0x5556476ff257]
+    d8(v8::internal::JSAtomicsCondition::Notify(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSAtomicsCondition>, unsigned int) ./../../src/objects/js-atomics-synchronization.cc:1227:10) [0x5556476ff42e]
+    d8(v8::internal::Builtin_Impl_AtomicsConditionNotify(v8::internal::BuiltinArguments, v8::internal::Isolate*) ./../../src/builtins/builtins-atomics-synchronization.cc:340:7) [0x555646d6f8c0]
+    d8(v8::internal::Builtin_AtomicsConditionNotify(int, unsigned long*, v8::internal::Isolate*) ./../../src/builtins/builtins-atomics-synchronization.cc:309:1) [0x555646d6f18d]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc:0:0) [0x5556498797bd]
+timeout: the monitored command dumped core

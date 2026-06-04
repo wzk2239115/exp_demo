@@ -1,0 +1,1 @@
+A segmentation fault occurs in the str_getcsv function when parsing input that ends with an escape character, due to improper handling of escape sequences at the end of the string.

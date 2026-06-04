@@ -1,0 +1,1 @@
+The vulnerability in ALP involves improper memory management due to the use of memcpy instead of tvb_memcpy, and an incorrect while() loop over numts. This can lead to potential memory handling issues in the affected code.

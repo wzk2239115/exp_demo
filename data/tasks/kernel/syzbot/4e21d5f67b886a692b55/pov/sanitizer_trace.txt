@@ -1,0 +1,62 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+list_del corruption. prev->next should be ffffc90003597b98, but was ffff88802a5b85c8. (prev=ffff88802a5b85c8)
+------------[ cut here ]------------
+kernel BUG at lib/list_debug.c:62!
+Oops: invalid opcode: 0000 [#1] PREEMPT SMP KASAN PTI
+CPU: 0 UID: 0 PID: 10814 Comm: syz-executor187 Not tainted 6.13.0-rc7-syzkaller-00191-gfda5e3f28400 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 12/27/2024
+RIP: 0010:__list_del_entry_valid_or_report+0x12c/0x1c0 lib/list_debug.c:62
+Code: e8 19 db da fc 90 0f 0b 48 89 ca 48 c7 c7 00 a0 b1 8b e8 07 db da fc 90 0f 0b 48 89 c2 48 c7 c7 60 a0 b1 8b e8 f5 da da fc 90 <0f> 0b 48 89 d1 48 c7 c7 e0 a0 b1 8b 48 89 c2 e8 e0 da da fc 90 0f
+RSP: 0018:ffffc90003597880 EFLAGS: 00010086
+RAX: 000000000000006d RBX: ffffc90003597b80 RCX: ffffffff8178e449
+RDX: 0000000000000000 RSI: ffffffff81798bd6 RDI: 0000000000000005
+RBP: ffff88802a5b8588 R08: 0000000000000005 R09: 0000000000000000
+R10: 0000000080000001 R11: 0000000000000001 R12: 0000000000000286
+R13: ffffc90003597b98 R14: ffffc90003597ba0 R15: ffffc90003597b70
+FS:  00005555953e1480(0000) GS:ffff8880b8600000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007fdc0a1421d0 CR3: 00000000279ac000 CR4: 00000000003526f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Call Trace:
+ <TASK>
+ __list_del_entry_valid include/linux/list.h:124 [inline]
+ __list_del_entry include/linux/list.h:215 [inline]
+ list_del include/linux/list.h:229 [inline]
+ __remove_wait_queue include/linux/wait.h:207 [inline]
+ remove_wait_queue+0x30/0x180 kernel/sched/wait.c:55
+ free_poll_entry fs/select.c:132 [inline]
+ poll_freewait+0xd5/0x250 fs/select.c:141
+ do_sys_poll+0x6f7/0xde0 fs/select.c:1010
+ __do_sys_poll fs/select.c:1074 [inline]
+ __se_sys_poll fs/select.c:1062 [inline]
+ __x64_sys_poll+0x1a8/0x450 fs/select.c:1062
+ do_syscall_x64 arch/x86/entry/common.c:52 [inline]
+ do_syscall_64+0xcd/0x250 arch/x86/entry/common.c:83
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7fdc0a0c7c19
+Code: 28 00 00 00 75 05 48 83 c4 28 c3 e8 f1 17 00 00 90 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007ffe2b4a6028 EFLAGS: 00000246 ORIG_RAX: 0000000000000007
+RAX: ffffffffffffffda RBX: 0000000000019b07 RCX: 00007fdc0a0c7c19
+RDX: 0000000000000106 RSI: 0000000000000005 RDI: 0000000020000080
+RBP: 0000000000000000 R08: 00007ffe2b4a605c R09: 00007ffe2b4a605c
+R10: 0000000000000000 R11: 0000000000000246 R12: 00007ffe2b4a605c
+R13: 00007ffe2b4a6090 R14: 00007ffe2b4a6070 R15: 00000000000004db
+ </TASK>
+Modules linked in:
+---[ end trace 0000000000000000 ]---
+RIP: 0010:__list_del_entry_valid_or_report+0x12c/0x1c0 lib/list_debug.c:62
+Code: e8 19 db da fc 90 0f 0b 48 89 ca 48 c7 c7 00 a0 b1 8b e8 07 db da fc 90 0f 0b 48 89 c2 48 c7 c7 60 a0 b1 8b e8 f5 da da fc 90 <0f> 0b 48 89 d1 48 c7 c7 e0 a0 b1 8b 48 89 c2 e8 e0 da da fc 90 0f
+RSP: 0018:ffffc90003597880 EFLAGS: 00010086
+RAX: 000000000000006d RBX: ffffc90003597b80 RCX: ffffffff8178e449
+RDX: 0000000000000000 RSI: ffffffff81798bd6 RDI: 0000000000000005
+RBP: ffff88802a5b8588 R08: 0000000000000005 R09: 0000000000000000
+R10: 0000000080000001 R11: 0000000000000001 R12: 0000000000000286
+R13: ffffc90003597b98 R14: ffffc90003597ba0 R15: ffffc90003597b70
+FS:  00005555953e1480(0000) GS:ffff8880b8600000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007fdc0a1421d0 CR3: 00000000279ac000 CR4: 00000000003526f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400

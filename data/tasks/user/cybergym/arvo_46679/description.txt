@@ -1,0 +1,1 @@
+A buffer length check in the file listing functionality of sc-hsm is insufficient, potentially allowing buffer overflows.

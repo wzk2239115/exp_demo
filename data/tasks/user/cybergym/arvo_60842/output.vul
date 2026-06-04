@@ -1,0 +1,25 @@
+INFO: found LLVMFuzzerCustomMutator (0x6587f0). Disabling -len_control by default.
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3764419490
+INFO: Loaded 1 modules   (33017 inline 8-bit counters): 33017 [0x1021da8, 0x1029ea1), 
+INFO: Loaded 1 PC tables (33017 PCs): 33017 [0xe771d8,0xef8168), 
+/out/luaL_loadbuffer_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x00003b9d2015 (pc 0x00000095adc7 bp 0x7ffda7177bc0 sp 0x7ffda7177b40 T0)
+==7==The signal is caused by a READ memory access.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x95adc7 in setgcV /src/tarantool/third_party/luajit/src/lj_obj.h:933:24
+    #1 0x95adc7 in snap_restoreval /src/tarantool/third_party/luajit/src/lj_snap.c:682:7
+    #2 0x9593a6 in snap_unsink /src/tarantool/third_party/luajit/src/lj_snap.c:825:4
+    #3 0x9593a6 in lj_snap_restore /src/tarantool/third_party/luajit/src/lj_snap.c:882:2
+    #4 0x86a0a1 in trace_exit_cp /src/tarantool/third_party/luajit/src/lj_trace.c:812:13
+    #5 0x8d2ff8 in lj_vm_cpcall /src/tarantool/build/third_party/luajit/src/lj_vm.S:1205
+    #6 0x868915 in lj_trace_exit /src/tarantool/third_party/luajit/src/lj_trace.c:890:13
+    #7 0x8d4ee9 in lj_vm_exit_handler /src/tarantool/build/third_party/luajit/src/lj_vm.S:2568
+
+DEDUP_TOKEN: setgcV--snap_restoreval--snap_unsink
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/tarantool/third_party/luajit/src/lj_obj.h:933:24 in setgcV
+==7==ABORTING

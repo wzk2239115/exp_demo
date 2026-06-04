@@ -1,0 +1,44 @@
+INFO: Seed: 2911861096
+INFO: Loaded 1 modules   (56817 inline 8-bit counters): 56817 [0xe86a18, 0xe94809), 
+INFO: Loaded 1 PC tables (56817 PCs): 56817 [0xe94810,0xf72720), 
+/out/trace_processor_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+[635.193] _trace_tokenizer.cc:378 incremental_state_cleared without trusted_packet_sequence_id
+[635.194] _trace_tokenizer.cc:378 incremental_state_cleared without trusted_packet_sequence_id
+[635.194] _trace_tokenizer.cc:378 incremental_state_cleared without trusted_packet_sequence_id
+[635.194] _trace_tokenizer.cc:378 incremental_state_cleared without trusted_packet_sequence_id
+[635.194] _trace_tokenizer.cc:378 incremental_state_cleared without trusted_packet_sequence_id
+[635.194] _trace_tokenizer.cc:378 incremental_state_cleared without trusted_packet_sequence_id
+[635.194] _trace_tokenizer.cc:378 incremental_state_cleared without trusted_packet_sequence_id
+[635.194] _trace_tokenizer.cc:378 incremental_state_cleared without trusted_packet_sequence_id
+[635.194] _trace_tokenizer.cc:378 incremental_state_cleared without trusted_packet_sequence_id
+[635.194] _trace_tokenizer.cc:418 InternedData packet without trusted_packet_sequence_id
+[635.194] _trace_tokenizer.cc:378 incremental_state_cleared without trusted_packet_sequence_id
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x3d567fffa200 (pc 0x0000006fffff bp 0x7fff51307830 sp 0x7fff51307830 T0)
+==7==The signal is caused by a READ memory access.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x6fffff in perfetto::trace_processor::TraceStorage::GetIdForVariadicType(perfetto::trace_processor::Variadic::Type) const /work/build/../../src/perfetto/src/trace_processor/trace_storage.h:775:12
+    #1 0x6fe90a in perfetto::trace_processor::GlobalArgsTracker::AddArgSet(std::__1::vector<perfetto::trace_processor::GlobalArgsTracker::Arg, std::__1::allocator<perfetto::trace_processor::GlobalArgsTracker::Arg> > const&, unsigned int, unsigned int) /work/build/../../src/perfetto/src/trace_processor/global_args_tracker.h:124:43
+    #2 0x6fd959 in perfetto::trace_processor::ArgsTracker::Flush() /work/build/../../src/perfetto/src/trace_processor/args_tracker.cc:72:40
+    #3 0x6fd3c2 in perfetto::trace_processor::ArgsTracker::~ArgsTracker() /work/build/../../src/perfetto/src/trace_processor/args_tracker.cc:27:3
+    #4 0x75aa79 in perfetto::trace_processor::ProtoTraceParser::ParseChromeEvents(long, protozero::ConstBytes) /work/build/../../src/perfetto/src/trace_processor/importers/proto/proto_trace_parser.cc:570:1
+    #5 0x756ad3 in perfetto::trace_processor::ProtoTraceParser::ParseTracePacketImpl(long, perfetto::trace_processor::TimestampedTracePiece, perfetto::trace_processor::TracePacketData const*, perfetto::protos::pbzero::TracePacket_Decoder const&) /work/build/../../src/perfetto/src/trace_processor/importers/proto/proto_trace_parser.cc:236:5
+    #6 0x756741 in perfetto::trace_processor::ProtoTraceParser::ParseTracePacket(long, perfetto::trace_processor::TimestampedTracePiece) /work/build/../../src/perfetto/src/trace_processor/importers/proto/proto_trace_parser.cc:194:3
+    #7 0x8008b1 in perfetto::trace_processor::TraceSorter::SortAndExtractEventsBeyondWindow(long) /work/build/../../src/perfetto/src/trace_processor/trace_sorter.cc:140:21
+    #8 0x7fed5a in perfetto::trace_processor::TraceSorter::ExtractEventsForced() /work/build/../../src/perfetto/src/trace_processor/trace_sorter.h:155:5
+    #9 0x7fec7d in perfetto::trace_processor::TraceProcessorStorageImpl::NotifyEndOfFile() /work/build/../../src/perfetto/src/trace_processor/trace_processor_storage_impl.cc:86:22
+    #10 0x569a7c in perfetto::trace_processor::FuzzTraceProcessor(unsigned char const*, unsigned long) /work/build/../../src/perfetto/src/trace_processor/trace_parsing_fuzzer.cc:33:14
+    #11 0x569fe0 in LLVMFuzzerTestOneInput /work/build/../../src/perfetto/src/trace_processor/trace_parsing_fuzzer.cc:42:3
+    #12 0x50b366 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/libfuzzer/FuzzerLoop.cpp:556:15
+    #13 0x4bc90f in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/libfuzzer/FuzzerDriver.cpp:292:6
+    #14 0x4ca572 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/libfuzzer/FuzzerDriver.cpp:774:9
+    #15 0x4bbf57 in main /src/libfuzzer/FuzzerMain.cpp:19:10
+    #16 0x7f147eef683f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #17 0x41f3d8 in _start (/out/trace_processor_fuzzer+0x41f3d8)
+
+DEDUP_TOKEN: perfetto::trace_processor::TraceStorage::GetIdForVariadicType(perfetto::trace_processor::Variadic::Type) const--perfetto::trace_processor::GlobalArgsTracker::AddArgSet(std::__1::vector<perfetto::trace_processor::GlobalArgsTracker::Arg, std::__1::allocator<perfetto::trace_processor::GlobalArgsTracker::Arg> > const&, unsigned int, unsigned int)--perfetto::trace_processor::ArgsTracker::Flush()
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /work/build/../../src/perfetto/src/trace_processor/trace_storage.h:775:12 in perfetto::trace_processor::TraceStorage::GetIdForVariadicType(perfetto::trace_processor::Variadic::Type) const
+==7==ABORTING

@@ -1,0 +1,20 @@
+
+
+#
+# Fatal error in ../../src/objects/objects.cc, line 361
+# Debug check failed: Handle<To> v8::internal::Cast(Handle<From>, const v8::SourceLocation &) [To = v8::internal::JSReceiver, From = v8::internal::Object].
+#
+#
+#
+#FailureMessage Object: 0x7ffcdae9c0c0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x55bce0737a23]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55bce0736e0d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55bce071bcf4]
+    out/debug/d8(+0x3fa5715) [0x55bce071b715]
+    d8(v8::internal::Object::ConvertToNumeric(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Object>) ./../../src/objects/casting.h:0:3) [0x55bcdde94f36]
+    d8(v8::internal::__RT_impl_Runtime_ToNumeric(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/runtime/runtime-object.cc:1233:3) [0x55bcde0fca5c]
+    d8(v8::internal::Runtime_ToNumeric(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-object.cc:1229:1) [0x55bcde0fc6a0]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x55bcdfe0f8fd]
+timeout: the monitored command dumped core

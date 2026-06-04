@@ -1,0 +1,21 @@
+V8 is running with experimental features enabled. Stability and security will suffer.
+
+
+#
+# Fatal error in ../../src/objects/shared-function-info-inl.h, line 750
+# Debug check failed: HasBytecodeArray().
+#
+#
+#
+#FailureMessage Object: 0x7ffe4e279650
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x55bd9bb54373]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55bd9bb5378d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55bd9bb38174]
+    out/debug/d8(+0x3c58ba5) [0x55bd9bb37ba5]
+    d8(v8::internal::Tagged<v8::internal::BytecodeArray> v8::internal::SharedFunctionInfo::GetBytecodeArray<v8::internal::Isolate>(v8::internal::Isolate*) const ./../../src/objects/shared-function-info-inl.h:0:3) [0x55bd9886d2c8]
+    d8(v8::internal::Deoptimizer::DoComputeUnoptimizedFrame(v8::internal::TranslatedFrame*, int, bool) ./../../src/deoptimizer/deoptimizer.cc:0:30) [0x55bd98bcbf6c]
+    d8(v8::internal::Deoptimizer::DoComputeOutputFrames() ./../../src/deoptimizer/deoptimizer.cc:0:9) [0x55bd98bc6ae2]
+    d8(Builtins_DeoptimizationEntry_Lazy setup-isolate-deserialize.cc:0:0) [0x55bd9af176c7]
+timeout: the monitored command dumped core

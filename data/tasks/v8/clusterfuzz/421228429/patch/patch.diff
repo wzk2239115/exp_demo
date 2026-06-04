@@ -1,0 +1,44 @@
+diff --git a/src/objects/js-array-buffer.cc b/src/objects/js-array-buffer.cc
+index 4038fc6ebb8..bcb356e9a07 100644
+--- a/src/objects/js-array-buffer.cc
++++ b/src/objects/js-array-buffer.cc
+@@ -460,19 +460,22 @@ size_t JSTypedArray::GetVariableByteLengthOrOutOfBounds(
+   DCHECK(!WasDetached());
+   size_t own_byte_offset = byte_offset();
+   if (is_length_tracking()) {
++    size_t own_element_size = element_size();
+     if (is_backed_by_rab()) {
+       size_t buffer_byte_length = buffer()->byte_length();
+       if (own_byte_offset > buffer_byte_length) {
+         out_of_bounds = true;
+         return 0;
+       }
+-      return (buffer_byte_length - own_byte_offset);
++      // Round down to the nearest multiple of element size.
++      return RoundDown(buffer_byte_length - own_byte_offset, own_element_size);
+     }
+     // GSAB-backed TypedArrays can't be out of bounds.
+     size_t buffer_byte_length =
+         buffer()->GetBackingStore()->byte_length(std::memory_order_seq_cst);
+     SBXCHECK(own_byte_offset <= buffer_byte_length);
+-    return buffer_byte_length - own_byte_offset;
++    // Round down to the nearest multiple of element size.
++    return RoundDown(buffer_byte_length - own_byte_offset, own_element_size);
+   }
+   DCHECK(is_backed_by_rab());
+   size_t own_byte_length = byte_length();
+diff --git a/test/mjsunit/regress/regress-421228429.js b/test/mjsunit/regress/regress-421228429.js
+new file mode 100644
+index 00000000000..543ea87550d
+--- /dev/null
++++ b/test/mjsunit/regress/regress-421228429.js
+@@ -0,0 +1,9 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++const gsab = new SharedArrayBuffer(129, {
++  maxByteLength: 1024
++});
++const lengthTracking = new Float64Array(gsab);
++lengthTracking.sort();

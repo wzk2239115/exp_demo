@@ -1,0 +1,1 @@
+A vulnerability exists in libblkid's bcachefs code where adding the offset to the address in address comparisons may cause an overflow and result in incorrect comparisons.

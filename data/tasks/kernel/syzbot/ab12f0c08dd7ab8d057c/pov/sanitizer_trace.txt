@@ -1,0 +1,53 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+ slab kmalloc-8k start ffff888146724000 pointer offset 1480 size 8192
+list_del corruption. next->prev should be ffff88807e0df030, but was ffff8881467245c8. (next=ffff8881467245c8)
+------------[ cut here ]------------
+kernel BUG at lib/list_debug.c:65!
+Oops: invalid opcode: 0000 [#1] SMP KASAN NOPTI
+CPU: 0 UID: 0 PID: 9 Comm: kworker/0:0 Not tainted syzkaller #0 PREEMPT(full) 
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 01/24/2026
+Workqueue: events io_fallback_req_func
+RIP: 0010:__list_del_entry_valid_or_report+0x183/0x1d0 lib/list_debug.c:65
+Code: 00 00 00 00 00 fc ff df 48 c1 ea 03 80 3c 02 00 75 4b 49 8b 54 24 08 4c 89 e1 48 89 de 48 c7 c7 c0 3d fa 8b e8 fe af 32 fc 90 <0f> 0b e8 36 bf 81 fd e9 9b fe ff ff 48 89 df e8 29 bf 81 fd e9 ad
+RSP: 0018:ffffc900000e7a18 EFLAGS: 00010086
+RAX: 000000000000006d RBX: ffff88807e0df030 RCX: 0000000000000000
+RDX: 000000000000006d RSI: ffffffff81e5d6c9 RDI: fffff5200001cf34
+RBP: ffff8881467245d0 R08: 0000000000000005 R09: 0000000000000000
+R10: 0000000080000001 R11: 0000000000000001 R12: ffff8881467245c8
+R13: ffff88807e0df048 R14: ffff88807e0df030 R15: ffff88807e0df008
+FS:  0000000000000000(0000) GS:ffff8881245d9000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 000000c007b29000 CR3: 0000000076159000 CR4: 00000000003526f0
+Call Trace:
+ <TASK>
+ __list_del_entry_valid include/linux/list.h:132 [inline]
+ __list_del_entry include/linux/list.h:223 [inline]
+ list_del_init include/linux/list.h:295 [inline]
+ io_poll_remove_waitq io_uring/poll.c:149 [inline]
+ io_poll_remove_entry io_uring/poll.c:166 [inline]
+ io_poll_remove_entries.part.0+0x156/0x7e0 io_uring/poll.c:197
+ io_poll_remove_entries io_uring/poll.c:177 [inline]
+ io_poll_task_func+0x39e/0xe30 io_uring/poll.c:343
+ io_fallback_req_func+0x16e/0x223 io_uring/io_uring.c:246
+ process_one_work+0x9c2/0x1840 kernel/workqueue.c:3257
+ process_scheduled_works kernel/workqueue.c:3340 [inline]
+ worker_thread+0x5da/0xe40 kernel/workqueue.c:3421
+ kthread+0x3b3/0x730 kernel/kthread.c:463
+ ret_from_fork+0x754/0xaf0 arch/x86/kernel/process.c:158
+ ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:246
+ </TASK>
+Modules linked in:
+---[ end trace 0000000000000000 ]---
+RIP: 0010:__list_del_entry_valid_or_report+0x183/0x1d0 lib/list_debug.c:65
+Code: 00 00 00 00 00 fc ff df 48 c1 ea 03 80 3c 02 00 75 4b 49 8b 54 24 08 4c 89 e1 48 89 de 48 c7 c7 c0 3d fa 8b e8 fe af 32 fc 90 <0f> 0b e8 36 bf 81 fd e9 9b fe ff ff 48 89 df e8 29 bf 81 fd e9 ad
+RSP: 0018:ffffc900000e7a18 EFLAGS: 00010086
+RAX: 000000000000006d RBX: ffff88807e0df030 RCX: 0000000000000000
+RDX: 000000000000006d RSI: ffffffff81e5d6c9 RDI: fffff5200001cf34
+RBP: ffff8881467245d0 R08: 0000000000000005 R09: 0000000000000000
+R10: 0000000080000001 R11: 0000000000000001 R12: ffff8881467245c8
+R13: ffff88807e0df048 R14: ffff88807e0df030 R15: ffff88807e0df008
+FS:  0000000000000000(0000) GS:ffff8881245d9000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 000000c007b29000 CR3: 0000000076159000 CR4: 00000000003526f0

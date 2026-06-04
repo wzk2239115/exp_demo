@@ -1,0 +1,5 @@
+is_debug = true
+target_cpu = "x64"
+dcheck_always_on = true
+v8_enable_sandbox = true
+is_asan = true

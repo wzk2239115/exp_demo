@@ -1,0 +1,1 @@
+A vulnerability exists in the BMP array header parsing code where the remaining data size is not checked before parsing in the relevant function. This can lead to out-of-bounds reads or crashes when handling malformed BMP files.

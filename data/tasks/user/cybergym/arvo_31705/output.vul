@@ -1,0 +1,26 @@
+=================================================================
+==7==ERROR: AddressSanitizer: attempting free on address which was not malloc()-ed: 0x7f96b6b6e85e in thread T0
+SCARINESS: 40 (bad-free)
+    #0 0x49eac2 in free /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:127:3
+    #1 0x5f18f2 in frame_get_lazychunk /src/c-blosc2/blosc/frame.c:2036:7
+    #2 0x6004ca in frame_decompress_chunk /src/c-blosc2/blosc/frame.c:2761:8
+    #3 0x5c973c in blosc2_schunk_decompress_chunk /src/c-blosc2/blosc/schunk.c:804:17
+    #4 0x4d2bf6 in LLVMFuzzerTestOneInput /src/c-blosc2/tests/fuzz/fuzz_decompress_frame.c:38:15
+    #5 0x4d3303 in ExecuteFilesOnyByOne /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c:185:7
+    #6 0x4d3303 in main /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c:237:12
+    #7 0x7f96b5c5083f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #8 0x423e48 in _start (/out/decompress_frame_fuzzer+0x423e48)
+
+DEDUP_TOKEN: free--frame_get_lazychunk--frame_decompress_chunk
+0x7f96b6b6e85e is located 94 bytes inside of 1048576-byte region [0x7f96b6b6e800,0x7f96b6c6e800)
+allocated by thread T0 here:
+    #0 0x49ed2d in malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:145:3
+    #1 0x4d3299 in ExecuteFilesOnyByOne /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c:176:41
+    #2 0x4d3299 in main /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c:237:12
+LLVMSymbolizer: error reading file: No such file or directory
+    #3 0x7ffe2a1b74ec  ([stack]+0x204ec)
+    #4 0x5f73736572706d6e  (<unknown module>)
+
+DEDUP_TOKEN: malloc--ExecuteFilesOnyByOne--main
+SUMMARY: AddressSanitizer: bad-free /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:127:3 in free
+==7==ABORTING

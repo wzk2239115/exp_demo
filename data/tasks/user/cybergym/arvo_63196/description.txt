@@ -1,0 +1,1 @@
+An invalid free occurs in the function alpha_ecoff_get_relocated_section_contents in coff-alpha.c due to improper iteration through reloc_vector, potentially leading to memory corruption or crashes.

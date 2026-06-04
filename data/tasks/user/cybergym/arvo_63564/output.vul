@@ -1,0 +1,23 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3825821258
+INFO: Loaded 1 modules   (73785 inline 8-bit counters): 73785 [0xac5230, 0xad7269), 
+INFO: Loaded 1 PC tables (73785 PCs): 73785 [0x8b7a20,0x9d7db0), 
+/out/xaac_dec_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+/src/libxaac/decoder/ixheaacd_mps_smoothing.c:678:24: runtime error: index 31 out of bounds for type 'WORD32[28]' (aka 'int[28]')
+    #0 0x58049b in ixheaacd_smooth_m1m2 /src/libxaac/decoder/ixheaacd_mps_smoothing.c:678:24
+    #1 0x5069f6 in ixheaacd_apply_frame /src/libxaac/decoder/ixheaacd_mps_dec.c:1951:3
+    #2 0x5069f6 in ixheaacd_heaac_mps_apply /src/libxaac/decoder/ixheaacd_mps_dec.c:2094:20
+    #3 0x4d2687 in ixheaacd_dec_execute /src/libxaac/decoder/ixheaacd_api.c:3674:7
+    #4 0x4c40bd in ixheaacd_dec_api /src/libxaac/decoder/ixheaacd_api.c:982:24
+    #5 0x4c19f0 in Codec::decodeXAACStream(unsigned char*, unsigned int, int*, int*) /src/libxaac/fuzzer/xaac_dec_fuzzer.cpp:656:14
+    #6 0x4c1fe7 in LLVMFuzzerTestOneInput /src/libxaac/fuzzer/xaac_dec_fuzzer.cpp:864:23
+    #7 0x4262a3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #8 0x411a02 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #9 0x4172ac in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #10 0x4407e2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #11 0x7f2dc2f84082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #12 0x407bcd in _start (/out/xaac_dec_fuzzer+0x407bcd)
+
+DEDUP_TOKEN: ixheaacd_smooth_m1m2--ixheaacd_apply_frame--ixheaacd_heaac_mps_apply
+SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior /src/libxaac/decoder/ixheaacd_mps_smoothing.c:678:24 in 

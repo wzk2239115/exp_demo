@@ -1,0 +1,1 @@
+A vulnerability exists in icaltypes.c within the icalreqstattype_from_string() function, where memory is allocated for an empty status.debug string.

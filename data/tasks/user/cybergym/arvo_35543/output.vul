@@ -1,0 +1,44 @@
+INFO: Seed: 3244865685
+INFO: Loaded 1 modules   (38136 inline 8-bit counters): 38136 [0x87238d0, 0x872cdc8), 
+INFO: Loaded 1 PC tables (38136 PCs): 38136 [0x85c169c,0x860be5c), 
+/out/hb-subset-fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: negative-size-param: (size=-1985049406)
+SCARINESS: 10 (negative-size-param)
+    #0 0x816c983 in __asan_memset /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:26:3
+    #1 0x82b35fa in OT::VarRegionList* hb_serialize_context_t::allocate_size<OT::VarRegionList>(unsigned int) /src/harfbuzz/src/./hb-serialize.hh:345:5
+    #2 0x82b225c in OT::VarRegionList::serialize(hb_serialize_context_t*, OT::VarRegionList const*, hb_bimap_t const&) /src/harfbuzz/src/./hb-ot-layout-common.hh:1908:9
+    #3 0x82ad2f6 in OT::VariationStore::serialize(hb_serialize_context_t*, OT::VariationStore const*, hb_array_t<hb_inc_bimap_t> const&) /src/harfbuzz/src/./hb-ot-layout-common.hh:2164:9
+    #4 0x82abc1d in bool OT::HVARVVAR::_subset<OT::HVAR>(hb_subset_context_t*) const /src/harfbuzz/src/./hb-ot-var-hvar-table.hh:398:10
+    #5 0x81ac46b in bool _subset2<OT::HVAR const>(hb_subset_plan_t*) /src/harfbuzz/src/hb-subset.cc:94:26
+    #6 0x81a5fef in hb_subset /src/harfbuzz/src/hb-subset.cc:312:28
+    #7 0x81a2923 in trySubset(hb_face_t*, unsigned int const*, int, bool, bool, bool) /src/harfbuzz/./test/fuzzing/hb-subset-fuzzer.cc:35:23
+    #8 0x81a2754 in trySubset(hb_face_t*, unsigned int const*, int, unsigned char const*) /src/harfbuzz/./test/fuzzing/hb-subset-fuzzer.cc:63:3
+    #9 0x81a250d in LLVMFuzzerTestOneInput /src/harfbuzz/./test/fuzzing/hb-subset-fuzzer.cc:85:3
+    #10 0x80a6ca6 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:556:15
+    #11 0x8093153 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6
+    #12 0x8098858 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned int)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:774:9
+    #13 0x80bd667 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10
+    #14 0xf7cf1646 in __libc_start_main (/lib32/libc.so.6+0x18646)
+    #15 0x806e128 in _start (/out/hb-subset-fuzzer+0x806e128)
+
+DEDUP_TOKEN: __asan_memset--OT::VarRegionList* hb_serialize_context_t::allocate_size<OT::VarRegionList>(unsigned int)--OT::VarRegionList::serialize(hb_serialize_context_t*, OT::VarRegionList const*, hb_bimap_t const&)
+0xf2600824 is located 36 bytes inside of 118326-byte region [0xf2600800,0xf261d636)
+allocated by thread T0 here:
+    #0 0x816d5d7 in realloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:164:3
+    #1 0x81ad25d in hb_vector_t<char>::alloc(unsigned int) /src/harfbuzz/src/./hb-vector.hh:202:28
+    #2 0x81ac3cc in bool _subset2<OT::HVAR const>(hb_subset_plan_t*) /src/harfbuzz/src/hb-subset.cc:84:9
+    #3 0x81a5fef in hb_subset /src/harfbuzz/src/hb-subset.cc:312:28
+    #4 0x81a2923 in trySubset(hb_face_t*, unsigned int const*, int, bool, bool, bool) /src/harfbuzz/./test/fuzzing/hb-subset-fuzzer.cc:35:23
+    #5 0x81a2754 in trySubset(hb_face_t*, unsigned int const*, int, unsigned char const*) /src/harfbuzz/./test/fuzzing/hb-subset-fuzzer.cc:63:3
+    #6 0x81a250d in LLVMFuzzerTestOneInput /src/harfbuzz/./test/fuzzing/hb-subset-fuzzer.cc:85:3
+    #7 0x80a6ca6 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:556:15
+    #8 0x8093153 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6
+    #9 0x8098858 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned int)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:774:9
+    #10 0x80bd667 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10
+    #11 0xf7cf1646 in __libc_start_main (/lib32/libc.so.6+0x18646)
+
+DEDUP_TOKEN: realloc--hb_vector_t<char>::alloc(unsigned int)--bool _subset2<OT::HVAR const>(hb_subset_plan_t*)
+SUMMARY: AddressSanitizer: negative-size-param /src/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:26:3 in __asan_memset
+==7==ABORTING

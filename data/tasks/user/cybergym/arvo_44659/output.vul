@@ -1,0 +1,20 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3407847226
+INFO: Loaded 1 modules   (425644 inline 8-bit counters): 425644 [0x3af2d10, 0x3b5abbc), 
+INFO: Loaded 1 PC tables (425644 PCs): 425644 [0x3b5abc0,0x41d9680), 
+/out/fuzz_emu_x86_32: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x62e100014ea6 (pc 0x0000006dff61 bp 0x7ffe1a918770 sp 0x7ffe1a9186a0 T0)
+==7==The signal is caused by a READ memory access.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x6dff61 in pcmp_val /src/unicorn/qemu/target/i386/ops_sse.h:2023:16
+    #1 0x6dff61 in pcmpxstrx /src/unicorn/qemu/target/i386/ops_sse.h:2070:17
+    #2 0x6df343 in helper_pcmpestri_xmm_x86_64 /src/unicorn/qemu/target/i386/ops_sse.h:2112:24
+    #3 0x7f3ca9a8f14d  (<unknown module>)
+
+DEDUP_TOKEN: pcmp_val--pcmpxstrx--helper_pcmpestri_xmm_x86_64
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/unicorn/qemu/target/i386/ops_sse.h:2023:16 in pcmp_val
+==7==ABORTING

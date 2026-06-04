@@ -1,0 +1,96 @@
+diff --git a/src/compiler/js-call-reducer.cc b/src/compiler/js-call-reducer.cc
+index e5a6671a6b9..cc9ec63ce09 100644
+--- a/src/compiler/js-call-reducer.cc
++++ b/src/compiler/js-call-reducer.cc
+@@ -3792,14 +3792,13 @@ bool CanInlineJSToWasmCall(const wasm::FunctionSig* wasm_signature) {
+     return false;
+   }
+ 
+-  wasm::ValueType externRefNonNull = wasm::kWasmExternRef.AsNonNull();
+   for (auto type : wasm_signature->all()) {
+ #if defined(V8_TARGET_ARCH_32_BIT)
+     if (type == wasm::kWasmI64) return false;
+ #endif
+     if (type != wasm::kWasmI32 && type != wasm::kWasmI64 &&
+         type != wasm::kWasmF32 && type != wasm::kWasmF64 &&
+-        type != wasm::kWasmExternRef && type != externRefNonNull) {
++        type != wasm::kWasmExternRef) {
+       return false;
+     }
+   }
+diff --git a/test/cctest/test-js-to-wasm.cc b/test/cctest/test-js-to-wasm.cc
+index f7be048dbf5..901fcbb2148 100644
+--- a/test/cctest/test-js-to-wasm.cc
++++ b/test/cctest/test-js-to-wasm.cc
+@@ -93,13 +93,6 @@ DECLARE_EXPORTED_FUNCTION(i64_square, sigs.l_l(),
+ DECLARE_EXPORTED_FUNCTION(externref_null_id, sigs.a_a(),
+                           WASM_CODE({WASM_LOCAL_GET(0)}))
+ 
+-static constexpr ValueType extern_extern_types[] = {kWasmExternRef.AsNonNull(),
+-                                                    kWasmExternRef.AsNonNull()};
+-static constexpr FunctionSig sig_extern_extern(1, 1, extern_extern_types);
+-
+-DECLARE_EXPORTED_FUNCTION(externref_id, &sig_extern_extern,
+-                          WASM_CODE({WASM_LOCAL_GET(0)}))
+-
+ DECLARE_EXPORTED_FUNCTION(f32_square, sigs.f_f(),
+                           WASM_CODE({WASM_LOCAL_GET(0), WASM_LOCAL_GET(0),
+                                      kExprF32Mul}))
+@@ -862,19 +855,6 @@ TEST(TestFastJSWasmCall_ExternrefNullArg) {
+   tester.CallAndCheckWasmFunction("externref_null_id", args4, str);
+ }
+ 
+-TEST(TestFastJSWasmCall_ExternrefArg) {
+-  v8::HandleScope scope(CcTest::isolate());
+-  FastJSWasmCallTester tester;
+-  tester.AddExportedFunction(k_externref_id);
+-  auto args1 = v8::to_array<v8::Local<v8::Value>>({v8_num(42)});
+-  tester.CallAndCheckWasmFunction("externref_id", args1, 42);
+-  auto args2 = v8::to_array<v8::Local<v8::Value>>({v8_bigint(42)});
+-  tester.CallAndCheckWasmFunctionBigInt("externref_id", args2, v8_bigint(42));
+-  auto str = v8_str("test");
+-  auto args3 = v8::to_array<v8::Local<v8::Value>>({str});
+-  tester.CallAndCheckWasmFunction("externref_id", args3, str);
+-}
+-
+ TEST(TestFastJSWasmCall_MultipleArgs) {
+   v8::HandleScope scope(CcTest::isolate());
+   FastJSWasmCallTester tester;
+diff --git a/test/mjsunit/regress/wasm/regress-366635354.js b/test/mjsunit/regress/wasm/regress-366635354.js
+new file mode 100644
+index 00000000000..18dcc41b0e7
+--- /dev/null
++++ b/test/mjsunit/regress/wasm/regress-366635354.js
+@@ -0,0 +1,32 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --always-turbofan --allow-natives-syntax
++
++d8.file.execute('test/mjsunit/wasm/wasm-module-builder.js');
++
++let builder = new WasmModuleBuilder();
++builder.addFunction('foo', makeSig([wasmRefType(kWasmExternRef)], []))
++    .addBody([kExprUnreachable])
++    .exportFunc();
++let instance = builder.instantiate();
++const wasm_caller = () => instance.exports.foo(null);
++
++%PrepareFunctionForOptimization(wasm_caller);
++testCallStack();
++%OptimizeFunctionOnNextCall(wasm_caller);
++testCallStack();
++
++function testCallStack() {
++  try {
++    wasm_caller();
++    assertUnreachable();
++  } catch (e) {
++    assertMatches(
++`TypeError: type incompatibility when transforming from/to JS
++    at wasm_caller .*\\.js:14:44\\)
++    at testCallStack .*\\.js:23:5\\).*`,
++      e.stack,);
++  }
++}

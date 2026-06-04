@@ -1,0 +1,84 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3889764870
+INFO: Loaded 1 modules   (236924 inline 8-bit counters): 236924 [0x1f52a80, 0x1f8c7fc), 
+INFO: Loaded 1 PC tables (236924 PCs): 236924 [0x1f8c800,0x2329fc0), 
+/out/fuzz_probe_analyze: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x602000000eb8 at pc 0x0000018abeae bp 0x7ffce528dcd0 sp 0x7ffce528dcc8
+READ of size 8 at 0x602000000eb8 thread T0
+SCARINESS: 23 (8-byte-read-heap-buffer-overflow)
+    #0 0x18abead in gf_m3u8_parse_sub_playlist /src/gpac/src/media_tools/m3u8.c:1257:13
+    #1 0x18a602a in gf_m3u8_parse_master_playlist /src/gpac/src/media_tools/m3u8.c:884:9
+    #2 0x13be96e in gf_m3u8_to_mpd /src/gpac/src/media_tools/mpd.c:2231:6
+    #3 0x13f5e36 in gf_dash_open /src/gpac/src/media_tools/dash_client.c
+    #4 0x6bca47 in dashdmx_configure_pid /src/gpac/src/filters/dmx_dash.c:1973:7
+    #5 0x1744a8d in gf_filter_pid_configure /src/gpac/src/filter_core/filter_pid.c:876:6
+    #6 0x175f682 in gf_filter_pid_connect_task /src/gpac/src/filter_core/filter_pid.c:1237:3
+    #7 0x57ea01 in gf_fs_thread_proc /src/gpac/src/filter_core/filter_session.c:2105:3
+    #8 0x57c2e4 in gf_fs_run /src/gpac/src/filter_core/filter_session.c:2405:3
+    #9 0x56ee2f in LLVMFuzzerTestOneInput /src/testsuite/oss-fuzzers/fuzz_probe_analyze.c:21:5
+    #10 0x4406d3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #11 0x42be32 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #12 0x4316dc in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #13 0x45ac12 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #14 0x7ff386e4d082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #15 0x421ffd in _start (/out/fuzz_probe_analyze+0x421ffd)
+
+DEDUP_TOKEN: gf_m3u8_parse_sub_playlist--gf_m3u8_parse_master_playlist--gf_m3u8_to_mpd
+0x602000000eb8 is located 0 bytes to the right of 8-byte region [0x602000000eb0,0x602000000eb8)
+allocated by thread T0 here:
+    #0 0x531a3e in __interceptor_calloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:77:3
+    #1 0xd7275f in gf_calloc /src/gpac/src/utils/alloc.c:155:9
+    #2 0x18aeefa in extract_attributes /src/gpac/src/media_tools/m3u8.c:329:8
+    #3 0x18a8ea0 in parse_attributes /src/gpac/src/media_tools/m3u8.c:625:8
+    #4 0x18a8ea0 in gf_m3u8_parse_sub_playlist /src/gpac/src/media_tools/m3u8.c:1251:18
+    #5 0x18a602a in gf_m3u8_parse_master_playlist /src/gpac/src/media_tools/m3u8.c:884:9
+    #6 0x13be96e in gf_m3u8_to_mpd /src/gpac/src/media_tools/mpd.c:2231:6
+    #7 0x13f5e36 in gf_dash_open /src/gpac/src/media_tools/dash_client.c
+    #8 0x6bca47 in dashdmx_configure_pid /src/gpac/src/filters/dmx_dash.c:1973:7
+    #9 0x1744a8d in gf_filter_pid_configure /src/gpac/src/filter_core/filter_pid.c:876:6
+    #10 0x175f682 in gf_filter_pid_connect_task /src/gpac/src/filter_core/filter_pid.c:1237:3
+    #11 0x57ea01 in gf_fs_thread_proc /src/gpac/src/filter_core/filter_session.c:2105:3
+    #12 0x57c2e4 in gf_fs_run /src/gpac/src/filter_core/filter_session.c:2405:3
+    #13 0x56ee2f in LLVMFuzzerTestOneInput /src/testsuite/oss-fuzzers/fuzz_probe_analyze.c:21:5
+    #14 0x4406d3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #15 0x42be32 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #16 0x4316dc in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #17 0x45ac12 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #18 0x7ff386e4d082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+
+DEDUP_TOKEN: __interceptor_calloc--gf_calloc--extract_attributes
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/gpac/src/media_tools/m3u8.c:1257:13 in gf_m3u8_parse_sub_playlist
+Shadow bytes around the buggy address:
+  0x0c047fff8180: fa fa 00 00 fa fa 00 00 fa fa 00 00 fa fa 07 fa
+  0x0c047fff8190: fa fa 05 fa fa fa 00 00 fa fa 00 00 fa fa 00 00
+  0x0c047fff81a0: fa fa 00 00 fa fa 00 00 fa fa 00 03 fa fa 00 00
+  0x0c047fff81b0: fa fa 00 00 fa fa 00 00 fa fa 00 00 fa fa 00 00
+  0x0c047fff81c0: fa fa 00 00 fa fa 00 00 fa fa 00 00 fa fa 00 00
+=>0x0c047fff81d0: fa fa 00 00 fa fa 00[fa]fa fa fd fd fa fa fa fa
+  0x0c047fff81e0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff81f0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff8200: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff8210: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c047fff8220: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

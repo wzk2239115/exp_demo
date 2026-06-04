@@ -1,0 +1,20 @@
+
+
+#
+# Fatal error in ../../src/execution/arguments.h, line 100
+# Debug check failed: Holder<To> v8::internal::Cast(Holder<From>, const v8::SourceLocation &) [To = v8::internal::JSFunction, From = v8::internal::Object, Holder = v8::internal::Handle].
+#
+#
+#
+#FailureMessage Object: 0x7ffc06186560
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:390:32) [0x55d510ac2533]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55d510ac169d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55d510aa7df4]
+    out/debug/d8(+0x45cf7e5) [0x55d510aa77e5]
+    d8(v8::internal::Handle<v8::internal::JSFunction> v8::internal::Arguments<(v8::internal::ArgumentsType)0>::at<v8::internal::JSFunction>(int) const ./../../src/objects/casting.h:0:3) [0x55d50e0cd437]
+    d8(v8::internal::__RT_impl_Runtime_ThrowConstructorNonCallableError(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/runtime/runtime-classes.cc:34:47) [0x55d50e0d6daa]
+    d8(v8::internal::Runtime_ThrowConstructorNonCallableError(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-classes.cc:31:1) [0x55d50e0d69d0]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x55d510141ffd]
+timeout: the monitored command dumped core

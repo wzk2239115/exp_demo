@@ -1,0 +1,1 @@
+A vulnerability exists in CiffParser/CiffIFD where overlapping IFDs are not prevented, potentially allowing memory corruption or data integrity issues. The function fails to use NORangesSet<Buffer> to ensure IFDs do not overlap.

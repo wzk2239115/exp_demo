@@ -1,0 +1,156 @@
+diff --git a/src/regexp/regexp-bytecodes-inl.h b/src/regexp/regexp-bytecodes-inl.h
+index 5074df38d7f..3a8d5848ae2 100644
+--- a/src/regexp/regexp-bytecodes-inl.h
++++ b/src/regexp/regexp-bytecodes-inl.h
+@@ -203,7 +203,7 @@ class RegExpBytecodeOperandsBase {
+  public:
+   template <Operand op>
+     requires(RegExpOperandTypeTraits<Type(op)>::kIsBasic)
+-  static auto Get(const uint8_t* pc) {
++  static auto Get(const uint8_t* pc, const DisallowGarbageCollection& no_gc) {
+     constexpr RegExpBytecodeOperandType OperandType = Type(op);
+     constexpr int offset = Offset(op);
+     using CType = RegExpOperandTypeTraits<OperandType>::kCType;
+@@ -217,13 +217,36 @@ class RegExpBytecodeOperandsBase {
+     }
+   }
+ 
++  template <Operand op>
++    requires(RegExpOperandTypeTraits<Type(op)>::kIsBasic)
++  static auto Get(DirectHandle<TrustedByteArray> bytecode, int offset,
++                  Zone* zone) {
++    // Basic operand types won't allocate, so we can always fallback to the
++    // GC-unsafe version.
++    DisallowGarbageCollection no_gc;
++    return Get<op>(bytecode->begin() + offset, no_gc);
++  }
++
+   template <Operand op>
+     requires(Type(op) == RegExpBytecodeOperandType::kBitTable)
+-  static auto Get(const uint8_t* pc) {
++  static auto Get(const uint8_t* pc, const DisallowGarbageCollection& no_gc) {
++    static_assert(Size(op) == RegExpMacroAssembler::kTableSize / kBitsPerByte);
+     DCHECK_EQ(*pc, RegExpBytecodes::ToByte(bc));
+     constexpr int offset = Offset(op);
+     return pc + offset;
+   }
++
++  template <Operand op>
++    requires(Type(op) == RegExpBytecodeOperandType::kBitTable)
++  static auto Get(DirectHandle<TrustedByteArray> bytecode, int offset,
++                  Zone* zone) {
++    static_assert(Size(op) == RegExpMacroAssembler::kTableSize / kBitsPerByte);
++    DCHECK_EQ(bytecode->get(offset), RegExpBytecodes::ToByte(bc));
++    constexpr int op_offset = Offset(op);
++    const uint8_t* start = bytecode->begin() + offset + op_offset;
++    const uint8_t* end = start + Size(op);
++    return ZoneVector<uint8_t>(start, end, zone);
++  }
+ };
+ 
+ }  // namespace detail
+diff --git a/src/regexp/regexp-code-generator.cc b/src/regexp/regexp-code-generator.cc
+index 3ff76acdaf1..91286280517 100644
+--- a/src/regexp/regexp-code-generator.cc
++++ b/src/regexp/regexp-code-generator.cc
+@@ -47,9 +47,10 @@ RegExpCodeGenerator::Result RegExpCodeGenerator::Assemble(
+ }
+ 
+ template <typename Operands, typename Operands::Operand Operand>
+-auto RegExpCodeGenerator::GetArgumentValue(const uint8_t* pc) const {
++auto RegExpCodeGenerator::GetArgumentValue() {
+   constexpr RegExpBytecodeOperandType op_type = Operands::Type(Operand);
+-  auto value = Operands::template Get<Operand>(pc);
++  auto value = Operands::template Get<Operand>(bytecode_,
++                                               iter_.current_offset(), &zone_);
+ 
+   // If the operand is a JumpTarget, we return the Label created during the
+   // first pass instead of an offset to the bytecode.
+@@ -61,11 +62,11 @@ auto RegExpCodeGenerator::GetArgumentValue(const uint8_t* pc) const {
+ }
+ 
+ template <typename Operands>
+-auto RegExpCodeGenerator::GetArgumentValuesAsTuple(const uint8_t* pc) const {
++auto RegExpCodeGenerator::GetArgumentValuesAsTuple() {
+   constexpr auto filtered_ops = Operands::GetOperandsTuple();
+   return std::apply(
+       [&](auto... ops) {
+-        return std::make_tuple(GetArgumentValue<Operands, ops.value>(pc)...);
++        return std::make_tuple(GetArgumentValue<Operands, ops.value>()...);
+       },
+       filtered_ops);
+ }
+@@ -92,8 +93,7 @@ auto RegExpCodeGenerator::GetArgumentValuesAsTuple(const uint8_t* pc) const {
+   VISIT_COMMENT(#Name);                                                      \
+   using Operands [[maybe_unused]] =                                          \
+       RegExpBytecodeOperands<RegExpBytecode::k##Name>;                       \
+-  const uint8_t* pc [[maybe_unused]] = iter_.current_address();              \
+-  __VA_OPT__(auto argument_tuple = GetArgumentValuesAsTuple<Operands>(pc);   \
++  __VA_OPT__(auto argument_tuple = GetArgumentValuesAsTuple<Operands>();     \
+              static_assert(std::tuple_size_v<decltype(argument_tuple)> ==    \
+                                Operands::kCountWithoutPadding,               \
+                            "Number of arguments to VISIT doesn't match the " \
+@@ -291,7 +291,7 @@ namespace {
+ // ByteArray. Optionally also populates a nibble_table used for SIMD variants
+ // (see BoyerMooreLookahead::GetSkipTable).
+ Handle<ByteArray> CreateBitTableByteArray(
+-    Isolate* isolate, const uint8_t* table_data,
++    Isolate* isolate, const ZoneVector<uint8_t> table_data,
+     Handle<ByteArray> nibble_table = Handle<ByteArray>::null()) {
+   Handle<ByteArray> table =
+       isolate->factory()->NewByteArray(RegExpMacroAssembler::kTableSize);
+@@ -498,11 +498,12 @@ void RegExpCodeGenerator::Visit() {
+ }
+ 
+ void RegExpCodeGenerator::PreVisitBytecodes() {
++  DisallowGarbageCollection no_gc;
+   iter_.ForEachBytecode([&]<RegExpBytecode bc>() {
+     using Operands = RegExpBytecodeOperands<bc>;
+     auto ensure_label = [&]<auto operand>() {
+       const uint8_t* pc = iter_.current_address();
+-      uint32_t offset = Operands::template Get<operand>(pc);
++      uint32_t offset = Operands::template Get<operand>(pc, no_gc);
+       if (!jump_targets_.Contains(offset)) {
+         jump_targets_.Add(offset);
+         Label* label = &labels_[offset];
+diff --git a/src/regexp/regexp-code-generator.h b/src/regexp/regexp-code-generator.h
+index 709f52a4cd1..b35fa3ed9e5 100644
+--- a/src/regexp/regexp-code-generator.h
++++ b/src/regexp/regexp-code-generator.h
+@@ -42,15 +42,15 @@ class RegExpCodeGenerator final {
+   V8_NODISCARD Result Assemble(DirectHandle<String> source, RegExpFlags flags);
+ 
+  private:
+-  // Returns the value for |operand_id| of bytecode at |pc| in the format
++  // Returns the value for |operand_id| of the current bytecode in the format
+   // expected by the macro assembler.
+   // E.g. converts an uint32_t bytecode offset to a Label*.
+   template <typename Operands, typename Operands::Operand operand_id>
+-  auto GetArgumentValue(const uint8_t* pc) const;
++  auto GetArgumentValue();
+ 
+-  // Returns all the argument values of the bytecode at |pc| as a tuple.
++  // Returns all the argument values of the current bytecode as a tuple.
+   template <typename Operands>
+-  auto GetArgumentValuesAsTuple(const uint8_t* pc) const;
++  auto GetArgumentValuesAsTuple();
+ 
+   // Visit all bytecodes before any code is emmited.
+   // Allocates labels for all jump targets to support forward jumps.
+diff --git a/test/mjsunit/regress/regress-449341185.js b/test/mjsunit/regress/regress-449341185.js
+new file mode 100644
+index 00000000000..2afae4dc5c8
+--- /dev/null
++++ b/test/mjsunit/regress/regress-449341185.js
+@@ -0,0 +1,11 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file
++
++// Flags: --expose-gc --allow-natives-syntax --stress-compaction
++
++gc();
++let re = /\p{Ll}/iu;
++re.test("\u{118D4}");
++%SetAllocationTimeout(1, 1);
++re.test("\u{118B4}");

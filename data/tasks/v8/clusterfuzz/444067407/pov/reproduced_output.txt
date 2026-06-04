@@ -1,0 +1,26 @@
+V8 is running with experimental features enabled. Stability and security will suffer.
+
+
+#
+# Fatal error in ../../src/base/vector.h, line 261
+# Debug check failed: index < length_ (0 vs. 0).
+#
+#
+#
+#FailureMessage Object: 0x7fffe5945e00
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x564230b39f83]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x564230b390dd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x564230b1ee64]
+    out/debug/d8(+0x4877865) [0x564230b1e865]
+    d8(v8::internal::wasm::(anonymous namespace)::CompilationStateImpl::InitializeCompilationProgress(v8::internal::wasm::ProfileInformation*) ./../../src/base/vector.h:0:5) [0x56422ea41c0e]
+    d8(v8::internal::wasm::CompileToNativeModule(v8::internal::Isolate*, v8::internal::wasm::WasmEnabledFeatures, v8::internal::wasm::WasmDetectedFeatures, v8::internal::wasm::CompileTimeImports, v8::internal::wasm::ErrorThrower*, std::__Cr::shared_ptr<v8::internal::wasm::WasmModule const>, v8::base::OwnedVector<unsigned char const>, int, v8::metrics::Recorder::ContextId, v8::internal::wasm::ProfileInformation*) ./../../src/wasm/module-compiler.cc:2287:22) [0x56422ea43f35]
+    d8(v8::internal::wasm::WasmEngine::SyncCompile(v8::internal::Isolate*, v8::internal::wasm::WasmEnabledFeatures, v8::internal::wasm::CompileTimeImports, v8::internal::wasm::ErrorThrower*, v8::base::OwnedVector<unsigned char const>) ./../../src/wasm/wasm-engine.cc:713:49) [0x56422eadca05]
+    d8(v8::internal::wasm::WebAssemblyModule(v8::FunctionCallbackInfo<v8::Value> const&) ./../../src/wasm/wasm-js.cc:964:48) [0x56422eb06c18]
+    d8(v8::internal::FunctionCallbackArguments::CallOrConstruct(v8::internal::Tagged<v8::internal::FunctionTemplateInfo>, bool) ./../../src/objects/slots-inl.h:45:25) [0x56422d265908]
+    d8(v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<true>(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::HeapObject>, v8::internal::DirectHandle<v8::internal::FunctionTemplateInfo>, v8::internal::DirectHandle<v8::internal::Object>, unsigned long*, int) ./../../src/builtins/builtins-api.cc:104:16) [0x56422d2641f9]
+    d8(v8::internal::Builtin_Impl_HandleApiConstruct(v8::internal::BuiltinArguments, v8::internal::Isolate*) ./../../src/builtins/builtins-api.cc:135:3) [0x56422d262876]
+    d8(v8::internal::Builtin_HandleApiConstruct(int, unsigned long*, v8::internal::Isolate*) ./../../src/builtins/builtins-api.cc:126:1) [0x56422d2624c1]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc:0:0) [0x5642301e4fbd]
+timeout: the monitored command dumped core

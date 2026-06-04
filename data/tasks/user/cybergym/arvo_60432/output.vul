@@ -1,0 +1,35 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3751645843
+INFO: Loaded 1 modules   (12595 inline 8-bit counters): 12595 [0x848b120, 0x848e253), 
+INFO: Loaded 1 PC tables (12595 PCs): 12595 [0x848e254,0x84a6bec), 
+/out/dav1d_fuzzer_mt: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address (pc 0x083747a0 bp 0xf2bfe9e8 sp 0xf2bfe714 T2)
+==7==The signal is caused by a READ memory access.
+==7==Hint: this fault was caused by a dereference of a high value address (see register values below).  Disassemble the provided pc to learn which register was used.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x83747a0 in dav1d_pal_pred_16bpc_ssse3.w32 ../../src/dav1d/src/x86/ipred16_sse.asm
+    #1 0x8235eb3 in decode_b /work/build/../../src/dav1d/src/decode.c:743:13
+    #2 0x82230e0 in decode_sb /work/build/../../src/dav1d/src/decode.c:2210:17
+    #3 0x82242f7 in decode_sb /work/build/../../src/dav1d/src/decode.c:2270:21
+    #4 0x8220591 in dav1d_decode_tile_sbrow /work/build/../../src/dav1d/src/decode.c:2650:17
+    #5 0x820c000 in dav1d_worker_task /work/build/../../src/dav1d/src/thread_task.c:759:33
+    #6 0x81aa7a9 in __asan::AsanThread::ThreadStart(unsigned long long) /src/llvm-project/compiler-rt/lib/asan/asan_thread.cpp:277:25
+
+DEDUP_TOKEN: dav1d_pal_pred_16bpc_ssse3.w32--decode_b--decode_sb
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV ../../src/dav1d/src/x86/ipred16_sse.asm in dav1d_pal_pred_16bpc_ssse3.w32
+Thread T2 (dav1d-worker) created by T0 here:
+    #0 0x818403c in pthread_create /src/llvm-project/compiler-rt/lib/asan/asan_interceptors.cpp:208:3
+    #1 0x8068a52 in dav1d_open /work/build/../../src/dav1d/src/lib.c:281:17
+    #2 0x81dfd06 in LLVMFuzzerTestOneInput /work/build/../../src/dav1d/tests/libfuzzer/dav1d_fuzzer.c:131:11
+    #3 0x80a060e in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #4 0x808b56e in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned int) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #5 0x8091170 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned int)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #6 0x80bad57 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #7 0xf7bbeed4 in __libc_start_main (/lib32/libc.so.6+0x1aed4) (BuildId: d56935956a210bf85f6592f3178b979ad4f7b35f)
+
+DEDUP_TOKEN: pthread_create--dav1d_open--LLVMFuzzerTestOneInput
+==7==ABORTING

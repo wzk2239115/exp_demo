@@ -1,0 +1,1 @@
+A vulnerability exists in which there is no check for enough space to decode the cbytes token.

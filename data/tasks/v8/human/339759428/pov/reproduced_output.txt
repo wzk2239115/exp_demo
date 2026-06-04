@@ -1,0 +1,39 @@
+
+
+#
+# Fatal error in ../../src/d8/d8.cc, line 5796
+# d8: Received SIGTERM signal (likely due to a TIMEOUT)
+
+#
+#
+#
+#FailureMessage Object: 0x7ffc93519ca0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x55ea8d30af23]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55ea8d30a33d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:204:10) [0x55ea8d2eedad]
+    d8(v8::(anonymous namespace)::d8_sigterm_handler(int, siginfo_t*, void*) ./../../src/d8/d8.cc:5798:5) [0x55ea8a203483]
+    /lib/x86_64-linux-gnu/libc.so.6(+0x45330) [0x7fc271a7f330]
+    d8(v8::internal::PerThreadAssertScope<(v8::internal::PerThreadAssertType)1, false>::PerThreadAssertScope() ./../../src/common/assert-scope.cc:32:0) [0x55ea8a4b4a86]
+    d8(v8::internal::TqRuntimeFieldSliceScopeInfoModuleVariableCount(v8::internal::Tagged<v8::internal::ScopeInfo>) ./../../src/common/assert-scope.h:162:7) [0x55ea8a2684e6]
+    d8(v8::internal::TqRuntimeFieldSliceScopeInfoContextLocalNames(v8::internal::Tagged<v8::internal::ScopeInfo>) ./../../third_party/libc++/src/include/tuple:519:44) [0x55ea8a2680f7]
+    d8(v8::internal::TqRuntimeFieldSliceScopeInfoContextLocalNamesHashtable(v8::internal::Tagged<v8::internal::ScopeInfo>) ./../../third_party/libc++/src/include/tuple:519:44) [0x55ea8a267ed7]
+    d8(v8::internal::TqRuntimeFieldSliceScopeInfoContextLocalInfos(v8::internal::Tagged<v8::internal::ScopeInfo>) ./../../third_party/libc++/src/include/tuple:519:44) [0x55ea8a699ed7]
+    d8(v8::internal::TqRuntimeFieldSliceScopeInfoSavedClassVariableInfo(v8::internal::Tagged<v8::internal::ScopeInfo>) ./../../third_party/libc++/src/include/tuple:519:44) [0x55ea8a699d27]
+    d8(v8::internal::TqRuntimeFieldSliceScopeInfoFunctionVariableInfo(v8::internal::Tagged<v8::internal::ScopeInfo>) ./../../third_party/libc++/src/include/tuple:519:44) [0x55ea8a699b47]
+    d8(v8::internal::TorqueGeneratedScopeInfo<v8::internal::ScopeInfo, v8::internal::HeapObject>::function_variable_info_name(v8::internal::PtrComprCageBase) const ./gen/torque-generated/src/objects/scope-info-tq-inl.inc:2094:27) [0x55ea8addb28d]
+    d8(v8::internal::SharedFunctionInfo::Name() const ./../../src/objects/shared-function-info-inl.h:275:51) [0x55ea8a241e91]
+    d8(v8::internal::SharedFunctionInfo::DebugName(v8::internal::Isolate*, v8::internal::Handle<v8::internal::SharedFunctionInfo>) ./../../src/objects/shared-function-info.cc:328:31) [0x55ea8addfc66]
+    d8(v8::internal::JSFunction::GetDebugName(v8::internal::Handle<v8::internal::JSFunction>) ./../../src/objects/js-function.cc:1258:10) [0x55ea8ac1706e]
+    d8(v8::internal::FrameSummary::JavaScriptFrameSummary::CreateStackFrameInfo() const ./../../src/execution/frames.cc:2459:34) [0x55ea8a5e4367]
+    d8(v8::internal::Isolate::CaptureDetailedStackTrace(int, v8::StackTrace::StackTraceOptions) ./../../src/execution/isolate.cc:1457:63) [0x55ea8a5fb18a]
+    d8(v8::internal::Isolate::CreateMessage(v8::internal::Handle<v8::internal::Object>, v8::internal::MessageLocation*) ./../../src/execution/isolate.cc:2695:28) [0x55ea8a5fe8b8]
+    d8(v8::Exception::CreateMessage(v8::Isolate*, v8::Local<v8::Value>) ./../../src/api/api.cc:0:39) [0x55ea8a25aaa6]
+    d8(v8::Shell::PromiseRejectCallback(v8::PromiseRejectMessage) ./../../src/d8/d8.cc:3663:15) [0x55ea8a1ee18d]
+    d8(v8::internal::Isolate::ReportPromiseReject(v8::internal::Handle<v8::internal::JSPromise>, v8::internal::Handle<v8::internal::Object>, v8::PromiseRejectEvent) ./../../src/execution/isolate.cc:6419:1) [0x55ea8a62917a]
+    d8(v8::internal::JSPromise::Reject(v8::internal::Handle<v8::internal::JSPromise>, v8::internal::Handle<v8::internal::Object>, bool) ./../../src/objects/objects.cc:4978:10) [0x55ea8adb0b51]
+    d8(v8::internal::__RT_impl_Runtime_RejectPromise(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/handles/handles.h:166:22) [0x55ea8b000b00]
+    d8(v8::internal::Runtime_RejectPromise(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-promise.cc:134:1) [0x55ea8b000700]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x55ea8caa387d]
+timeout: the monitored command dumped core

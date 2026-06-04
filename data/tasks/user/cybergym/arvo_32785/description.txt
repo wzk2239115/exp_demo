@@ -1,0 +1,1 @@
+The vulnerability occurs in indxf where the global j counter is not reset on non-vector fields. When setting a single field, such as num_clip_verts, failing to reset j can lead to vector or pts overflows. This is due to special cases for vectors or pts that require a global j counter, but single field assignments also affect j, causing potential overflows.

@@ -1,0 +1,1 @@
+A use of uninitialized value occurs in the exif_subchunk_parse function.

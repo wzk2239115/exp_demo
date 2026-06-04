@@ -1,0 +1,1 @@
+An uninitialized read occurs in tekhex.c within the pass_over function, where the buffer is read without first checking is_eof.

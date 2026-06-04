@@ -1,0 +1,54 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+WARNING: CPU: 0 PID: 5928 at lib/refcount.c:31 refcount_warn_saturate+0x1ed/0x210 lib/refcount.c:31
+Modules linked in:
+CPU: 0 UID: 0 PID: 5928 Comm: syz-executor199 Not tainted 6.13.0-rc3-syzkaller-00289-g48f506ad0b68 #0
+Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2~bpo12+1 04/01/2014
+RIP: 0010:refcount_warn_saturate+0x1ed/0x210 lib/refcount.c:31
+Code: 8b e8 87 3e ba fc 90 0f 0b 90 90 e9 c3 fe ff ff e8 e8 04 fa fc c6 05 56 d5 a7 0b 01 90 48 c7 c7 00 9a d1 8b e8 64 3e ba fc 90 <0f> 0b 90 90 e9 a0 fe ff ff 48 89 ef e8 52 b1 5c fd e9 44 fe ff ff
+RSP: 0018:ffffc900027f78f8 EFLAGS: 00010286
+
+RAX: 0000000000000000 RBX: 0000000000000000 RCX: ffffffff815a50d9
+RDX: ffff888023abc880 RSI: ffffffff815a50e6 RDI: 0000000000000001
+RBP: ffff88802a7a064c R08: 0000000000000001 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000002 R12: 1ffff920004fef24
+R13: ffff88802a7a064c R14: 0000000000000000 R15: ffff88802a7a0000
+FS:  0000000000000000(0000) GS:ffff88806a600000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007f5d1dee5000 CR3: 000000000df7e000 CR4: 0000000000352ef0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Call Trace:
+ <TASK>
+ __refcount_dec include/linux/refcount.h:336 [inline]
+ refcount_dec include/linux/refcount.h:351 [inline]
+ ref_tracker_free+0x710/0x820 lib/ref_tracker.c:236
+ netdev_tracker_free include/linux/netdevice.h:4156 [inline]
+ netdev_put include/linux/netdevice.h:4173 [inline]
+ netdev_put include/linux/netdevice.h:4169 [inline]
+ ax25_release+0x33f/0xa10 net/ax25/af_ax25.c:1069
+ __sock_release+0xb0/0x270 net/socket.c:640
+ sock_close+0x1c/0x30 net/socket.c:1408
+ __fput+0x3f8/0xb60 fs/file_table.c:450
+ task_work_run+0x14e/0x250 kernel/task_work.c:239
+ exit_task_work include/linux/task_work.h:43 [inline]
+ do_exit+0xad8/0x2d70 kernel/exit.c:938
+ do_group_exit+0xd3/0x2a0 kernel/exit.c:1087
+ get_signal+0x24ed/0x26c0 kernel/signal.c:3017
+ arch_do_signal_or_restart+0x90/0x7e0 arch/x86/kernel/signal.c:337
+ exit_to_user_mode_loop kernel/entry/common.c:111 [inline]
+ exit_to_user_mode_prepare include/linux/entry-common.h:329 [inline]
+ __syscall_exit_to_user_mode_work kernel/entry/common.c:207 [inline]
+ syscall_exit_to_user_mode+0x150/0x2a0 kernel/entry/common.c:218
+ do_syscall_64+0xda/0x250 arch/x86/entry/common.c:89
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7f5d1df27e79
+Code: Unable to access opcode bytes at 0x7f5d1df27e4f.
+RSP: 002b:00007f5d1dee4238 EFLAGS: 00000246 ORIG_RAX: 00000000000000ca
+RAX: fffffffffffffe00 RBX: 00007f5d1dfb1328 RCX: 00007f5d1df27e79
+RDX: 0000000000000000 RSI: 0000000000000080 RDI: 00007f5d1dfb1328
+RBP: 00007f5d1dfb1320 R08: 00007f5d1dee46c0 R09: 00007f5d1dee46c0
+R10: 0000000000000000 R11: 0000000000000246 R12: 00007f5d1df7f004
+R13: 0000000000000000 R14: 00007fffc935d900 R15: 00007fffc935d9e8
+ </TASK>

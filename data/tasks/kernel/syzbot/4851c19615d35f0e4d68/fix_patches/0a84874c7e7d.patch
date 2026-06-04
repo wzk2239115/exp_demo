@@ -1,0 +1,41 @@
+From 0a84874c7e7dde5cdddc80a82093120e924a348b Mon Sep 17 00:00:00 2001
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Date: Mon, 26 May 2025 16:56:46 +0800
+Subject: crypto: shash - Fix buffer overrun in import function
+
+Only set the partial block length to zero if the algorithm is
+block-only.  Otherwise the descriptor context could be empty,
+e.g., for digest_null.
+
+Reported-by: syzbot+4851c19615d35f0e4d68@syzkaller.appspotmail.com
+Fixes: 7650f826f7b2 ("crypto: shash - Handle partial blocks in API")
+Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
+---
+ crypto/shash.c | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/crypto/shash.c b/crypto/shash.c
+index 37537d7995c7b..4721f5f134f4d 100644
+--- a/crypto/shash.c
++++ b/crypto/shash.c
+@@ -257,12 +257,13 @@ static int __crypto_shash_import(struct shash_desc *desc, const void *in,
+ 	if (crypto_shash_get_flags(tfm) & CRYPTO_TFM_NEED_KEY)
+ 		return -ENOKEY;
+ 
+-	plen = crypto_shash_blocksize(tfm) + 1;
+-	descsize = crypto_shash_descsize(tfm);
+ 	ss = crypto_shash_statesize(tfm);
+-	buf[descsize - 1] = 0;
+-	if (crypto_shash_block_only(tfm))
++	if (crypto_shash_block_only(tfm)) {
++		plen = crypto_shash_blocksize(tfm) + 1;
+ 		ss -= plen;
++		descsize = crypto_shash_descsize(tfm);
++		buf[descsize - 1] = 0;
++	}
+ 	if (!import) {
+ 		memcpy(buf, in, ss);
+ 		return 0;
+-- 
+cgit 1.3-korg
+

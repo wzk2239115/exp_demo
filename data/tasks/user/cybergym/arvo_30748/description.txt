@@ -1,0 +1,1 @@
+A negative-size-param issue occurs when reading content_len in the frame_get_metalayers function, leading to a potential security vulnerability.

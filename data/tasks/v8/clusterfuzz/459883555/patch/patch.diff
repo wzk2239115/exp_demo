@@ -1,0 +1,60 @@
+diff --git a/src/wasm/module-compiler.cc b/src/wasm/module-compiler.cc
+index d85ca0f0382..b4402d7f5c9 100644
+--- a/src/wasm/module-compiler.cc
++++ b/src/wasm/module-compiler.cc
+@@ -1879,7 +1879,10 @@ WasmError ValidateAndSetBuiltinImports(const WasmModule* module,
+     }
+ 
+     // Check compile-time imported functions.
+-    if (import.kind != kExternalFunction) continue;
++    if (import.kind != kExternalFunction &&
++        import.kind != kExternalExactFunction) {
++      continue;
++    }
+     base::Vector<const uint8_t> module_name = wire_bytes.SubVector(
+         import.module_name.offset(), import.module_name.end_offset());
+     constexpr size_t kMinInterestingLength = 10;
+diff --git a/src/wasm/module-instantiate.cc b/src/wasm/module-instantiate.cc
+index dc03d78dbd0..d2aada6b3f0 100644
+--- a/src/wasm/module-instantiate.cc
++++ b/src/wasm/module-instantiate.cc
+@@ -1844,7 +1844,8 @@ void InstanceBuilder::SanitizeImports() {
+       continue;
+     }
+ 
+-    if (import.kind == kExternalFunction) {
++    if (import.kind == kExternalFunction ||
++        import.kind == kExternalExactFunction) {
+       WellKnownImport wki = well_known_imports.get(import.index);
+       if (IsCompileTimeImport(wki)) {
+         DirectHandle<JSFunction> fun =
+diff --git a/test/mjsunit/wasm/custom-descriptors-imports.js b/test/mjsunit/wasm/custom-descriptors-imports.js
+index 975ba446c12..d38c9088c04 100644
+--- a/test/mjsunit/wasm/custom-descriptors-imports.js
++++ b/test/mjsunit/wasm/custom-descriptors-imports.js
+@@ -12,6 +12,8 @@ let $sig0 = builder.addType(kSig_v_v);
+ 
+ let $imp_exact = builder.addImport("", "exact", $sig0, kExternalExactFunction);
+ let $imp_inexact = builder.addImport("", "inexact", $sig0);
++// Compile-time imports may also be exact.
++builder.addImport("wasm:js-string", "test", kSig_i_r, kExternalExactFunction);
+ 
+ let $glob0 = builder.addGlobal(wasmRefType($sig0).exact(), true, false,
+                                [kExprRefFunc, $imp_exact]);
+@@ -24,12 +26,14 @@ let imports = {"": {
+   "exact": () => {},
+   "inexact": () => {},
+ }};
+-builder.instantiate(imports);  // Works.
++let builtins = {builtins: ["js-string"]}
++builder.instantiate(imports, builtins);  // Works.
+ 
+ builder.addGlobal(wasmRefType($sig0).exact(), true, false,
+                   [kExprRefFunc, $imp_inexact]);
+ 
+-assertThrows(() => builder.instantiate(imports), WebAssembly.CompileError);
++assertThrows(() => builder.instantiate(imports, builtins),
++             WebAssembly.CompileError);
+ 
+ // Can't test a second reason to fail validation in the same builder.
+ let builder2 = new WasmModuleBuilder();

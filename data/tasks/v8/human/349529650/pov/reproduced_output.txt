@@ -1,0 +1,23 @@
+=== stdout ===
+writer_tfd: 405600
+dummy_tfd: 405a00
+running...
+
+=== stderr ===
+Sandbox testing mode is enabled. Write to the page starting at 0x20d5e9933000 (available from JavaScript as `Sandbox.targetPage`) to demonstrate a sandbox bypass.
+
+## V8 sandbox violation detected!
+
+Received signal 11 SEGV_ACCERR 20d5e9933000
+
+==== C stack trace ===============================
+
+ [0x7f410f1f9753]
+ [0x7f410f1f96a2]
+ [0x7f410eaa0330]
+ [0x3e5d175368cf]
+[end of stack trace]
+timeout: the monitored command dumped core
+
+=== exit code ===
+139

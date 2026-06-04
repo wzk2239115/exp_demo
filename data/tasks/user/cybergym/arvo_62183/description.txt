@@ -1,0 +1,1 @@
+A divide-by-zero vulnerability exists in the function impd_drc_stft_drc_gain_calc_init, which occurs when the DRC gain coordinates are identical or the slope is perpendicular to the gain value. This can lead to a runtime error.

@@ -1,0 +1,1 @@
+An out-of-bounds read occurs in the parser when formatting an error message, as the code attempts to print characters beyond the end of the buffer.

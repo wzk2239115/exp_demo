@@ -1,0 +1,22 @@
+=== stdout ===
+running...
+instantiate success, triggering arbitrary write
+
+=== stderr ===
+Sandbox testing mode is enabled. Write to the page starting at 0x2f15ed6b9000 (available from JavaScript as `Sandbox.targetPage`) to demonstrate a sandbox bypass.
+
+## V8 sandbox violation detected!
+
+Received signal 11 SEGV_ACCERR 2f15ed6b9000
+
+==== C stack trace ===============================
+
+ [0x7f71655a5243]
+ [0x7f71655a5192]
+ [0x7f7164e4c330]
+ [0x23df9c6d68bb]
+[end of stack trace]
+timeout: the monitored command dumped core
+
+=== exit code ===
+139

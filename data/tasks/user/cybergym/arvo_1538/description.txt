@@ -1,0 +1,1 @@
+A vulnerability exists in avcodec/ac3dec where the band structure is not properly tracked, leading to potential out-of-array index access in certain corner cases.

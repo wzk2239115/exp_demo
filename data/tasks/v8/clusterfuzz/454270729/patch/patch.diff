@@ -1,0 +1,67 @@
+diff --git a/src/maglev/maglev-graph-builder.cc b/src/maglev/maglev-graph-builder.cc
+index 948bcfc1c88..14740954c83 100644
+--- a/src/maglev/maglev-graph-builder.cc
++++ b/src/maglev/maglev-graph-builder.cc
+@@ -9543,7 +9543,10 @@ MaybeReduceResult MaglevGraphBuilder::TryReduceStringPrototypeSlice(
+   std::optional<int32_t> index_const = TryGetInt32Constant(index);
+   if (!index_const || *index_const != -1) return {};
+ 
+-  ValueNode* receiver = args.receiver();
++  // Ensure that {receiver} is actually a String.
++  ValueNode* receiver = GetValueOrUndefined(args.receiver());
++  RETURN_IF_ABORT(BuildCheckString(receiver));
++
+   ValueNode* receiver_length;
+   GET_VALUE_OR_ABORT(receiver_length, BuildLoadStringLength(receiver));
+ 
+diff --git a/test/mjsunit/maglev/regress/regress-454270729.js b/test/mjsunit/maglev/regress/regress-454270729.js
+new file mode 100644
+index 00000000000..d49173a9a7a
+--- /dev/null
++++ b/test/mjsunit/maglev/regress/regress-454270729.js
+@@ -0,0 +1,16 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax
++
++function foo(a) {
++  try {
++    return a.slice(-1);
++  } catch (e) {}
++}
++%PrepareFunctionForOptimization(foo);
++foo();
++foo("lol");
++%OptimizeMaglevOnNextCall(foo);
++foo();
+diff --git a/test/mjsunit/maglev/regress/regress-454270729b.js b/test/mjsunit/maglev/regress/regress-454270729b.js
+new file mode 100644
+index 00000000000..7823d59deac
+--- /dev/null
++++ b/test/mjsunit/maglev/regress/regress-454270729b.js
+@@ -0,0 +1,23 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax
++
++function NotString() {
++}
++
++NotString.prototype.slice = String.prototype.slice;
++
++function foo(a) {
++  try {
++    return a.slice(-1);
++  } catch {
++  }
++}
++%PrepareFunctionForOptimization(foo);
++
++foo(new NotString());
++
++%OptimizeMaglevOnNextCall(foo);
++foo(new NotString());

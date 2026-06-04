@@ -1,0 +1,1 @@
+A vulnerability exists where malformed input files can cause the archive start offset to become negative. This issue arises due to insufficient validation of the input, potentially leading to unexpected behavior.

@@ -1,0 +1,52 @@
+Accepting input from '/tmp/poc'
+Usage for fuzzing: honggfuzz -P [flags] -- /out/FuzzGIFLoader
+=================================================================
+==7==ERROR: AddressSanitizer: global-buffer-overflow on address 0x000000627af0 at pc 0x00000050baab bp 0x7fffea4cb210 sp 0x7fffea4cb208
+READ of size 4 at 0x000000627af0 thread T0
+SCARINESS: 17 (4-byte-read-global-buffer-overflow)
+    #0 0x50baaa in Gfx::decode_frame(Gfx::GIFLoadingContext&, unsigned long) /src/serenity/Userland/Libraries/LibGfx/GIFLoader.cpp:402:35
+    #1 0x506d4d in Gfx::GIFImageDecoderPlugin::frame(unsigned long) /src/serenity/Userland/Libraries/LibGfx/GIFLoader.cpp:754:78
+    #2 0x500585 in Gfx::GIFImageDecoderPlugin::bitmap() /src/serenity/Userland/Libraries/LibGfx/GIFLoader.cpp:667:16
+    #3 0x500ec2 in Gfx::load_gif_from_memory(unsigned char const*, unsigned long) /src/serenity/Userland/Libraries/LibGfx/GIFLoader.cpp:122:31
+    #4 0x4e9b7c in LLVMFuzzerTestOneInput /src/serenity/Meta/Lagom/build/../Fuzzers/FuzzGIFLoader.cpp:33:5
+    #5 0x4dfceb in main (/out/FuzzGIFLoader+0x4dfceb)
+    #6 0x7fd4afa9683f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #7 0x4312a8 in _start (/out/FuzzGIFLoader+0x4312a8)
+
+DEDUP_TOKEN: Gfx::decode_frame(Gfx::GIFLoadingContext&, unsigned long)--Gfx::GIFImageDecoderPlugin::frame(unsigned long)--Gfx::GIFImageDecoderPlugin::bitmap()
+0x000000627af0 is located 48 bytes to the left of global variable 'Gfx::INTERLACE_ROW_OFFSETS' defined in '/src/serenity/Userland/Libraries/LibGfx/GIFLoader.cpp:44:18' (0x627b20) of size 16
+0x000000627af0 is located 0 bytes to the right of global variable 'Gfx::INTERLACE_ROW_STRIDES' defined in '/src/serenity/Userland/Libraries/LibGfx/GIFLoader.cpp:43:18' (0x627ae0) of size 16
+SUMMARY: AddressSanitizer: global-buffer-overflow /src/serenity/Userland/Libraries/LibGfx/GIFLoader.cpp:402:35 in Gfx::decode_frame(Gfx::GIFLoadingContext&, unsigned long)
+Shadow bytes around the buggy address:
+  0x0000800bcf00: 00 00 00 04 f9 f9 f9 f9 00 00 00 00 00 00 00 00
+  0x0000800bcf10: 00 00 00 00 07 f9 f9 f9 f9 f9 f9 f9 00 00 01 f9
+  0x0000800bcf20: f9 f9 f9 f9 00 00 05 f9 f9 f9 f9 f9 00 00 00 00
+  0x0000800bcf30: 06 f9 f9 f9 f9 f9 f9 f9 00 00 03 f9 f9 f9 f9 f9
+  0x0000800bcf40: 00 00 00 00 00 00 00 04 f9 f9 f9 f9 07 f9 f9 f9
+=>0x0000800bcf50: f9 f9 f9 f9 07 f9 f9 f9 f9 f9 f9 f9 00 00[f9]f9
+  0x0000800bcf60: f9 f9 f9 f9 00 00 f9 f9 f9 f9 f9 f9 00 00 00 00
+  0x0000800bcf70: 00 04 f9 f9 f9 f9 f9 f9 00 00 00 00 00 00 06 f9
+  0x0000800bcf80: f9 f9 f9 f9 00 00 00 00 00 00 00 00 f9 f9 f9 f9
+  0x0000800bcf90: 00 00 00 00 f9 f9 f9 f9 00 00 00 00 00 04 f9 f9
+  0x0000800bcfa0: f9 f9 f9 f9 00 00 00 00 02 f9 f9 f9 f9 f9 f9 f9
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==7==ABORTING

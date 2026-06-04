@@ -1,0 +1,33 @@
+
+
+#
+# Fatal error in ../../src/compiler/turbofan-typer.cc, line 451
+# UpdateType error for node 133: ObjectIsArrayBufferView(88)
+  88: Phi[kRepTagged](65, 133, 84)
+
+#
+#
+#
+#FailureMessage Object: 0x7fffdfdcc220
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:390:32) [0x56355c697bc3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x56355c696f6d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x56355c67ddb4]
+    d8(v8::internal::compiler::Typer::Visitor::UpdateType(v8::internal::compiler::Node*, v8::internal::compiler::Type) ./../../src/compiler/node-properties.h:266:5) [0x56355afd63e9]
+    d8(v8::internal::compiler::GraphReducer::Reduce(v8::internal::compiler::Node*) ./../../src/compiler/graph-reducer.cc:34:25) [0x56355ad8fbba]
+    d8(v8::internal::compiler::GraphReducer::ReduceTop() ./../../src/compiler/graph-reducer.h:39:47) [0x56355ad8f7d6]
+    d8(v8::internal::compiler::GraphReducer::ReduceNode(v8::internal::compiler::Node*) ./../../third_party/libc++/src/include/deque:762:88) [0x56355ad8f238]
+    d8(v8::internal::compiler::Typer::Run(v8::internal::ZoneVector<v8::internal::compiler::Node*> const&, v8::internal::compiler::LoopVariableOptimizer*) ./../../src/compiler/turbofan-typer.cc:472:22) [0x56355afd0010]
+    d8(v8::internal::compiler::TyperPhase::Run(v8::internal::compiler::TFPipelineData*, v8::internal::Zone*, v8::internal::compiler::Typer*) ./../../third_party/libc++/src/include/optional:299:9) [0x56355af33c80]
+    d8(auto v8::internal::compiler::PipelineImpl::Run<v8::internal::compiler::TyperPhase, v8::internal::compiler::Typer*>(v8::internal::compiler::Typer*&&) ./../../src/logging/runtime-call-stats.h:794:9) [0x56355aef3145]
+    d8(v8::internal::compiler::PipelineImpl::OptimizeTurbofanGraph(v8::internal::compiler::Linkage*) ./../../src/compiler/pipeline.cc:0:3) [0x56355aeef60b]
+    d8(v8::internal::compiler::PipelineCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/compiler/pipeline.cc:781:62) [0x56355aeeee40]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:470:22) [0x56355912752d]
+    d8(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1103:7) [0x563559135587]
+    d8(v8::internal::Compiler::CompileOptimized(v8::internal::Isolate*, v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind) ./../../src/handles/maybe-handles-inl.h:38:17) [0x5635591383cc]
+    d8(v8::internal::(anonymous namespace)::CompileOptimized(v8::internal::DirectHandle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::Isolate*) ./../../src/handles/handles.h:198:22) [0x563559e44a09]
+    d8(v8::internal::__RT_impl_Runtime_OptimizeTurbofanEager(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/execution/isolate-data.h:322:44) [0x563559e3de12]
+    d8(v8::internal::Runtime_OptimizeTurbofanEager(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:222:1) [0x563559e3da30]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x56355bd08ffd]
+timeout: the monitored command dumped core

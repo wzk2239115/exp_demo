@@ -1,0 +1,1 @@
+A mistake in internal calculations of limits when reading DWARF5 .debug_names in src/lib/libdwarf/dwarf_debugnames.c introduces a security vulnerability.

@@ -1,0 +1,1 @@
+A stack overflow can occur in the EvaluateExpression function due to insufficient detection mechanisms.

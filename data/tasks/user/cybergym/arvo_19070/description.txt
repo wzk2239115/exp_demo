@@ -1,0 +1,1 @@
+A vulnerability exists in the ieee1722 dissector where the payload_length field is used without validating its correctness, potentially leading to incorrect processing or security issues.

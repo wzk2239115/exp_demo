@@ -1,0 +1,36 @@
+diff --git a/src/parsing/preparser.cc b/src/parsing/preparser.cc
+index 4955045227c..201fbdb7ec8 100644
+--- a/src/parsing/preparser.cc
++++ b/src/parsing/preparser.cc
+@@ -41,12 +41,12 @@ PreParserIdentifier GetIdentifierHelper(Scanner* scanner,
+   if (string == avf->constructor_string()) {
+     return PreParserIdentifier::Constructor();
+   }
+-  if (scanner->literal_contains_escapes()) {
+-    return PreParserIdentifier::Default();
+-  }
+   if (string == avf->eval_string()) {
+     return PreParserIdentifier::Eval();
+   }
++  if (scanner->literal_contains_escapes()) {
++    return PreParserIdentifier::Default();
++  }
+   if (string == avf->arguments_string()) {
+     return PreParserIdentifier::Arguments();
+   }
+diff --git a/test/mjsunit/regress/regress-430344952.js b/test/mjsunit/regress/regress-430344952.js
+new file mode 100644
+index 00000000000..3931fea51d9
+--- /dev/null
++++ b/test/mjsunit/regress/regress-430344952.js
+@@ -0,0 +1,10 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++function fun() {
++  ev\u0061l('var z = 3;');
++  return z;
++}
++
++assertEquals(3, fun());

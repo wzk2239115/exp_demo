@@ -1,0 +1,22 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3188465809
+INFO: Loaded 1 modules   (624105 inline 8-bit counters): 624105 [0x384a7c8, 0x38e2db1), 
+INFO: Loaded 1 PC tables (624105 PCs): 624105 [0x1f81f48,0x2907dd8), 
+/out/llvmfuzz: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+in_dxf.c:10891:35: runtime error: store to address 0x000000000008 with insufficient space for an object of type 'double'
+0x000000000008: note: pointer points here
+<memory cannot be printed>
+    #0 0x1d97739 in new_object /src/libredwg/src/in_dxf.c:10891:47
+    #1 0x1d72264 in dxf_entities_read /src/libredwg/src/in_dxf.c:12237:18
+    #2 0x1d68e91 in dwg_read_dxf /src/libredwg/src/in_dxf.c:12820:23
+    #3 0x4b3b56 in LLVMFuzzerTestOneInput /src/libredwg/examples/llvmfuzz.c:116:13
+    #4 0x4429e3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:599:15
+    #5 0x42c842 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #6 0x43268a in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9
+    #7 0x45e3c2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #8 0x7f7623baf83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #9 0x4074d8 in _start (/out/llvmfuzz+0x4074d8)
+
+DEDUP_TOKEN: new_object--dxf_entities_read--dwg_read_dxf
+SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior in_dxf.c:10891:35 in 

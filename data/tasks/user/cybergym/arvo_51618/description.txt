@@ -1,0 +1,1 @@
+A security vulnerability exists in the Ins_PUSHW instruction due to a missing bounds check on the byte code buffer when handling 'words' (2 bytes each).

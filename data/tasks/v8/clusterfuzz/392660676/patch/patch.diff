@@ -1,0 +1,37 @@
+diff --git a/src/compiler/operation-typer.cc b/src/compiler/operation-typer.cc
+index 3e8a3c978b0..cf4dc3bc549 100644
+--- a/src/compiler/operation-typer.cc
++++ b/src/compiler/operation-typer.cc
+@@ -585,8 +585,8 @@ Type OperationTyper::NumberToUint8Clamped(Type type) {
+ Type OperationTyper::NumberToFloat16RawBits(Type type) {
+   DCHECK(type.Is(Type::Number()));
+ 
+-  if (type.Is(cache_->kFloat16)) return type;
+-  return cache_->kFloat16;
++  if (type.Is(cache_->kUint16)) return type;
++  return cache_->kUint16;
+ }
+ 
+ Type OperationTyper::Float16RawBitsToNumber(Type type) {
+diff --git a/test/mjsunit/compiler/regress-392660676.js b/test/mjsunit/compiler/regress-392660676.js
+new file mode 100644
+index 00000000000..19db2a92914
+--- /dev/null
++++ b/test/mjsunit/compiler/regress-392660676.js
+@@ -0,0 +1,16 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax --js-staging
++
++function foo() {
++  var arr = new Float16Array(1);
++  arr[0] = undefined;
++  return arr[0];
++}
++
++%PrepareFunctionForOptimization(foo)
++foo();
++%OptimizeFunctionOnNextCall(foo);
++assertTrue(isNaN(foo()));

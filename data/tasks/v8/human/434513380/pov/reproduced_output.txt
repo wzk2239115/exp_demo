@@ -1,0 +1,20 @@
+DebugPrint: Smi: 0x0 (0)
+
+
+
+#
+# Fatal error in ../../src/runtime/runtime-test.cc, line 2324
+# Check failed: !WriteBarrier::IsRequired(heap_object, value).
+#
+#
+#
+#FailureMessage Object: 0x7fff66632b00
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:395:32) [0x55dac6aab023]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55dac6aaa18d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55dac6a8fe14]
+    d8(v8::internal::__RT_impl_Runtime_CheckNoWriteBarrierNeeded(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/objects/tagged-impl-inl.h:217:5) [0x55dac414c8ae]
+    d8(v8::internal::Runtime_CheckNoWriteBarrierNeeded(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-test.cc:2312:1) [0x55dac414c38d]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x55dac614f47d]
+timeout: the monitored command dumped core

@@ -1,0 +1,1 @@
+A heap-buffer overflow exists in the text_to_stream function due to incorrect use of the viewer stat stack, which can result in accessing a state beyond the end of the stack in extreme cases. This issue arises from tracking the stack like a graphics state parameter within the pdfwrite device structure.

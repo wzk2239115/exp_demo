@@ -1,0 +1,1 @@
+A vulnerability exists where a variable dropped in fz_catch() is not remembered with fz_var(), potentially leading to incorrect exception handling.

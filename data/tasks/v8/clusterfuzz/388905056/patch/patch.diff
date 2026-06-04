@@ -1,0 +1,36 @@
+diff --git a/src/compiler/js-call-reducer.cc b/src/compiler/js-call-reducer.cc
+index 96942340ee6..9c69ea19e59 100644
+--- a/src/compiler/js-call-reducer.cc
++++ b/src/compiler/js-call-reducer.cc
+@@ -4595,7 +4595,8 @@ Reduction JSCallReducer::ReduceJSCall(Node* node) {
+       // succeed.
+       FixedArrayRef bound_arguments = function.bound_arguments(broker());
+       const uint32_t bound_arguments_length = bound_arguments.length();
+-      if (arity + bound_arguments_length > Code::kMaxArguments) {
++      if (arity + bound_arguments_length + /* receiver */ 1 >
++          Code::kMaxArguments) {
+         return NoChange();
+       }
+       static constexpr int kInlineSize = 16;  // Arbitrary.
+diff --git a/test/mjsunit/regress/regress-388905056.js b/test/mjsunit/regress/regress-388905056.js
+new file mode 100644
+index 00000000000..c647a0988fd
+--- /dev/null
++++ b/test/mjsunit/regress/regress-388905056.js
+@@ -0,0 +1,16 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax --nolazy-feedback-allocation
++// Flags: --stress-concurrent-inlining
++
++function f() {}
++let array = [];
++array.length = 65534;
++let bound = f.bind(null, ...array);
++function g() { bound(1); }
++%PrepareFunctionForOptimization(g);
++g();
++%OptimizeFunctionOnNextCall(g);
++g()

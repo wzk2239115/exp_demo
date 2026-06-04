@@ -1,0 +1,21 @@
+=== stdout ===
+[research:memcor/wasm-gc-opt-loop-backedge-skip/exploit.js] warmup...
+[research:memcor/wasm-gc-opt-loop-backedge-skip/exploit.js]  - ok
+[base:bootstrap/stage2-primitives.js] bootstrapping stage 2 primitives...
+[base:bootstrap/stage2-primitives.js] object holder addr: 0xb5574
+[base:bootstrap/stage2-primitives.js] object holder elements addr: 0x8100010
+[base:bootstrap/stage2-primitives.js] sbx buffer: 0x11a0510
+[base:bootstrap/stage2-primitives.js] cleaning up old primitives...
+[base:bootstrap/stage2-primitives.js] success!
+[research:sandbox/blink/partitionalloc-metadata/leak-sbx.js] ArrayBuffer backing store: 0x100001400
+61630225_exploit.js:424: Error: failed to find SlotSpanMetadata for ArrayBufferAllocator
+if(addr_slot_span_meta == null) throw new Error("failed to find SlotSpanMetadata for ArrayBufferAllocator");
+                                      ^
+Error: failed to find SlotSpanMetadata for ArrayBufferAllocator
+    at 61630225_exploit.js:424:39
+    at 61630225_exploit.js:1318:3
+
+1 pending unhandled Promise rejection(s) detected.
+
+=== exit code ===
+1

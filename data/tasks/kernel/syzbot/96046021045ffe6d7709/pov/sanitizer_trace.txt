@@ -1,0 +1,60 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+KASAN: null-ptr-deref in range [0x0000000000000010-0x0000000000000017]
+CPU: 1 UID: 0 PID: 13 Comm: kworker/u8:1 Not tainted syzkaller #0 PREEMPT(full) 
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 01/24/2026
+Workqueue: krdsd rds_tcp_accept_worker
+RIP: 0010:rds_tcp_accept_one+0xa5b/0xd70 net/rds/tcp_listen.c:319
+Code: 00 00 48 83 c3 18 48 89 d8 48 c1 e8 03 42 80 3c 28 00 74 08 48 89 df e8 63 a9 2f f7 48 8b 1b 48 83 c3 12 49 89 de 49 c1 ee 03 <43> 0f b6 04 2e 84 c0 0f 85 53 02 00 00 44 0f b6 2b bf 08 00 00 00
+RSP: 0018:ffffc900001279a0 EFLAGS: 00010202
+RAX: 1ffff1100edc939b RBX: 0000000000000012 RCX: 0000000000000000
+RDX: 0000000000000006 RSI: ffffffff8e006fa9 RDI: 00000000ffffffff
+RBP: ffffc90000127b18 R08: ffffffff903342b7 R09: 1ffffffff2066856
+R10: dffffc0000000000 R11: fffffbfff2066857 R12: ffff88807c9fc000
+R13: dffffc0000000000 R14: 0000000000000002 R15: 1ffff92000024f3c
+FS:  0000000000000000(0000) GS:ffff888125115000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007f189ce708c0 CR3: 00000000725d4000 CR4: 00000000003526f0
+Call Trace:
+ <TASK>
+ rds_tcp_accept_worker+0x1d/0x70 net/rds/tcp.c:524
+ process_one_work+0x949/0x1650 kernel/workqueue.c:3279
+ process_scheduled_works kernel/workqueue.c:3362 [inline]
+ worker_thread+0xb46/0x1140 kernel/workqueue.c:3443
+ kthread+0x388/0x470 kernel/kthread.c:467
+ ret_from_fork+0x51e/0xb90 arch/x86/kernel/process.c:158
+ ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:245
+ </TASK>
+Modules linked in:
+---[ end trace 0000000000000000 ]---
+RIP: 0010:rds_tcp_accept_one+0xa5b/0xd70 net/rds/tcp_listen.c:319
+Code: 00 00 48 83 c3 18 48 89 d8 48 c1 e8 03 42 80 3c 28 00 74 08 48 89 df e8 63 a9 2f f7 48 8b 1b 48 83 c3 12 49 89 de 49 c1 ee 03 <43> 0f b6 04 2e 84 c0 0f 85 53 02 00 00 44 0f b6 2b bf 08 00 00 00
+RSP: 0018:ffffc900001279a0 EFLAGS: 00010202
+RAX: 1ffff1100edc939b RBX: 0000000000000012 RCX: 0000000000000000
+RDX: 0000000000000006 RSI: ffffffff8e006fa9 RDI: 00000000ffffffff
+RBP: ffffc90000127b18 R08: ffffffff903342b7 R09: 1ffffffff2066856
+R10: dffffc0000000000 R11: fffffbfff2066857 R12: ffff88807c9fc000
+R13: dffffc0000000000 R14: 0000000000000002 R15: 1ffff92000024f3c
+FS:  0000000000000000(0000) GS:ffff888125015000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007f189d1e4198 CR3: 000000000e74c000 CR4: 00000000003526f0
+----------------
+Code disassembly (best guess):
+   0:	00 00                	add    %al,(%rax)
+   2:	48 83 c3 18          	add    $0x18,%rbx
+   6:	48 89 d8             	mov    %rbx,%rax
+   9:	48 c1 e8 03          	shr    $0x3,%rax
+   d:	42 80 3c 28 00       	cmpb   $0x0,(%rax,%r13,1)
+  12:	74 08                	je     0x1c
+  14:	48 89 df             	mov    %rbx,%rdi
+  17:	e8 63 a9 2f f7       	call   0xf72fa97f
+  1c:	48 8b 1b             	mov    (%rbx),%rbx
+  1f:	48 83 c3 12          	add    $0x12,%rbx
+  23:	49 89 de             	mov    %rbx,%r14
+  26:	49 c1 ee 03          	shr    $0x3,%r14
+* 2a:	43 0f b6 04 2e       	movzbl (%r14,%r13,1),%eax <-- trapping instruction
+  2f:	84 c0                	test   %al,%al
+  31:	0f 85 53 02 00 00    	jne    0x28a
+  37:	44 0f b6 2b          	movzbl (%rbx),%r13d
+  3b:	bf 08 00 00 00       	mov    $0x8,%edi

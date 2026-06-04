@@ -1,0 +1,32 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3690668612
+INFO: Loaded 1 modules   (172900 inline 8-bit counters): 172900 [0x1a6e3c0, 0x1a98724), 
+INFO: Loaded 1 PC tables (172900 PCs): 172900 [0x1586410,0x1829a50), 
+/out/fuzz_objcopy: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+BFD: /tmp/libfuzzer.7: unsupported swap_aux_in for storage class 0x8f
+BFD: /tmp/libfuzzer.7: unsupported swap_aux_in for storage class 0x8f
+BFD: /tmp/libfuzzer.7: unsupported swap_aux_in for storage class 0x8f
+BFD: /tmp/libfuzzer.7: unsupported swap_aux_in for storage class 0x8f
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x621f18004100 (pc 0x000000794554 bp 0x7fff625a5710 sp 0x7fff625a56a0 T0)
+==7==The signal is caused by a READ memory access.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x794554 in coff_mangle_symbols /src/binutils-gdb/bfd/coffgen.c:807:46
+    #1 0xb45f17 in coff_write_object_contents /src/binutils-gdb/bfd/./coffcode.h:3988:7
+    #2 0x5de901 in bfd_close /src/binutils-gdb/bfd/opncls.c:810:13
+    #3 0x567768 in copy_file /src/binutils-gdb/binutils/./fuzz_objcopy.h:3882:51
+    #4 0x5640b8 in copy_main /src/binutils-gdb/binutils/./fuzz_objcopy.h:5949:3
+    #5 0x5655ec in LLVMFuzzerTestOneInput /src/binutils-gdb/binutils/fuzz_objcopy.c:54:3
+    #6 0x456d13 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) cxa_noexception.cpp
+    #7 0x4425c2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #8 0x448075 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) cxa_noexception.cpp
+    #9 0x470d72 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #10 0x7f9ddec57082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)
+    #11 0x41f85d in _start (/out/fuzz_objcopy+0x41f85d)
+
+DEDUP_TOKEN: coff_mangle_symbols--coff_write_object_contents--bfd_close
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/binutils-gdb/bfd/coffgen.c:807:46 in coff_mangle_symbols
+==7==ABORTING

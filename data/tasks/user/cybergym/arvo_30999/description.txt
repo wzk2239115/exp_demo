@@ -1,0 +1,1 @@
+A vulnerability exists where the delref operation occurs before successful allocation, which can lead to inconsistent reference counts after an out-of-memory (OOM) condition. This issue is particularly notable in some string/array separation cases.

@@ -1,0 +1,20 @@
+=== stdout ===
+test/mjsunit/mjsunit.js:418: Failure:
+expected:
+should match '/TypeError: type incompatibility when transforming from\/to JS\n    at wasm_caller .*\.js:14:44\)\n    at testCallStack .*\.js:23:5\).*/'
+found:
+"RuntimeError: unreachable\n    at foo (wasm://wasm/7b94f76a:wasm-function[0]:0x22)\n    at wasm_caller (test/mjsunit/regress/wasm/regress-366635354.js:14:44)\n    at testCallStack (test/mjsunit/regress/wasm/regress-366635354.js:23:5)\n    at test/mjsunit/regress/wasm/regress-366635354.js:19:1"
+
+Stack: MjsUnitAssertionError
+    at assertMatches test/mjsunit/mjsunit.js 718:7
+    at testCallStack test/mjsunit/regress/wasm/regress-366635354.js 26:5
+    at               test/mjsunit/regress/wasm/regress-366635354.js 19:1
+    throw new MjsUnitAssertionError(
+    ^
+MjsUnitAssertionError
+    at assertMatches test/mjsunit/mjsunit.js 718:7
+    at testCallStack test/mjsunit/regress/wasm/regress-366635354.js 26:5
+    at               test/mjsunit/regress/wasm/regress-366635354.js 19:1
+
+=== exit code ===
+1

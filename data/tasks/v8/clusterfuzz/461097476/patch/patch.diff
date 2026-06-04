@@ -1,0 +1,66 @@
+diff --git a/src/compiler/turboshaft/turbolev-graph-builder.cc b/src/compiler/turboshaft/turbolev-graph-builder.cc
+index dec6a6e5b07..8f7976a8530 100644
+--- a/src/compiler/turboshaft/turbolev-graph-builder.cc
++++ b/src/compiler/turboshaft/turbolev-graph-builder.cc
+@@ -1394,6 +1394,16 @@ class GraphBuildingNodeProcessor {
+     int actual_parameter_count = JSParameterCount(node->num_args());
+ 
+     if (node->shared_function_info().HasBuiltinId()) {
++      Builtin builtin = node->shared_function_info().builtin_id();
++
++      // Non-JS builtins must be called via CallBuiltin().
++      DCHECK(Builtins::HasJSLinkage(builtin));
++
++      // This SBXCHECK is a defense-in-depth measure to ensure that we always
++      // generate valid calls here (with matching signatures).
++      SBXCHECK(Builtins::IsCompatibleJSBuiltin(
++          builtin, node->expected_parameter_count()));
++
+       // Note that there is no need for a ThrowingScope here:
+       // GenerateBuiltinCall takes care of creating one.
+       base::SmallVector<OpIndex, 16> arguments;
+@@ -1414,9 +1424,9 @@ class GraphBuildingNodeProcessor {
+         arguments.push_back(undefined_value_);
+       }
+       arguments.push_back(Map(node->context()));
++
+       GENERATE_AND_MAP_BUILTIN_CALL(
+-          node, node->shared_function_info().builtin_id(), frame_state,
+-          base::VectorOf(arguments),
++          node, builtin, frame_state, base::VectorOf(arguments),
+           std::max<int>(actual_parameter_count,
+                         node->expected_parameter_count()));
+     } else {
+diff --git a/test/mjsunit/sandbox/regress-461097476.js b/test/mjsunit/sandbox/regress-461097476.js
+new file mode 100644
+index 00000000000..965c4b42525
+--- /dev/null
++++ b/test/mjsunit/sandbox/regress-461097476.js
+@@ -0,0 +1,27 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --sandbox-testing --disable-in-process-stack-traces
++// Flags: --turbolev --allow-natives-syntax
++
++function F0() {
++  try { new F0(); } catch (e) {}
++}
++
++%PrepareFunctionForOptimization(F0);
++new F0();
++
++corrupt(F0, 1494921241);
++
++%OptimizeFunctionOnNextCall(F0);
++new F0();
++
++
++function corrupt(obj) {
++  let buffer = new Sandbox.MemoryView(0, 0x100000000);
++  let memory = new DataView(buffer);
++
++  let addr = memory.getUint32(Sandbox.getAddressOf(obj) + 16, true) - 1;
++  memory.setUint32(addr + 8, 0x42, true);
++}

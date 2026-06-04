@@ -1,0 +1,1 @@
+The mechanism to improve metadata reading in the FLAC decoder overrides a FLAC__STREAM_DECODER_ABORTED state with FLAC__STREAM_DECODER_SEARCH_FOR_FRAME_SYNC, causing the decoder to overread a buffer into an uninitialized part and resulting in the use of an undefined value. This occurs when searching for frame sync is set even though the decoder is not in a valid state.

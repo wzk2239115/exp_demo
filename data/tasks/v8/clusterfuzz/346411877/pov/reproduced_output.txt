@@ -1,0 +1,31 @@
+
+
+#
+# Fatal error in ../../src/objects/map-updater.cc, line 1315
+# Debug check failed: IsClass(*old_field_type) implies old_representation.IsHeapObject().
+#
+#
+#
+#FailureMessage Object: 0x7fffcdf72c40
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x55db2ff97d63]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55db2ff9717d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55db2ff7bb84]
+    out/debug/d8(+0x3a5a5b5) [0x55db2ff7b5b5]
+    d8(v8::internal::MapUpdater::GeneralizeField(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Map>, v8::internal::InternalIndex, v8::internal::PropertyConstness, v8::internal::Representation, v8::internal::Handle<v8::internal::FieldType>) ./../../src/objects/map-updater.cc:0:3) [0x55db2d99db7c]
+    d8(v8::internal::MapUpdater::GeneralizeField(v8::internal::Handle<v8::internal::Map>, v8::internal::InternalIndex, v8::internal::PropertyConstness, v8::internal::Representation, v8::internal::Handle<v8::internal::FieldType>) ./../../src/handles/handles.h:75:12) [0x55db2d99d3e6]
+    d8(v8::internal::MapUpdater::TryReconfigureToDataFieldInplace() ./../../src/handles/handles.h:75:12) [0x55db2d999bff]
+    d8(v8::internal::MapUpdater::ReconfigureToDataField(v8::internal::InternalIndex, v8::internal::PropertyAttributes, v8::internal::PropertyConstness, v8::internal::Representation, v8::internal::Handle<v8::internal::FieldType>) ./../../src/objects/map-updater.cc:227:42) [0x55db2d99973a]
+    d8(v8::internal::(anonymous namespace)::UpdateDescriptorForValue(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Map>, v8::internal::InternalIndex, v8::internal::PropertyConstness, v8::internal::Handle<v8::internal::Object>) ./../../src/objects/map.cc:1932:13) [0x55db2d9b0453]
+    d8(v8::internal::Map::TransitionToDataProperty(v8::internal::Isolate*, v8::internal::Handle<v8::internal::Map>, v8::internal::Handle<v8::internal::Name>, v8::internal::Handle<v8::internal::Object>, v8::internal::PropertyAttributes, v8::internal::PropertyConstness, v8::internal::StoreOrigin) ./../../src/objects/map.cc:1977:12) [0x55db2d9b0813]
+    d8(v8::internal::LookupIterator::PrepareTransitionToDataProperty(v8::internal::Handle<v8::internal::JSReceiver>, v8::internal::Handle<v8::internal::Object>, v8::internal::PropertyAttributes, v8::internal::StoreOrigin) ./../../src/objects/lookup.cc:637:10) [0x55db2d98fdef]
+    d8(v8::internal::Object::TransitionAndWriteDataProperty(v8::internal::LookupIterator*, v8::internal::Handle<v8::internal::Object>, v8::internal::PropertyAttributes, v8::Maybe<v8::internal::ShouldThrow>, v8::internal::StoreOrigin) ./../../src/objects/lookup.h:140:32) [0x55db2da109ce]
+    d8(v8::internal::JSObject::DefineOwnPropertyIgnoreAttributes(v8::internal::LookupIterator*, v8::internal::Handle<v8::internal::Object>, v8::internal::PropertyAttributes, v8::Maybe<v8::internal::ShouldThrow>, v8::internal::JSObject::AccessorInfoHandling, v8::internal::EnforceDefineSemantics, v8::internal::StoreOrigin) ./../../src/objects/js-objects.cc:0:16) [0x55db2d8aba05]
+    d8(v8::internal::JSObject::SetOwnPropertyIgnoreAttributes(v8::internal::Handle<v8::internal::JSObject>, v8::internal::Handle<v8::internal::Name>, v8::internal::Handle<v8::internal::Object>, v8::internal::PropertyAttributes) ./../../src/objects/js-objects.cc:3611:3) [0x55db2d8bdeb5]
+    d8(v8::internal::(anonymous namespace)::CreateObjectLiteral(v8::internal::Isolate*, v8::internal::Handle<v8::internal::ObjectBoilerplateDescription>, int, v8::internal::AllocationType) ./../../src/handles/maybe-handles.h:50:34) [0x55db2dc36df3]
+    d8(v8::internal::MaybeHandle<v8::internal::JSObject> v8::internal::(anonymous namespace)::CreateLiteralWithoutAllocationSite<v8::internal::(anonymous namespace)::ObjectLiteralHelper>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::HeapObject>, int) ./../../src/runtime/runtime-literals.cc:351:12) [0x55db2dc35569]
+    d8(v8::internal::__RT_impl_Runtime_CreateObjectLiteral(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/runtime/runtime-literals.cc:0:0) [0x55db2dc33389]
+    d8(v8::internal::Runtime_CreateObjectLiteral(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-literals.cc:578:1) [0x55db2dc32850]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x55db2f73497d]
+timeout: the monitored command dumped core

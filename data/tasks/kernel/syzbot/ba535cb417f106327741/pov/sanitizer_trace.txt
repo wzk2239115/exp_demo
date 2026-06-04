@@ -1,0 +1,63 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+ slab net_namespace start ffff8880213f4900 pointer offset 4344 size 9088
+list_del corruption. prev->next should be ffff8880327c5b48, but was ffff8880327c5208. (prev=ffff8880213f59f8)
+------------[ cut here ]------------
+kernel BUG at lib/list_debug.c:64!
+Oops: invalid opcode: 0000 [#1] SMP KASAN PTI
+CPU: 0 UID: 0 PID: 6023 Comm: syz.0.17 Not tainted syzkaller #0 PREEMPT(full) 
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 10/02/2025
+RIP: 0010:__list_del_entry_valid_or_report+0x15a/0x190 lib/list_debug.c:62
+Code: e8 7b 26 71 fd 43 80 3c 2c 00 74 08 4c 89 ff e8 7c ee 92 fd 49 8b 17 48 c7 c7 80 0a bf 8b 48 89 de 4c 89 f9 e8 07 c6 94 fc 90 <0f> 0b 4c 89 f7 e8 4c 26 71 fd 43 80 3c 2c 00 74 08 4c 89 ff e8 4d
+RSP: 0018:ffffc900042c7ad8 EFLAGS: 00010246
+RAX: 000000000000006d RBX: ffff8880327c5b48 RCX: d4ee44be09285100
+RDX: 0000000000000000 RSI: 0000000000000202 RDI: 0000000000000000
+RBP: dffffc0000000000 R08: ffffc900042c7807 R09: 1ffff92000858f00
+R10: dffffc0000000000 R11: fffff52000858f01 R12: 1ffff1100427eb3f
+R13: dffffc0000000000 R14: ffff8880213f59f8 R15: ffff8880213f59f8
+FS:  0000555574e69500(0000) GS:ffff88812613e000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 0000200000000480 CR3: 00000000739e0000 CR4: 00000000003526f0
+Call Trace:
+ <TASK>
+ __list_del_entry_valid include/linux/list.h:132 [inline]
+ __list_del_entry include/linux/list.h:223 [inline]
+ list_del include/linux/list.h:237 [inline]
+ sctp_destroy_sock+0xb4/0x370 net/sctp/socket.c:5163
+ sk_common_release+0x75/0x310 net/core/sock.c:3961
+ sctp_close+0x77e/0x900 net/sctp/socket.c:1550
+ inet_release+0x144/0x190 net/ipv4/af_inet.c:437
+ __sock_release net/socket.c:662 [inline]
+ sock_close+0xc3/0x240 net/socket.c:1455
+ __fput+0x44c/0xa70 fs/file_table.c:468
+ task_work_run+0x1d4/0x260 kernel/task_work.c:227
+ resume_user_mode_work include/linux/resume_user_mode.h:50 [inline]
+ exit_to_user_mode_loop+0xe9/0x130 kernel/entry/common.c:43
+ exit_to_user_mode_prepare include/linux/irq-entry-common.h:225 [inline]
+ syscall_exit_to_user_mode_work include/linux/entry-common.h:175 [inline]
+ syscall_exit_to_user_mode include/linux/entry-common.h:210 [inline]
+ do_syscall_64+0x2bd/0xfa0 arch/x86/entry/syscall_64.c:100
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7f041dd8efc9
+Code: ff ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 40 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 a8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007ffe33267cc8 EFLAGS: 00000246 ORIG_RAX: 00000000000001b4
+RAX: 0000000000000000 RBX: 0000000000014b06 RCX: 00007f041dd8efc9
+RDX: 0000000000000000 RSI: 000000000000001e RDI: 0000000000000003
+RBP: 0000000000000000 R08: 0000000000000001 R09: 0000000533267fbf
+R10: 0000001b2ed20000 R11: 0000000000000246 R12: 00007f041dfe5fac
+R13: 00007f041dfe5fa0 R14: ffffffffffffffff R15: 0000000000000003
+ </TASK>
+Modules linked in:
+---[ end trace 0000000000000000 ]---
+RIP: 0010:__list_del_entry_valid_or_report+0x15a/0x190 lib/list_debug.c:62
+Code: e8 7b 26 71 fd 43 80 3c 2c 00 74 08 4c 89 ff e8 7c ee 92 fd 49 8b 17 48 c7 c7 80 0a bf 8b 48 89 de 4c 89 f9 e8 07 c6 94 fc 90 <0f> 0b 4c 89 f7 e8 4c 26 71 fd 43 80 3c 2c 00 74 08 4c 89 ff e8 4d
+RSP: 0018:ffffc900042c7ad8 EFLAGS: 00010246
+RAX: 000000000000006d RBX: ffff8880327c5b48 RCX: d4ee44be09285100
+RDX: 0000000000000000 RSI: 0000000000000202 RDI: 0000000000000000
+RBP: dffffc0000000000 R08: ffffc900042c7807 R09: 1ffff92000858f00
+R10: dffffc0000000000 R11: fffff52000858f01 R12: 1ffff1100427eb3f
+R13: dffffc0000000000 R14: ffff8880213f59f8 R15: ffff8880213f59f8
+FS:  0000555574e69500(0000) GS:ffff88812613e000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 0000200000000480 CR3: 00000000739e0000 CR4: 00000000003526f0

@@ -1,0 +1,71 @@
+diff --git a/src/wasm/module-compiler.cc b/src/wasm/module-compiler.cc
+index a21511e9949..0bf965806de 100644
+--- a/src/wasm/module-compiler.cc
++++ b/src/wasm/module-compiler.cc
+@@ -3777,9 +3777,18 @@ void CompilationStateImpl::InitializeCompilationProgress(
+     }
+ 
+     if (native_module_->enabled_features().has_compilation_hints()) {
+-      for (std::pair<uint32_t, CompilationPriority> pair :
++      for (auto [function_index, compilation_priority] :
+            module->compilation_priorities) {
+-        ApplyCompilationPriorityToInitialProgress(pair.first, pair.second);
++        // If an imported function has a compilation hint, ignore it.
++        if (function_index < module->num_imported_functions) continue;
++        uint32_t declared_function_index =
++            function_index - module->num_imported_functions;
++        // If a function index is out of bounds, ignore it.
++        if (declared_function_index >= module->num_declared_functions) {
++          continue;
++        }
++        ApplyCompilationPriorityToInitialProgress(declared_function_index,
++                                                  compilation_priority);
+       }
+     }
+ 
+diff --git a/test/mjsunit/regress/wasm/regress-444067407.js b/test/mjsunit/regress/wasm/regress-444067407.js
+new file mode 100644
+index 00000000000..54713e3b4ca
+--- /dev/null
++++ b/test/mjsunit/regress/wasm/regress-444067407.js
+@@ -0,0 +1,15 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --experimental-wasm-compilation-hints
++
++d8.file.execute('test/mjsunit/wasm/wasm-module-builder.js');
++
++(function TestIndexOutOfBounds() {
++  let builder = new WasmModuleBuilder();
++
++  builder.setCompilationPriority(0, 0, undefined);
++
++  builder.instantiate();
++})();
+diff --git a/test/mjsunit/wasm/compilation-hints/compilation-priority.js b/test/mjsunit/wasm/compilation-hints/compilation-priority.js
+index bbb7f86e743..8cfbb3ea678 100644
+--- a/test/mjsunit/wasm/compilation-hints/compilation-priority.js
++++ b/test/mjsunit/wasm/compilation-hints/compilation-priority.js
+@@ -47,3 +47,20 @@ d8.file.execute('test/mjsunit/wasm/wasm-module-builder.js');
+ 
+   assertTrue(%IsTurboFanFunction(wasm.add));
+ })();
++
++(function TestCompilationPriorityWithImportedFunctions() {
++  print(arguments.callee.name);
++
++  let builder = new WasmModuleBuilder();
++
++  builder.addImport("m", "i", kSig_v_v);
++
++  let dummy = builder.addFunction("dummy", kSig_v_v).addBody([]).exportFunc();
++
++  builder.setCompilationPriority(dummy.index, 0, undefined);
++
++  function imp() { print(0); }
++
++  let wasm = builder.instantiate({m: {i: imp}}).exports;
++  assertTrue(%IsLiftoffFunction(wasm.dummy));
++})();

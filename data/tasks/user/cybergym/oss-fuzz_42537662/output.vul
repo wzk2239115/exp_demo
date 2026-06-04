@@ -1,0 +1,47 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 4046795554
+INFO: Loaded 1 modules   (68323 inline 8-bit counters): 68323 [0x5634b361e088, 0x5634b362eb6b), 
+INFO: Loaded 1 PC tables (68323 PCs): 68323 [0x5634b362eb70,0x5634b37399a0), 
+/out/ffmpeg_AV_CODEC_ID_VC1_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x5634b2f9b0b6 in guess_mv /src/ffmpeg/libavcodec/error_resilience.c:668:25
+    #1 0x5634b2f91f5d in ff_er_frame_end /src/ffmpeg/libavcodec/error_resilience.c:1224:9
+    #2 0x5634b2d0407b in vc1_decode_frame /src/ffmpeg/libavcodec/vc1dec.c:1341:13
+    #3 0x5634b2c814d5 in decode_simple_internal /src/ffmpeg/libavcodec/decode.c:429:20
+    #4 0x5634b2c814d5 in decode_simple_receive_frame /src/ffmpeg/libavcodec/decode.c:600:15
+    #5 0x5634b2c814d5 in decode_receive_frame_internal /src/ffmpeg/libavcodec/decode.c:631:15
+    #6 0x5634b2c809ed in avcodec_send_packet /src/ffmpeg/libavcodec/decode.c:721:15
+    #7 0x5634b2c6e493 in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_dec_fuzzer.c:534:25
+    #8 0x5634b2b60ee0 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #9 0x5634b2b4c155 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #10 0x5634b2b51bef in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #11 0x5634b2b7ce92 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #12 0x7fe6ff2d2082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+    #13 0x5634b2b4433d in _start (/out/ffmpeg_AV_CODEC_ID_VC1_fuzzer+0x21333d)
+
+  Uninitialized value was created by a heap allocation
+    #0 0x5634b2c04463 in posix_memalign /src/llvm-project/compiler-rt/lib/msan/msan_interceptors.cpp:162:3
+    #1 0x5634b34c9767 in av_malloc /src/ffmpeg/libavutil/mem.c:107:9
+    #2 0x5634b347e382 in av_buffer_alloc /src/ffmpeg/libavutil/buffer.c:82:12
+    #3 0x5634b2c70dad in fuzz_video_get_buffer /src/ffmpeg/tools/target_dec_fuzzer.c:132:25
+    #4 0x5634b2c70dad in fuzz_get_buffer2 /src/ffmpeg/tools/target_dec_fuzzer.c:153:18
+    #5 0x5634b2c8c703 in ff_get_buffer /src/ffmpeg/libavcodec/decode.c:1621:11
+    #6 0x5634b2ce5429 in thread_get_buffer_internal /src/ffmpeg/libavcodec/pthread_frame.c:969:16
+    #7 0x5634b2ce5429 in ff_thread_get_buffer /src/ffmpeg/libavcodec/pthread_frame.c:988:15
+    #8 0x5634b315ba9f in alloc_picture /src/ffmpeg/libavcodec/mpegvideo_dec.c:234:15
+    #9 0x5634b315ae9b in ff_mpv_frame_start /src/ffmpeg/libavcodec/mpegvideo_dec.c:356:11
+    #10 0x5634b2d00b06 in vc1_decode_frame /src/ffmpeg/libavcodec/vc1dec.c:1068:16
+    #11 0x5634b2c814d5 in decode_simple_internal /src/ffmpeg/libavcodec/decode.c:429:20
+    #12 0x5634b2c814d5 in decode_simple_receive_frame /src/ffmpeg/libavcodec/decode.c:600:15
+    #13 0x5634b2c814d5 in decode_receive_frame_internal /src/ffmpeg/libavcodec/decode.c:631:15
+    #14 0x5634b2c809ed in avcodec_send_packet /src/ffmpeg/libavcodec/decode.c:721:15
+    #15 0x5634b2c6e493 in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_dec_fuzzer.c:534:25
+    #16 0x5634b2b60ee0 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #17 0x5634b2b4c155 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #18 0x5634b2b51bef in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #19 0x5634b2b7ce92 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #20 0x7fe6ff2d2082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /src/ffmpeg/libavcodec/error_resilience.c:668:25 in guess_mv
+Exiting

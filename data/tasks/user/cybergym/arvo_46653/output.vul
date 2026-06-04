@@ -1,0 +1,62 @@
+Reading 130885 bytes from /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x6150000020fe at pc 0x0000004e43bc bp 0x7ffd6a74b270 sp 0x7ffd6a74b268
+READ of size 1 at 0x6150000020fe thread T0
+SCARINESS: 12 (1-byte-read-heap-buffer-overflow)
+    #0 0x4e43bb in sc_pkcs15init_delete_by_path /src/opensc/src/tests/fuzzing/../../../src/pkcs15init/pkcs15-lib.c:628:18
+    #1 0x50db60 in sc_pkcs15init_store_data /src/opensc/src/tests/fuzzing/../../../src/pkcs15init/pkcs15-lib.c:2371:6
+    #2 0x51418f in sc_pkcs15init_store_data_object /src/opensc/src/tests/fuzzing/../../../src/pkcs15init/pkcs15-lib.c:2245:6
+    #3 0x5320f6 in do_store_data_object /src/opensc/src/tests/fuzzing/fuzz_pkcs15init.c:178:5
+    #4 0x534849 in LLVMFuzzerTestOneInput /src/opensc/src/tests/fuzzing/fuzz_pkcs15init.c:344:5
+    #5 0x54ca65 in ExecuteFilesOnyByOne /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c:191:7
+    #6 0x54c8d5 in main /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c
+    #7 0x7f1eedfca082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)
+    #8 0x41fe2d in _start (/out/fuzz_pkcs15init+0x41fe2d)
+
+DEDUP_TOKEN: sc_pkcs15init_delete_by_path--sc_pkcs15init_store_data--sc_pkcs15init_store_data_object
+0x6150000020fe is located 2 bytes to the left of 464-byte region [0x615000002100,0x6150000022d0)
+allocated by thread T0 here:
+    #0 0x4a05d2 in __interceptor_calloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:138:3
+    #1 0x553fd6 in sc_file_new /src/opensc/src/libopensc/sc.c:619:33
+    #2 0x5548a6 in sc_file_dup /src/opensc/src/libopensc/sc.c:655:9
+    #3 0x4dffca in sc_profile_get_file_by_path /src/opensc/src/tests/fuzzing/../../../src/pkcs15init/profile.c:627:2
+    #4 0x50d790 in sc_pkcs15init_store_data /src/opensc/src/tests/fuzzing/../../../src/pkcs15init/pkcs15-lib.c:2363:6
+    #5 0x51418f in sc_pkcs15init_store_data_object /src/opensc/src/tests/fuzzing/../../../src/pkcs15init/pkcs15-lib.c:2245:6
+    #6 0x5320f6 in do_store_data_object /src/opensc/src/tests/fuzzing/fuzz_pkcs15init.c:178:5
+    #7 0x534849 in LLVMFuzzerTestOneInput /src/opensc/src/tests/fuzzing/fuzz_pkcs15init.c:344:5
+    #8 0x54ca65 in ExecuteFilesOnyByOne /src/aflplusplus/utils/aflpp_driver/aflpp_driver.c:191:7
+
+DEDUP_TOKEN: __interceptor_calloc--sc_file_new--sc_file_dup
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/opensc/src/tests/fuzzing/../../../src/pkcs15init/pkcs15-lib.c:628:18 in sc_pkcs15init_delete_by_path
+Shadow bytes around the buggy address:
+  0x0c2a7fff83c0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c2a7fff83d0: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x0c2a7fff83e0: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x0c2a7fff83f0: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x0c2a7fff8400: fd fd fd fd fd fd fd fd fd fd fa fa fa fa fa fa
+=>0x0c2a7fff8410: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa[fa]
+  0x0c2a7fff8420: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c2a7fff8430: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c2a7fff8440: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c2a7fff8450: 00 00 00 00 00 00 00 00 00 00 fa fa fa fa fa fa
+  0x0c2a7fff8460: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

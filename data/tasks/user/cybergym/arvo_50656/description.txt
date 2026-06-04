@@ -1,0 +1,1 @@
+A vulnerability exists in Ins_NPUSHB() due to a missing bounds check on the instruction buffer.

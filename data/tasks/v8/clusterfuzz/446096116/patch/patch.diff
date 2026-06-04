@@ -1,0 +1,75 @@
+diff --git a/src/maglev/maglev-phi-representation-selector.cc b/src/maglev/maglev-phi-representation-selector.cc
+index 3e670b0ae77..2169a73dcdf 100644
+--- a/src/maglev/maglev-phi-representation-selector.cc
++++ b/src/maglev/maglev-phi-representation-selector.cc
+@@ -541,20 +541,20 @@ void MaglevPhiRepresentationSelector::ConvertTaggedPhiTo(
+           case Opcode::kChangeInt32ToFloat64: {
+             new_input =
+                 GetReplacementForPhiInputConversion<ChangeInt32ToFloat64>(
+-                    input, phi, input_index);
++                    bypassed_input, phi, input_index);
+             break;
+           }
+           case Opcode::kChangeUint32ToFloat64: {
+             new_input =
+                 GetReplacementForPhiInputConversion<ChangeUint32ToFloat64>(
+-                    input, phi, input_index);
++                    bypassed_input, phi, input_index);
+             break;
+           }
+ #ifdef V8_ENABLE_UNDEFINED_DOUBLE
+           case Opcode::kFloat64ToHoleyFloat64: {
+             new_input =
+                 GetReplacementForPhiInputConversion<Float64ToHoleyFloat64>(
+-                    input, phi, input_index);
++                    bypassed_input, phi, input_index);
+             break;
+           }
+ #endif  // V8_ENABLE_UNDEFINED_DOUBLE
+@@ -724,11 +724,12 @@ void MaglevPhiRepresentationSelector::ConvertTaggedPhiTo(
+ template <class NodeT>
+ ValueNode* MaglevPhiRepresentationSelector::GetReplacementForPhiInputConversion(
+     ValueNode* input, Phi* phi, uint32_t input_index) {
++  DCHECK(!input->Is<Identity>());
+   TRACE_UNTAGGING(TRACE_INPUT_LABEL
+                   << ": Replacing old conversion with a "
+                   << OpcodeToString(NodeBase::opcode_of<NodeT>));
+   return AddNewNodeNoInputConversionAtBlockEnd<NodeT>(
+-      phi->predecessor_at(input_index), {input->input(0).node()});
++      phi->predecessor_at(input_index), {input});
+ }
+ 
+ ProcessResult MaglevPhiRepresentationSelector::UpdateUntaggingOfPhi(
+diff --git a/src/maglev/maglev-phi-representation-selector.h b/src/maglev/maglev-phi-representation-selector.h
+index 5a1ed9dc89d..49dbfac215c 100644
+--- a/src/maglev/maglev-phi-representation-selector.h
++++ b/src/maglev/maglev-phi-representation-selector.h
+@@ -107,8 +107,7 @@ class MaglevPhiRepresentationSelector {
+   void ConvertTaggedPhiTo(Phi* phi, ValueRepresentation repr,
+                           const HoistTypeList& hoist_untagging);
+   template <class NodeT>
+-  ValueNode* GetReplacementForPhiInputConversion(ValueNode* conversion_node,
+-                                                 Phi* phi,
++  ValueNode* GetReplacementForPhiInputConversion(ValueNode* input, Phi* phi,
+                                                  uint32_t input_index);
+ 
+   // Since this pass changes the representation of Phis, it makes some untagging
+diff --git a/test/mjsunit/maglev/regress/regress-446096116.js b/test/mjsunit/maglev/regress/regress-446096116.js
+new file mode 100644
+index 00000000000..ffa62e53679
+--- /dev/null
++++ b/test/mjsunit/maglev/regress/regress-446096116.js
+@@ -0,0 +1,13 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++for (let v2 = 0; v2 < 100; v2++) {
++  let v3 = 0;
++  for (let v4 = 0; v4 < 100; v4++) {
++    [v4, 1211501577, v3];
++    const v44 = 0;
++    v44 * v44;
++    v3 = v44 | v2;
++  }
++}

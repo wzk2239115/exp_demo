@@ -1,0 +1,1 @@
+A vulnerability exists where incorrect aber values are not properly cleaned, and insufficient extra data is allocated to the image, leading to a potential buffer overrun when processing specially crafted test images.

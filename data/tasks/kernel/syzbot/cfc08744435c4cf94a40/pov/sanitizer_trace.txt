@@ -1,0 +1,67 @@
+# Static excerpt from docs/crash_report.txt (syzbot crawl).
+# For a trace captured by re-running the reproducer in the VM, see validation.json and pov/qemu_serial.log if present.
+
+=====================================================
+BUG: KMSAN: kernel-infoleak-after-free in instrument_copy_to_user include/linux/instrumented.h:114 [inline]
+BUG: KMSAN: kernel-infoleak-after-free in _copy_to_user+0xbc/0x110 lib/usercopy.c:40
+ instrument_copy_to_user include/linux/instrumented.h:114 [inline]
+ _copy_to_user+0xbc/0x110 lib/usercopy.c:40
+ copy_to_user include/linux/uaccess.h:191 [inline]
+ copy_siginfo_to_user+0x40/0x130 kernel/signal.c:3380
+ ptrace_request+0xfa7/0x36e0 kernel/ptrace.c:1046
+ arch_ptrace+0x43b/0x680 arch/x86/kernel/ptrace.c:848
+ __do_sys_ptrace kernel/ptrace.c:1285 [inline]
+ __se_sys_ptrace+0x2d8/0x760 kernel/ptrace.c:1258
+ __x64_sys_ptrace+0xbd/0x110 kernel/ptrace.c:1258
+ do_syscall_64+0xd5/0x1f0
+ entry_SYSCALL_64_after_hwframe+0x6d/0x75
+
+Uninit was stored to memory at:
+ copy_siginfo include/linux/signal.h:18 [inline]
+ ptrace_getsiginfo kernel/ptrace.c:685 [inline]
+ ptrace_request+0xf33/0x36e0 kernel/ptrace.c:1044
+ arch_ptrace+0x43b/0x680 arch/x86/kernel/ptrace.c:848
+ __do_sys_ptrace kernel/ptrace.c:1285 [inline]
+ __se_sys_ptrace+0x2d8/0x760 kernel/ptrace.c:1258
+ __x64_sys_ptrace+0xbd/0x110 kernel/ptrace.c:1258
+ do_syscall_64+0xd5/0x1f0
+ entry_SYSCALL_64_after_hwframe+0x6d/0x75
+
+Uninit was stored to memory at:
+ copy_siginfo include/linux/signal.h:18 [inline]
+ collect_signal kernel/signal.c:587 [inline]
+ __dequeue_signal+0x501/0xad0 kernel/signal.c:616
+ dequeue_signal+0x14b/0xb20 kernel/signal.c:639
+ get_signal+0xb46/0x2d00 kernel/signal.c:2790
+ arch_do_signal_or_restart+0x53/0xcb0 arch/x86/kernel/signal.c:310
+ exit_to_user_mode_loop kernel/entry/common.c:111 [inline]
+ exit_to_user_mode_prepare include/linux/entry-common.h:328 [inline]
+ __syscall_exit_to_user_mode_work kernel/entry/common.c:207 [inline]
+ syscall_exit_to_user_mode+0x5d/0x160 kernel/entry/common.c:218
+ do_syscall_64+0xe4/0x1f0 arch/x86/entry/common.c:89
+ entry_SYSCALL_64_after_hwframe+0x6d/0x75
+
+Uninit was created at:
+ slab_free_hook mm/slub.c:2073 [inline]
+ slab_free mm/slub.c:4280 [inline]
+ kmem_cache_free+0x257/0xa80 mm/slub.c:4344
+ __sigqueue_free kernel/signal.c:451 [inline]
+ collect_signal kernel/signal.c:594 [inline]
+ __dequeue_signal+0xa58/0xad0 kernel/signal.c:616
+ dequeue_signal+0x14b/0xb20 kernel/signal.c:639
+ get_signal+0xb46/0x2d00 kernel/signal.c:2790
+ arch_do_signal_or_restart+0x53/0xcb0 arch/x86/kernel/signal.c:310
+ exit_to_user_mode_loop kernel/entry/common.c:111 [inline]
+ exit_to_user_mode_prepare include/linux/entry-common.h:328 [inline]
+ __syscall_exit_to_user_mode_work kernel/entry/common.c:207 [inline]
+ syscall_exit_to_user_mode+0x5d/0x160 kernel/entry/common.c:218
+ do_syscall_64+0xe4/0x1f0 arch/x86/entry/common.c:89
+ entry_SYSCALL_64_after_hwframe+0x6d/0x75
+
+Bytes 12-15 of 48 are uninitialized
+Memory access of size 48 starts at ffff8881240cfc60
+Data copied to user address 0000000014dcf540
+
+CPU: 1 PID: 5012 Comm: strace-static-x Not tainted 6.8.0-syzkaller-13213-g70293240c5ce #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 02/29/2024
+=====================================================

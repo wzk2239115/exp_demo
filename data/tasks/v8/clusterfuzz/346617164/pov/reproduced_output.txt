@@ -1,0 +1,30 @@
+
+
+#
+# Fatal error in ../../src/maglev/maglev-regalloc-data.h, line 86
+# Debug check failed: state.GetPayload().is_initialized.
+#
+#
+#
+#FailureMessage Object: 0x7fffcf28d520
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x55e8034aad63]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55e8034aa17d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55e80348eb84]
+    out/debug/d8(+0x3a485b5) [0x55e80348e5b5]
+    d8(void v8::internal::maglev::MergePointRegisterState::ForEachGeneralRegister<v8::internal::maglev::BasicBlock::HasPhisOrRegisterMerges() const::'lambda'(v8::internal::Register, v8::base::PointerWithPayload<void, v8::internal::maglev::RegisterStateFlags, 2>&)>(v8::internal::maglev::BasicBlock::HasPhisOrRegisterMerges() const::'lambda'(v8::internal::Register, v8::base::PointerWithPayload<void, v8::internal::maglev::RegisterStateFlags, 2>&)&&) ./../../src/maglev/maglev-regalloc-data.h:75:3) [0x55e8012a3b35]
+    d8(v8::internal::maglev::BasicBlock::HasPhisOrRegisterMerges() const ./../../src/maglev/maglev-basic-block.h:158:41) [0x55e8012a390f]
+    d8(v8::internal::maglev::BasicBlock::RealJumpTarget() ./../../src/maglev/maglev-basic-block.h:183:77) [0x55e8012a32a6]
+    d8(v8::internal::maglev::MaglevCodeGenerator::EmitCode() ./../../src/maglev/maglev-code-generator.cc:739:35) [0x55e80129647e]
+    d8(v8::internal::maglev::MaglevCodeGenerator::Assemble() ./../../src/maglev/maglev-code-generator.cc:1568:8) [0x55e8012960f9]
+    d8(v8::internal::maglev::MaglevCompiler::Compile(v8::internal::LocalIsolate*, v8::internal::maglev::MaglevCompilationInfo*) ./../../src/maglev/maglev-compiler.cc:726:36) [0x55e80134a6f2]
+    d8(v8::internal::maglev::MaglevCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/maglev/maglev-concurrent-dispatcher.cc:0:8) [0x55e80140c60a]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:486:22) [0x55e80059fecd]
+    d8(v8::internal::(anonymous namespace)::CompileMaglev(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1300:9) [0x55e8005bd125]
+    d8(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:0:0) [0x55e8005acc9c]
+    d8(v8::internal::Compiler::CompileOptimized(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind) ./../../src/handles/maybe-handles.h:60:19) [0x55e8005ae914]
+    d8(v8::internal::__RT_impl_Runtime_CompileOptimized(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/handles/handles.h:159:22) [0x55e8011098aa]
+    d8(v8::internal::Runtime_CompileOptimized(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:98:1) [0x55e8011093e0]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x55e802c4797d]
+timeout: the monitored command dumped core

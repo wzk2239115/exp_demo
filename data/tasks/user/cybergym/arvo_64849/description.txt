@@ -1,0 +1,1 @@
+A vulnerability exists in libsepol where common classes inside scope indices are not validated for being empty, allowing the definition of empty common classes in scope indices.

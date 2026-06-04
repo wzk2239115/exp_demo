@@ -1,0 +1,26 @@
+
+
+#
+# Fatal error in ../../src/base/small-vector.h, line 140
+# Debug check failed: size() > index (7 vs. 7).
+#
+#
+#
+#FailureMessage Object: 0x7ffea1b95760
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x55aacd82a793]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55aacd829bcd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:204:10) [0x55aacd80e69e]
+    out/debug/d8(+0x39b70f5) [0x55aacd80e0f5]
+    d8(v8::internal::compiler::(anonymous namespace)::WasmWrapperGraphBuilder::BuildCallOnCentralStack(v8::base::SmallVector<v8::internal::compiler::Node*, 16ul, std::__Cr::allocator<v8::internal::compiler::Node*>>&, int&, v8::internal::compiler::CallDescriptor*, v8::internal::compiler::Node*) ./../../src/base/small-vector.h:0:5) [0x55aacc56d9e3]
+    d8(v8::internal::compiler::(anonymous namespace)::WasmWrapperGraphBuilder::BuildWasmToJSWrapper(v8::internal::wasm::ImportCallKind, int, v8::internal::wasm::Suspend, v8::internal::wasm::WasmModule const*) ./../../src/compiler/wasm-compiler.cc:0:0) [0x55aacc56bd62]
+    d8(v8::internal::compiler::CompileWasmToJSWrapper(v8::internal::Isolate*, v8::internal::Signature<v8::internal::wasm::ValueType> const*, v8::internal::wasm::ImportCallKind, int, v8::internal::wasm::Suspend) ./../../src/compiler/wasm-compiler.cc:8821:32) [0x55aacc567ecc]
+    d8(v8::internal::WasmJSFunction::New(v8::internal::Isolate*, v8::internal::Signature<v8::internal::wasm::ValueType> const*, v8::internal::Handle<v8::internal::JSReceiver>, v8::internal::wasm::Suspend) ./../../src/wasm/wasm-objects.cc:2393:33) [0x55aacbdfd4f8]
+    d8(v8::(anonymous namespace)::WebAssemblyFunction(v8::FunctionCallbackInfo<v8::Value> const&) ./../../include/v8-function-callback.h:556:26) [0x55aacbdca4f8]
+    d8(v8::internal::FunctionCallbackArguments::Call(v8::internal::Tagged<v8::internal::FunctionTemplateInfo>) ./../../src/objects/slots-inl.h:42:25) [0x55aaca7ff3ec]
+    d8(v8::internal::MaybeHandle<v8::internal::Object> v8::internal::(anonymous namespace)::HandleApiCallHelper<true>(v8::internal::Isolate*, v8::internal::Handle<v8::internal::HeapObject>, v8::internal::Handle<v8::internal::FunctionTemplateInfo>, v8::internal::Handle<v8::internal::Object>, unsigned long*, int) ./../../src/builtins/builtins-api.cc:110:36) [0x55aaca7fdc19]
+    d8(v8::internal::Builtin_Impl_HandleApiConstruct(v8::internal::BuiltinArguments, v8::internal::Isolate*) ./../../src/builtins/builtins-api.cc:141:3) [0x55aaca7fc634]
+    d8(v8::internal::Builtin_HandleApiConstruct(int, unsigned long*, v8::internal::Isolate*) ./../../src/builtins/builtins-api.cc:132:1) [0x55aaca7fbe8d]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc:0:0) [0x55aaccf2c1bd]
+timeout: the monitored command dumped core

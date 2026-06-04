@@ -1,0 +1,70 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3598868135
+INFO: Loaded 1 modules   (20230 inline 8-bit counters): 20230 [0xb4ae00, 0xb4fd06), 
+INFO: Loaded 1 PC tables (20230 PCs): 20230 [0xb4fd08,0xb9ed68), 
+/out/fuzz_ndpi_reader: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x606000690f5d at pc 0x0000004c4dfd bp 0x7ffd0da20330 sp 0x7ffd0da1fad8
+READ of size 22 at 0x606000690f5d thread T0
+SCARINESS: 26 (multi-byte-read-heap-buffer-overflow)
+    #0 0x4c4dfc in strncmp /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors.inc:497:3
+    #1 0x6616e6 in ndpi_search_bittorrent /src/ndpi/src/lib/protocols/bittorrent.c:498:6
+    #2 0x5dfbaf in check_ndpi_detection_func /src/ndpi/src/lib/ndpi_main.c:5669:6
+    #3 0x5e0f3f in ndpi_check_flow_func /src/ndpi/src/lib/ndpi_main.c
+    #4 0x5e8c20 in ndpi_detection_process_packet /src/ndpi/src/lib/ndpi_main.c:6561:15
+    #5 0x57f35e in packet_processing /src/ndpi/fuzz/../example/reader_util.c:1678:31
+    #6 0x57f35e in ndpi_workflow_process_packet /src/ndpi/fuzz/../example/reader_util.c:2256:10
+    #7 0x56cc12 in LLVMFuzzerTestOneInput /src/ndpi/fuzz/fuzz_ndpi_reader.c:123:7
+    #8 0x43dff3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #9 0x429752 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #10 0x42effc in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #11 0x458532 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #12 0x7f7759540082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #13 0x41f91d in _start (/out/fuzz_ndpi_reader+0x41f91d)
+
+DEDUP_TOKEN: strncmp--ndpi_search_bittorrent--check_ndpi_detection_func
+0x606000690f5d is located 0 bytes to the right of 61-byte region [0x606000690f20,0x606000690f5d)
+allocated by thread T0 here:
+    #0 0x52f186 in __interceptor_malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:69:3
+    #1 0x56cba9 in LLVMFuzzerTestOneInput /src/ndpi/fuzz/fuzz_ndpi_reader.c:117:31
+    #2 0x43dff3 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #3 0x429752 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #4 0x42effc in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #5 0x458532 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #6 0x7f7759540082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+
+DEDUP_TOKEN: __interceptor_malloc--LLVMFuzzerTestOneInput--fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long)
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/llvm-project/compiler-rt/lib/asan/../sanitizer_common/sanitizer_common_interceptors.inc:497:3 in strncmp
+Shadow bytes around the buggy address:
+  0x0c0c800ca190: 00 00 00 00 00 00 00 00 fa fa fa fa 00 00 00 00
+  0x0c0c800ca1a0: 00 00 00 00 fa fa fa fa 00 00 00 00 00 00 00 00
+  0x0c0c800ca1b0: fa fa fa fa 00 00 00 00 00 00 00 00 fa fa fa fa
+  0x0c0c800ca1c0: 00 00 00 00 00 00 00 00 fa fa fa fa 00 00 00 00
+  0x0c0c800ca1d0: 00 00 00 00 fa fa fa fa 00 00 00 00 00 00 00 00
+=>0x0c0c800ca1e0: fa fa fa fa 00 00 00 00 00 00 00[05]fa fa fa fa
+  0x0c0c800ca1f0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c0c800ca200: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c0c800ca210: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c0c800ca220: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c0c800ca230: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

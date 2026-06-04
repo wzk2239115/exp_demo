@@ -1,0 +1,42 @@
+diff --git a/src/maglev/maglev-graph-builder.cc b/src/maglev/maglev-graph-builder.cc
+index 487bf745ec1..6cfe938ae94 100644
+--- a/src/maglev/maglev-graph-builder.cc
++++ b/src/maglev/maglev-graph-builder.cc
+@@ -11446,6 +11446,13 @@ ReduceResult MaglevGraphBuilder::BuildCheckNumericalValue(
+       }
+     }
+ 
++    if (TryGetFloat64OrHoleyFloat64Constant(
++            UseRepresentation::kFloat64, node,
++            TaggedToFloat64ConversionType::kOnlyNumber)) {
++      // This a non-smi float64 constant ==> deopting.
++      return EmitUnconditionalDeopt(reason);
++    }
++
+     if (NodeTypeIs(GetType(node), NodeType::kAnyHeapObject)) {
+       return EmitUnconditionalDeopt(reason);
+     }
+diff --git a/test/mjsunit/maglev/regress-458608439.js b/test/mjsunit/maglev/regress-458608439.js
+new file mode 100644
+index 00000000000..a69ca0a5336
+--- /dev/null
++++ b/test/mjsunit/maglev/regress-458608439.js
+@@ -0,0 +1,18 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --allow-natives-syntax
++
++let x = 4.5;
++let y = 0;
++
++function foo(n) {
++  x = n;
++  y = n;
++}
++
++%PrepareFunctionForOptimization(foo);
++
++%OptimizeMaglevOnNextCall(foo);
++foo();

@@ -1,0 +1,1 @@
+A vulnerability exists in the numeric comparison functionality where the decNumber library subtracts the exponents of two numbers without limiting the number of digits, potentially causing an integer overflow. The maximum adjusted exponent is `emax` and the minimum is `emin - digits + 1`, leading to a situation where `emax - (emin - digits + 1)` can exceed `INT32_MAX`.

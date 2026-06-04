@@ -1,0 +1,29 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 4049649691
+INFO: Loaded 1 modules   (106768 inline 8-bit counters): 106768 [0x562f9e6eca50, 0x562f9e706b60), 
+INFO: Loaded 1 PC tables (106768 PCs): 106768 [0x562f9e706b60,0x562f9e8a7c60), 
+/out/ffmpeg_dem_MXF_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+Uninitialized bytes in MemcmpInterceptorCommon at offset 0 inside [0x7fff50234ef0, 17)
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x562f9db32125 in memcmp /src/llvm-project/compiler-rt/lib/msan/../sanitizer_common/sanitizer_common_interceptors.inc:845:10
+    #1 0x562f9de3ca64 in mxf_read_indirect_value /src/ffmpeg/libavformat/mxfdec.c:1538:9
+    #2 0x562f9de3ca64 in mxf_read_tagged_value /src/ffmpeg/libavformat/mxfdec.c:1553:16
+    #3 0x562f9de37a0f in mxf_read_local_tags /src/ffmpeg/libavformat/mxfdec.c:3305:27
+    #4 0x562f9de37a0f in mxf_parse_klv /src/ffmpeg/libavformat/mxfdec.c:3353:15
+    #5 0x562f9de1b4e5 in mxf_read_header /src/ffmpeg/libavformat/mxfdec.c:3767:28
+    #6 0x562f9dc3e3e4 in avformat_open_input /src/ffmpeg/libavformat/demux.c:305:20
+    #7 0x562f9db8ae0c in LLVMFuzzerTestOneInput /src/ffmpeg/tools/target_dem_fuzzer.c:202:11
+    #8 0x562f9da80340 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #9 0x562f9da6b5b5 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #10 0x562f9da7104f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #11 0x562f9da9c2f2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #12 0x7f26c2ce7082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+    #13 0x562f9da6379d in _start (/out/ffmpeg_dem_MXF_fuzzer+0x2fa79d)
+
+  Uninitialized value was created by an allocation of 'key.i' in the stack frame
+    #0 0x562f9de3c9a4 in mxf_read_indirect_value /src/ffmpeg/libavformat/mxfdec.c:1531:5
+    #1 0x562f9de3c9a4 in mxf_read_tagged_value /src/ffmpeg/libavformat/mxfdec.c:1553:16
+
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /src/ffmpeg/libavformat/mxfdec.c:1538:9 in mxf_read_indirect_value
+Exiting

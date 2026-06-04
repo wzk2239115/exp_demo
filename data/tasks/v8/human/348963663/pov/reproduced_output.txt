@@ -1,0 +1,19 @@
+
+
+#
+# Fatal error in ../../src/objects/object-type.cc, line 82
+# Type cast failed in Parameter 1 at ../../src/builtins/builtins-constructor-gen.cc:292
+  Expected JSReceiver but found 0x189d00000069: [Oddball] in ReadOnlySpace: #undefined
+
+#
+#
+#
+#FailureMessage Object: 0x7fffecfd8b50
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x5617007b6d63]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x5617007b617d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x56170079ab84]
+    d8(v8::internal::CheckObjectType(unsigned long, unsigned long, unsigned long) ./../../src/objects/object-type.cc:0:3) [0x5616fe1db493]
+    d8(Builtins_FastNewObject setup-isolate-deserialize.cc:0:0) [0x5616ffbb8dc8]
+timeout: the monitored command dumped core

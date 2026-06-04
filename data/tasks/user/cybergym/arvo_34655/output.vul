@@ -1,0 +1,86 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3224341887
+INFO: Loaded 1 modules   (155144 inline 8-bit counters): 155144 [0x1b0ef10, 0x1b34d18), 
+INFO: Loaded 1 PC tables (155144 PCs): 155144 [0x144fc18,0x16adc98), 
+/out/fuzz_bfd: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+BFD: warning: /tmp/fuzz.bfd-HEUnC2() has a section extending past end of file
+BFD: warning: /tmp/fuzz.bfd-HEUnC2() has a section extending past end of file
+BFD: warning: /tmp/fuzz.bfd-HEUnC2() has a section extending past end of file
+BFD: warning: /tmp/fuzz.bfd-HEUnC2() has a section extending past end of file
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x617000000318 at pc 0x00000055c90f bp 0x7ffe2a3ae210 sp 0x7ffe2a3ae208
+READ of size 1 at 0x617000000318 thread T0
+SCARINESS: 12 (1-byte-read-heap-buffer-overflow)
+    #0 0x55c90e in _bfd_safe_read_leb128 /src/binutils-gdb/bfd/libbfd.c:1191:14
+    #1 0x65a32f in _bfd_elf_parse_attributes /src/binutils-gdb/bfd/elf-attrs.c:543:15
+    #2 0x5c49f7 in bfd_section_from_shdr /src/binutils-gdb/bfd/elf.c:2535:4
+    #3 0x5ab6fa in bfd_elf64_object_p /src/binutils-gdb/bfd/./elfcode.h:834:7
+    #4 0x556049 in bfd_check_format_matches /src/binutils-gdb/bfd/format.c:343:17
+    #5 0x555842 in bfd_check_format /src/binutils-gdb/bfd/format.c:94:10
+    #6 0x1023252 in bfd_generic_archive_p /src/binutils-gdb/bfd/archive.c:928:8
+    #7 0x556049 in bfd_check_format_matches /src/binutils-gdb/bfd/format.c:343:17
+    #8 0x555842 in bfd_check_format /src/binutils-gdb/bfd/format.c:94:10
+    #9 0x5555f8 in LLVMFuzzerTestOneInput /src/binutils-gdb/fuzz/fuzz_bfd.c:61:5
+    #10 0x458833 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:599:15
+    #11 0x443cb2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #12 0x449987 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9
+    #13 0x4735f2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #14 0x7f85d6cfc83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #15 0x41f068 in _start (/out/fuzz_bfd+0x41f068)
+
+DEDUP_TOKEN: _bfd_safe_read_leb128--_bfd_elf_parse_attributes--bfd_section_from_shdr
+0x617000000318 is located 0 bytes to the right of 664-byte region [0x617000000080,0x617000000318)
+allocated by thread T0 here:
+    #0 0x521efd in malloc /src/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:145:3
+    #1 0x55a616 in bfd_malloc /src/binutils-gdb/bfd/libbfd.c:289:9
+    #2 0x659c2a in _bfd_elf_parse_attributes /src/binutils-gdb/bfd/elf-attrs.c:455:27
+    #3 0x5c49f7 in bfd_section_from_shdr /src/binutils-gdb/bfd/elf.c:2535:4
+    #4 0x5ab6fa in bfd_elf64_object_p /src/binutils-gdb/bfd/./elfcode.h:834:7
+    #5 0x556049 in bfd_check_format_matches /src/binutils-gdb/bfd/format.c:343:17
+    #6 0x555842 in bfd_check_format /src/binutils-gdb/bfd/format.c:94:10
+    #7 0x1023252 in bfd_generic_archive_p /src/binutils-gdb/bfd/archive.c:928:8
+    #8 0x556049 in bfd_check_format_matches /src/binutils-gdb/bfd/format.c:343:17
+    #9 0x555842 in bfd_check_format /src/binutils-gdb/bfd/format.c:94:10
+    #10 0x5555f8 in LLVMFuzzerTestOneInput /src/binutils-gdb/fuzz/fuzz_bfd.c:61:5
+    #11 0x458833 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:599:15
+    #12 0x443cb2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:323:6
+    #13 0x449987 in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:856:9
+    #14 0x4735f2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #15 0x7f85d6cfc83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+
+DEDUP_TOKEN: malloc--bfd_malloc--_bfd_elf_parse_attributes
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/binutils-gdb/bfd/libbfd.c:1191:14 in _bfd_safe_read_leb128
+Shadow bytes around the buggy address:
+  0x0c2e7fff8010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c2e7fff8020: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c2e7fff8030: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c2e7fff8040: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x0c2e7fff8050: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x0c2e7fff8060: 00 00 00[fa]fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c2e7fff8070: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c2e7fff8080: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c2e7fff8090: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c2e7fff80a0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c2e7fff80b0: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+  Shadow gap:              cc
+==7==ABORTING

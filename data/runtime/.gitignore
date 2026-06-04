@@ -1,0 +1,7 @@
+# Downloaded archives
+*.tar.gz
+
+# Built artifacts
+/gdb/
+/nc
+/node/

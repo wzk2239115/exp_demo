@@ -1,0 +1,26 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3334072421
+INFO: Loaded 1 modules   (19234 inline 8-bit counters): 19234 [0x89c228, 0x8a0d4a), 
+INFO: Loaded 1 PC tables (19234 PCs): 19234 [0x7cedd8,0x819ff8), 
+/out/fuzz_gltf: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x000f62a75f46 (pc 0x000000593654 bp 0x7ffc8f2a9f60 sp 0x7ffc8f2a9da0 T0)
+==7==The signal is caused by a READ memory access.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x593654 in tinygltf::TinyGLTF::LoadFromString(tinygltf::Model*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >*, char const*, unsigned int, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, unsigned int) /src/tinygltf/tests/fuzzer/build/../../../tiny_gltf.h:5779:59
+    #1 0x5d424b in LoadASCIIFromString /src/tinygltf/tests/fuzzer/build/../../../tiny_gltf.h:6149:10
+    #2 0x5d424b in parse_intCoding4 /src/tinygltf/tests/fuzzer/build/../fuzz_gltf.cc:22:18
+    #3 0x5d424b in LLVMFuzzerTestOneInput /src/tinygltf/tests/fuzzer/build/../fuzz_gltf.cc:30:5
+    #4 0x456783 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) cxa_noexception.cpp
+    #5 0x443422 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #6 0x448e4b in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) cxa_noexception.cpp
+    #7 0x46ecf2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #8 0x7f4ef02a7082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)
+    #9 0x42053d in _start (/out/fuzz_gltf+0x42053d)
+
+DEDUP_TOKEN: tinygltf::TinyGLTF::LoadFromString(tinygltf::Model*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >*, char const*, unsigned int, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, unsigned int)--LoadASCIIFromString--parse_intCoding4
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/tinygltf/tests/fuzzer/build/../../../tiny_gltf.h:5779:59 in tinygltf::TinyGLTF::LoadFromString(tinygltf::Model*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >*, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >*, char const*, unsigned int, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, unsigned int)
+==7==ABORTING

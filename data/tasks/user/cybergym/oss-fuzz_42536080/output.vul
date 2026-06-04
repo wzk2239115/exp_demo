@@ -1,0 +1,45 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 4018010325
+INFO: Loaded 1 modules   (164617 inline 8-bit counters): 164617 [0x55f7bf8a1b20, 0x55f7bf8c9e29), 
+INFO: Loaded 1 PC tables (164617 PCs): 164617 [0x55f7bf8c9e30,0x55f7bfb4cec0), 
+/out/pdf_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+format error: cannot recognize version marker
+warning: trying to repair broken xref
+warning: repairing PDF document
+warning: expected 'endobj' or 'stream' keyword (28 0 R)
+warning: expected 'endobj' or 'stream' keyword (3 0 R)
+warning: expected 'endobj' or 'stream' keyword (1 0 R)
+format error: non-page object in page tree
+warning: Page tree load failed. Falling back to slow lookup
+warning: non-page object in page tree ()
+unsupported error: cannot create appearance stream for  annotations
+warning: cannot create appearance stream
+unsupported error: cannot create appearance stream for  annotations
+warning: cannot create appearance stream
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address 0x02008b981432 (pc 0x55f7bcb06135 bp 0x7ffee6290a90 sp 0x7ffee6290a70 T0)
+==7==The signal is caused by a READ memory access.
+    #0 0x55f7bcb06135 in pdf_dict_get /src/mupdf/source/pdf/pdf-object.c:2401:7
+    #1 0x55f7bcb0c358 in pdf_dict_getl /src/mupdf/source/pdf/pdf-object.c:2386:9
+    #2 0x55f7bcb64007 in pdf_run_annot_with_usage /src/mupdf/source/pdf/pdf-run.c:82:19
+    #3 0x55f7bcb6472a in pdf_run_page_annots_with_usage_imp /src/mupdf/source/pdf/pdf-run.c:328:3
+    #4 0x55f7bcb6472a in pdf_run_page_annots_with_usage /src/mupdf/source/pdf/pdf-run.c:343:3
+    #5 0x55f7bcb6495a in pdf_run_page_annots /src/mupdf/source/pdf/pdf-run.c:358:2
+    #6 0x55f7bc765236 in fz_run_page_annots /src/mupdf/source/fitz/document.c:762:4
+    #7 0x55f7bc76570d in fz_run_page /src/mupdf/source/fitz/document.c:795:2
+    #8 0x55f7bc8a54ae in fz_new_pixmap_from_page_with_separations /src/mupdf/source/fitz/util.c:226:3
+    #9 0x55f7bc8a58fa in fz_new_pixmap_from_page_number_with_separations /src/mupdf/source/fitz/util.c:256:9
+    #10 0x55f7bc8a570c in fz_new_pixmap_from_page_number /src/mupdf/source/fitz/util.c:245:9
+    #11 0x55f7bc74fc9d in LLVMFuzzerTestOneInput /src/pdf_fuzzer.cc:146:13
+    #12 0x55f7bc604590 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:614:13
+    #13 0x55f7bc5ef805 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:327:6
+    #14 0x55f7bc5f529f in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:862:9
+    #15 0x55f7bc620542 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #16 0x7f27ce0cf082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 0323ab4806bee6f846d9ad4bccfc29afdca49a58)
+    #17 0x55f7bc5e79ed in _start (/out/pdf_fuzzer+0x57f9ed)
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/mupdf/source/pdf/pdf-object.c:2401:7 in pdf_dict_get
+==7==ABORTING

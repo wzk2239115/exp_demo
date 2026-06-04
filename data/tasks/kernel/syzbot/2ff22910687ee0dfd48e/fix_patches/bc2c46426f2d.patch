@@ -1,0 +1,59 @@
+From bc2c46426f2d95e58c82f394531afdd034c8706c Mon Sep 17 00:00:00 2001
+From: Lizhi Xu <lizhi.xu@windriver.com>
+Date: Mon, 14 Apr 2025 15:11:23 +0800
+Subject: software node: Prevent link creation failure from causing kobj
+ reference count imbalance
+
+syzbot reported a uaf in software_node_notify_remove. [1]
+
+When any of the two sysfs_create_link() in software_node_notify() fails,
+the swnode->kobj reference count will not increase normally, which will
+cause swnode to be released incorrectly due to the imbalance of kobj reference
+count when executing software_node_notify_remove().
+
+Increase the reference count of kobj before creating the link to avoid uaf.
+
+[1]
+BUG: KASAN: slab-use-after-free in software_node_notify_remove+0x1bc/0x1c0 drivers/base/swnode.c:1108
+Read of size 1 at addr ffff888033c08908 by task syz-executor105/5844
+Freed by task 5844:
+ software_node_notify_remove+0x159/0x1c0 drivers/base/swnode.c:1106
+ device_platform_notify_remove drivers/base/core.c:2387 [inline]
+
+Fixes: 9eb59204d519 ("iommufd/selftest: Add set_dev_pasid in mock iommu")
+Reported-by: syzbot+2ff22910687ee0dfd48e@syzkaller.appspotmail.com
+Closes: https://syzkaller.appspot.com/bug?extid=2ff22910687ee0dfd48e
+Tested-by: syzbot+2ff22910687ee0dfd48e@syzkaller.appspotmail.com
+Signed-off-by: Lizhi Xu <lizhi.xu@windriver.com>
+Reviewed-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Reviewed-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Link: https://lore.kernel.org/r/20250414071123.1228331-1-lizhi.xu@windriver.com
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ drivers/base/swnode.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/drivers/base/swnode.c b/drivers/base/swnode.c
+index b1726a3515f6f..5c78fa6ae7725 100644
+--- a/drivers/base/swnode.c
++++ b/drivers/base/swnode.c
+@@ -1080,6 +1080,7 @@ void software_node_notify(struct device *dev)
+ 	if (!swnode)
+ 		return;
+ 
++	kobject_get(&swnode->kobj);
+ 	ret = sysfs_create_link(&dev->kobj, &swnode->kobj, "software_node");
+ 	if (ret)
+ 		return;
+@@ -1089,8 +1090,6 @@ void software_node_notify(struct device *dev)
+ 		sysfs_remove_link(&dev->kobj, "software_node");
+ 		return;
+ 	}
+-
+-	kobject_get(&swnode->kobj);
+ }
+ 
+ void software_node_notify_remove(struct device *dev)
+-- 
+cgit 1.3-korg
+

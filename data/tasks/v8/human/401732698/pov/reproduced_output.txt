@@ -1,0 +1,27 @@
+
+
+#
+# Fatal error in ../../src/flags/flags.cc, line 140
+# Flag --sandbox-testing: value implied by --sandbox-fuzzing conflicts with explicit specification.
+If a test variant caused this, it might be necessary to specify additional contradictory flags in tools/testrunner/local/variants.py.
+#
+#
+#
+#FailureMessage Object: 0x7ffe6698bd80
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:390:32) [0x5633df4e2c13]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x5633df4e1fbd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x5633df4c8e04]
+    d8(v8::internal::Flag::CheckFlagChange(v8::internal::Flag::SetBy, bool, char const*) ./../../src/flags/flags.cc:203:13) [0x5633dc1e7a60]
+    d8(bool v8::internal::(anonymous namespace)::ImplicationProcessor::TriggerImplication<bool>(bool, char const*, v8::internal::FlagValue<bool>*, char const*, bool, bool) ./../../src/flags/flags.cc:1010:9) [0x5633dc1f87e0]
+    d8(v8::internal::(anonymous namespace)::ImplicationProcessor::EnforceImplications() ./../../src/flags/flag-definitions.h:0:1) [0x5633dc1f43d9]
+    d8(v8::internal::FlagList::EnforceFlagImplications() ./../../src/flags/flags.cc:1189:3) [0x5633dc1f0508]
+    d8(v8::internal::V8::Initialize() ./../../src/init/v8.cc:149:3) [0x5633dc5aba96]
+    d8(v8::V8::Initialize(int) ./../../src/api/api.cc:6475:3) [0x5633dbd6ebef]
+    d8(v8::Shell::Main(int, char**) ./../../src/d8/d8.h:411:33) [0x5633dbc252bd]
+    /lib/x86_64-linux-gnu/libc.so.6(+0x2a1ca) [0x7fe1926bc1ca]
+    /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b) [0x7fe1926bc28b]
+    out/debug/d8(_start+0x2a) [0x5633dbbee02a]
+Received signal 6
+timeout: the monitored command dumped core

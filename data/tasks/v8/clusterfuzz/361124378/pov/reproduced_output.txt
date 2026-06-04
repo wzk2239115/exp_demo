@@ -1,0 +1,32 @@
+V8 is running with experimental features enabled. Stability and security will suffer.
+
+
+#
+# Fatal error in ../../src/compiler/turboshaft/operations.h, line 3964
+# Debug check failed: can_throw == CanThrow::kNo implies lazy_deopt_on_throw == LazyDeoptOnThrow::kNo.
+#
+#
+#
+#FailureMessage Object: 0x7ffdfbb1e9a0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x55b2396f8c33]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55b2396f804d]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x55b2396dc8a4]
+    out/debug/d8(+0x3da32c5) [0x55b2396dc2c5]
+    d8(v8::internal::compiler::turboshaft::TSCallDescriptor::Create(v8::internal::compiler::CallDescriptor const*, v8::internal::compiler::CanThrow, v8::internal::compiler::LazyDeoptOnThrow, v8::internal::Zone*, v8::internal::compiler::JSWasmCallParameters const*) ./../../src/compiler/turboshaft/operations.h:0:5) [0x55b237819f7d]
+    d8(std::__Cr::enable_if<v8::internal::compiler::turboshaft::BuiltinCallDescriptor::CreateFunctionContext<(v8::internal::Builtin)1186>::kNeedsFrameState && v8::internal::compiler::turboshaft::BuiltinCallDescriptor::CreateFunctionContext<(v8::internal::Builtin)1186>::kNeedsContext, v8::internal::compiler::turboshaft::detail::IndexTypeFor<v8::internal::compiler::turboshaft::BuiltinCallDescriptor::CreateFunctionContext<(v8::internal::Builtin)1186>::results_t>::type>::type v8::internal::compiler::turboshaft::TurboshaftAssemblerOpInterface<v8::internal::compiler::turboshaft::Assembler<v8::base::tmp::list1<v8::internal::compiler::turboshaft::BlockOriginTrackingReducer, v8::internal::compiler::turboshaft::MaglevEarlyLoweringReducer, v8::internal::compiler::turboshaft::MachineOptimizationReducer, v8::internal::compiler::turboshaft::VariableReducer, v8::internal::compiler::turboshaft::RequiredOptimizationReducer, v8::internal::compiler::turboshaft::ValueNumberingReducer, v8::internal::compiler::turboshaft::TSReducerBase>>>::CallBuiltin<v8::internal::compiler::turboshaft::BuiltinCallDescriptor::CreateFunctionContext<(v8::internal::Builtin)1186>>(v8::internal::Isolate*, v8::internal::compiler::turboshaft::V<v8::internal::compiler::turboshaft::FrameState>, v8::internal::compiler::turboshaft::V<v8::internal::Context>, v8::internal::compiler::turboshaft::BuiltinCallDescriptor::CreateFunctionContext<(v8::internal::Builtin)1186>::arguments_t const&, v8::internal::compiler::LazyDeoptOnThrow) ./../../src/compiler/turboshaft/assembler.h:3307:27) [0x55b23857948d]
+    d8(v8::internal::compiler::turboshaft::GraphBuildingNodeProcessor::Process(v8::internal::maglev::CreateFunctionContext*, v8::internal::maglev::ProcessingState const&) ./../../src/compiler/turboshaft/assembler.h:0:12) [0x55b23857908e]
+    d8(v8::internal::maglev::ProcessResult v8::internal::compiler::turboshaft::NodeProcessorBase::Process<v8::internal::maglev::CreateFunctionContext>(v8::internal::maglev::CreateFunctionContext*, v8::internal::maglev::ProcessingState const&) ./../../src/compiler/turboshaft/maglev-graph-building-phase.cc:0:37) [0x55b2385311f3]
+    d8(v8::internal::maglev::GraphProcessor<v8::internal::compiler::turboshaft::NodeProcessorBase, true>::ProcessGraph(v8::internal::maglev::Graph*) ./../../src/maglev/maglev-graph-processor.h:170:9) [0x55b2384edf3d]
+    d8(v8::internal::compiler::turboshaft::MaglevGraphBuildingPhase::Run(v8::internal::compiler::turboshaft::PipelineData*, v8::internal::Zone*) ./../../src/zone/zone-containers.h:276:35) [0x55b2384edbbf]
+    d8(auto v8::internal::compiler::turboshaft::Pipeline::Run<v8::internal::compiler::turboshaft::MaglevGraphBuildingPhase>() ./../../src/compiler/turboshaft/pipelines.h:82:27) [0x55b23813d0c6]
+    d8(v8::internal::compiler::turboshaft::Pipeline::CreateGraphWithMaglev() ./../../src/compiler/turboshaft/pipelines.h:132:9) [0x55b238129af4]
+    d8(v8::internal::compiler::PipelineCompilationJob::ExecuteJobImpl(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/compiler/pipeline.cc:813:9) [0x55b238129923]
+    d8(v8::internal::OptimizedCompilationJob::ExecuteJob(v8::internal::RuntimeCallStats*, v8::internal::LocalIsolate*) ./../../src/codegen/compiler.cc:485:22) [0x55b23656ba9d]
+    d8(v8::internal::(anonymous namespace)::GetOrCompileOptimized(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind, v8::internal::BytecodeOffset, v8::internal::(anonymous namespace)::CompileResultBehavior) ./../../src/codegen/compiler.cc:1091:7) [0x55b23657a63d]
+    d8(v8::internal::Compiler::CompileOptimized(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::ConcurrencyMode, v8::internal::CodeKind) ./../../src/handles/maybe-handles.h:60:19) [0x55b23657ceca]
+    d8(v8::internal::__RT_impl_Runtime_CompileOptimized(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/handles/handles.h:163:22) [0x55b2371b4e9f]
+    d8(v8::internal::Runtime_CompileOptimized(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:128:1) [0x55b2371b49c0]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x55b238e863fd]
+timeout: the monitored command dumped core

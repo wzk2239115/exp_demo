@@ -1,0 +1,109 @@
+diff --git a/src/builtins/builtins-intl.cc b/src/builtins/builtins-intl.cc
+index 6c3f8fbef44..50217c084fb 100644
+--- a/src/builtins/builtins-intl.cc
++++ b/src/builtins/builtins-intl.cc
+@@ -1296,11 +1296,13 @@ BUILTIN(SegmentsPrototypeIterator) {
+   const char* const method_name = "%SegmentIsPrototype%[@@iterator]";
+   HandleScope scope(isolate);
+   CHECK_RECEIVER(JSSegments, segments, method_name);
++  DirectHandle<Managed<icu::BreakIterator>> managed_break_iterator(
++      segments->icu_break_iterator(), isolate);
++
+   RETURN_RESULT_OR_FAILURE(
+-      isolate,
+-      JSSegmentIterator::Create(
+-          isolate, direct_handle(segments->raw_string(), isolate),
+-          segments->icu_break_iterator()->raw(), segments->granularity()));
++      isolate, JSSegmentIterator::Create(
++                   isolate, direct_handle(segments->raw_string(), isolate),
++                   managed_break_iterator, segments->granularity()));
+ }
+ 
+ BUILTIN(V8BreakIteratorConstructor) {
+diff --git a/src/objects/js-segment-iterator.cc b/src/objects/js-segment-iterator.cc
+index 6efb16c8c1b..d4113d1b684 100644
+--- a/src/objects/js-segment-iterator.cc
++++ b/src/objects/js-segment-iterator.cc
+@@ -31,31 +31,26 @@ Handle<String> JSSegmentIterator::GranularityAsString(Isolate* isolate) const {
+ // ecma402 #sec-createsegmentiterator
+ MaybeDirectHandle<JSSegmentIterator> JSSegmentIterator::Create(
+     Isolate* isolate, DirectHandle<String> input_string,
+-    icu::BreakIterator* incoming_break_iterator,
++    DirectHandle<Managed<icu::BreakIterator>> incoming_break_iterator,
+     JSSegmenter::Granularity granularity) {
+   // Clone a copy for both the ownership and not sharing with containing and
+   // other calls to the iterator because icu::BreakIterator keep the iteration
+   // position internally and cannot be shared across multiple calls to
+   // JSSegmentIterator::Create and JSSegments::Containing.
+   std::shared_ptr<icu::BreakIterator> break_iterator{
+-      incoming_break_iterator->clone()};
++      incoming_break_iterator->raw()->clone()};
+   DCHECK_NOT_NULL(break_iterator);
+   DirectHandle<Map> map(isolate->native_context()->intl_segment_iterator_map(),
+                         isolate);
+ 
+   // 5. Set iterator.[[IteratedStringNextSegmentCodeUnitIndex]] to 0.
++  DirectHandle<Managed<icu::UnicodeString>> unicode_string =
++      Intl::SetTextToBreakIterator(isolate, input_string, break_iterator.get());
++
+   break_iterator->first();
+   DirectHandle<Managed<icu::BreakIterator>> managed_break_iterator =
+       Managed<icu::BreakIterator>::From(isolate, 0, break_iterator);
+ 
+-  std::shared_ptr<icu::UnicodeString> string =
+-      std::make_shared<icu::UnicodeString>();
+-  break_iterator->getText().getText(*string);
+-  DirectHandle<Managed<icu::UnicodeString>> unicode_string =
+-      Managed<icu::UnicodeString>::From(isolate, 0, string);
+-
+-  break_iterator->setText(*string);
+-
+   // Now all properties are ready, so we can allocate the result object.
+   DirectHandle<JSObject> result = isolate->factory()->NewJSObjectFromMap(map);
+   DisallowGarbageCollection no_gc;
+diff --git a/src/objects/js-segment-iterator.h b/src/objects/js-segment-iterator.h
+index 4050d72d004..ca516a02cf7 100644
+--- a/src/objects/js-segment-iterator.h
++++ b/src/objects/js-segment-iterator.h
+@@ -36,7 +36,7 @@ class JSSegmentIterator
+   // ecma402 #sec-CreateSegmentIterator
+   V8_WARN_UNUSED_RESULT static MaybeDirectHandle<JSSegmentIterator> Create(
+       Isolate* isolate, DirectHandle<String> input_string,
+-      icu::BreakIterator* icu_break_iterator,
++      DirectHandle<Managed<icu::BreakIterator>> incoming_break_iterator,
+       JSSegmenter::Granularity granularity);
+ 
+   // ecma402 #sec-segment-iterator-prototype-next
+diff --git a/src/objects/js-segments.h b/src/objects/js-segments.h
+index ed7268b4c08..9a0afb30e1b 100644
+--- a/src/objects/js-segments.h
++++ b/src/objects/js-segments.h
+@@ -63,7 +63,7 @@ class JSSegments : public TorqueGeneratedJSSegments<JSSegments, JSObject> {
+   inline JSSegmenter::Granularity granularity() const;
+ 
+   // Bit positions in |flags|.
+-  DEFINE_TORQUE_GENERATED_JS_SEGMENT_ITERATOR_FLAGS()
++  DEFINE_TORQUE_GENERATED_JS_SEGMENTS_FLAGS()
+ 
+   static_assert(GranularityBits::is_valid(JSSegmenter::Granularity::GRAPHEME));
+   static_assert(GranularityBits::is_valid(JSSegmenter::Granularity::WORD));
+diff --git a/test/mjsunit/sandbox/regress/regress-454734141.js b/test/mjsunit/sandbox/regress/regress-454734141.js
+new file mode 100644
+index 00000000000..a133101fc38
+--- /dev/null
++++ b/test/mjsunit/sandbox/regress/regress-454734141.js
+@@ -0,0 +1,14 @@
++// Copyright 2025 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --sandbox-testing --expose-gc
++
++const segment = (new Intl.Segmenter).segment();
++
++const addr = Sandbox.getAddressOf(segment);
++const buffer = new DataView(new Sandbox.MemoryView(0, 0x100000000));
++buffer.setUint8(addr + 22, 0x1);
++
++gc();
++new Uint8Array(segment);

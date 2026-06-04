@@ -1,0 +1,1 @@
+A vulnerability exists in the idn2_to_ascii_4i() function where the output length is not restricted to 63 characters.

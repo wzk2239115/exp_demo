@@ -1,0 +1,58 @@
+diff --git a/src/compiler/turboshaft/assembler.h b/src/compiler/turboshaft/assembler.h
+index e77cd4acc92..01f56c1fd36 100644
+--- a/src/compiler/turboshaft/assembler.h
++++ b/src/compiler/turboshaft/assembler.h
+@@ -2110,7 +2110,11 @@ class TurboshaftAssemblerOpInterface
+         Load(LoadRootRegister(), LoadOp::Kind::RawAligned().Immutable(),
+              MemoryRepresentation::PointerSized(),
+              IsolateData::trusted_cage_base_offset());
+-    return WordPtrBitwiseOr(ChangeUint32ToUintPtr(tagged), trusted_cage_base);
++    // The bit cast is needed to change the type of the node to Tagged. This is
++    // necessary so that if this value gets spilled on the stack, then the GC
++    // will process it.
++    return BitcastWordPtrToTagged(
++        WordPtrBitwiseOr(ChangeUint32ToUintPtr(tagged), trusted_cage_base));
+ #else
+     return Load(base, LoadOp::Kind::TaggedBase(),
+                 MemoryRepresentation::TaggedPointer(), offset);
+diff --git a/src/compiler/wasm-graph-assembler.cc b/src/compiler/wasm-graph-assembler.cc
+index 2e14d690983..e9a850e542f 100644
+--- a/src/compiler/wasm-graph-assembler.cc
++++ b/src/compiler/wasm-graph-assembler.cc
+@@ -225,6 +225,9 @@ Node* WasmGraphAssembler::BuildDecodeTrustedPointer(Node* handle,
+   // decoded_ptr = WordAnd(decoded_ptr, IntPtrConstant(~tag));
+   // Always set the tagged bit, used as a marking bit in that table.
+   decoded_ptr = WordOr(decoded_ptr, IntPtrConstant(kHeapObjectTag));
++  // We have to change the type of the result value to Tagged, so if the value
++  // gets spilled on the stack, it will get processed by the GC.
++  decoded_ptr = BitcastWordToTagged(decoded_ptr);
+   return decoded_ptr;
+ #else
+   UNREACHABLE();
+diff --git a/test/mjsunit/regress/wasm/regress-323698305.js b/test/mjsunit/regress/wasm/regress-323698305.js
+new file mode 100644
+index 00000000000..8dbfffb411b
+--- /dev/null
++++ b/test/mjsunit/regress/wasm/regress-323698305.js
+@@ -0,0 +1,21 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --expose-gc --stress-compaction
++
++d8.file.execute('test/mjsunit/wasm/wasm-module-builder.js');
++
++const builder = new WasmModuleBuilder();
++builder.addImport("q", "imp", kSig_i_i);
++builder.addExport("exp", 0);
++
++function gc_wrapper() {
++  gc();
++}
++
++gc_wrapper[Symbol.toPrimitive] = gc_wrapper;
++const imp = { q: { imp: gc_wrapper } };
++
++const instance = builder.instantiate(imp);
++instance.exports.exp(gc_wrapper);

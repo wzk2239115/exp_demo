@@ -1,0 +1,52 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3435353529
+INFO: Loaded 1 modules   (20592 inline 8-bit counters): 20592 [0xa27f20, 0xa2cf90), 
+INFO: Loaded 1 PC tables (20592 PCs): 20592 [0x936b48,0x987248), 
+/out/libraw_cr2_fuzzer: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+==7==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x653e3d in LibRaw::init_fuji_block(fuji_compressed_block*, fuji_compressed_params const*, long long, unsigned int) /src/libraw/src/decoders/fuji_compressed.cpp:283:25
+    #1 0x662a6e in LibRaw::fuji_decode_strip(fuji_compressed_params*, int, long long, unsigned int, unsigned char*) /src/libraw/src/decoders/fuji_compressed.cpp:1032:3
+    #2 0x664ad3 in LibRaw::fuji_decode_loop(fuji_compressed_params*, int, long long*, unsigned int*, unsigned char*) /src/libraw/src/decoders/fuji_compressed.cpp:1160:5
+    #3 0x664625 in LibRaw::fuji_compressed_load_raw() /src/libraw/src/decoders/fuji_compressed.cpp:1141:3
+    #4 0x52c72c in LibRaw::unpack() /src/libraw/src/decoders/unpack.cpp:291:7
+    #5 0x529915 in LLVMFuzzerTestOneInput /src/libraw_fuzzer.cc:66:20
+    #6 0x455302 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #7 0x440eb2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #8 0x44671c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #9 0x46f0b2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #10 0x7f3a96d8a082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)
+    #11 0x41f5fd in _start (/out/libraw_cr2_fuzzer+0x41f5fd)
+
+DEDUP_TOKEN: LibRaw::init_fuji_block(fuji_compressed_block*, fuji_compressed_params const*, long long, unsigned int)--LibRaw::fuji_decode_strip(fuji_compressed_params*, int, long long, unsigned int, unsigned char*)--LibRaw::fuji_decode_loop(fuji_compressed_params*, int, long long*, unsigned int*, unsigned char*)
+  Uninitialized value was stored to memory at
+    #0 0x664371 in LibRaw::fuji_compressed_load_raw() /src/libraw/src/decoders/fuji_compressed.cpp:1135:28
+    #1 0x52c72c in LibRaw::unpack() /src/libraw/src/decoders/unpack.cpp:291:7
+    #2 0x529915 in LLVMFuzzerTestOneInput /src/libraw_fuzzer.cc:66:20
+    #3 0x455302 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #4 0x440eb2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #5 0x44671c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #6 0x46f0b2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #7 0x7f3a96d8a082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)
+
+DEDUP_TOKEN: LibRaw::fuji_compressed_load_raw()--LibRaw::unpack()--LLVMFuzzerTestOneInput
+  Uninitialized value was created by a heap allocation
+    #0 0x4d4add in __interceptor_malloc /src/llvm-project/compiler-rt/lib/msan/msan_interceptors.cpp:911:3
+    #1 0x57259c in malloc /src/libraw/./libraw/libraw_alloc.h:49:17
+    #2 0x57259c in LibRaw::malloc(unsigned long) /src/libraw/src/utils/utils_libraw.cpp:251:20
+    #3 0x663a7a in LibRaw::fuji_compressed_load_raw() /src/libraw/src/decoders/fuji_compressed.cpp:1104:29
+    #4 0x52c72c in LibRaw::unpack() /src/libraw/src/decoders/unpack.cpp:291:7
+    #5 0x529915 in LLVMFuzzerTestOneInput /src/libraw_fuzzer.cc:66:20
+    #6 0x455302 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #7 0x440eb2 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #8 0x44671c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #9 0x46f0b2 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #10 0x7f3a96d8a082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082)
+
+DEDUP_TOKEN: __interceptor_malloc--malloc--LibRaw::malloc(unsigned long)
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /src/libraw/src/decoders/fuji_compressed.cpp:283:25 in LibRaw::init_fuji_block(fuji_compressed_block*, fuji_compressed_params const*, long long, unsigned int)
+Unique heap origins: 40
+Stack depot allocated bytes: 1638400
+Unique origin histories: 9
+History depot allocated bytes: 196608
+Exiting

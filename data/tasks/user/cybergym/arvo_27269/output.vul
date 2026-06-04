@@ -1,0 +1,27 @@
+INFO: Seed: 3067107925
+INFO: Loaded 1 modules   (7372 inline 8-bit counters): 7372 [0x8c2af0, 0x8c47bc), 
+INFO: Loaded 1 PC tables (7372 PCs): 7372 [0x63d718,0x65a3d8), 
+/out/p2p: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==7==ERROR: AddressSanitizer: SEGV on unknown address (pc 0x0000005da942 bp 0x7ffcf89c2c60 sp 0x7ffcf89c2c50 T0)
+==7==The signal is caused by a READ memory access.
+==7==Hint: this fault was caused by a dereference of a high value address (see register values below).  Dissassemble the provided pc to learn which register was used.
+SCARINESS: 20 (wild-addr-read)
+    #0 0x5da942 in wpabuf_free /src/hostap/src/utils/wpabuf.c:201:11
+    #1 0x562140 in p2p_device_free /src/hostap/src/p2p/p2p.c:933:3
+    #2 0x57439a in p2p_flush /src/hostap/src/p2p/p2p.c:3022:3
+    #3 0x57409a in p2p_deinit /src/hostap/src/p2p/p2p.c:2994:2
+    #4 0x55476b in LLVMFuzzerTestOneInput /src/hostap/tests/fuzzing/p2p/p2p.c:173:2
+    #5 0x45a281 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:556:15
+    #6 0x444da1 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:292:6
+    #7 0x44aa5e in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:774:9
+    #8 0x474982 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:19:10
+    #9 0x7f23e400e83f in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2083f)
+    #10 0x41e218 in _start (/out/p2p+0x41e218)
+
+DEDUP_TOKEN: wpabuf_free--p2p_device_free--p2p_flush
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /src/hostap/src/utils/wpabuf.c:201:11 in wpabuf_free
+==7==ABORTING

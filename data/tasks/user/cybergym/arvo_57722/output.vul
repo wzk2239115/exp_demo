@@ -1,0 +1,28 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 3674195210
+INFO: Loaded 1 modules   (1009248 inline 8-bit counters): 1009248 [0x480a370, 0x49009d0), 
+INFO: Loaded 1 PC tables (1009248 PCs): 1009248 [0x2b194c0,0x3a7fac0), 
+/out/llvmfuzz: Running 1 inputs 1 time(s) each.
+Running: /tmp/poc
+UndefinedBehaviorSanitizer:DEADLYSIGNAL
+==7==ERROR: UndefinedBehaviorSanitizer: SEGV on unknown address 0x7c4d71368008 (pc 0x7f4d7357c6f0 bp 0x7c4d71368010 sp 0x7ffddae9d740 T7)
+==7==The signal is caused by a READ memory access.
+    #0 0x7f4d7357c6f0 in free (/lib/x86_64-linux-gnu/libc.so.6+0x9a6f0) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #1 0x7f4d7357d0fc in __libc_realloc (/lib/x86_64-linux-gnu/libc.so.6+0x9b0fc) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #2 0x4d1985 in bit_TV_to_utf8 /src/libredwg/src/bits.c:2960:28
+    #3 0x15cb5ff in json_cquote /src/libredwg/src/out_json.c:1355:19
+    #4 0x163ced6 in json_header_write_private /src/libredwg/src/./header_variables.spec:65:7
+    #5 0x15cdb25 in json_header_write /src/libredwg/src/out_json.c:1905:11
+    #6 0x15cdb25 in dwg_write_json /src/libredwg/src/out_json.c:2429:3
+    #7 0x4c0866 in LLVMFuzzerTestOneInput /src/libredwg/examples/llvmfuzz.c:195:7
+    #8 0x426403 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerLoop.cpp:611:15
+    #9 0x411b62 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:324:6
+    #10 0x41740c in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerDriver.cpp:860:9
+    #11 0x440942 in main /src/llvm-project/compiler-rt/lib/fuzzer/FuzzerMain.cpp:20:10
+    #12 0x7f4d73506082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #13 0x407d2d in _start (/out/llvmfuzz+0x407d2d)
+
+DEDUP_TOKEN: free--__libc_realloc--bit_TV_to_utf8
+UndefinedBehaviorSanitizer can not provide additional info.
+SUMMARY: UndefinedBehaviorSanitizer: SEGV (/lib/x86_64-linux-gnu/libc.so.6+0x9a6f0) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce) in free
+==7==ABORTING

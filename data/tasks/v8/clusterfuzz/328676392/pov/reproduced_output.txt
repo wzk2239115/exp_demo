@@ -1,0 +1,23 @@
+
+
+#
+# Fatal error in ../../src/execution/frames.cc, line 2714
+# Check failed: !translated_values->IsMaterializedObject().
+#
+#
+#
+#FailureMessage Object: 0x7ffdac69e0b0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x55c33daa4793]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x55c33daa3bcd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:204:10) [0x55c33da8869e]
+    d8(v8::internal::OptimizedFrame::Summarize(std::__Cr::vector<v8::internal::FrameSummary, std::__Cr::allocator<v8::internal::FrameSummary>>*) const ./../../src/execution/frames.cc:0:0) [0x55c33ade27ed]
+    d8(v8::internal::(anonymous namespace)::CaptureSimpleStackTrace(v8::internal::Isolate*, int, v8::internal::FrameSkipMode, v8::internal::Handle<v8::internal::Object>) ./../../third_party/libc++/src/include/vector:1399:28) [0x55c33adf5151]
+    d8(v8::internal::Isolate::CaptureAndSetErrorStack(v8::internal::Handle<v8::internal::JSObject>, v8::internal::FrameSkipMode, v8::internal::Handle<v8::internal::Object>) ./../../src/execution/isolate.cc:1313:19) [0x55c33adf4aeb]
+    d8(v8::internal::ErrorUtils::Construct(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, v8::internal::FrameSkipMode, v8::internal::Handle<v8::internal::Object>, v8::internal::ErrorUtils::StackTraceCollection) ./../../src/handles/maybe-handles.h:85:43) [0x55c33ae30235]
+    d8(v8::internal::ErrorUtils::Construct(v8::internal::Isolate*, v8::internal::Handle<v8::internal::JSFunction>, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>, v8::internal::Handle<v8::internal::Object>) ./../../src/execution/messages.cc:553:1) [0x55c33ae2ff44]
+    d8(v8::internal::Builtin_Impl_ErrorConstructor(v8::internal::BuiltinArguments, v8::internal::Isolate*) ./../../src/builtins/builtins-error.cc:22:3) [0x55c33ab3bdd9]
+    d8(v8::internal::Builtin_ErrorConstructor(int, unsigned long*, v8::internal::Isolate*) ./../../src/builtins/builtins-error.cc:19:1) [0x55c33ab3b9fd]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_BuiltinExit setup-isolate-deserialize.cc:0:0) [0x55c33d1a9c7d]
+timeout: the monitored command dumped core

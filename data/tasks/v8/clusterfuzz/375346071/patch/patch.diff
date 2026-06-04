@@ -1,0 +1,41 @@
+diff --git a/src/runtime/runtime-wasm.cc b/src/runtime/runtime-wasm.cc
+index 41c137edb85..374634cbce7 100644
+--- a/src/runtime/runtime-wasm.cc
++++ b/src/runtime/runtime-wasm.cc
+@@ -682,7 +682,8 @@ RUNTIME_FUNCTION(Runtime_TierUpWasmToJSWrapper) {
+       // We're tiering up a WasmToJS wrapper, so the function must be an
+       // imported JS function.
+       DCHECK(IsWasmImportData(internal->implicit_arg()));
+-      instance_data = Cast<WasmTrustedInstanceData>(internal->implicit_arg());
++      instance_data =
++          Cast<WasmImportData>(internal->implicit_arg())->instance_data();
+     }
+     // For imported JS functions, we don't really care about updating the call
+     // target in the table, but we do need the table to manage the lifetime
+diff --git a/test/mjsunit/regress/wasm/regress-375346071.js b/test/mjsunit/regress/wasm/regress-375346071.js
+new file mode 100644
+index 00000000000..95f323af063
+--- /dev/null
++++ b/test/mjsunit/regress/wasm/regress-375346071.js
+@@ -0,0 +1,21 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --wasm-wrapper-tiering-budget=1
++
++d8.file.execute('test/mjsunit/wasm/wasm-module-builder.js');
++
++const builder = new WasmModuleBuilder();
++const type = builder.addType(kSig_v_v);
++const __v_44 = builder.addImport('m', 'foo', kSig_v_v);
++const table = builder.addTable(kWasmAnyFunc, 10).index;
++builder.addActiveElementSegment(table, wasmI32Const(0), [__v_44]);
++builder.addFunction('main', kSig_v_v)
++    .addBody([
++      kExprI32Const, 0, kExprTableGet, table, kGCPrefix, kExprRefCast, type,
++      kExprCallRef, type
++    ])
++    .exportFunc();
++const instance = builder.instantiate({'m': {'foo': () => 15}});
++instance.exports.main();

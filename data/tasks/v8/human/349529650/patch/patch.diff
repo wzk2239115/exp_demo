@@ -1,0 +1,553 @@
+diff --git a/src/diagnostics/objects-printer.cc b/src/diagnostics/objects-printer.cc
+index 03de1bb3c20..c83fa476656 100644
+--- a/src/diagnostics/objects-printer.cc
++++ b/src/diagnostics/objects-printer.cc
+@@ -2084,8 +2084,10 @@ void JSFunction::JSFunctionPrint(std::ostream& os) {
+ #if V8_ENABLE_WEBASSEMBLY
+   if (WasmExportedFunction::IsWasmExportedFunction(*this)) {
+     Tagged<WasmExportedFunction> function = Cast<WasmExportedFunction>(*this);
+-    os << "\n - Wasm instance data: " << Brief(function->instance_data());
+-    os << "\n - Wasm function index: " << function->function_index();
++    Tagged<WasmExportedFunctionData> data =
++        function->shared()->wasm_exported_function_data();
++    os << "\n - Wasm instance data: " << Brief(data->instance_data());
++    os << "\n - Wasm function index: " << data->function_index();
+   }
+   if (WasmJSFunction::IsWasmJSFunction(*this)) {
+     Tagged<WasmJSFunction> function = Cast<WasmJSFunction>(*this);
+diff --git a/src/runtime/runtime-test-wasm.cc b/src/runtime/runtime-test-wasm.cc
+index 53c538d3d08..5557f1117fc 100644
+--- a/src/runtime/runtime-test-wasm.cc
++++ b/src/runtime/runtime-test-wasm.cc
+@@ -546,8 +546,9 @@ RUNTIME_FUNCTION(Runtime_WasmTierUpFunction) {
+   Handle<JSFunction> function = args.at<JSFunction>(0);
+   CHECK(WasmExportedFunction::IsWasmExportedFunction(*function));
+   auto exp_fun = Cast<WasmExportedFunction>(function);
+-  Tagged<WasmTrustedInstanceData> trusted_data = exp_fun->instance_data();
+-  int func_index = exp_fun->function_index();
++  auto func_data = exp_fun->shared()->wasm_exported_function_data();
++  Tagged<WasmTrustedInstanceData> trusted_data = func_data->instance_data();
++  int func_index = func_data->function_index();
+   wasm::TierUpNowForTesting(isolate, trusted_data, func_index);
+   return ReadOnlyRoots(isolate).undefined_value();
+ }
+@@ -577,8 +578,9 @@ RUNTIME_FUNCTION(Runtime_IsWasmDebugFunction) {
+   Handle<JSFunction> function = args.at<JSFunction>(0);
+   CHECK(WasmExportedFunction::IsWasmExportedFunction(*function));
+   auto exp_fun = Cast<WasmExportedFunction>(function);
+-  wasm::NativeModule* native_module = exp_fun->instance_data()->native_module();
+-  uint32_t func_index = exp_fun->function_index();
++  auto data = exp_fun->shared()->wasm_exported_function_data();
++  wasm::NativeModule* native_module = data->instance_data()->native_module();
++  uint32_t func_index = data->function_index();
+   wasm::WasmCodeRefScope code_ref_scope;
+   wasm::WasmCode* code = native_module->GetCode(func_index);
+   return isolate->heap()->ToBoolean(code && code->is_liftoff() &&
+@@ -591,8 +593,9 @@ RUNTIME_FUNCTION(Runtime_IsLiftoffFunction) {
+   Handle<JSFunction> function = args.at<JSFunction>(0);
+   CHECK(WasmExportedFunction::IsWasmExportedFunction(*function));
+   auto exp_fun = Cast<WasmExportedFunction>(function);
+-  wasm::NativeModule* native_module = exp_fun->instance_data()->native_module();
+-  uint32_t func_index = exp_fun->function_index();
++  auto data = exp_fun->shared()->wasm_exported_function_data();
++  wasm::NativeModule* native_module = data->instance_data()->native_module();
++  uint32_t func_index = data->function_index();
+   wasm::WasmCodeRefScope code_ref_scope;
+   wasm::WasmCode* code = native_module->GetCode(func_index);
+   return isolate->heap()->ToBoolean(code && code->is_liftoff());
+@@ -604,8 +607,9 @@ RUNTIME_FUNCTION(Runtime_IsTurboFanFunction) {
+   Handle<JSFunction> function = args.at<JSFunction>(0);
+   CHECK(WasmExportedFunction::IsWasmExportedFunction(*function));
+   auto exp_fun = Cast<WasmExportedFunction>(function);
+-  wasm::NativeModule* native_module = exp_fun->instance_data()->native_module();
+-  uint32_t func_index = exp_fun->function_index();
++  auto data = exp_fun->shared()->wasm_exported_function_data();
++  wasm::NativeModule* native_module = data->instance_data()->native_module();
++  uint32_t func_index = data->function_index();
+   wasm::WasmCodeRefScope code_ref_scope;
+   wasm::WasmCode* code = native_module->GetCode(func_index);
+   return isolate->heap()->ToBoolean(code && code->is_turbofan());
+@@ -617,8 +621,9 @@ RUNTIME_FUNCTION(Runtime_IsUncompiledWasmFunction) {
+   Handle<JSFunction> function = args.at<JSFunction>(0);
+   CHECK(WasmExportedFunction::IsWasmExportedFunction(*function));
+   auto exp_fun = Cast<WasmExportedFunction>(function);
+-  wasm::NativeModule* native_module = exp_fun->instance_data()->native_module();
+-  uint32_t func_index = exp_fun->function_index();
++  auto data = exp_fun->shared()->wasm_exported_function_data();
++  wasm::NativeModule* native_module = data->instance_data()->native_module();
++  uint32_t func_index = data->function_index();
+   return isolate->heap()->ToBoolean(!native_module->HasCode(func_index));
+ }
+ 
+@@ -679,9 +684,10 @@ RUNTIME_FUNCTION(Runtime_WasmDeoptsExecutedForFunction) {
+     return Smi::FromInt(-1);
+   }
+   auto wasm_func = Cast<WasmExportedFunction>(arg);
++  auto func_data = wasm_func->shared()->wasm_exported_function_data();
+   const wasm::WasmModule* module =
+-      wasm_func->instance_data()->native_module()->module();
+-  uint32_t func_index = wasm_func->function_index();
++      func_data->instance_data()->native_module()->module();
++  uint32_t func_index = func_data->function_index();
+   const wasm::TypeFeedbackStorage& feedback = module->type_feedback;
+   base::SharedMutexGuard<base::kExclusive> mutex_guard(&feedback.mutex);
+   auto entry = feedback.deopt_count_for_function.find(func_index);
+diff --git a/src/wasm/c-api.cc b/src/wasm/c-api.cc
+index 117a6e4b570..ec44098c149 100644
+--- a/src/wasm/c-api.cc
++++ b/src/wasm/c-api.cc
+@@ -1553,10 +1553,9 @@ auto Func::type() const -> own<FuncType> {
+   }
+   DCHECK(i::WasmExportedFunction::IsWasmExportedFunction(*func));
+   auto function = i::Cast<i::WasmExportedFunction>(func);
+-  return FunctionSigToFuncType(function->instance_data()
+-                                   ->module()
+-                                   ->functions[function->function_index()]
+-                                   .sig);
++  auto data = function->shared()->wasm_exported_function_data();
++  return FunctionSigToFuncType(
++      data->instance_data()->module()->functions[data->function_index()].sig);
+ }
+ 
+ auto Func::param_arity() const -> size_t {
+@@ -1568,10 +1567,9 @@ auto Func::param_arity() const -> size_t {
+   }
+   DCHECK(i::WasmExportedFunction::IsWasmExportedFunction(*func));
+   auto function = i::Cast<i::WasmExportedFunction>(func);
+-  const i::wasm::FunctionSig* sig = function->instance_data()
+-                                        ->module()
+-                                        ->functions[function->function_index()]
+-                                        .sig;
++  auto data = function->shared()->wasm_exported_function_data();
++  const i::wasm::FunctionSig* sig =
++      data->instance_data()->module()->functions[data->function_index()].sig;
+   return sig->parameter_count();
+ }
+ 
+@@ -1584,10 +1582,9 @@ auto Func::result_arity() const -> size_t {
+   }
+   DCHECK(i::WasmExportedFunction::IsWasmExportedFunction(*func));
+   auto function = i::Cast<i::WasmExportedFunction>(func);
+-  const i::wasm::FunctionSig* sig = function->instance_data()
+-                                        ->module()
+-                                        ->functions[function->function_index()]
+-                                        .sig;
++  auto data = function->shared()->wasm_exported_function_data();
++  const i::wasm::FunctionSig* sig =
++      data->instance_data()->module()->functions[data->function_index()].sig;
+   return sig->return_count();
+ }
+ 
+diff --git a/src/wasm/module-instantiate.cc b/src/wasm/module-instantiate.cc
+index 74f2fda722c..8f87e59588b 100644
+--- a/src/wasm/module-instantiate.cc
++++ b/src/wasm/module-instantiate.cc
+@@ -671,12 +671,27 @@ WellKnownImport CheckForWellKnownImport(
+ WasmImportData::WasmImportData(
+     DirectHandle<WasmTrustedInstanceData> trusted_instance_data, int func_index,
+     Handle<JSReceiver> callable, const wasm::FunctionSig* expected_sig,
+-    uint32_t expected_canonical_type_index, WellKnownImport preknown_import)
+-    : callable_(callable) {
++    uint32_t expected_canonical_type_index, WellKnownImport preknown_import) {
++  SetCallable(callable->GetIsolate(), callable);
+   kind_ = ComputeKind(trusted_instance_data, func_index, expected_sig,
+                       expected_canonical_type_index, preknown_import);
+ }
+ 
++void WasmImportData::SetCallable(Isolate* isolate,
++                                 Tagged<JSReceiver> callable) {
++  SetCallable(isolate, handle(callable, isolate));
++}
++void WasmImportData::SetCallable(Isolate* isolate,
++                                 Handle<JSReceiver> callable) {
++  callable_ = callable;
++  trusted_function_data_ = {};
++  if (!IsJSFunction(*callable)) return;
++  Tagged<SharedFunctionInfo> sfi = Cast<JSFunction>(*callable_)->shared();
++  if (sfi->HasWasmFunctionData()) {
++    trusted_function_data_ = handle(sfi->wasm_function_data(), isolate);
++  }
++}
++
+ ImportCallKind WasmImportData::ComputeKind(
+     DirectHandle<WasmTrustedInstanceData> trusted_instance_data, int func_index,
+     const wasm::FunctionSig* expected_sig,
+@@ -694,36 +709,38 @@ ImportCallKind WasmImportData::ComputeKind(
+   Isolate* isolate = callable_->GetIsolate();
+   if (IsWasmSuspendingObject(*callable_)) {
+     suspend_ = kSuspend;
+-    callable_ =
+-        handle(Cast<WasmSuspendingObject>(*callable_)->callable(), isolate);
++    SetCallable(isolate, Cast<WasmSuspendingObject>(*callable_)->callable());
+   }
+-  if (WasmExportedFunction::IsWasmExportedFunction(*callable_)) {
+-    auto imported_function = Cast<WasmExportedFunction>(callable_);
+-    if (!imported_function->MatchesSignature(expected_canonical_type_index)) {
++  if (!trusted_function_data_.is_null() &&
++      IsWasmExportedFunctionData(*trusted_function_data_)) {
++    Tagged<WasmExportedFunctionData> data =
++        Cast<WasmExportedFunctionData>(*trusted_function_data_);
++    if (!data->MatchesSignature(expected_canonical_type_index)) {
+       return ImportCallKind::kLinkError;
+     }
+-    uint32_t func_index =
+-        static_cast<uint32_t>(imported_function->function_index());
+-    if (func_index >=
+-        imported_function->instance_data()->module()->num_imported_functions) {
++    uint32_t func_index = static_cast<uint32_t>(data->function_index());
++    if (func_index >= data->instance_data()->module()->num_imported_functions) {
+       return ImportCallKind::kWasmToWasm;
+     }
+     // Resolve the shortcut to the underlying callable and continue.
+-    ImportedFunctionEntry entry(
+-        handle(imported_function->instance_data(), isolate), func_index);
+-    callable_ = handle(entry.callable(), isolate);
++    ImportedFunctionEntry entry(handle(data->instance_data(), isolate),
++                                func_index);
++    SetCallable(isolate, entry.callable());
+   }
+-  if (WasmJSFunction::IsWasmJSFunction(*callable_)) {
++  if (!trusted_function_data_.is_null() &&
++      IsWasmJSFunctionData(*trusted_function_data_)) {
+     Tagged<WasmJSFunctionData> js_function_data =
+-        Cast<WasmJSFunction>(callable_)->shared()->wasm_js_function_data();
++        Cast<WasmJSFunctionData>(*trusted_function_data_);
+     suspend_ = js_function_data->GetSuspend();
+     if (!js_function_data->MatchesSignature(expected_canonical_type_index)) {
+       return ImportCallKind::kLinkError;
+     }
+     // Resolve the short-cut to the underlying callable and continue.
+-    callable_ = handle(js_function_data->GetCallable(), isolate);
++    SetCallable(isolate, js_function_data->GetCallable());
+   }
+   if (WasmCapiFunction::IsWasmCapiFunction(*callable_)) {
++    // TODO(jkummerow): Update this to follow the style of the other kinds of
++    // functions.
+     auto capi_function = Cast<WasmCapiFunction>(callable_);
+     if (!capi_function->MatchesSignature(expected_canonical_type_index)) {
+       return ImportCallKind::kLinkError;
+@@ -747,8 +764,7 @@ ImportCallKind WasmImportData::ComputeKind(
+   // For JavaScript calls, determine whether the target has an arity match.
+   if (IsJSFunction(*callable_)) {
+     auto function = Cast<JSFunction>(callable_);
+-    DirectHandle<SharedFunctionInfo> shared(function->shared(),
+-                                            function->GetIsolate());
++    DirectHandle<SharedFunctionInfo> shared(function->shared(), isolate);
+ 
+ // Check for math intrinsics.
+ #define COMPARE_SIG_FOR_BUILTIN(name)                                     \
+@@ -1864,6 +1880,8 @@ bool InstanceBuilder::ProcessImportedFunction(
+   well_known_imports_.push_back(resolved.well_known_status());
+   ImportCallKind kind = resolved.kind();
+   js_receiver = resolved.callable();
++  Handle<WasmFunctionData> trusted_function_data =
++      resolved.trusted_function_data();
+   ImportedFunctionEntry imported_entry(trusted_instance_data, func_index);
+   switch (kind) {
+     case ImportCallKind::kRuntimeTypeError:
+@@ -1877,11 +1895,14 @@ bool InstanceBuilder::ProcessImportedFunction(
+       return false;
+     case ImportCallKind::kWasmToWasm: {
+       // The imported function is a Wasm function from another instance.
+-      auto imported_function = Cast<WasmExportedFunction>(js_receiver);
+-      // The import reference is the instance object itself.
+-      Address imported_target = imported_function->GetWasmCallTarget();
+-      imported_entry.SetWasmToWasm(imported_function->instance_data(),
+-                                   imported_target);
++      auto function_data =
++          Cast<WasmExportedFunctionData>(trusted_function_data);
++      // The import reference is the trusted instance data itself.
++      Tagged<WasmTrustedInstanceData> instance_data =
++          function_data->instance_data();
++      Address imported_target =
++          instance_data->GetCallTarget(function_data->function_index());
++      imported_entry.SetWasmToWasm(instance_data, imported_target);
+       break;
+     }
+     case ImportCallKind::kWasmToCapi: {
+diff --git a/src/wasm/module-instantiate.h b/src/wasm/module-instantiate.h
+index da5a2506e96..50d6310aa28 100644
+--- a/src/wasm/module-instantiate.h
++++ b/src/wasm/module-instantiate.h
+@@ -22,6 +22,7 @@ namespace internal {
+ 
+ class FixedArray;
+ class JSArrayBuffer;
++class WasmFunctionData;
+ class WasmModuleObject;
+ class WasmInstanceObject;
+ class WasmTrustedInstanceData;
+@@ -95,8 +96,17 @@ class WasmImportData {
+   WellKnownImport well_known_status() const { return well_known_status_; }
+   Suspend suspend() const { return suspend_; }
+   Handle<JSReceiver> callable() const { return callable_; }
++  // Avoid reading function data from the result of `callable()`, because it
++  // might have been corrupted in the meantime (in a compromised sandbox).
++  // Instead, use this cached copy.
++  Handle<WasmFunctionData> trusted_function_data() const {
++    return trusted_function_data_;
++  }
+ 
+  private:
++  void SetCallable(Isolate* isolate, Tagged<JSReceiver> callable);
++  void SetCallable(Isolate* isolate, Handle<JSReceiver> callable);
++
+   ImportCallKind ComputeKind(
+       DirectHandle<WasmTrustedInstanceData> trusted_instance_data,
+       int func_index, const wasm::FunctionSig* expected_sig,
+@@ -106,6 +116,7 @@ class WasmImportData {
+   WellKnownImport well_known_status_{WellKnownImport::kGeneric};
+   Suspend suspend_{kNoSuspend};
+   Handle<JSReceiver> callable_;
++  Handle<WasmFunctionData> trusted_function_data_;
+ };
+ 
+ MaybeHandle<WasmInstanceObject> InstantiateToInstanceObject(
+diff --git a/src/wasm/wasm-js.cc b/src/wasm/wasm-js.cc
+index 64b5ee7afc3..19a60d4eb19 100644
+--- a/src/wasm/wasm-js.cc
++++ b/src/wasm/wasm-js.cc
+@@ -2500,7 +2500,8 @@ void WebAssemblyFunctionType(const v8::FunctionCallbackInfo<v8::Value>& info) {
+     auto wasm_exported_function = i::Cast<i::WasmExportedFunction>(fun);
+     i::Tagged<i::WasmExportedFunctionData> data =
+         wasm_exported_function->shared()->wasm_exported_function_data();
+-    sig = wasm_exported_function->sig();
++    sig =
++        data->instance_data()->module()->functions[data->function_index()].sig;
+     i::wasm::Promise promise_flags =
+         i::WasmFunctionData::PromiseField::decode(data->js_promise_flags());
+     if (promise_flags != i::wasm::kNoPromise) {
+diff --git a/src/wasm/wasm-objects.cc b/src/wasm/wasm-objects.cc
+index 382ce1b4a7b..2b413fbd7e2 100644
+--- a/src/wasm/wasm-objects.cc
++++ b/src/wasm/wasm-objects.cc
+@@ -302,9 +302,10 @@ void WasmTableObject::SetFunctionTableEntry(Isolate* isolate,
+ 
+   if (WasmExportedFunction::IsWasmExportedFunction(*external)) {
+     auto exported_function = Cast<WasmExportedFunction>(external);
++    auto func_data = exported_function->shared()->wasm_exported_function_data();
+     Handle<WasmTrustedInstanceData> target_instance_data(
+-        exported_function->instance_data(), isolate);
+-    int func_index = exported_function->function_index();
++        func_data->instance_data(), isolate);
++    int func_index = func_data->function_index();
+     const WasmModule* module = target_instance_data->module();
+     SBXCHECK_BOUNDS(func_index, module->functions.size());
+     auto* wasm_function = module->functions.data() + func_index;
+@@ -653,8 +654,10 @@ void WasmTableObject::GetFunctionTableEntry(
+   }
+   if (WasmExportedFunction::IsWasmExportedFunction(*element)) {
+     auto target_func = Cast<WasmExportedFunction>(element);
+-    *instance_data = handle(target_func->instance_data(), isolate);
+-    *function_index = target_func->function_index();
++    auto func_data = Cast<WasmExportedFunctionData>(
++        target_func->shared()->wasm_exported_function_data());
++    *instance_data = handle(func_data->instance_data(), isolate);
++    *function_index = func_data->function_index();
+     *maybe_js_function = MaybeHandle<WasmJSFunction>();
+     return;
+   }
+@@ -2296,14 +2299,6 @@ Handle<WasmCapiFunction> WasmCapiFunction::New(
+   return Cast<WasmCapiFunction>(result);
+ }
+ 
+-Tagged<WasmTrustedInstanceData> WasmExportedFunction::instance_data() {
+-  return shared()->wasm_exported_function_data()->instance_data();
+-}
+-
+-int WasmExportedFunction::function_index() {
+-  return shared()->wasm_exported_function_data()->function_index();
+-}
+-
+ Handle<WasmExportedFunction> WasmExportedFunction::New(
+     Isolate* isolate, DirectHandle<WasmTrustedInstanceData> instance_data,
+     DirectHandle<WasmFuncRef> func_ref,
+@@ -2386,19 +2381,10 @@ Handle<WasmExportedFunction> WasmExportedFunction::New(
+   return Cast<WasmExportedFunction>(js_function);
+ }
+ 
+-Address WasmExportedFunction::GetWasmCallTarget() {
+-  return instance_data()->GetCallTarget(function_index());
+-}
+-
+-const wasm::FunctionSig* WasmExportedFunction::sig() {
+-  return instance_data()->module()->functions[function_index()].sig;
+-}
+-
+-bool WasmExportedFunction::MatchesSignature(
++bool WasmExportedFunctionData::MatchesSignature(
+     uint32_t other_canonical_type_index) {
+   return wasm::GetWasmEngine()->type_canonicalizer()->IsCanonicalSubtype(
+-      this->shared()->wasm_exported_function_data()->canonical_type_index(),
+-      other_canonical_type_index);
++      canonical_type_index(), other_canonical_type_index);
+ }
+ 
+ // static
+diff --git a/src/wasm/wasm-objects.h b/src/wasm/wasm-objects.h
+index 511077089af..30506df5aeb 100644
+--- a/src/wasm/wasm-objects.h
++++ b/src/wasm/wasm-objects.h
+@@ -796,9 +796,6 @@ bool UseGenericWasmToJSWrapper(wasm::ImportCallKind kind,
+ // Representation of WebAssembly.Function JavaScript-level object.
+ class WasmExportedFunction : public JSFunction {
+  public:
+-  Tagged<WasmTrustedInstanceData> instance_data();
+-  V8_EXPORT_PRIVATE int function_index();
+-
+   V8_EXPORT_PRIVATE static bool IsWasmExportedFunction(Tagged<Object> object);
+ 
+   V8_EXPORT_PRIVATE static Handle<WasmExportedFunction> New(
+@@ -807,12 +804,6 @@ class WasmExportedFunction : public JSFunction {
+       DirectHandle<WasmInternalFunction> internal_function, int arity,
+       DirectHandle<Code> export_wrapper);
+ 
+-  Address GetWasmCallTarget();
+-
+-  V8_EXPORT_PRIVATE const wasm::FunctionSig* sig();
+-
+-  bool MatchesSignature(uint32_t other_canonical_sig_index);
+-
+   // Return a null-terminated string with the debug name in the form
+   // 'js-to-wasm:<sig>'.
+   static std::unique_ptr<char[]> GetDebugName(const wasm::FunctionSig* sig);
+@@ -901,6 +892,8 @@ class WasmExportedFunctionData
+ 
+   DECL_PRIMITIVE_ACCESSORS(sig, const wasm::FunctionSig*)
+ 
++  bool MatchesSignature(uint32_t other_canonical_sig_index);
++
+   // Dispatched behavior.
+   DECL_PRINTER(WasmExportedFunctionData)
+   DECL_VERIFIER(WasmExportedFunctionData)
+diff --git a/test/fuzzer/wasm-deopt.cc b/test/fuzzer/wasm-deopt.cc
+index d1f47695fc2..2d09a62fca4 100644
+--- a/test/fuzzer/wasm-deopt.cc
++++ b/test/fuzzer/wasm-deopt.cc
+@@ -241,13 +241,14 @@ int FuzzIt(base::Vector<const uint8_t> data) {
+   Handle<WasmExportedFunction> main_function =
+       testing::GetExportedFunction(i_isolate, instance, "main")
+           .ToHandleChecked();
+-  int function_to_optimize = main_function->function_index();
++  int function_to_optimize =
++      main_function->shared()->wasm_exported_function_data()->function_index();
+   // As the main function has a fixed signature, it doesn't provide great
+   // coverage to always optimize and deopt the main function. Instead by only
+   // optimizing an inner wasm function, there can be a large amount of
+   // parameters with all kinds of types.
+   if (!inlinees.empty() && (data.last() & 1)) {
+-    function_to_optimize = main_function->function_index() - 1;
++    function_to_optimize--;
+   }
+ 
+   size_t num_callees = reference_results.size();
+diff --git a/test/fuzzer/wasm-fuzzer-common.cc b/test/fuzzer/wasm-fuzzer-common.cc
+index b82490143b1..907b524b35f 100644
+--- a/test/fuzzer/wasm-fuzzer-common.cc
++++ b/test/fuzzer/wasm-fuzzer-common.cc
+@@ -171,8 +171,14 @@ void ExecuteAgainstReference(Isolate* isolate,
+   isolate->heap()->AddNearHeapLimitCallback(heap_limit_callback,
+                                             &oom_callback_data);
+ 
++  Tagged<WasmExportedFunctionData> func_data =
++      main_function->shared()->wasm_exported_function_data();
++  const FunctionSig* sig = func_data->instance_data()
++                               ->module()
++                               ->functions[func_data->function_index()]
++                               .sig;
+   base::OwnedVector<Handle<Object>> compiled_args =
+-      testing::MakeDefaultArguments(isolate, main_function->sig());
++      testing::MakeDefaultArguments(isolate, sig);
+   std::unique_ptr<const char[]> exception_ref;
+   int32_t result_ref = testing::CallWasmFunctionForTesting(
+       isolate, instance_ref, "main", compiled_args.as_vector(), &exception_ref);
+diff --git a/test/mjsunit/sandbox/wasm-imports-concurrent-mutation.js b/test/mjsunit/sandbox/wasm-imports-concurrent-mutation.js
+new file mode 100644
+index 00000000000..b7fdd0c427a
+--- /dev/null
++++ b/test/mjsunit/sandbox/wasm-imports-concurrent-mutation.js
+@@ -0,0 +1,84 @@
++// Copyright 2024 the V8 project authors. All rights reserved.
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++// Flags: --sandbox-testing
++
++d8.file.execute('test/mjsunit/wasm/wasm-module-builder.js');
++
++// module 0: exporter
++let builder = new WasmModuleBuilder();
++let $struct = builder.addStruct([makeField(kWasmI64, true)]);
++let $sig_v_s = builder.addType(makeSig([wasmRefType($struct)], []));
++builder.addFunction("writer", $sig_v_s)
++  .exportFunc()
++  .addBody([
++    kExprLocalGet, 0,
++    kExprI64Const, 42,
++    kGCPrefix, kExprStructSet, $struct, 0,
++  ]);
++builder.addFunction("dummy", kSig_v_l).exportFunc().addBody([]);
++let instance0 = builder.instantiate();
++let { writer, dummy } = instance0.exports;
++
++// module 1: importer
++builder = new WasmModuleBuilder();
++$struct = builder.addStruct([makeField(kWasmI64, true)]);
++$sig_v_s = builder.addType(makeSig([wasmRefType($struct)], []));
++let $sig_v_l = builder.addType(kSig_v_l);
++let $importWriter = builder.addImport('import', 'writer', $sig_v_l);
++let $boom = builder.addFunction("boom", $sig_v_l)
++  .exportFunc()
++  .addBody([
++    kExprLocalGet, 0,
++    kExprCallFunction, $importWriter,
++  ]);
++
++// Prepare corruption utilities.
++const kHeapObjectTag = 1;
++const kJSFunctionSFIOffset = 16;
++const kSharedFunctionInfoTrustedDataOffset = 4;
++
++let memory = new DataView(new Sandbox.MemoryView(0, 0x100000000));
++function getPtr(obj) {
++  return Sandbox.getAddressOf(obj) + kHeapObjectTag;
++}
++function getField(obj, offset) {
++  return memory.getUint32(obj + offset - kHeapObjectTag, true);
++}
++function setField(obj, offset, value) {
++  memory.setUint32(obj + offset - kHeapObjectTag, value, true);
++}
++
++let writer_sfi = getField(getPtr(writer), kJSFunctionSFIOffset);
++let writer_tfd = getField(writer_sfi, kSharedFunctionInfoTrustedDataOffset);
++
++let dummy_sfi = getField(getPtr(dummy), kJSFunctionSFIOffset);
++let dummy_tfd = getField(dummy_sfi, kSharedFunctionInfoTrustedDataOffset);
++
++function workerTemplate(writer_sfi, writer_tfd, dummy_tfd) {
++  const kHeapObjectTag = 1;
++  const kSharedFunctionInfoTrustedDataOffset = 4;
++  let memory = new DataView(new Sandbox.MemoryView(0, 0x100000000));
++  function setField(obj, offset, value) {
++    memory.setUint32(obj + offset - kHeapObjectTag, value, true);
++  }
++  while (true) {
++    setField(writer_sfi, kSharedFunctionInfoTrustedDataOffset, dummy_tfd);
++    setField(writer_sfi, kSharedFunctionInfoTrustedDataOffset, writer_tfd);
++  }
++}
++const workerCode = new Function(
++    `(${workerTemplate})([${writer_sfi}, ${writer_tfd}, ${dummy_tfd}])`);
++let worker = new Worker(workerCode, {type: 'function'});
++
++// Before fixing the issue, this usually took 1-5 iterations until it got
++// lucky enough to win the race condition.
++for (let i = 0; i < 20; i++) {
++  try {
++    let instance1 = builder.instantiate({'import': {'writer': writer}});
++    instance1.exports.boom(BigInt(Sandbox.targetPage) - 0x7n);
++  } catch {
++    // Just try again.
++  }
++}

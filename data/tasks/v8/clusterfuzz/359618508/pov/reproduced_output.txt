@@ -1,0 +1,23 @@
+
+
+#
+# Fatal error in ../../src/deoptimizer/translated-state.cc, line 2461
+# Check failed: IsRegExpDataWrapper(*field_value).
+#
+#
+#
+#FailureMessage Object: 0x7ffef3f94fe0
+==== C stack trace ===============================
+
+    d8(v8::base::debug::StackTrace::StackTrace() ./../../src/base/debug/stack_trace_posix.cc:375:32) [0x5605cdc827a3]
+    d8(v8::platform::(anonymous namespace)::PrintStackTrace() ./../../src/libplatform/default-platform.cc:28:9) [0x5605cdc81bbd]
+    d8(V8_Fatal(char const*, int, char const*, ...) ./../../src/base/logging.cc:214:10) [0x5605cdc665d4]
+    d8(v8::internal::TranslatedState::InitializeJSObjectAt(v8::internal::TranslatedFrame*, int*, v8::internal::TranslatedValue*, v8::internal::Handle<v8::internal::Map>, v8::internal::PerThreadAssertScope<false, (v8::internal::PerThreadAssertType)1, (v8::internal::PerThreadAssertType)2> const&) ./../../src/base/logging.h:458:1) [0x5605cac5d113]
+    d8(v8::internal::TranslatedState::InitializeCapturedObjectAt(int, std::__Cr::stack<int, std::__Cr::deque<int, std::__Cr::allocator<int>>>*, v8::internal::PerThreadAssertScope<false, (v8::internal::PerThreadAssertType)1, (v8::internal::PerThreadAssertType)2> const&) ./../../src/deoptimizer/translated-state.cc:2031:3) [0x5605cac5b3de]
+    d8(v8::internal::TranslatedState::InitializeObjectAt(v8::internal::TranslatedValue*) ./../../third_party/libc++/src/include/deque:731:67) [0x5605cac555b5]
+    d8(v8::internal::TranslatedValue::GetValue() ./../../src/deoptimizer/translated-state.cc:713:24) [0x5605cac54fa9]
+    d8(v8::internal::Deoptimizer::MaterializeHeapObjects() ./../../src/deoptimizer/deoptimizer.cc:2717:58) [0x5605cac48400]
+    d8(v8::internal::__RT_impl_Runtime_NotifyDeoptimized(v8::internal::Arguments<(v8::internal::ArgumentsType)0>, v8::internal::Isolate*) ./../../src/deoptimizer/deoptimizer.h:78:12) [0x5605cb74a350]
+    d8(v8::internal::Runtime_NotifyDeoptimized(int, unsigned long*, v8::internal::Isolate*) ./../../src/runtime/runtime-compiler.cc:338:1) [0x5605cb749d09]
+    d8(Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit setup-isolate-deserialize.cc:0:0) [0x5605cd43427d]
+timeout: the monitored command dumped core

@@ -1,0 +1,80 @@
+Accepting input from '/tmp/poc'
+Usage for fuzzing: honggfuzz -P [flags] -- /out/thumbnail_fuzzer
+=================================================================
+==7==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x60600000479c at pc 0x0000012c08e0 bp 0x7fff10eb3530 sp 0x7fff10eb3528
+READ of size 4 at 0x60600000479c thread T0
+SCARINESS: 17 (4-byte-read-heap-buffer-overflow)
+    #0 0x12c08df in HeifContext::interpret_heif_file() /src/libheif/libheif/context.cc:985:42
+    #1 0x12b1a39 in HeifContext::read(std::__1::shared_ptr<StreamReader> const&) /src/libheif/libheif/context.cc:426:10
+    #2 0x125fccc in heif_context_read_from_reader /src/libheif/libheif/heif.cc:468:29
+    #3 0x75b198 in vips_foreign_load_heif_build /src/libvips/build/../libvips/foreign/heifload.c:268:11
+    #4 0x75f289 in vips_foreign_load_heif_buffer_build /src/libvips/build/../libvips/foreign/heifload.c:1297:6
+    #5 0x614aac in vips_object_build /src/libvips/build/../libvips/iofuncs/object.c:372:6
+    #6 0x85a13d in vips_cache_operation_buildp /src/libvips/build/../libvips/iofuncs/cache.c:850:7
+    #7 0x64d2d5 in vips_call_required_optional /src/libvips/build/../libvips/iofuncs/operation.c:918:6
+    #8 0x65036e in vips_call_by_name /src/libvips/build/../libvips/iofuncs/operation.c:958:11
+    #9 0x650744 in vips_call_split_option_string /src/libvips/build/../libvips/iofuncs/operation.c:1077:11
+    #10 0x62a0bf in vips_image_new_from_buffer /src/libvips/build/../libvips/iofuncs/image.c:2167:11
+    #11 0x4e34e3 in LLVMFuzzerTestOneInput /src/libvips/build/../fuzz/thumbnail_fuzzer.cc:19:16
+    #12 0x2345e2b in main (/out/thumbnail_fuzzer+0x2345e2b)
+    #13 0x7fb05527d082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 87b331c034a6458c64ce09c03939e947212e18ce)
+    #14 0x424b6d in _start (/out/thumbnail_fuzzer+0x424b6d)
+
+DEDUP_TOKEN: HeifContext::interpret_heif_file()--HeifContext::read(std::__1::shared_ptr<StreamReader> const&)--heif_context_read_from_reader
+0x60600000479c is located 0 bytes to the right of 60-byte region [0x606000004760,0x60600000479c)
+allocated by thread T0 here:
+    #0 0x4e0ded in operator new(unsigned long) /src/llvm-project/compiler-rt/lib/asan/asan_new_delete.cpp:95:3
+    #1 0x1288423 in void* std::__1::__libcpp_operator_new<unsigned long>(unsigned long) /usr/local/bin/../include/c++/v1/new:245:10
+    #2 0x1288423 in std::__1::__libcpp_allocate(unsigned long, unsigned long) /usr/local/bin/../include/c++/v1/new:271:10
+    #3 0x1288423 in std::__1::allocator<unsigned int>::allocate(unsigned long) /usr/local/bin/../include/c++/v1/__memory/allocator.h:105:38
+    #4 0x1288423 in std::__1::allocator_traits<std::__1::allocator<unsigned int> >::allocate(std::__1::allocator<unsigned int>&, unsigned long) /usr/local/bin/../include/c++/v1/__memory/allocator_traits.h:262:20
+    #5 0x1288423 in std::__1::vector<unsigned int, std::__1::allocator<unsigned int> >::__vallocate(unsigned long) /usr/local/bin/../include/c++/v1/vector:931:37
+    #6 0x1288423 in std::__1::vector<unsigned int, std::__1::allocator<unsigned int> >::vector(std::__1::vector<unsigned int, std::__1::allocator<unsigned int> > const&) /usr/local/bin/../include/c++/v1/vector:1166:9
+    #7 0x12bda04 in HeifContext::interpret_heif_file() /src/libheif/libheif/context.cc:980:42
+    #8 0x12b1a39 in HeifContext::read(std::__1::shared_ptr<StreamReader> const&) /src/libheif/libheif/context.cc:426:10
+    #9 0x125fccc in heif_context_read_from_reader /src/libheif/libheif/heif.cc:468:29
+    #10 0x75b198 in vips_foreign_load_heif_build /src/libvips/build/../libvips/foreign/heifload.c:268:11
+    #11 0x75f289 in vips_foreign_load_heif_buffer_build /src/libvips/build/../libvips/foreign/heifload.c:1297:6
+    #12 0x614aac in vips_object_build /src/libvips/build/../libvips/iofuncs/object.c:372:6
+    #13 0x85a13d in vips_cache_operation_buildp /src/libvips/build/../libvips/iofuncs/cache.c:850:7
+    #14 0x64d2d5 in vips_call_required_optional /src/libvips/build/../libvips/iofuncs/operation.c:918:6
+    #15 0x65036e in vips_call_by_name /src/libvips/build/../libvips/iofuncs/operation.c:958:11
+    #16 0x650744 in vips_call_split_option_string /src/libvips/build/../libvips/iofuncs/operation.c:1077:11
+    #17 0x62a0bf in vips_image_new_from_buffer /src/libvips/build/../libvips/iofuncs/image.c:2167:11
+    #18 0x4e34e3 in LLVMFuzzerTestOneInput /src/libvips/build/../fuzz/thumbnail_fuzzer.cc:19:16
+    #19 0x2345e2b in main (/out/thumbnail_fuzzer+0x2345e2b)
+
+DEDUP_TOKEN: operator new(unsigned long)--void* std::__1::__libcpp_operator_new<unsigned long>(unsigned long)--std::__1::__libcpp_allocate(unsigned long, unsigned long)
+SUMMARY: AddressSanitizer: heap-buffer-overflow /src/libheif/libheif/context.cc:985:42 in HeifContext::interpret_heif_file()
+Shadow bytes around the buggy address:
+  0x0c0c7fff88a0: fa fa fa fa 00 00 00 00 00 00 00 fa fa fa fa fa
+  0x0c0c7fff88b0: 00 00 00 00 00 00 00 fa fa fa fa fa 00 00 00 00
+  0x0c0c7fff88c0: 00 00 00 fa fa fa fa fa 00 00 00 00 00 00 00 fa
+  0x0c0c7fff88d0: fa fa fa fa 00 00 00 00 00 00 00 fa fa fa fa fa
+  0x0c0c7fff88e0: 00 00 00 00 00 00 00 04 fa fa fa fa 00 00 00 00
+=>0x0c0c7fff88f0: 00 00 00[04]fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c0c7fff8900: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c0c7fff8910: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c0c7fff8920: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c0c7fff8930: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x0c0c7fff8940: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==7==ABORTING

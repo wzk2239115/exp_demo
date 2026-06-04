@@ -1,0 +1,28 @@
+diff --git a/src/maglev/maglev-ir.cc b/src/maglev/maglev-ir.cc
+index 203c84b8cb4..5a37f2bf2ed 100644
+--- a/src/maglev/maglev-ir.cc
++++ b/src/maglev/maglev-ir.cc
+@@ -3846,6 +3846,7 @@ void CreateRegExpLiteral::GenerateCode(MaglevAssembler* masm,
+       pattern().object(),                           // pattern
+       Smi::FromInt(flags())                         // flags
+   );
++  masm->DefineLazyDeoptPoint(lazy_deopt_info());
+ }
+ 
+ int GetTemplateObject::MaxCallStackArgs() const {
+diff --git a/src/maglev/maglev-ir.h b/src/maglev/maglev-ir.h
+index da8ff3799b1..9bcddc83ec7 100644
+--- a/src/maglev/maglev-ir.h
++++ b/src/maglev/maglev-ir.h
+@@ -5367,8 +5367,9 @@ class CreateRegExpLiteral
+   int flags() const { return flags_; }
+ 
+   // The implementation currently calls runtime.
+-  static constexpr OpProperties kProperties =
+-      OpProperties::Call() | OpProperties::NotIdempotent();
++  static constexpr OpProperties kProperties = OpProperties::Call() |
++                                              OpProperties::NotIdempotent() |
++                                              OpProperties::CanThrow();
+ 
+   int MaxCallStackArgs() const;
+   void SetValueLocationConstraints();
