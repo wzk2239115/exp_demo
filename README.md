@@ -3,7 +3,7 @@
 [![Paper](https://img.shields.io/badge/arXiv-2605.11086-b31b1b?style=flat&logo=arxiv&logoColor=white)](https://arxiv.org/abs/2605.11086)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-ExploitGym is a large-scale, realistic benchmark of 869 instances built from real-world vulnerabilities across userspace programs, Google's V8 engine, and the Linux kernel, designed to evaluate AI agents' ability to develop exploits. (The paper describes a 898-instance snapshot; see [Benchmark updates](#benchmark-updates) for how the released set differs.)
+ExploitGym is a large-scale, realistic benchmark of 869 instances built from real-world vulnerabilities across userspace programs, Google's V8 engine, and the Linux kernel, designed to evaluate AI agents' ability to develop exploits.
 
 ## Quick start
 
@@ -49,12 +49,9 @@ CLIs) live in [docs/setup.md](docs/setup.md).
 
 ## Benchmark updates
 
-The released benchmark is actively maintained and may differ from the snapshot
-evaluated in the [paper](https://arxiv.org/abs/2605.11086). The current release
-is **v1** — 869 instances (kernel 186, user 502, v8 181), filtered down from the
-paper's 898 by removing non-exploitable / unreproducible cases. See
-[CHANGELOG.md](CHANGELOG.md) for the full version history. The canonical task
-list for the current release is `data/task_ids/v1.txt`.
+The released benchmark is actively maintained. The current release is **v1.0** with
+869 instances. See [CHANGELOG.md](CHANGELOG.md) for the full version history. The
+canonical task list for the current release is `data/task_ids/v1.txt`.
 
 ## Citation
 
