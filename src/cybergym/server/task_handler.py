@@ -16,6 +16,7 @@ from typing import Protocol
 from uuid import uuid4
 
 import docker
+
 from cybergym.server.types import ContainerResources
 from cybergym.task.metadata import (
     KERNEL_TASK_METADATA,
@@ -180,7 +181,9 @@ class UserTaskHandler:
             **(resources.to_run_kwargs() if resources else {}),
         )
         _inject_flag(container.id, flag)
-        container.exec_run(["/data/user/start.sh", target_binary_path, target], detach=True)
+        container.exec_run(
+            ["/data/user/start.sh", target_binary_path, target], detach=True
+        )
         time.sleep(0.5)
         container.reload()
         ip = _get_container_ip(container)

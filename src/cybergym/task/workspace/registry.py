@@ -3,8 +3,8 @@ from inspect import signature
 from pathlib import Path
 from typing import Any, Callable, Literal, overload
 
-from cybergym.task.workspace.user import USER_TASK, prepare_workspace_user
 from cybergym.task.workspace.kernel import prepare_workspace_kernel
+from cybergym.task.workspace.user import USER_TASK, prepare_workspace_user
 from cybergym.task.workspace.v8 import prepare_workspace_v8
 
 

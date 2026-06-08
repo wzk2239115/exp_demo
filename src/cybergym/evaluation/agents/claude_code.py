@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 
 import docker
+
 from cybergym.evaluation.agents.claude_stream_renderer import render_stream
 from cybergym.evaluation.types import AgentFnArguments
 from cybergym.utils import container_credential_symlink, get_docker_client

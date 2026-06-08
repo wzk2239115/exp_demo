@@ -13,7 +13,7 @@ import httpx
 from docker.models.containers import Container
 
 from cybergym.evaluation.base import Evaluator
-from cybergym.evaluation.types import CheckResult, UserTaskExtraKwargs, EvalConfig
+from cybergym.evaluation.types import CheckResult, EvalConfig, UserTaskExtraKwargs
 from cybergym.server.types import DEFAULT_API_KEY
 from cybergym.task.token import DEFAULT_FLAG_SEED, generate_flag, generate_token
 
@@ -102,8 +102,7 @@ class UserEvaluator(Evaluator):
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 404:
                     logger.info(
-                        "Container already gone (no server record); "
-                        "nothing to delete"
+                        "Container already gone (no server record); nothing to delete"
                     )
                 else:
                     logger.error("Error deleting container in cleanup: %s", e)

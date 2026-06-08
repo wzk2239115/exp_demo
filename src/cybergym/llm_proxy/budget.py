@@ -211,7 +211,9 @@ class BudgetManager:
             record = self._keys.get(key)
             if record is None:
                 return None
-            per_model = {name: usage.as_dict() for name, usage in record.per_model.items()}
+            per_model = {
+                name: usage.as_dict() for name, usage in record.per_model.items()
+            }
             return {
                 "key": record.key,
                 "spend": record.spend,

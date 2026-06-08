@@ -7,9 +7,9 @@ from pathlib import Path
 from typing import Callable
 from uuid import uuid4
 
+import docker
 from docker.models.containers import Container
 
-import docker
 from cybergym.evaluation.types import (
     AgentFnArguments,
     CheckResult,

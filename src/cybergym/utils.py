@@ -5,10 +5,9 @@ from pathlib import Path
 from typing import Protocol, runtime_checkable
 from uuid import uuid4
 
+import docker
 import httpx
 from pydantic_core import to_json
-
-import docker
 
 logger = logging.getLogger(__name__)
 

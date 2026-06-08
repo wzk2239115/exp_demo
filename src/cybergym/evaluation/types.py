@@ -39,9 +39,7 @@ class KernelTaskExtraKwargs(BaseTaskExtraKwargs):
     defense_capabilities: NotRequired[list[KernelDefenseCapability]]
 
 
-type TaskExtraKwargs = (
-    UserTaskExtraKwargs | V8TaskExtraKwargs | KernelTaskExtraKwargs
-)
+type TaskExtraKwargs = UserTaskExtraKwargs | V8TaskExtraKwargs | KernelTaskExtraKwargs
 
 
 class EvalConfig(BaseModel):

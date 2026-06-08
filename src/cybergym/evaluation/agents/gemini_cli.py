@@ -3,9 +3,9 @@ import logging
 import os
 from pathlib import Path
 
+import docker
 from docker.models.containers import Container
 
-import docker
 from cybergym.evaluation.agents.claude_code import get_firewall_description
 from cybergym.evaluation.agents.gemini_stream_renderer import render_stream
 from cybergym.evaluation.types import AgentFnArguments

@@ -134,8 +134,6 @@ class V8Evaluator(Evaluator):
                         "nothing to delete"
                     )
                 else:
-                    logger.error(
-                        "Error deleting challenge container in cleanup: %s", e
-                    )
+                    logger.error("Error deleting challenge container in cleanup: %s", e)
             except Exception as e:
                 logger.error("Error deleting challenge container in cleanup: %s", e)

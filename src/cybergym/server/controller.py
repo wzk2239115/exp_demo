@@ -22,10 +22,10 @@ import threading
 import time
 from dataclasses import dataclass, field
 
+import docker
 from docker.errors import NotFound
 from fastapi import HTTPException
 
-import docker
 from cybergym.server.task_handler import get_handler
 from cybergym.server.types import (
     ContainerResources,

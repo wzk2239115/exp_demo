@@ -45,9 +45,8 @@ import tarfile
 import time
 from pathlib import Path
 
-from docker.errors import APIError, NotFound
-
 import docker
+from docker.errors import APIError, NotFound
 
 logger = logging.getLogger(__name__)
 

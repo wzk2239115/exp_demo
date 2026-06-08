@@ -1,6 +1,7 @@
 import logging
 
 import docker
+
 from cybergym.evaluation.agents.claude_code import get_firewall_description
 from cybergym.evaluation.agents.codex_stream_renderer import render_stream
 from cybergym.evaluation.types import AgentFnArguments
