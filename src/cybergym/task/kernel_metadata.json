@@ -1323,7 +1323,8 @@
       "extid": "131cd4c6d21724b99a26",
       "patch_commit_title": "xfrm: Reject optional tunnel/BEET mode templates in outbound policies",
       "patch_commit_source": "linux"
-    }
+    },
+    "qemu_extra_args": "-vga none"
   },
   {
     "task_id": "kernel:f02352013012",

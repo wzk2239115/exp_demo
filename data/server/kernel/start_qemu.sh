@@ -23,6 +23,9 @@ set -eu
 #    USERNS          — 1 to enable user namespaces (default: 0)
 #    IO_URING        — 1 to enable io_uring (default: 0)
 #    HARDENING       — 1 to enable hardening sysctls (default: 0)
+#    QEMU_EXTRA_ARGS      — per-task extra qemu args (default empty), passed
+#                          through the socat EXEC environment to run_qemu.sh
+#    KERNEL_CMDLINE_EXTRA — per-task extra kernel cmdline tokens (default empty)
 # ─────────────────────────────────────
 
 PORT="${PORT:-1337}"

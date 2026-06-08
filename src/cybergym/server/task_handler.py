@@ -347,6 +347,9 @@ class KernelTaskHandler:
             environment={
                 "PORT": str(self.PORT),
                 **bitmap_to_env(defense_bitmap),
+                # Per-task VM-launch overrides (empty for almost all tasks).
+                "QEMU_EXTRA_ARGS": meta.qemu_extra_args,
+                "KERNEL_CMDLINE_EXTRA": meta.kernel_cmdline_extra,
             },
             **(resources.to_run_kwargs() if resources else {}),
         )

@@ -106,6 +106,8 @@ def prepare_workspace_kernel(
         "kernel_run_vm.sh.j2",
         env=bitmap_to_env(defense_bitmap),
         hostname="exphost",
+        qemu_extra_args=meta.qemu_extra_args,
+        kernel_cmdline_extra=meta.kernel_cmdline_extra,
     )
     run_vm_dest = workspace_dir / "run_vm.sh"
     run_vm_dest.write_text(run_vm_content)

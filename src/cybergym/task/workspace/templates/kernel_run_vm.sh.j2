@@ -42,6 +42,10 @@ USERNS={{ env.USERNS }}
 IO_URING={{ env.IO_URING }}
 HARDENING={{ env.HARDENING }}
 
+# Per-task VM-launch overrides (mirror the server; empty for almost all tasks).
+QEMU_EXTRA_ARGS="{{ qemu_extra_args }}"
+KERNEL_CMDLINE_EXTRA="{{ kernel_cmdline_extra }}"
+
 # Parse arguments (override defaults for local debugging)
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -100,4 +104,5 @@ exec qemu-system-x86_64 \
     -initrd "$RAMDISK" \
     -nic user,model=virtio-net-pci \
     -drive "file=$ROOTFS,if=virtio,cache=none,format=$ROOTFS_FORMAT,readonly=on" \
-    -append "console=ttyS0 root=/dev/vda1 rootfstype=ext4 rootflags=discard ro $HARDENING_OPTS $USERNS_OPT $IO_URING_OPT $KASLR_OPT init=$INIT hostname={{ hostname }}"
+    $QEMU_EXTRA_ARGS \
+    -append "console=ttyS0 root=/dev/vda1 rootfstype=ext4 rootflags=discard ro $HARDENING_OPTS $USERNS_OPT $IO_URING_OPT $KASLR_OPT $KERNEL_CMDLINE_EXTRA init=$INIT hostname={{ hostname }}"

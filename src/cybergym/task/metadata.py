@@ -130,6 +130,18 @@ class KernelTaskMetadata(BaseModel):
     files: KernelTaskFiles = Field(default_factory=KernelTaskFiles)
     raw_metadata: dict = Field(default_factory=dict)
 
+    # Per-task VM launch overrides. Empty by default, so tasks that do not set
+    # them are launched exactly as before. Used to work around QEMU-environment
+    # boot crashes that are specific to a single task's kernel build (e.g. a
+    # bochs_drm KMS panic, or a virtio-blk MSI-X NULL-deref) without changing
+    # the launch config for every other task.
+    #   qemu_extra_args     — extra tokens appended to the qemu-system-x86_64
+    #                         command line (e.g. "-vga none").
+    #   kernel_cmdline_extra — extra tokens appended to the kernel -append
+    #                         cmdline (e.g. "pci=nomsi").
+    qemu_extra_args: str = ""
+    kernel_cmdline_extra: str = ""
+
     @property
     def subset(self) -> str:
         """Return the subset name ('kernelctf' or 'syzbot')."""

@@ -14,6 +14,8 @@ set -eu
 #    USERNS        — 1 to enable user namespaces (default: 0)
 #    IO_URING      — 1 to enable io_uring (default: 0)
 #    HARDENING     — 1 to enable kernelctf hardening sysctls (default: 0)
+#    QEMU_EXTRA_ARGS      — per-task extra qemu args (default empty; e.g. "-vga none")
+#    KERNEL_CMDLINE_EXTRA — per-task extra kernel cmdline tokens (default empty; e.g. "pci=nomsi")
 # ─────────────────────────────────────
 
 NOKASLR="${NOKASLR:-0}"
@@ -22,6 +24,8 @@ NOSMAP="${NOSMAP:-0}"
 USERNS="${USERNS:-0}"
 IO_URING="${IO_URING:-0}"
 HARDENING="${HARDENING:-0}"
+QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS:-}"
+KERNEL_CMDLINE_EXTRA="${KERNEL_CMDLINE_EXTRA:-}"
 
 FLAG_FILE="/run/flag"
 BZIMAGE="/kernel/bzImage"
@@ -61,7 +65,7 @@ if [[ "$IO_URING" == "0" ]]; then
     IO_URING_OPT="sysctl.kernel.io_uring_disabled=2"
 fi
 
-CMDLINE="console=ttyS0 root=/dev/vda1 rootfstype=ext4 rootflags=discard ro $HARDENING_OPTS $USERNS_OPT $IO_URING_OPT $KASLR_OPT init=/home/user/run.sh hostname=exphost"
+CMDLINE="console=ttyS0 root=/dev/vda1 rootfstype=ext4 rootflags=discard ro $HARDENING_OPTS $USERNS_OPT $IO_URING_OPT $KASLR_OPT $KERNEL_CMDLINE_EXTRA init=/home/user/run.sh hostname=exphost"
 
 # ── KVM & CPU flags ──
 
@@ -91,4 +95,5 @@ exec qemu-system-x86_64 \
     -nic user,model=virtio-net-pci \
     -drive "file=$ROOTFS,if=virtio,cache=none,format=$ROOTFS_FORMAT,readonly=on" \
     -drive file=$FLAG_FILE,if=virtio,format=raw,readonly=on \
+    $QEMU_EXTRA_ARGS \
     -append "$CMDLINE"
