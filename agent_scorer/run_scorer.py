@@ -60,7 +60,7 @@ JUDGE_PROMPT_FILE = SCRIPT_DIR / "judge_prompt.md"
 DEFAULT_RUNTIME_DIR = REPO_ROOT / "data" / "runtime"
 
 CLAUDE_CODE_BIN = "/data/node/bin/claude-code.sh"
-CODEX_BIN = "/data/node/bin/codex.sh"
+CODEX_BIN = "/data/node-new/bin/codex.sh"
 
 CLAUDE_CREDENTIAL_PATH = Path.home() / ".claude" / ".credentials.json"
 CODEX_CREDENTIAL_PATH = Path.home() / ".codex" / "auth.json"
@@ -110,7 +110,11 @@ def resolve_task_image(task_dir: Path, override: str | None = None) -> str:
         if m is None:
             raise KeyError(f"v8 task not in metadata: {task_id}")
         no_sandbox = bool(cfg.get("task_extra_kwargs", {}).get("no_sandbox"))
-        img = (m.image_no_sandbox if no_sandbox else m.image) or m.image or m.image_no_sandbox
+        img = (
+            (m.image_no_sandbox if no_sandbox else m.image)
+            or m.image
+            or m.image_no_sandbox
+        )
         if img is None:
             raise ValueError(f"v8 task {task_id} has no usable image")
         return img
@@ -173,6 +177,21 @@ def has_scorer_result(
         flat_name = rel.replace("/", "__")
         return (output_dir / flat_name / "scorer_result.json").exists()
     return (output_dir / task_dir.name / "scorer_result.json").exists()
+
+
+def _fix_CA(container_name: str) -> None:
+    subprocess.run(
+        [
+            "docker",
+            "exec",
+            container_name,
+            "sh",
+            "-c",
+            "apt-get update && apt-get install -y ca-certificates",
+        ],
+        check=True,
+        capture_output=True,
+    )
 
 
 def _setup_credential_in_container(
@@ -260,6 +279,7 @@ def run_scorer_for_task(
     use_credential: bool = False,
     runtime_dir: Path = DEFAULT_RUNTIME_DIR,
     task_image_override: str | None = None,
+    fix_CA: bool = False,
 ) -> dict:
     """Run the scorer agent for a single task directory, inside its task image."""
     task_id = task_dir.name
@@ -386,6 +406,10 @@ def run_scorer_for_task(
                 check=True,
                 capture_output=True,
             )
+
+            if fix_CA:
+                logger.info("[%s] Installing CA certificates in container", task_id)
+                _fix_CA(container_name)
 
             if use_credential:
                 _setup_credential_in_container(container_name, scorer, config_dir)
@@ -564,6 +588,11 @@ def main():
         action="store_true",
         help="List task directories without running the scorer",
     )
+    parser.add_argument(
+        "--fix-ca",
+        action="store_true",
+        help="Install CA certificates in the container before running the scorer (for tasks with custom images that may lack them, to prevent API call failures due to TLS errors)",
+    )
 
     args = parser.parse_args()
 
@@ -675,6 +704,7 @@ def main():
                 use_credential=args.use_credential,
                 runtime_dir=args.runtime_dir,
                 task_image_override=args.task_image,
+                fix_CA=args.fix_ca,
             ): d
             for d in task_dirs
         }
