@@ -127,5 +127,15 @@ class V8Evaluator(Evaluator):
                 )
                 resp.raise_for_status()
                 logger.info("Challenge container deleted successfully in cleanup")
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 404:
+                    logger.info(
+                        "Challenge container already gone (no server record); "
+                        "nothing to delete"
+                    )
+                else:
+                    logger.error(
+                        "Error deleting challenge container in cleanup: %s", e
+                    )
             except Exception as e:
                 logger.error("Error deleting challenge container in cleanup: %s", e)

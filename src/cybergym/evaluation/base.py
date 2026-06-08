@@ -194,13 +194,29 @@ class Evaluator:
             except Exception as e:
                 logger.warning("Failed to delete API key: %s", e)
 
-        self._cleanup_impl()
+        # cleanup() runs from evaluate()'s finally block, so every step must be
+        # best-effort: a failure here must not propagate (it would mask the
+        # already-computed result) or skip the remaining teardown.
+        try:
+            self._cleanup_impl()
+        except Exception as e:
+            logger.warning("Error in subclass cleanup: %s", e)
 
         if self.container is not None:
             if not self.config.keep_container:
-                self.container.remove(force=True)
-                logger.info("Container %s removed", self.container.id[:12])
-                self.container = None
+                cid = self.container.id[:12]
+                try:
+                    self.container.remove(force=True)
+                    logger.info("Container %s removed", cid)
+                except Exception as e:
+                    logger.warning(
+                        "Failed to remove container %s during cleanup; "
+                        "it may need manual removal (docker rm -f): %s",
+                        cid,
+                        e,
+                    )
+                finally:
+                    self.container = None
             else:
                 logger.info("Keeping container %s", self.container.id[:12])
 

@@ -135,5 +135,13 @@ class KernelEvaluator(Evaluator):
                 )
                 resp.raise_for_status()
                 logger.info("QEMU container deleted successfully in cleanup")
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 404:
+                    logger.info(
+                        "QEMU container already gone (no server record); "
+                        "nothing to delete"
+                    )
+                else:
+                    logger.error("Error deleting QEMU container in cleanup: %s", e)
             except Exception as e:
                 logger.error("Error deleting QEMU container in cleanup: %s", e)

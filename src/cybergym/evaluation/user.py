@@ -99,5 +99,13 @@ class UserEvaluator(Evaluator):
                 )
                 resp.raise_for_status()
                 logger.info("Container deleted successfully in cleanup")
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 404:
+                    logger.info(
+                        "Container already gone (no server record); "
+                        "nothing to delete"
+                    )
+                else:
+                    logger.error("Error deleting container in cleanup: %s", e)
             except Exception as e:
                 logger.error("Error deleting container in cleanup: %s", e)
