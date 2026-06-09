@@ -8,6 +8,7 @@ from typing import Callable
 from uuid import uuid4
 
 import docker
+import docker.types
 from docker.models.containers import Container
 
 from cybergym.evaluation.types import (
@@ -22,6 +23,7 @@ from cybergym.task.workspace import prepare_workspace
 from cybergym.utils import (
     APIKeyManager,
     check_system_config,
+    docker_cp_dir_from_container_filtered,
     docker_cp_from_container,
     docker_cp_to_container,
     get_docker_client,
@@ -86,14 +88,22 @@ class Evaluator:
         try:
             if self.config.save_workspace_after_eval:
                 workspace_out = out_dir / "workspace"
-                docker_cp_from_container(
-                    container.id,
-                    "/workspace",
-                    str(workspace_out),
-                )
-                self._prune_large_files(
-                    workspace_out, self.config.save_workspace_max_file_bytes
-                )
+                max_bytes = self.config.save_workspace_max_file_bytes
+                # Filter by size *before* copying so oversized files are never
+                # transferred out of the container. Fall back to a plain copy +
+                # host-side prune if in-container filtering is unavailable.
+                copied = False
+                if max_bytes is not None:
+                    copied = docker_cp_dir_from_container_filtered(
+                        container.id, "/workspace", workspace_out, max_bytes
+                    )
+                if not copied:
+                    docker_cp_from_container(
+                        container.id,
+                        "/workspace",
+                        str(workspace_out),
+                    )
+                    self._prune_large_files(workspace_out, max_bytes)
             self._collect_outputs_impl(container, out_dir)
         except Exception as e:
             logger.exception(
@@ -263,6 +273,14 @@ class Evaluator:
         kwargs: dict = {k: v for k, v in mapping.items() if v is not None}
         if cfg.container_storage_size is not None:
             kwargs["storage_opt"] = {"size": cfg.container_storage_size}
+        if cfg.container_ulimit_core is not None:
+            kwargs["ulimits"] = [
+                docker.types.Ulimit(
+                    name="core",
+                    soft=cfg.container_ulimit_core,
+                    hard=cfg.container_ulimit_core,
+                )
+            ]
         return kwargs
 
     def prepare_workspace(self, workspace_dir: Path) -> str:

@@ -121,6 +121,11 @@ class EvalConfig(BaseModel):
     ``storage_opt={"size": ...}``. Requires a storage driver that supports
     per-container quotas (overlay2 on xfs w/ pquota, btrfs, zfs, devicemapper)."""
 
+    container_ulimit_core: int | None = 64 * 1024 * 1024 * 1024
+    """Core dump size limit in bytes (e.g. 64 GiB). Forwarded to
+    ``ulimits=[docker.types.Ulimit(name="core", soft=..., hard=...)]``.
+    Set to 0 to disable core dumps, or None for inherited."""
+
 
 class CheckResult(BaseModel):
     name: str

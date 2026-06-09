@@ -1,5 +1,9 @@
 import logging
+import shlex
+import shutil
 import subprocess
+import tarfile
+import tempfile
 from functools import lru_cache
 from pathlib import Path
 from typing import Protocol, runtime_checkable
@@ -122,6 +126,73 @@ def docker_cp_from_container(
         stderr=subprocess.STDOUT,
     )
     logger.debug("docker cp output: %s", proc.stdout.decode(errors="replace").rstrip())
+
+
+def docker_cp_dir_from_container_filtered(
+    container_id: str,
+    container_dir: str,
+    host_dir: str | Path,
+    max_bytes: int,
+) -> bool:
+    """Copy the *contents* of ``container_dir`` to ``host_dir``, skipping files
+    larger than ``max_bytes``.
+
+    The filter is applied **inside the container**: a tar of only the
+    small-enough files (plus the directory structure) is built there and
+    streamed out, so oversized files (core dumps, corpora, big binaries) are
+    never transferred over the docker socket. The container filesystem is not
+    modified, so ``--keep-container`` runs retain everything.
+
+    Returns ``True`` on success. Returns ``False`` (without raising) if the
+    in-container tooling is unavailable or the stream fails, so the caller can
+    fall back to a plain copy.
+    """
+    host_dir = Path(host_dir)
+    host_dir.mkdir(parents=True, exist_ok=True)
+
+    # Build a NUL-delimited list of dirs + files <= max_bytes, tar it with
+    # --no-recursion so only the listed entries are archived. `! -size +Nc`
+    # matches files of at most N bytes. Only `tar -cf -` writes to stdout, so
+    # stdout is a clean binary tar stream (no TTY is allocated, so it is not
+    # mangled); diagnostics from find/tar go to stderr.
+    script = (
+        f"cd {shlex.quote(container_dir)} && "
+        f"find . \\( -type d -o \\( -type f ! -size +{int(max_bytes)}c \\) \\) "
+        f"-print0 | tar --null --no-recursion -cf - -T -"
+    )
+
+    def _fail(msg: str) -> bool:
+        # Reset host_dir so the caller's plain-copy fallback starts clean
+        # (docker cp into an existing dir would otherwise nest the result).
+        shutil.rmtree(host_dir, ignore_errors=True)
+        logger.warning(
+            "Filtered copy of %s %s; falling back to plain copy", container_dir, msg
+        )
+        return False
+
+    # stderr -> a real file (not an unread PIPE) so a chatty find/tar can never
+    # fill the pipe buffer and deadlock the producer while we drain stdout.
+    try:
+        with tempfile.TemporaryFile() as errf:
+            proc = subprocess.Popen(
+                ["docker", "exec", container_id, "sh", "-c", script],
+                stdout=subprocess.PIPE,
+                stderr=errf,
+            )
+            try:
+                # Stream the tar straight into extraction; nothing buffered whole.
+                with tarfile.open(fileobj=proc.stdout, mode="r|") as tf:
+                    tf.extractall(host_dir, filter="data")
+            finally:
+                proc.stdout.close()
+                proc.wait()
+            if proc.returncode != 0:
+                errf.seek(0)
+                tail = errf.read().decode(errors="replace").strip()[-300:]
+                return _fail(f"failed (rc={proc.returncode}): {tail}")
+        return True
+    except Exception as e:
+        return _fail(f"raised {e!r}")
 
 
 def docker_exec_stream_with_exit_code(
