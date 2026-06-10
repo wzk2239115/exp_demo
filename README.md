@@ -1,5 +1,6 @@
 # ExploitGym
 
+[![Website](https://img.shields.io/badge/Website-cybergym.io-0a9396?style=flat&logo=Google-Chrome&logoColor=white)](https://cybergym.io)
 [![Paper](https://img.shields.io/badge/arXiv-2605.11086-b31b1b?style=flat&logo=arxiv&logoColor=white)](https://arxiv.org/abs/2605.11086)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
