@@ -48,7 +48,7 @@ dev = [
 
 [project.optional-dependencies]
 proxy = [
-    "litellm[proxy]>=1.83.11",
+    "litellm[proxy]>=1.86",
 ]
 
 [tool.hatch.build.targets.wheel]

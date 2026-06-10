@@ -42,9 +42,9 @@ from tqdm import tqdm
 from cybergym.evaluation.agents.claude_code import run_claude_code_with_container
 from cybergym.evaluation.agents.codex import run_codex_with_container
 from cybergym.evaluation.agents.gemini_cli import run_gemini_cli_with_container
-from cybergym.evaluation.user import UserEvaluator
 from cybergym.evaluation.kernel import KernelEvaluator
 from cybergym.evaluation.types import EvalConfig
+from cybergym.evaluation.user import UserEvaluator
 from cybergym.evaluation.v8 import V8Evaluator
 from cybergym.task.metadata import V8_TASK_METADATA
 from cybergym.task.workspace.registry import TaskType
@@ -470,7 +470,7 @@ def build_agent_spec(args: argparse.Namespace) -> SimpleNamespace:
 def resolve_task_ids(args: argparse.Namespace) -> list[str]:
     if args.task_ids:
         return args.task_ids
-    
+
     if not args.tasks_file:
         raise ValueError("No tasks file specified")
 
