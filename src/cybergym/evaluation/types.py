@@ -1,12 +1,12 @@
 from pathlib import Path
 from typing import Any, NotRequired, TypedDict
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
 from cybergym.task.metadata import KernelDefenseCapability
 from cybergym.task.workspace import TaskType
 from cybergym.task.workspace.user import USER_TASK
-from cybergym.utils import DATA_DIR
+from cybergym.utils import DATA_DIR, APIKeyManager
 
 type JSONValue = Any
 
@@ -135,6 +135,11 @@ class CheckResult(BaseModel):
 
 
 class AgentFnArguments(BaseModel):
+    # key_manager is a runtime object (a runtime_checkable Protocol), not data;
+    # allow it as an arbitrary type (validated via isinstance) rather than a
+    # serializable schema.
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     task_description: str
     runtime_dir_in_container: str
     agent_timeout_seconds: int
@@ -153,6 +158,10 @@ class AgentFnArguments(BaseModel):
     """
 
     disable_web_search: bool = True
+    key_manager: APIKeyManager | None = Field(default=None, exclude=True)
+    """Optional API key manager for handling agent API keys.
+
+    A live runtime handle (excluded from serialization), not config data."""
 
 
 class EvalResult(BaseModel):

@@ -60,7 +60,7 @@ JUDGE_PROMPT_FILE = SCRIPT_DIR / "judge_prompt.md"
 DEFAULT_RUNTIME_DIR = REPO_ROOT / "data" / "runtime"
 
 CLAUDE_CODE_BIN = "/data/node/bin/claude-code.sh"
-CODEX_BIN = "/data/node-new/bin/codex.sh"
+CODEX_BIN = "/data/node/bin/codex.sh"
 
 CLAUDE_CREDENTIAL_PATH = Path.home() / ".claude" / ".credentials.json"
 CODEX_CREDENTIAL_PATH = Path.home() / ".codex" / "auth.json"

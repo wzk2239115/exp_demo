@@ -444,6 +444,7 @@ class Evaluator:
                         extra_kwargs=self.config.agent_extra_kwargs,
                         credential_path=self.config.credential_path,
                         firewall_env=firewall_env,
+                        key_manager=self._key_manager,
                     )
                 )
             except Exception:
