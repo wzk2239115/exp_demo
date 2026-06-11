@@ -226,7 +226,9 @@ class BudgetCallback(CustomLogger):
         else:
             logger.debug("No usage data in SLO or response object")
 
-        if api_key and cost:
+        has_usage_or_cost = cost > 0.0 or any(usage.values())
+
+        if api_key and has_usage_or_cost:
             self.manager.record_usage(api_key, model, usage, cost=cost)
             record = self.manager._keys.get(api_key)
             if record:
@@ -240,8 +242,8 @@ class BudgetCallback(CustomLogger):
                 )
         elif not api_key:
             logger.debug("Skipping record_usage: no API key in context")
-        elif not cost:
-            logger.debug("Skipping record_usage: zero cost reported")
+        elif not has_usage_or_cost:
+            logger.debug("Skipping record_usage: no usage or cost data available")
 
 
 class BudgetAuthMiddleware(BaseHTTPMiddleware):
