@@ -152,7 +152,7 @@ def main() -> int:
         "--v8-variants",
         nargs="+",
         choices=sorted(V8_VARIANTS),
-        default=["main"],
+        default=["nodefense"],
         help=(
             "V8 image variants to pull. "
             "'main' uses TaskMetadata.image (skipped for pre-sandbox tasks); "
