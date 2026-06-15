@@ -4,13 +4,13 @@ import logging
 import re
 import time
 from pathlib import Path
-from typing import Callable
 from uuid import uuid4
 
 import docker
 import docker.types
 from docker.models.containers import Container
 
+from cybergym.evaluation.agents.base import Agent
 from cybergym.evaluation.types import (
     AgentFnArguments,
     CheckResult,
@@ -59,7 +59,7 @@ class Evaluator:
     The full pipeline is run by calling :meth:`evaluate`::
 
         evaluator = MyEvaluator(config)
-        result = evaluator.evaluate(agent_fn)
+        result = evaluator.evaluate(agent)
     """
 
     def __init__(
@@ -298,24 +298,38 @@ class Evaluator:
             **self.config.task_extra_kwargs,
         )
 
-    def evaluate(
-        self,
-        agent_fn: Callable[
-            [
-                AgentFnArguments,
-            ],
-            None,
-        ],
-    ) -> EvalResult:
+    @staticmethod
+    def _switch_network(
+        client,
+        container: Container,
+        from_network: str,
+        to_network: str,
+    ) -> None:
+        """Disconnect *container* from *from_network*, connect it to *to_network*.
+
+        Used to revoke the broad install-proxy network after the install phase
+        and attach the container to the API-only run network. After this, the
+        container has no route to the install proxy.
+        """
+        if from_network == to_network:
+            return
+        client.networks.get(from_network).disconnect(container, force=True)
+        client.networks.get(to_network).connect(container)
+        logger.info("Switched container network: %s -> %s", from_network, to_network)
+
+    def evaluate(self, agent: Agent) -> EvalResult:
         """Run the full evaluation pipeline.
 
         1. Prepare the task workspace via :func:`cybergym.task.workspace.prepare_workspace`.
         2. Start a Docker container from the task image.
         3. Copy the workspace into the container at ``/workspace``.
-        4. Call ``agent_fn(container, prompt)``.
-        5. Call :meth:`collect_outputs` to copy results to ``out_dir/outputs/``.
-        6. Call :meth:`verify` on the collected outputs.
-        7. Persist ``result.json`` and return an :class:`EvalResult`.
+        4. If ``agent`` defines an install phase, run :meth:`Agent.install`
+           with network access, then lock the container down to the API-only
+           run network.
+        5. Call :meth:`Agent.run`.
+        6. Call :meth:`collect_outputs` to copy results to ``out_dir/outputs/``.
+        7. Call :meth:`verify` on the collected outputs.
+        8. Persist ``result.json`` and return an :class:`EvalResult`.
         """
         docker_image = self._resolve_docker_image()
         # Container name: task_id alone identifies both task_type and task;
@@ -348,17 +362,40 @@ class Evaluator:
             "Starting evaluation: task=%s image=%s", self.config.task_id, docker_image
         )
 
-        # Connect to a running firewall proxy if enabled
-        firewall_env: dict[str, str] | None = None
-        network: str | None = None
+        has_install_phase = agent.has_install_phase(self.config.task_type)
+
+        # Connect to the running firewall proxies if enabled. The run proxy
+        # enforces the API-only allowlist used while the agent runs. When there
+        # is an install phase, the allow-all install proxy provides unrestricted
+        # network access first; the container is moved off it afterwards.
+        run_firewall_env: dict[str, str] | None = None
+        install_firewall_env: dict[str, str] | None = None
+        run_network: str | None = None
+        install_network: str | None = None
         if self.config.use_firewall:
-            firewall = FirewallProxyManager()
-            firewall.connect()
-            network = firewall.network_name
-            firewall_env = firewall.env_vars()
+            run_firewall = FirewallProxyManager()
+            run_firewall.connect()
+            run_network = run_firewall.network_name
+            run_firewall_env = run_firewall.env_vars()
             logger.info(
-                "Connected to firewall: network=%s url=%s", network, firewall.proxy_url
+                "Connected to run firewall: network=%s url=%s",
+                run_network,
+                run_firewall.proxy_url,
             )
+            if has_install_phase:
+                install_firewall = FirewallProxyManager.for_install()
+                install_firewall.connect()
+                install_network = install_firewall.network_name
+                install_firewall_env = install_firewall.env_vars()
+                logger.info(
+                    "Connected to install firewall: network=%s url=%s",
+                    install_network,
+                    install_firewall.proxy_url,
+                )
+
+        # Start on the install network when an install phase will run behind the
+        # firewall; otherwise start directly on the API-only run network.
+        startup_network = install_network or run_network
 
         client = get_docker_client()
         try:
@@ -374,7 +411,7 @@ class Evaluator:
                 command=["tail", "-f", "/dev/null"],
                 detach=True,
                 name=container_name,
-                network=network,
+                network=startup_network,
                 volumes=volumes,
                 **self._resource_container_kwargs(),
                 **self._extra_container_kwargs(),
@@ -396,6 +433,23 @@ class Evaluator:
                 workspace_in_container,
             )
             logger.info("Workspace copied to container")
+
+            # Install phase: install dependencies with network access, then
+            # (when behind the firewall) revoke the broad install network and
+            # attach the container to the API-only run network before the agent
+            # runs.
+            if has_install_phase:
+                logger.info("Running install phase")
+                agent.install(
+                    self.container,
+                    env=install_firewall_env,
+                    task_id=self.config.task_id,
+                    task_type=self.config.task_type,
+                )
+                if install_network and run_network:
+                    self._switch_network(
+                        client, self.container, install_network, run_network
+                    )
 
             # Validate that at least one auth source is available
             if (
@@ -432,7 +486,7 @@ class Evaluator:
             tic = time.perf_counter()
 
             try:
-                agent_fn(
+                agent.run(
                     AgentFnArguments(
                         task_description=task_description,
                         container_id=self.container.id,
@@ -443,7 +497,7 @@ class Evaluator:
                         api_key=self._api_key,
                         extra_kwargs=self.config.agent_extra_kwargs,
                         credential_path=self.config.credential_path,
-                        firewall_env=firewall_env,
+                        firewall_env=run_firewall_env,
                         key_manager=self._key_manager,
                     )
                 )

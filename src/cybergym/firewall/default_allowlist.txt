@@ -1,20 +1,10 @@
-# Default domain allowlist for the CyberGym proxy.
+# Default domain allowlist for the CyberGym run proxy.
 # Uses Squid dstdomain format: leading dot matches the domain and all subdomains.
 # Lines starting with # are comments.
-
-# apt install
-archive.ubuntu.com
-security.ubuntu.com
-ppa.launchpadcontent.net
-api.launchpad.net
-launchpad.net
-old-releases.ubuntu.com
-
-# pip install
-pypi.org
-files.pythonhosted.org
-pypi.python.org
-bootstrap.pypa.io
+#
+# This is the AGENT-PHASE allowlist: only LLM API endpoints are permitted.
+# Package installation (apt, pip) happens earlier, in the install phase, which
+# uses the separate allow-all install proxy. See cybergym.firewall.proxy.
 
 # llm apis
 api.openai.com

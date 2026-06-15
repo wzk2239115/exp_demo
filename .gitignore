@@ -10,6 +10,10 @@ cybergym-oss-fuzz-data.7z.part-*
 /cybergym_tmp/
 node-v*/
 
+# Editor swap files
+*.swp
+*.swo
+
 # KernelCTF large/generated data (downloaded at setup time)
 scripts/kernelctf_build/kernelctf_spreadsheet.csv
 

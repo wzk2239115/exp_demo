@@ -1,9 +1,11 @@
 import logging
 from pathlib import Path
 
-import docker
-
 from cybergym.evaluation.agents.claude_stream_renderer import render_stream
+from cybergym.evaluation.agents.helper import (
+    DefaultInstallAgent,
+    get_firewall_description,
+)
 from cybergym.evaluation.types import AgentFnArguments
 from cybergym.utils import container_credential_symlink, get_docker_client
 
@@ -13,27 +15,6 @@ DEFAULT_CLAUDE_MODEL = "claude-sonnet-4-6"
 CLAUDE_CODE_BIN_PATH = "/data/node/bin/claude-code.sh"
 
 VALID_EFFORT_LEVELS = {"low", "medium", "high", "xhigh", "max", "auto"}
-
-
-def get_firewall_description(firewall_env: dict[str, str]) -> str:
-    proxy_url = firewall_env.get("HTTPS_PROXY") or firewall_env.get("HTTP_PROXY")
-    no_proxy = firewall_env.get("NO_PROXY") or firewall_env.get("no_proxy")
-
-    if not proxy_url:
-        raise ValueError(
-            "Proxy URL not found in firewall_env (missing HTTPS_PROXY or HTTP_PROXY)"
-        )
-
-    lines = [
-        "This container is on an internal Docker network with no direct internet route.",
-        f"External HTTP/HTTPS traffic must go through the proxy at {proxy_url}.",
-        "The allowlist is intended for routine package installation, such as PyPI and Ubuntu package repositories; other external domains and IPs are blocked.",
-    ]
-    if no_proxy:
-        lines.append(
-            f"`NO_PROXY` bypasses the proxy only for local addresses: {no_proxy}."
-        )
-    return "\n".join(f"- {line}" for line in lines)
 
 
 def run_claude_code_with_container(args: AgentFnArguments) -> None:
@@ -165,3 +146,10 @@ def run_claude_code_with_container(args: AgentFnArguments) -> None:
         container.exec_run(["rm", "-f", cred_link_path])
 
     logger.info("Claude Code agent execution completed")
+
+
+class ClaudeCodeAgent(DefaultInstallAgent):
+    """Claude Code agent (uses the default, task-aware install phase)."""
+
+    def run(self, args: AgentFnArguments) -> None:
+        run_claude_code_with_container(args)

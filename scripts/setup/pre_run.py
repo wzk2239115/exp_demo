@@ -1,7 +1,8 @@
 """Pre-run readiness check + service startup for cybergym evaluations.
 
 Given a task list, verifies the host is ready to launch agents:
-  - ASLR disabled (kernel.randomize_va_space == 0)
+  - ASLR disabled (kernel.randomize_va_space == 0), or, with --hardened,
+    ASLR enabled (kernel.randomize_va_space != 0)
   - Coredump pattern configured
   - Docker reachable + bridge IP resolvable
   - KVM available + accessible (only when kernel tasks are selected)
@@ -10,7 +11,9 @@ Given a task list, verifies the host is ready to launch agents:
   - PoC data extracted to data/tasks/ for each task
 
 If checks pass, starts the three supporting services in the background:
-  - Firewall (cybergym.firewall)
+  - Firewall (cybergym.firewall) — the API-only run proxy, plus the allow-all
+    install proxy when a selected task family has a non-empty install script
+    (it installs deps during the pre-agent install phase behind that proxy)
   - Controller (cybergym.server)
   - LLM proxy (cybergym.llm_proxy)
 
@@ -24,6 +27,12 @@ Usage:
   uv run scripts/setup/pre_run.py data/task_ids/ready.txt
   uv run scripts/setup/pre_run.py data/task_ids/ready.txt --no-llm-proxy
   uv run scripts/setup/pre_run.py data/task_ids/ready.txt --budget 10
+  uv run scripts/setup/pre_run.py data/task_ids/ready.txt --hardened
+
+--hardened switches to the strict/hardened profile: it requires ASLR enabled,
+checks the hardened image variants (user exp.hardened, v8 strict), and prints
+the matching run_agent.py flags (--user-mode exp.hardened --v8-mode strict
+--kernel-defense strict).
 """
 
 import argparse
@@ -36,8 +45,19 @@ import time
 from pathlib import Path
 
 import docker
-from cybergym.firewall.proxy import PROXY_CONTAINER_NAME
+
+from cybergym.evaluation.agents.helper import task_needs_install
+from cybergym.firewall.proxy import INSTALL_PROXY_CONTAINER_NAME, PROXY_CONTAINER_NAME
 from cybergym.task.metadata import KERNEL_TASK_METADATA, TASK_METADATA, V8_TASK_METADATA
+from cybergym.task.workspace import TaskType
+
+# Map task-id prefixes to their TaskType (for deciding which install scripts
+# apply to the selected tasks).
+_PREFIX_TO_TASK_TYPE = {
+    "kernel:": TaskType.KERNEL_EXPLOITATION,
+    "v8:": TaskType.V8_EXPLOITATION,
+    "user:": TaskType.USER_EXPLOITATION,
+}
 
 COLOR_OK = "\033[32m"
 COLOR_WARN = "\033[33m"
@@ -62,14 +82,25 @@ def fail(msg):
 # ---------------------------------------------------------------------------
 
 
-def check_aslr() -> bool:
-    print("[1/6] ASLR disabled")
+def check_aslr(hardened: bool = False) -> bool:
+    # Hardened profile expects defenses ON (ASLR enabled); the default profile
+    # expects ASLR disabled for deterministic exploitation.
+    print(f"[1/6] ASLR {'enabled' if hardened else 'disabled'}")
     try:
         val = subprocess.check_output(
             ["sysctl", "-n", "kernel.randomize_va_space"], text=True
         ).strip()
     except Exception as e:
         fail(f"could not read sysctl: {e}")
+        return False
+    if hardened:
+        if val != "0":
+            ok(f"kernel.randomize_va_space={val}")
+            return True
+        fail(
+            "kernel.randomize_va_space=0 — hardened mode needs ASLR enabled; "
+            "run: sudo sysctl -w kernel.randomize_va_space=2"
+        )
         return False
     if val == "0":
         ok("kernel.randomize_va_space=0")
@@ -167,25 +198,40 @@ def check_squid(needed: bool) -> bool:
         return False
 
 
-def _images_for_task(task_id, user_modes, v8_variants):
+def _images_for_task(task_id, user_modes, v8_variants, hardened=False):
     if task_id.startswith("user:"):
         meta = TASK_METADATA.get(task_id)
         if meta is None:
             return []
         return [meta.images[m] for m in user_modes if meta.images.get(m)]
     if task_id.startswith("kernel:"):
+        # Kernel defense (incl. --kernel-defense strict) is a runtime bitmap,
+        # not a separate image, so the image is the same in either profile.
         meta = KERNEL_TASK_METADATA.get(task_id)
         return [meta.image_name] if meta else []
     if task_id.startswith("v8:"):
         meta = V8_TASK_METADATA.get(task_id)
         if meta is None:
             return []
+        if hardened:
+            # --v8-mode strict: prefer the sandbox (main) image, fall back to
+            # the nosandbox image.
+            img = meta.image or meta.image_no_sandbox
+            return [img] if img else []
+        # Variant resolution mirrors pull_images.py.
         images = []
         for v in v8_variants:
             if v == "main":
-                images.append(meta.image)
-            elif v == "nosandbox" and meta.image_no_sandbox:
-                images.append(meta.image_no_sandbox)
+                if meta.image:
+                    images.append(meta.image)
+            elif v == "nosandbox":
+                if meta.image_no_sandbox:
+                    images.append(meta.image_no_sandbox)
+            elif v == "nodefense":
+                # Prefer the nosandbox image, fall back to the sandbox image.
+                img = meta.image_no_sandbox or meta.image
+                if img:
+                    images.append(img)
         return images
     meta = TASK_METADATA.get(task_id)
     if meta is None:
@@ -193,14 +239,14 @@ def _images_for_task(task_id, user_modes, v8_variants):
     return [meta.images[m] for m in user_modes if meta.images.get(m)]
 
 
-def check_images(task_ids, user_modes, v8_variants) -> bool:
+def check_images(task_ids, user_modes, v8_variants, hardened=False) -> bool:
     print("[6/6] Target images")
     client = docker.from_env()
     local = {t for img in client.images.list() for t in img.tags}
     missing = {}
     unknown_tasks = []
     for tid in task_ids:
-        imgs = _images_for_task(tid, user_modes, v8_variants)
+        imgs = _images_for_task(tid, user_modes, v8_variants, hardened)
         if not imgs:
             unknown_tasks.append(tid)
             continue
@@ -218,9 +264,12 @@ def check_images(task_ids, user_modes, v8_variants) -> bool:
             print(f"       {tid}: {img}")
     if len(missing) > 5:
         print(f"       ... and {len(missing) - 5} more")
+    # Under --hardened the v8 image is strict-resolved (main or nosandbox);
+    # pull both to cover it, since pull_images has no 'strict' variant.
+    v8_hint = "main nosandbox" if hardened else " ".join(v8_variants)
     print(
         "       To pre-pull: uv run scripts/setup/pull_images.py <tasks> "
-        f"--user-modes {' '.join(user_modes)} --v8-variants {' '.join(v8_variants)}"
+        f"--user-modes {' '.join(user_modes)} --v8-variants {v8_hint}"
     )
     return True
 
@@ -249,10 +298,21 @@ def _http_alive(url: str, timeout: float = 1.0) -> bool:
 
 
 def detect_firewall_running() -> bool:
-    """True if the firewall proxy container is already up."""
+    """True if the (API-only) run proxy container is already up."""
     try:
         client = docker.from_env()
         c = client.containers.get(PROXY_CONTAINER_NAME)
+        c.reload()
+        return c.status == "running"
+    except Exception:
+        return False
+
+
+def detect_install_proxy_running() -> bool:
+    """True if the allow-all install proxy container is already up."""
+    try:
+        client = docker.from_env()
+        c = client.containers.get(INSTALL_PROXY_CONTAINER_NAME)
         c.reload()
         return c.status == "running"
     except Exception:
@@ -268,9 +328,9 @@ def detect_llm_proxy_running(bridge_ip: str, port: int) -> bool:
     """True if an LLM proxy is already serving on bridge_ip:port."""
     if not bridge_ip:
         return False
-    return _http_alive(
-        f"http://{bridge_ip}:{port}/health/liveliness"
-    ) or _http_alive(f"http://{bridge_ip}:{port}/")
+    return _http_alive(f"http://{bridge_ip}:{port}/health/liveliness") or _http_alive(
+        f"http://{bridge_ip}:{port}/"
+    )
 
 
 def extract_admin_key_from_log(log_path: Path) -> str | None:
@@ -308,11 +368,25 @@ def _start_background(cmd, log_path: Path, env=None):
     )
 
 
-def start_firewall(bridge_ip, log_dir: Path) -> bool:
-    print(f"\n→ Firewall (ip={bridge_ip})")
+def start_firewall(bridge_ip, log_dir: Path, with_install: bool) -> bool:
+    # Kernel tasks run an install phase behind the allow-all install proxy, so
+    # bring up both proxies ('both') when kernel tasks are present; otherwise
+    # just the API-only run proxy ('run').
+    which = "both" if with_install else "run"
+    print(f"\n→ Firewall (ip={bridge_ip}, which={which})")
     # firewall start is not long-running — it creates containers and exits.
     r = subprocess.run(
-        ["uv", "run", "-m", "cybergym.firewall", "start", "--ip", bridge_ip],
+        [
+            "uv",
+            "run",
+            "-m",
+            "cybergym.firewall",
+            "start",
+            "--which",
+            which,
+            "--ip",
+            bridge_ip,
+        ],
         capture_output=True,
         text=True,
     )
@@ -320,7 +394,13 @@ def start_firewall(bridge_ip, log_dir: Path) -> bool:
     if r.returncode != 0:
         fail(f"firewall start failed (see {log_dir}/firewall-start.log)")
         return False
-    ok("firewall running (cybergym-internal network + cybergym-proxy container)")
+    if with_install:
+        ok(
+            "firewall running (run proxy: cybergym-internal + cybergym-proxy; "
+            "install proxy: cybergym-install + cybergym-install-proxy)"
+        )
+    else:
+        ok("firewall running (cybergym-internal network + cybergym-proxy container)")
     return True
 
 
@@ -435,17 +515,35 @@ def main():
         "--no-llm-proxy", action="store_true", help="Skip LLM proxy startup"
     )
     parser.add_argument(
+        "--hardened",
+        action="store_true",
+        help=(
+            "Strict/hardened profile: require ASLR enabled, check the hardened "
+            "image variants (user exp.hardened, v8 strict), and print the "
+            "matching run_agent.py flags (--user-mode exp.hardened --v8-mode "
+            "strict --kernel-defense strict). Sets the --user-modes/--v8-variants "
+            "defaults unless you pass them explicitly."
+        ),
+    )
+    parser.add_argument(
         "--user-modes",
         nargs="+",
-        default=["exp.none"],
-        help="Image modes required for user/cybergym tasks (default: exp.none)",
+        default=None,
+        help=(
+            "Image modes required for user/cybergym tasks "
+            "(default: exp.none, or exp.hardened with --hardened)"
+        ),
     )
     parser.add_argument(
         "--v8-variants",
         nargs="+",
-        default=["main"],
-        choices=["main", "nosandbox"],
-        help="V8 image variants required (default: main)",
+        default=None,
+        choices=["main", "nosandbox", "nodefense"],
+        help=(
+            "V8 image variants required (default: nodefense; ignored with "
+            "--hardened, which uses v8 strict). 'nodefense' prefers the "
+            "nosandbox image, falling back to the sandbox image."
+        ),
     )
     parser.add_argument(
         "--data-dir",
@@ -477,6 +575,14 @@ def main():
     )
     args = parser.parse_args()
 
+    # The --hardened preset sets the image-check defaults unless overridden.
+    # v8 image resolution under --hardened uses strict semantics directly, so
+    # --v8-variants is ignored in that case (it only feeds the default profile).
+    if args.user_modes is None:
+        args.user_modes = ["exp.hardened"] if args.hardened else ["exp.none"]
+    if args.v8_variants is None:
+        args.v8_variants = ["nodefense"]
+
     if not args.tasks_file.exists():
         print(f"Task file not found: {args.tasks_file}", file=sys.stderr)
         sys.exit(2)
@@ -493,7 +599,7 @@ def main():
     enabled_proxy = not args.no_llm_proxy
 
     results = [
-        check_aslr(),
+        check_aslr(hardened=args.hardened),
         check_coredump(),
     ]
     docker_ok, bridge_ip = check_docker()
@@ -504,7 +610,9 @@ def main():
     has_kernel_tasks = any(t.startswith("kernel:") for t in task_ids)
     results.append(check_kvm(needed=has_kernel_tasks))
     results.append(check_squid(needed=enabled_firewall))
-    results.append(check_images(task_ids, args.user_modes, args.v8_variants))
+    results.append(
+        check_images(task_ids, args.user_modes, args.v8_variants, args.hardened)
+    )
 
     print()
     if not all(results):
@@ -518,7 +626,22 @@ def main():
     # if so, skip launching a duplicate. A `--no-*` flag disables the service
     # entirely (neither detected nor started).
     print("\nService status:")
-    firewall_running = enabled_firewall and detect_firewall_running()
+    # Task families with a non-empty install script need the allow-all install
+    # proxy up. Treat the firewall as "running" only when every proxy it needs
+    # is up, so a missing install proxy triggers a (idempotent) start of both.
+    present_task_types = {
+        tt
+        for prefix, tt in _PREFIX_TO_TASK_TYPE.items()
+        if any(t.startswith(prefix) for t in task_ids)
+    }
+    need_install_proxy = enabled_firewall and any(
+        task_needs_install(tt) for tt in present_task_types
+    )
+    firewall_running = (
+        enabled_firewall
+        and detect_firewall_running()
+        and (not need_install_proxy or detect_install_proxy_running())
+    )
     controller_running = enabled_controller and detect_controller_running(
         bridge_ip, args.controller_port
     )
@@ -551,7 +674,7 @@ def main():
     log_dir.mkdir(parents=True, exist_ok=True)
 
     if need_start_firewall:
-        if not start_firewall(bridge_ip, log_dir):
+        if not start_firewall(bridge_ip, log_dir, with_install=need_install_proxy):
             sys.exit(1)
 
     controller_proc = None
@@ -583,18 +706,25 @@ def main():
             recovered = extract_admin_key_from_log(log_path)
             if recovered:
                 admin_key = recovered
-                print(f"export CYBERGYM_ADMIN_KEY={admin_key}  # recovered from {log_path}")
+                print(
+                    f"export CYBERGYM_ADMIN_KEY={admin_key}  # recovered from {log_path}"
+                )
             else:
                 print(
                     "# llm_proxy was already running but its admin key was not "
                     f"found in {log_path}; set CYBERGYM_ADMIN_KEY yourself"
                 )
         print(f"  --proxy-url http://{bridge_ip}:{args.proxy_port} \\")
-        print(f"  --proxy-admin-key $CYBERGYM_ADMIN_KEY \\")
+        print("  --proxy-admin-key $CYBERGYM_ADMIN_KEY \\")
     if enabled_controller:
         print(f"  --controller-url http://{bridge_ip}:{args.controller_port} \\")
     if enabled_firewall:
-        print(f"  --use-firewall \\")
+        print("  --use-firewall \\")
+    if args.hardened:
+        # Hardened profile: pass the matching defense flags to run_agent.py.
+        print("  --user-mode exp.hardened \\")
+        print("  --v8-mode strict \\")
+        print("  --kernel-defense strict \\")
     pids = []
     if controller_proc:
         pids.append(f"controller={controller_proc.pid}")
@@ -603,7 +733,10 @@ def main():
     if pids:
         print(f"\nBackground PIDs: {' '.join(pids)}")
         print(f"Logs: {log_dir}/")
-        print("Stop with: kill <pid>  (firewall: uv run -m cybergym.firewall stop)")
+        print(
+            "Stop with: kill <pid>  "
+            "(firewall: uv run -m cybergym.firewall stop --which both)"
+        )
     print("=" * 60)
 
 

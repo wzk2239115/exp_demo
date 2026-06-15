@@ -40,6 +40,17 @@ proxy's `CYBERGYM_ADMIN_KEY` from the proxy log; otherwise it prints the
 freshly generated key. The closing summary lists the exact env vars and
 `run_agent.py` flags to use next.
 
+By default pre_run checks the unhardened images (user `exp.none`, v8
+`nodefense`) and expects ASLR **disabled**. Pass `--hardened` for the
+strict profile: it requires ASLR **enabled**, checks the hardened image
+variants (user `exp.hardened`, v8 strict), and prints the matching
+`run_agent.py` flags (`--user-mode exp.hardened --v8-mode strict
+--kernel-defense strict`).
+
+```bash
+uv run scripts/setup/pre_run.py data/task_ids/sample.txt --hardened
+```
+
 The rest of this section documents the equivalent manual startup, which you
 can use instead of (or to understand) `pre_run.py`.
 
@@ -96,19 +107,26 @@ curl -s -X DELETE -H "x-admin-key: $CYBERGYM_ADMIN_KEY" \
 ## Prepare firewall
 
 Optional. Creates the `cybergym-internal` Docker network and a Squid
-proxy container that only forwards to allowlisted domains. Required if
-you pass `--use-firewall` to `run_agent.py`.
+run proxy that forwards only to the LLM API endpoints. Required if you
+pass `--use-firewall` to `run_agent.py`.
 
 ```bash
 uv run -m cybergym.firewall start --ip $DOCKER_BRIDGE_IP
 ```
 
+The agents' install phase installs task deps behind a separate allow-all
+install proxy. Bring up both with `--which both`:
+
+```bash
+uv run -m cybergym.firewall start --which both --ip $DOCKER_BRIDGE_IP
+```
+
 Status / update (preserves the network) / teardown:
 
 ```bash
-uv run -m cybergym.firewall status
+uv run -m cybergym.firewall status --which both
 uv run -m cybergym.firewall update --domain extra.example.com
-uv run -m cybergym.firewall stop-all
+uv run -m cybergym.firewall stop-all --which both
 ```
 
 When the firewall is up, pass `--network cybergym-internal` to the

@@ -11,6 +11,20 @@ Architecture
     Agent ──(cybergym-internal, no internet)──▶ Squid ──(bridge)──▶ Internet
                                                        filtered by domain
 
+Two proxies, two phases
+-----------------------
+The *run* proxy (this default) enforces an API-only domain allowlist and is
+what the agent sees while it runs. A second *install* proxy
+(``FirewallProxyManager.for_install()``) sits on its own internal network
+(``cybergym-install``) and forwards to **any** destination — it exists only for
+the pre-agent install phase, where the container needs unrestricted network
+access to fetch packages. The evaluator disconnects the container from the
+install network before the agent runs, so the agent has no route to it.
+
+    # Run proxy:     python -m cybergym.firewall start --which run
+    # Install proxy: python -m cybergym.firewall start --which install
+    # Both:          python -m cybergym.firewall start --which both
+
 Usage
 -----
     from cybergym.firewall import FirewallProxyManager, load_allowlist
@@ -55,6 +69,13 @@ PROXY_IMAGE = "ubuntu/squid:latest"
 PROXY_PORT = 3128
 INTERNAL_NETWORK = "cybergym-internal"
 
+# Install proxy: a second, allow-all proxy on its own internal network. Used
+# only during the pre-agent install phase. The agent container is disconnected
+# from this network before the agent runs, so it has no route to this proxy
+# during the agent phase (where only the run proxy's API allowlist applies).
+INSTALL_PROXY_CONTAINER_NAME = "cybergym-install-proxy"
+INSTALL_NETWORK = "cybergym-install"
+
 DEFAULT_ALLOWLIST_PATH = Path(__file__).with_name("default_allowlist.txt")
 
 DOMAIN_ALLOWLIST_CONTAINER_PATH = "/etc/squid/allowed_domains.txt"
@@ -79,6 +100,29 @@ http_access allow CONNECT allowed_domains
 http_access allow allowed_domains
 {ip_rule}
 http_access deny all
+
+http_port {port}
+
+# Disable disk cache
+cache deny all
+
+# Logging (Squid runs as user 'proxy' which cannot write to /dev/stdout)
+access_log /var/log/squid/access.log
+cache_log /var/log/squid/cache.log
+"""
+
+ALLOW_ALL_SQUID_CONF_TEMPLATE = """\
+# --- CyberGym install proxy (allow-all) ---
+# Forwards to any destination. Used only during the install phase; the agent
+# container is disconnected from this proxy's network before the agent runs.
+
+acl SSL_ports port 1-65535
+acl Safe_ports port 1-65535
+acl CONNECT method CONNECT
+
+http_access deny !Safe_ports
+http_access deny CONNECT !SSL_ports
+http_access allow all
 
 http_port {port}
 
@@ -126,10 +170,22 @@ class FirewallProxyManager:
         proxy_port: int = PROXY_PORT,
         container_name: str = PROXY_CONTAINER_NAME,
         network_name: str = INTERNAL_NETWORK,
+        allow_all: bool = False,
     ):
-        self.allowlist_path = Path(allowlist_path or DEFAULT_ALLOWLIST_PATH).resolve()
-        if not self.allowlist_path.is_file():
-            raise FileNotFoundError(f"Allowlist file not found: {self.allowlist_path}")
+        self.allow_all = allow_all
+        if allow_all:
+            # No allowlist needed — the proxy forwards to any destination.
+            self.allowlist_path = (
+                Path(allowlist_path).resolve() if allowlist_path else None
+            )
+        else:
+            self.allowlist_path = Path(
+                allowlist_path or DEFAULT_ALLOWLIST_PATH
+            ).resolve()
+            if not self.allowlist_path.is_file():
+                raise FileNotFoundError(
+                    f"Allowlist file not found: {self.allowlist_path}"
+                )
         self.extra_domains = extra_domains or []
         self.ip_allowlist_path = (
             Path(ip_allowlist_path).resolve() if ip_allowlist_path else None
@@ -145,6 +201,18 @@ class FirewallProxyManager:
         self.container_name = container_name
         self.network_name = network_name
         self._client = docker.from_env()
+
+    @classmethod
+    def for_install(cls, **kwargs) -> "FirewallProxyManager":
+        """Build an allow-all install proxy on its own internal network.
+
+        Used for the pre-agent install phase, where the container needs
+        unrestricted network access to fetch packages. The agent container is
+        disconnected from this network before the agent runs.
+        """
+        kwargs.setdefault("container_name", INSTALL_PROXY_CONTAINER_NAME)
+        kwargs.setdefault("network_name", INSTALL_NETWORK)
+        return cls(allow_all=True, **kwargs)
 
     # -- public API ----------------------------------------------------------
 
@@ -324,17 +392,20 @@ class FirewallProxyManager:
                 name=self.container_name,
             )
 
-            # Build merged allowlist contents (file + extra entries)
-            domain_content = self._build_allowlist(
-                self.allowlist_path, self.extra_domains
-            )
-            ip_content = self._build_allowlist(self.ip_allowlist_path, self.extra_ips)
-
-            # Copy config files into the container
+            # Copy the squid config into the container
             self._put_file(proxy, "/etc/squid/squid.conf", self._generate_squid_conf())
-            self._put_file(proxy, DOMAIN_ALLOWLIST_CONTAINER_PATH, domain_content)
-            if ip_content:
-                self._put_file(proxy, IP_ALLOWLIST_CONTAINER_PATH, ip_content)
+
+            # Allowlist files are only meaningful for the filtering proxy.
+            if not self.allow_all:
+                domain_content = self._build_allowlist(
+                    self.allowlist_path, self.extra_domains
+                )
+                ip_content = self._build_allowlist(
+                    self.ip_allowlist_path, self.extra_ips
+                )
+                self._put_file(proxy, DOMAIN_ALLOWLIST_CONTAINER_PATH, domain_content)
+                if ip_content:
+                    self._put_file(proxy, IP_ALLOWLIST_CONTAINER_PATH, ip_content)
 
             proxy.start()
 
@@ -388,6 +459,9 @@ class FirewallProxyManager:
         return bool(self.ip_allowlist_path or self.extra_ips)
 
     def _generate_squid_conf(self) -> str:
+        if self.allow_all:
+            return ALLOW_ALL_SQUID_CONF_TEMPLATE.format(port=self.proxy_port)
+
         ip_acl = ""
         ip_rule = ""
         ip_connect_rule = ""
@@ -414,11 +488,44 @@ class FirewallProxyManager:
 # ======================================================================
 
 
+def _build_manager(which: str, args: argparse.Namespace) -> "FirewallProxyManager":
+    """Construct the manager for one proxy target ('run' or 'install')."""
+    if which == "install":
+        # The install proxy is allow-all; domain/IP allowlist args don't apply.
+        return FirewallProxyManager.for_install()
+
+    kwargs: dict = {}
+    if getattr(args, "allowlist", None):
+        kwargs["allowlist_path"] = args.allowlist
+    if getattr(args, "domain", None):
+        kwargs["extra_domains"] = args.domain
+    if getattr(args, "ip_allowlist", None):
+        kwargs["ip_allowlist_path"] = args.ip_allowlist
+    if getattr(args, "ip", None):
+        kwargs["extra_ips"] = args.ip
+    return FirewallProxyManager(**kwargs)
+
+
+def _resolve_targets(which: str) -> list[str]:
+    return ["run", "install"] if which == "both" else [which]
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Manage the CyberGym proxy infrastructure.",
     )
     sub = parser.add_subparsers(dest="action", required=True)
+
+    def _add_which(p):
+        p.add_argument(
+            "--which",
+            choices=["run", "install", "both"],
+            default="run",
+            help=(
+                "Which proxy to manage: 'run' (API-only allowlist, default), "
+                "'install' (allow-all install proxy), or 'both'."
+            ),
+        )
 
     # Shared arguments for start/update
     for p in [
@@ -427,57 +534,61 @@ def main():
             "update", help="Restart proxy with current config (network preserved)"
         ),
     ]:
+        _add_which(p)
         p.add_argument(
             "--allowlist",
             type=Path,
-            help="Domain allowlist file (default: built-in list)",
+            help="Domain allowlist file (default: built-in list). Run proxy only.",
         )
-        p.add_argument("--domain", action="append", help="Extra allowed domain")
-        p.add_argument("--ip-allowlist", type=Path, help="IP allowlist file")
-        p.add_argument("--ip", action="append", help="Extra allowed IP/CIDR")
+        p.add_argument(
+            "--domain",
+            action="append",
+            help="Extra allowed domain (run proxy only)",
+        )
+        p.add_argument(
+            "--ip-allowlist",
+            type=Path,
+            help="IP allowlist file (run proxy only)",
+        )
+        p.add_argument(
+            "--ip",
+            action="append",
+            help="Extra allowed IP/CIDR (run proxy only)",
+        )
 
-    sub.add_parser("stop", help="Stop proxy container")
-    sub.add_parser("stop-all", help="Stop proxy and remove network")
-    sub.add_parser("status", help="Show infrastructure state")
+    _add_which(sub.add_parser("stop", help="Stop proxy container"))
+    _add_which(sub.add_parser("stop-all", help="Stop proxy and remove network"))
+    _add_which(sub.add_parser("status", help="Show infrastructure state"))
 
     args = parser.parse_args()
     logging.basicConfig(format="%(asctime)s [%(name)s] %(message)s", level=logging.INFO)
 
-    kwargs: dict = {}
-    if args.action in ("start", "update"):
-        if getattr(args, "allowlist", None):
-            kwargs["allowlist_path"] = args.allowlist
-        if getattr(args, "domain", None):
-            kwargs["extra_domains"] = args.domain
-        if getattr(args, "ip_allowlist", None):
-            kwargs["ip_allowlist_path"] = args.ip_allowlist
-        if getattr(args, "ip", None):
-            kwargs["extra_ips"] = args.ip
-
-    mgr = FirewallProxyManager(**kwargs)
-
-    match args.action:
-        case "start":
-            mgr.start()
-            logger.info(
-                "Proxy ready  url=%s  network=%s  host_gateway=%s",
-                mgr.proxy_url,
-                mgr.network_name,
-                mgr.host_gateway,
-            )
-        case "update":
-            mgr.update()
-            logger.info(
-                "Proxy updated  url=%s  allowlist=%s",
-                mgr.proxy_url,
-                mgr.allowlist_path,
-            )
-        case "stop":
-            mgr.stop()
-        case "stop-all":
-            mgr.stop_all()
-        case "status":
-            print(json.dumps(mgr.status(), indent=2))
+    for which in _resolve_targets(args.which):
+        mgr = _build_manager(which, args)
+        match args.action:
+            case "start":
+                mgr.start()
+                logger.info(
+                    "Proxy ready  which=%s  url=%s  network=%s  host_gateway=%s",
+                    which,
+                    mgr.proxy_url,
+                    mgr.network_name,
+                    mgr.host_gateway,
+                )
+            case "update":
+                mgr.update()
+                logger.info(
+                    "Proxy updated  which=%s  url=%s  allowlist=%s",
+                    which,
+                    mgr.proxy_url,
+                    mgr.allowlist_path,
+                )
+            case "stop":
+                mgr.stop()
+            case "stop-all":
+                mgr.stop_all()
+            case "status":
+                print(json.dumps({which: mgr.status()}, indent=2))
 
 
 if __name__ == "__main__":

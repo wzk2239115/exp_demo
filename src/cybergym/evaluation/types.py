@@ -91,7 +91,15 @@ class EvalConfig(BaseModel):
     When True, the evaluator connects to a running FirewallProxyManager
     instance (started separately via ``python -m cybergym.firewall start``)
     and places the agent container on the internal Docker network.  The
-    firewall's domain allowlist is configured at proxy start time, not here.
+    firewall's domain allowlist (API endpoints only) is configured at proxy
+    start time, not here.
+
+    When an evaluator overrides :meth:`Evaluator._run_install_phase`, the
+    evaluator first attaches the container to the allow-all *install* proxy
+    network (started via ``python -m cybergym.firewall start --which install``),
+    runs the install phase with full network access, then disconnects it from
+    that network and connects it to the API-only run network before invoking
+    the agent.
     """
 
     container_mem_limit: str | None = "8g"

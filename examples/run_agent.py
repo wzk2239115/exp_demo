@@ -39,9 +39,9 @@ from types import SimpleNamespace
 from pydantic import SecretStr
 from tqdm import tqdm
 
-from cybergym.evaluation.agents.claude_code import run_claude_code_with_container
-from cybergym.evaluation.agents.codex import run_codex_with_container
-from cybergym.evaluation.agents.gemini_cli import run_gemini_cli_with_container
+from cybergym.evaluation.agents.claude_code import ClaudeCodeAgent
+from cybergym.evaluation.agents.codex import CodexAgent
+from cybergym.evaluation.agents.gemini_cli import GeminiCliAgent
 from cybergym.evaluation.kernel import KernelEvaluator
 from cybergym.evaluation.types import EvalConfig
 from cybergym.evaluation.user import UserEvaluator
@@ -442,7 +442,7 @@ def infer_task_family(task_id: str) -> TaskFamily:
 def build_agent_spec(args: argparse.Namespace) -> SimpleNamespace:
     if args.agent == "codex":
         return SimpleNamespace(
-            runner=run_codex_with_container,
+            agent=CodexAgent(),
             agent_extra_kwargs={
                 "codex_model": args.model,
                 "reasoning_effort": args.reasoning_effort,
@@ -451,7 +451,7 @@ def build_agent_spec(args: argparse.Namespace) -> SimpleNamespace:
         )
     if args.agent == "claude_code":
         return SimpleNamespace(
-            runner=run_claude_code_with_container,
+            agent=ClaudeCodeAgent(),
             agent_extra_kwargs={
                 "claude_model": args.model,
                 "reasoning_effort": args.reasoning_effort,
@@ -460,7 +460,7 @@ def build_agent_spec(args: argparse.Namespace) -> SimpleNamespace:
         )
     if args.agent == "gemini_cli":
         return SimpleNamespace(
-            runner=run_gemini_cli_with_container,
+            agent=GeminiCliAgent(),
             agent_extra_kwargs={"gemini_model": args.model},
             direct_api_key_env="GEMINI_API_KEY",
         )
@@ -593,7 +593,7 @@ def run_one(
         else:
             raise ValueError(f"Unsupported task family: {family}")
 
-        evaluator.evaluate(agent_fn=agent_spec.runner)
+        evaluator.evaluate(agent_spec.agent)
     except Exception as e:
         logger.exception("Evaluation for %s raised exception: %s", task_id, e)
     finally:

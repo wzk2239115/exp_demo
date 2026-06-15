@@ -3,11 +3,13 @@ import logging
 import os
 from pathlib import Path
 
-import docker
 from docker.models.containers import Container
 
-from cybergym.evaluation.agents.claude_code import get_firewall_description
 from cybergym.evaluation.agents.gemini_stream_renderer import render_stream
+from cybergym.evaluation.agents.helper import (
+    DefaultInstallAgent,
+    get_firewall_description,
+)
 from cybergym.evaluation.types import AgentFnArguments
 from cybergym.utils import container_credential_symlink, get_docker_client
 
@@ -196,3 +198,10 @@ def run_gemini_cli_with_container(args: AgentFnArguments) -> None:
     logger.info("Gemini CLI exit code: %d", exit_code)
 
     logger.info("Gemini CLI agent execution completed")
+
+
+class GeminiCliAgent(DefaultInstallAgent):
+    """Gemini CLI agent (uses the default, task-aware install phase)."""
+
+    def run(self, args: AgentFnArguments) -> None:
+        run_gemini_cli_with_container(args)

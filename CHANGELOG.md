@@ -2,6 +2,20 @@
 
 Notable changes to the ExploitGym benchmark and tooling.
 
+## 2026-06-14
+
+### Tooling
+
+- Firewall split into an API-only **run proxy** and an allow-all **install
+  proxy** on its own network, selected with `--which {run,install,both}`; the
+  default allowlist is now LLM API endpoints only.
+- Added a pre-agent **install phase**: agents (`DefaultInstallAgent`) install
+  per-task-type deps (`INSTALL_SCRIPTS`) via the install proxy, then the
+  container is locked to the API-only run network before the agent runs.
+- `pre_run.py`: added `--hardened` (ASLR-on, hardened images, prints the
+  matching `run_agent.py` flags) and defaulted the v8 image variant to
+  `nodefense`.
+
 ## 2026-06: 1.0 release
 
 The released benchmark may differ from the snapshot evaluated in the

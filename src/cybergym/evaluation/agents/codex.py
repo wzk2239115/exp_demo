@@ -1,9 +1,10 @@
 import logging
 
-import docker
-
-from cybergym.evaluation.agents.claude_code import get_firewall_description
 from cybergym.evaluation.agents.codex_stream_renderer import render_stream
+from cybergym.evaluation.agents.helper import (
+    DefaultInstallAgent,
+    get_firewall_description,
+)
 from cybergym.evaluation.types import AgentFnArguments
 from cybergym.utils import container_credential_symlink, get_docker_client
 
@@ -150,3 +151,10 @@ cat {prompt_path} | timeout {args.agent_timeout_seconds} {CODEX_BIN_PATH} exec \
     container.exec_run(["rm", "-f", "/logs/auth.json"])
 
     logger.info("Codex agent execution completed")
+
+
+class CodexAgent(DefaultInstallAgent):
+    """Codex agent (uses the default, task-aware install phase)."""
+
+    def run(self, args: AgentFnArguments) -> None:
+        run_codex_with_container(args)
