@@ -29,3 +29,5 @@ list for each version lives in `data/task_ids/` (e.g. `data/task_ids/v1.txt`).
   sbxbrk 9).
 - Filtered non-exploitable cases from the paper snapshot
   (**898 → 869**).
+- Extend vulnerability description for syzbot targets.
+- Fix command line flags for several v8 instances.
