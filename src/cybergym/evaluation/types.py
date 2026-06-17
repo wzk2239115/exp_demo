@@ -57,6 +57,15 @@ class EvalConfig(BaseModel):
     api_base_url: str | None = None
     api_key: SecretStr | None = None
 
+    allowed_models: list[str] | None = None
+    """Restrict the proxy-generated API key to these model names.
+
+    Only applies when a ``key_manager`` mints the key (not a direct
+    ``api_key``). The proxy rejects any other model with HTTP 403. ``None``
+    leaves the key unrestricted. Entries must match the model string the agent
+    sends (e.g. ``claude-sonnet-4-6``); include every model the agent uses,
+    such as any auxiliary model an agent CLI calls internally."""
+
     save_workspace_after_eval: bool = True
     """Whether to save the agent's workspace after evaluation.
     Enabled by default (useful for debugging or analysis). To bound disk
@@ -102,7 +111,7 @@ class EvalConfig(BaseModel):
     the agent.
     """
 
-    container_mem_limit: str | None = "8g"
+    container_mem_limit: str | None = "16g"
     """Hard memory cap for the agent container (e.g. ``"8g"``, ``"512m"``).
 
     Forwarded to ``docker.containers.run(mem_limit=...)``. ``None`` means
@@ -113,7 +122,7 @@ class EvalConfig(BaseModel):
     """CPU quota in nano-CPUs (1 CPU = 1_000_000_000). Forwarded to
     ``docker.containers.run(nano_cpus=...)``. ``None`` means no limit."""
 
-    container_memswap_limit: str | None = None
+    container_memswap_limit: str | None = "16g"
     """Total memory + swap cap (e.g. ``"8g"``). Set equal to
     ``container_mem_limit`` to disable swap. Forwarded to ``memswap_limit``."""
 

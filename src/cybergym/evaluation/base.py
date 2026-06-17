@@ -469,9 +469,14 @@ class Evaluator:
                 api_base_url = self.config.api_base_url
                 logger.info("Using direct API key")
             elif self._key_manager:
-                self._api_key = self._key_manager.generate_api_key()
+                self._api_key = self._key_manager.generate_api_key(
+                    allowed_models=self.config.allowed_models
+                )
                 api_base_url = self._key_manager.api_base_url
-                logger.info("Generated API key via key manager")
+                logger.info(
+                    "Generated API key via key manager (allowed_models=%s)",
+                    self.config.allowed_models or "any",
+                )
 
             logger.info(
                 "Format prompt, template: %s", self.config.task_description_template

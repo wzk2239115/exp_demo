@@ -9,12 +9,17 @@ from cybergym.llm_proxy import server
 from cybergym.llm_proxy.budget import BudgetManager
 
 
-def _make_client(manager: BudgetManager, master_key: str = "sk-test") -> TestClient:
+def _make_client(
+    manager: BudgetManager,
+    master_key: str = "sk-test",
+    block_web_search: bool = True,
+) -> TestClient:
     app = FastAPI()
     app.add_middleware(
         server.BudgetAuthMiddleware,
         manager=manager,
         master_key=master_key,
+        block_web_search=block_web_search,
     )
 
     @app.post("/v1/messages")
@@ -332,7 +337,10 @@ class TestPerModelUsage:
             ("anthropic/claude-opus-4-7", 800, 150, 0.30),
         ]:
             manager.record_usage(
-                key, model, {"input_tokens": in_tok, "output_tokens": out_tok}, cost=cost
+                key,
+                model,
+                {"input_tokens": in_tok, "output_tokens": out_tok},
+                cost=cost,
             )
         usage = manager.get_usage(key)
         models = usage["models"]
@@ -438,3 +446,440 @@ class TestTracebackRedaction:
         response = TestClient(app).get("/boom-text")
         assert response.status_code == 500
         assert response.text == "Traceback (most recent call last): opaque"
+
+
+class TestWebSearchDetector:
+    """Unit tests for the vendored web-search detector."""
+
+    def test_none_for_benign_requests(self):
+        from cybergym.llm_proxy.websearch import find_web_search
+
+        assert find_web_search({"model": "claude-sonnet-4-6"}) is None
+        assert find_web_search({"model": "gpt-5.3", "tools": []}) is None
+        # A user-defined tool that is not web search.
+        assert (
+            find_web_search(
+                {"tools": [{"type": "function", "function": {"name": "calc"}}]}
+            )
+            is None
+        )
+        # A prompt that merely mentions web search must not trip the detector.
+        assert (
+            find_web_search(
+                {"messages": [{"role": "user", "content": "use web_search please"}]}
+            )
+            is None
+        )
+        assert find_web_search(None) is None
+        assert find_web_search("not a dict") is None
+
+    def test_web_search_models(self):
+        from cybergym.llm_proxy.websearch import find_web_search
+
+        assert find_web_search({"model": "gpt-4o-search-preview"})
+        assert find_web_search({"model": "gpt-4o-mini-search-preview-2025-03-11"})
+        # search-api family (e.g. gpt-5-search-api), incl. the provider prefix.
+        assert find_web_search({"model": "gpt-5-search-api"})
+        assert find_web_search({"model": "openai/gpt-5-search-api"})
+
+    def test_non_search_models_not_flagged(self):
+        from cybergym.llm_proxy.websearch import find_web_search
+
+        assert find_web_search({"model": "gpt-5.3"}) is None
+        assert find_web_search({"model": "o3"}) is None
+        assert find_web_search({"model": "claude-sonnet-4-6"}) is None
+
+    def test_deep_research_models_blocked(self):
+        from cybergym.llm_proxy.websearch import find_web_search
+
+        # Deep-research models require an external data source, so deny them.
+        assert find_web_search({"model": "o4-mini-deep-research"})
+        assert find_web_search({"model": "openai/o3-deep-research-2025-06-26"})
+
+    def test_model_in_route_path_blocked(self):
+        from cybergym.llm_proxy.websearch import find_web_search
+
+        # A blocked model named in a Gemini-style route path is still caught.
+        assert find_web_search({}, "/v1beta/models/o3-deep-research:generateContent")
+        # A benign model in the path is fine.
+        assert (
+            find_web_search({}, "/v1beta/models/gemini-2.5-pro:generateContent") is None
+        )
+
+    def test_mcp_blocked(self):
+        from cybergym.llm_proxy.websearch import find_web_search
+
+        # OpenAI remote MCP tool.
+        assert find_web_search(
+            {"tools": [{"type": "mcp", "server_url": "https://mcp.example/x"}]}
+        )
+        # Anthropic MCP connector list.
+        assert find_web_search({"mcp_servers": [{"url": "https://mcp.example/x"}]})
+        # A server_url buried anywhere in the body.
+        assert find_web_search(
+            {"input": [{"tool": {"server_url": "https://mcp.example/x"}}]}
+        )
+
+    def test_remote_file_and_url_inputs_blocked(self):
+        from cybergym.llm_proxy.websearch import find_web_search
+
+        # OpenAI Responses input_file by URL.
+        assert find_web_search(
+            {"input": [{"type": "input_file", "file_url": "https://x/src.c"}]}
+        )
+        # Anthropic URL document source.
+        assert find_web_search(
+            {
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "document",
+                                "source": {"type": "url", "url": "https://x/src.c"},
+                            }
+                        ],
+                    }
+                ]
+            }
+        )
+
+    def test_hosted_code_and_retrieval_tools_blocked(self):
+        from cybergym.llm_proxy.websearch import find_web_search
+
+        assert find_web_search({"tools": [{"type": "code_interpreter"}]})
+        assert find_web_search({"tools": [{"type": "code_execution_20250522"}]})
+        assert find_web_search({"tools": [{"type": "file_search"}]})
+
+    def test_gemini_url_context_and_enterprise_search_blocked(self):
+        from cybergym.llm_proxy.websearch import find_web_search
+
+        assert find_web_search({"tools": [{"url_context": {}}]})
+        assert find_web_search({"tools": [{"urlContext": {}}]})
+        assert find_web_search({"tools": [{"enterprise_web_search": {}}]})
+
+    def test_client_side_tools_not_blocked(self):
+        from cybergym.llm_proxy.websearch import find_web_search
+
+        # Anthropic client-executed tools (Claude Code) must pass through.
+        assert (
+            find_web_search({"tools": [{"type": "bash_20250124", "name": "bash"}]})
+            is None
+        )
+        assert (
+            find_web_search(
+                {"tools": [{"type": "text_editor_20250124", "name": "str_replace"}]}
+            )
+            is None
+        )
+        # Anthropic custom tool (client-defined, with its own schema).
+        assert (
+            find_web_search(
+                {"tools": [{"name": "run_tests", "input_schema": {"type": "object"}}]}
+            )
+            is None
+        )
+        # A function tool whose JSON schema declares a param named "file_url"
+        # must not be flagged (only string-valued file_url fields are fetches).
+        assert (
+            find_web_search(
+                {
+                    "tools": [
+                        {
+                            "type": "function",
+                            "function": {
+                                "name": "fetch",
+                                "parameters": {
+                                    "properties": {"file_url": {"type": "string"}}
+                                },
+                            },
+                        }
+                    ]
+                }
+            )
+            is None
+        )
+        # A function param named "image_url" (schema dict, no url) is not a fetch.
+        assert (
+            find_web_search(
+                {
+                    "tools": [
+                        {
+                            "type": "function",
+                            "function": {
+                                "name": "f",
+                                "parameters": {
+                                    "properties": {"image_url": {"type": "string"}}
+                                },
+                            },
+                        }
+                    ]
+                }
+            )
+            is None
+        )
+
+    def test_remote_image_url_blocked(self):
+        from cybergym.llm_proxy.websearch import find_web_search
+
+        # OpenAI Chat Completions object form.
+        assert find_web_search(
+            {
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image_url",
+                                "image_url": {"url": "https://x/a.png"},
+                            }
+                        ],
+                    }
+                ]
+            }
+        )
+        # OpenAI Responses string form.
+        assert find_web_search(
+            {"input": [{"type": "input_image", "image_url": "https://x/a.png"}]}
+        )
+        # Inline data: image is not an external fetch.
+        assert (
+            find_web_search(
+                {
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "image_url",
+                                    "image_url": {"url": "data:image/png;base64,AAAA"},
+                                }
+                            ],
+                        }
+                    ]
+                }
+            )
+            is None
+        )
+
+    def test_gemini_file_uri_blocked(self):
+        from cybergym.llm_proxy.websearch import find_web_search
+
+        assert find_web_search(
+            {
+                "contents": [
+                    {"parts": [{"file_data": {"file_uri": "https://youtu.be/x"}}]}
+                ]
+            }
+        )
+        assert find_web_search(
+            {"contents": [{"parts": [{"fileData": {"fileUri": "gs://bucket/x"}}]}]}
+        )
+
+    def test_hosted_shell_network_policy_blocked(self):
+        from cybergym.llm_proxy.websearch import find_web_search
+
+        assert find_web_search(
+            {"tools": [{"type": "shell", "network_policy": {"allowed_domains": ["x"]}}]}
+        )
+
+    def test_openai_web_search_options(self):
+        from cybergym.llm_proxy.websearch import find_web_search
+
+        assert find_web_search({"model": "gpt-5.3", "web_search_options": {}})
+
+    def test_anthropic_web_search_and_fetch_tools(self):
+        from cybergym.llm_proxy.websearch import find_web_search
+
+        # Claude Code's native shape.
+        assert find_web_search(
+            {"tools": [{"type": "web_search_20250305", "name": "web_search"}]}
+        )
+        # Future-dated version still caught by the prefix.
+        assert find_web_search({"tools": [{"type": "web_search_20260209"}]})
+        # Web fetch tool.
+        assert find_web_search({"tools": [{"type": "web_fetch_20250910"}]})
+
+    def test_openai_responses_web_search_tools(self):
+        from cybergym.llm_proxy.websearch import find_web_search
+
+        assert find_web_search({"tools": [{"type": "web_search"}]})
+        assert find_web_search({"tools": [{"type": "web_search_preview"}]})
+
+    def test_litellm_and_legacy_tool_names(self):
+        from cybergym.llm_proxy.websearch import find_web_search
+
+        assert find_web_search({"tools": [{"name": "litellm_web_search"}]})
+        assert find_web_search({"tools": [{"name": "WebSearch"}]})
+        assert find_web_search(
+            {
+                "tools": [
+                    {"type": "function", "function": {"name": "litellm_web_search"}}
+                ]
+            }
+        )
+
+    def test_gemini_grounding_tools(self):
+        from cybergym.llm_proxy.websearch import find_web_search
+
+        assert find_web_search({"tools": [{"google_search": {}}]})
+        assert find_web_search({"tools": [{"googleSearch": {}}]})
+        assert find_web_search({"tools": [{"google_search_retrieval": {}}]})
+        # Gemini may send `tools` as a single object rather than a list.
+        assert find_web_search({"tools": {"google_search": {}}})
+
+
+class TestWebSearchBlocking:
+    """Middleware-level web-search blocking."""
+
+    def test_web_search_request_is_blocked(self):
+        manager = BudgetManager()
+        key = manager.generate_key()
+        client = _make_client(manager)
+
+        response = client.post(
+            "/v1/messages",
+            headers={"authorization": f"Bearer {key}"},
+            json={"tools": [{"type": "web_search_20250305", "name": "web_search"}]},
+        )
+        assert response.status_code == 403
+        assert response.json()["error"]["type"] == "web_search_blocked"
+
+    def test_remote_fetch_request_is_blocked(self):
+        # A non-web-search egress vector (remote file URL) is also blocked.
+        manager = BudgetManager()
+        key = manager.generate_key()
+        client = _make_client(manager)
+
+        response = client.post(
+            "/v1/messages",
+            headers={"authorization": f"Bearer {key}"},
+            json={"input": [{"type": "input_file", "file_url": "https://x/src.c"}]},
+        )
+        assert response.status_code == 403
+        assert response.json()["error"]["type"] == "web_search_blocked"
+
+    def test_web_search_allowed_when_disabled(self):
+        # With block_web_search=False the same request is forwarded.
+        manager = BudgetManager()
+        key = manager.generate_key()
+        client = _make_client(manager, block_web_search=False)
+
+        response = client.post(
+            "/v1/messages",
+            headers={"authorization": f"Bearer {key}"},
+            json={"tools": [{"type": "web_search_20250305", "name": "web_search"}]},
+        )
+        assert response.status_code == 200
+
+    def test_web_search_not_billed(self):
+        # A blocked request must not consume budget.
+        manager = BudgetManager(default_max_budget=5.0)
+        key = manager.generate_key(max_budget=5.0)
+        client = _make_client(manager)
+
+        client.post(
+            "/v1/messages",
+            headers={"authorization": f"Bearer {key}"},
+            json={"model": "gpt-4o-search-preview"},
+        )
+        assert manager.get_usage(key)["spend"] == 0.0
+
+    def test_benign_request_passes_through_with_body(self):
+        # Verifies the body is replayed to the downstream app after inspection.
+        manager = BudgetManager()
+        key = manager.generate_key()
+
+        app = FastAPI()
+        app.add_middleware(
+            server.BudgetAuthMiddleware, manager=manager, master_key="sk-test"
+        )
+
+        @app.post("/v1/messages")
+        async def echo_body(request: Request):
+            body = await request.json()
+            return JSONResponse({"received": body})
+
+        client = TestClient(app)
+        payload = {
+            "model": "claude-sonnet-4-6",
+            "messages": [{"role": "user", "content": "hi"}],
+        }
+        response = client.post(
+            "/v1/messages",
+            headers={"authorization": f"Bearer {key}"},
+            json=payload,
+        )
+        assert response.status_code == 200
+        assert response.json()["received"] == payload
+
+
+class TestModelAllowlist:
+    """Per-key model allowlist."""
+
+    def test_generate_key_stores_allowed_models(self):
+        manager = BudgetManager()
+        key = manager.generate_key(allowed_models=["claude-sonnet-4-6"])
+        record = manager.validate_key(key)
+        assert record.allowed_models == frozenset({"claude-sonnet-4-6"})
+        assert manager.get_usage(key)["allowed_models"] == ["claude-sonnet-4-6"]
+
+    def test_no_allowlist_allows_any_model(self):
+        manager = BudgetManager()
+        key = manager.generate_key()  # no allowed_models -> unrestricted
+        assert manager.validate_key(key).allowed_models is None
+        client = _make_client(manager)
+
+        response = client.post(
+            "/v1/messages",
+            headers={"authorization": f"Bearer {key}"},
+            json={"model": "anything-goes"},
+        )
+        assert response.status_code == 200
+
+    def test_allowed_model_passes(self):
+        manager = BudgetManager()
+        key = manager.generate_key(allowed_models=["claude-sonnet-4-6"])
+        client = _make_client(manager)
+
+        response = client.post(
+            "/v1/messages",
+            headers={"authorization": f"Bearer {key}"},
+            json={"model": "claude-sonnet-4-6", "messages": []},
+        )
+        assert response.status_code == 200
+
+    def test_disallowed_model_blocked(self):
+        manager = BudgetManager(default_max_budget=5.0)
+        key = manager.generate_key(max_budget=5.0, allowed_models=["claude-sonnet-4-6"])
+        client = _make_client(manager)
+
+        response = client.post(
+            "/v1/messages",
+            headers={"authorization": f"Bearer {key}"},
+            json={"model": "gpt-5.3", "messages": []},
+        )
+        assert response.status_code == 403
+        assert response.json()["error"]["type"] == "model_not_allowed"
+        # A blocked request must not consume budget.
+        assert manager.get_usage(key)["spend"] == 0.0
+
+    def test_allowlist_matches_model_in_route_path(self):
+        manager = BudgetManager()
+        key = manager.generate_key(allowed_models=["gemini-2.5-pro"])
+        client = _make_client(manager)
+
+        allowed = client.post(
+            "/models/gemini-2.5-pro:countTokens",
+            headers={"authorization": f"Bearer {key}"},
+            json={},
+        )
+        assert allowed.status_code == 200
+
+        denied = client.post(
+            "/models/gemini-2.5-flash:countTokens",
+            headers={"authorization": f"Bearer {key}"},
+            json={},
+        )
+        assert denied.status_code == 403
+        assert denied.json()["error"]["type"] == "model_not_allowed"

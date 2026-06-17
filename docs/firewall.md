@@ -102,6 +102,12 @@ install proxy (see [Install phase](#install-phase) below).
 Pass `--allowlist` to replace the default, or `--domain` to add entries
 on top of it.
 
+> **Warning:** This network firewall cannot block **provider-side retrieval**
+> (web search, MCP, remote file/URL inputs, deep-research) — that traffic
+> comes from the provider, not the container. Only the
+> [llm_proxy](eval.md#prepare-local-litellm-proxy) enforces that block; CLI
+> flags don't, since a process can `curl` the allowlisted endpoint directly.
+
 ## Install phase
 
 Some tasks need build tooling and packages installed before the agent runs.

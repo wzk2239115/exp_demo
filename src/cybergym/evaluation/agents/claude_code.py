@@ -2,10 +2,7 @@ import logging
 from pathlib import Path
 
 from cybergym.evaluation.agents.claude_stream_renderer import render_stream
-from cybergym.evaluation.agents.helper import (
-    DefaultInstallAgent,
-    get_firewall_description,
-)
+from cybergym.evaluation.agents.helper import DefaultInstallAgent
 from cybergym.evaluation.types import AgentFnArguments
 from cybergym.utils import container_credential_symlink, get_docker_client
 
@@ -67,8 +64,6 @@ def run_claude_code_with_container(args: AgentFnArguments) -> None:
         logger.info("Symlinked credential file in container: %s", cred_link_path)
 
     prompt = args.task_description
-    if args.firewall_env:
-        prompt += f"\n\n---\n\nFirewall:\n{get_firewall_description(args.firewall_env)}"
 
     prompt_path = "/tmp/prompt.txt"
     container.exec_run(

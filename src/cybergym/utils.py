@@ -273,7 +273,11 @@ class APIKeyManager(Protocol):
     @property
     def api_base_url(self) -> str: ...
 
-    def generate_api_key(self, max_budget: float | None = None) -> str: ...
+    def generate_api_key(
+        self,
+        max_budget: float | None = None,
+        allowed_models: list[str] | None = None,
+    ) -> str: ...
 
     def get_api_key_usage(self, api_key: str) -> dict: ...
 
@@ -291,6 +295,7 @@ class LiteLLMAPIKeyManager:
         litellm_team_id: str | None = None,
         default_max_budget: float = 5.0,
         api_key_alias_prefix: str = "rmit-",
+        default_allowed_models: list[str] | None = None,
     ):
         self.default_max_budget = default_max_budget
         self.litellm_base_url = litellm_base_url
@@ -298,6 +303,7 @@ class LiteLLMAPIKeyManager:
         self.litellm_user_id = litellm_user_id
         self.litellm_team_id = litellm_team_id
         self.api_key_alias_prefix = api_key_alias_prefix
+        self.default_allowed_models = default_allowed_models
         self._alive_keys: set[str] = set()
         self._deleted_keys: set[str] = set()
 
@@ -305,7 +311,11 @@ class LiteLLMAPIKeyManager:
     def api_base_url(self) -> str:
         return self.litellm_base_url
 
-    def generate_api_key(self, max_budget: float | None = None) -> str:
+    def generate_api_key(
+        self,
+        max_budget: float | None = None,
+        allowed_models: list[str] | None = None,
+    ) -> str:
         logger.info(
             "Generating LiteLLM API key with max_budget=%.2f",
             max_budget or self.default_max_budget,
@@ -315,6 +325,14 @@ class LiteLLMAPIKeyManager:
             "key_alias": self.api_key_alias_prefix + str(uuid4()),
             "allowed_routes": ["llm_api_routes"],
         }
+        # litellm restricts a key to specific models via its `models` field.
+        models = (
+            allowed_models
+            if allowed_models is not None
+            else self.default_allowed_models
+        )
+        if models:
+            params["models"] = list(models)
         if self.litellm_user_id:
             params["user_id"] = self.litellm_user_id
         if self.litellm_team_id:

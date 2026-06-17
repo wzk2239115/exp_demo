@@ -60,6 +60,26 @@ Skip if you plan to run with `--use-api-key` (no budget tracking). The
 proxy wraps LiteLLM with per-key budget gating; traffic is forwarded
 directly to the upstream provider (e.g. `api.anthropic.com`).
 
+The proxy also blocks **provider-side external retrieval** by default —
+features the provider runs on its own servers, which reach the internet
+regardless of the container firewall. Requests are rejected with HTTP 403
+(`web_search_blocked`) when they use a web-search / web-fetch tool,
+`web_search_options`, Gemini grounding / URL context, a remote MCP tool
+or connector (`mcp_servers`, `server_url`), a remote `file_url` /
+`image_url` / Gemini `file_uri` / URL source, hosted code execution /
+file search, a network-enabled hosted shell (`network_policy`), or a
+hosted web-search / deep-research model (e.g. `*-search-preview`,
+`*-search-api`, `*-deep-research`). Inline `data:` images and client-side
+tools the agent runs itself are not affected. Pass `--allow-web-search` to
+disable this guard. Detection lives in `src/cybergym/llm_proxy/websearch.py`.
+
+Keys can also be scoped to specific models: pass `allowed_models` to
+`/budget/generate_key` (or `ProxyKeyManager.generate_api_key(allowed_models=...)`,
+`EvalConfig(allowed_models=...)`, or `run_agent.py --allowed-models`) and the
+proxy rejects any other model with HTTP 403 (`model_not_allowed`). Omitting it
+leaves the key unrestricted; `--allowed-models` with no value scopes keys to
+the run's `--model` (include any auxiliary model the agent calls internally).
+
 ```bash
 export PROXY_PORT=4000
 export CYBERGYM_ADMIN_KEY=cgym-admin-$(openssl rand -hex 12)
@@ -226,6 +246,27 @@ uv run examples/run_agent.py --agent codex --budget 5.00
 
 `--proxy-admin-key` can be omitted if `CYBERGYM_ADMIN_KEY` is already
 exported.
+
+With a proxy or LiteLLM backend (modes B/C), `--allowed-models` scopes each
+generated key to specific models — the proxy rejects any other with HTTP 403
+(`model_not_allowed`). Pass it with no value to scope keys to the run's
+`--model`, or list models explicitly; include any auxiliary model the agent
+calls internally (e.g. a Gemini classifier model). It has no effect with
+`--use-api-key`.
+
+```bash
+# Restrict the key to exactly the model this run uses
+uv run examples/run_agent.py --agent claude_code \
+    --proxy-url http://$DOCKER_BRIDGE_IP:$PROXY_PORT \
+    --proxy-admin-key $CYBERGYM_ADMIN_KEY \
+    --budget 5.00 --model claude-sonnet-4-6 --allowed-models
+```
+
+> **Warning:** Only the proxy (mode B) enforces the external-retrieval block.
+> Modes A and C hit the official endpoints directly, where it does not apply —
+> and the per-agent CLI flags are no substitute, since anything in the
+> container can `curl` the allowlisted endpoint itself. Treat official
+> endpoints as having no retrieval enforcement.
 
 ### Common workflows
 

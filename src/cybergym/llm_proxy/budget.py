@@ -71,6 +71,10 @@ class ModelUsage:
 class KeyRecord:
     key: str
     max_budget: float
+    # Models this key may call. None means no restriction (any model). Matched
+    # exactly against the model string in the request (body `model` or, for
+    # Gemini, the route path).
+    allowed_models: frozenset[str] | None = None
     spend: float = 0.0
     input_tokens: int = 0
     output_tokens: int = 0
@@ -98,14 +102,29 @@ class BudgetManager:
         self._keys: dict[str, KeyRecord] = {}
         self._lock = threading.Lock()
 
-    def generate_key(self, max_budget: float | None = None) -> str:
-        """Create a new API key with a budget. Returns the key string."""
+    def generate_key(
+        self,
+        max_budget: float | None = None,
+        allowed_models: list[str] | None = None,
+    ) -> str:
+        """Create a new API key with a budget. Returns the key string.
+
+        If *allowed_models* is given, the key may only call those models
+        (matched exactly against the request's model string); None allows any.
+        """
         key = f"cgym-{uuid4().hex[:24]}"
         budget = max_budget or self.default_max_budget
+        allowed = frozenset(allowed_models) if allowed_models else None
         with self._lock:
-            self._keys[key] = KeyRecord(key=key, max_budget=budget)
+            self._keys[key] = KeyRecord(
+                key=key, max_budget=budget, allowed_models=allowed
+            )
         logger.info(
-            "Generated key %s...%s with budget $%.2f", key[:8], key[-4:], budget
+            "Generated key %s...%s with budget $%.2f (models=%s)",
+            key[:8],
+            key[-4:],
+            budget,
+            sorted(allowed) if allowed else "any",
         )
         return key
 
@@ -219,6 +238,9 @@ class BudgetManager:
                 "spend": record.spend,
                 "max_budget": record.max_budget,
                 "remaining": max(0, record.max_budget - record.spend),
+                "allowed_models": (
+                    sorted(record.allowed_models) if record.allowed_models else None
+                ),
                 "input_tokens": record.input_tokens,
                 "output_tokens": record.output_tokens,
                 "cache_read_tokens": record.cache_read_tokens,

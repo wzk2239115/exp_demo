@@ -16,6 +16,7 @@ Usage:
 import json
 import logging
 import os
+import re
 import secrets
 from contextvars import ContextVar
 from urllib.parse import parse_qsl, urlencode
@@ -38,6 +39,7 @@ from starlette.responses import Response
 from starlette.routing import compile_path
 
 from cybergym.llm_proxy.budget import BudgetManager
+from cybergym.llm_proxy.websearch import find_web_search
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +110,19 @@ def _is_inference_route(path: str) -> bool:
 # SpecialHeaders enum consumed by litellm/proxy/auth/user_api_key_auth.py::get_api_key.
 _AUTHORIZATION_HEADER = SpecialHeaders.openai_authorization.value.lower()
 _LITELLM_AUTH_HEADERS = frozenset(h.value.lower() for h in SpecialHeaders)
+
+
+# Model named in a Gemini-style route path, e.g.
+# /v1beta/models/<model>:generateContent
+_PATH_MODEL_RE = re.compile(r"/models/([^/:]+)")
+
+
+def _request_model(body: object, path: str) -> str | None:
+    """Return the model the request targets (body `model` or Gemini route path)."""
+    if isinstance(body, dict) and isinstance(body.get("model"), str):
+        return body["model"]
+    match = _PATH_MODEL_RE.search(path or "")
+    return match.group(1) if match else None
 
 
 def _extract_api_key(request: Request) -> str:
@@ -255,10 +270,17 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
     request headers for the callback to pick up.
     """
 
-    def __init__(self, app, manager: BudgetManager, master_key: str):
+    def __init__(
+        self,
+        app,
+        manager: BudgetManager,
+        master_key: str,
+        block_web_search: bool = True,
+    ):
         super().__init__(app)
         self.manager = manager
         self.master_key = master_key
+        self.block_web_search = block_web_search
 
     async def dispatch(self, request: Request, call_next) -> Response:
         path = request.url.path
@@ -347,6 +369,78 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
             record.spend,
             record.max_budget,
         )
+
+        # Body-level policy checks. We parse the JSON body once and run both the
+        # external-retrieval guard and the per-key model allowlist on it, here in
+        # the one chokepoint that sees every route including the provider
+        # pass-through prefixes (litellm's pass-through handlers skip its
+        # guardrail pre-call hooks). Starlette's BaseHTTPMiddleware caches
+        # request.body() and replays it to the downstream app, so reading it
+        # here does not consume the stream.
+        enforce_models = record.allowed_models is not None
+        if (self.block_web_search or enforce_models) and request.method in (
+            "POST",
+            "PUT",
+            "PATCH",
+        ):
+            raw_body = await request.body()
+            parsed_body = None
+            if raw_body:
+                try:
+                    parsed_body = json.loads(raw_body)
+                except ValueError:
+                    parsed_body = None
+
+            # Reject provider-side external retrieval (web search, web fetch,
+            # remote MCP, file/URL inputs, hosted code execution, deep-research
+            # models) — these run on the provider's servers and bypass the
+            # container firewall. Disabled via --allow-web-search.
+            if self.block_web_search:
+                reason = find_web_search(parsed_body, path)
+                if reason is not None:
+                    logger.info(
+                        "Rejected external-retrieval request for key %s (%s): %s %s",
+                        key_hint,
+                        reason,
+                        request.method,
+                        path,
+                    )
+                    return JSONResponse(
+                        status_code=403,
+                        content={
+                            "error": {
+                                "message": (
+                                    "Request blocked by proxy policy "
+                                    f"(external retrieval disabled): {reason}"
+                                ),
+                                "type": "web_search_blocked",
+                            }
+                        },
+                    )
+
+            # Enforce the per-key model allowlist (when set on the key).
+            if enforce_models:
+                model = _request_model(parsed_body, path)
+                if model is not None and model not in record.allowed_models:
+                    logger.info(
+                        "Rejected model '%s' for key %s (allowed: %s): %s %s",
+                        model,
+                        key_hint,
+                        sorted(record.allowed_models),
+                        request.method,
+                        path,
+                    )
+                    return JSONResponse(
+                        status_code=403,
+                        content={
+                            "error": {
+                                "message": (
+                                    f"Model '{model}' is not allowed for this key"
+                                ),
+                                "type": "model_not_allowed",
+                            }
+                        },
+                    )
 
         # Swap in master key for litellm and stash original key in metadata header
         # We modify the ASGI scope directly since headers are immutable on Request.
@@ -507,6 +601,7 @@ def setup_proxy(
     manager: BudgetManager,
     config_path: str | None = None,
     admin_key: str | None = None,
+    block_web_search: bool = True,
 ):
     """Configure litellm proxy with budget tracking.
 
@@ -518,6 +613,8 @@ def setup_proxy(
         config_path: Path to litellm proxy YAML config.
         admin_key: Key required to access /budget/* endpoints.
             If None, auto-generated.
+        block_web_search: When True (default), reject requests that would
+            invoke provider-side web search. Set False to allow web search.
     """
     global _admin_key
     _admin_key = admin_key or f"cgym-admin-{uuid4().hex[:24]}"
@@ -542,9 +639,12 @@ def setup_proxy(
 
     # Add auth middleware
     app.add_middleware(
-        BudgetAuthMiddleware, manager=manager, master_key=INTERNAL_MASTER_KEY
+        BudgetAuthMiddleware,
+        manager=manager,
+        master_key=INTERNAL_MASTER_KEY,
+        block_web_search=block_web_search,
     )
-    logger.debug("Added BudgetAuthMiddleware")
+    logger.debug("Added BudgetAuthMiddleware (block_web_search=%s)", block_web_search)
 
     # Add traceback-redaction middleware last so it wraps outside of everything
     # else and sees the final error body before it leaves the server.
@@ -556,9 +656,18 @@ def setup_proxy(
     async def generate_key(request: Request):
         body = await request.json()
         max_budget = body.get("max_budget", manager.default_max_budget)
-        logger.debug("Endpoint /budget/generate_key: max_budget=$%.2f", max_budget)
-        key = manager.generate_key(max_budget=max_budget)
-        return {"key": key, "max_budget": max_budget}
+        allowed_models = body.get("allowed_models")
+        logger.debug(
+            "Endpoint /budget/generate_key: max_budget=$%.2f models=%s",
+            max_budget,
+            allowed_models or "any",
+        )
+        key = manager.generate_key(max_budget=max_budget, allowed_models=allowed_models)
+        return {
+            "key": key,
+            "max_budget": max_budget,
+            "allowed_models": allowed_models,
+        }
 
     @app.get("/budget/usage/{key}")
     async def get_usage(key: str):

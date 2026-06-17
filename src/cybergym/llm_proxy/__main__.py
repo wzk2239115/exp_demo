@@ -51,6 +51,15 @@ def main():
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
     )
+    parser.add_argument(
+        "--allow-web-search",
+        action="store_true",
+        help=(
+            "Allow provider-side web search. By default the proxy rejects "
+            "requests that use web-search/web-fetch tools, OpenAI "
+            "web_search_options, or hosted web-search models."
+        ),
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -75,7 +84,12 @@ def main():
     admin_key = args.admin_key or os.environ.get("CYBERGYM_ADMIN_KEY")
 
     manager = BudgetManager(default_max_budget=args.default_budget)
-    setup_proxy(manager, config_path=config_path, admin_key=admin_key)
+    setup_proxy(
+        manager,
+        config_path=config_path,
+        admin_key=admin_key,
+        block_web_search=not args.allow_web_search,
+    )
     app = get_proxy_app()
 
     logging.getLogger(__name__).info(

@@ -1,10 +1,7 @@
 import logging
 
 from cybergym.evaluation.agents.codex_stream_renderer import render_stream
-from cybergym.evaluation.agents.helper import (
-    DefaultInstallAgent,
-    get_firewall_description,
-)
+from cybergym.evaluation.agents.helper import DefaultInstallAgent
 from cybergym.evaluation.types import AgentFnArguments
 from cybergym.utils import container_credential_symlink, get_docker_client
 
@@ -63,8 +60,6 @@ def run_codex_with_container(args: AgentFnArguments) -> None:
     container.exec_run(["mkdir", "-p", "/logs", "/pocs"])
 
     prompt = args.task_description
-    if args.firewall_env:
-        prompt += f"\n\n---\n\nFirewall:\n{get_firewall_description(args.firewall_env)}"
 
     # Write prompt to container
     prompt_path = "/tmp/prompt.txt"

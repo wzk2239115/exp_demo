@@ -33,10 +33,12 @@ class ProxyKeyManager:
         proxy_url: str = "http://localhost:4000",
         default_max_budget: float = 20.0,
         admin_key: str | None = None,
+        default_allowed_models: list[str] | None = None,
     ):
         self.proxy_url = proxy_url.rstrip("/")
         self.default_max_budget = default_max_budget
         self.admin_key = admin_key
+        self.default_allowed_models = default_allowed_models
         self._alive_keys: set[str] = set()
 
     @property
@@ -48,13 +50,29 @@ class ProxyKeyManager:
             return {"x-admin-key": self.admin_key}
         return {}
 
-    def generate_api_key(self, max_budget: float | None = None) -> str:
+    def generate_api_key(
+        self,
+        max_budget: float | None = None,
+        allowed_models: list[str] | None = None,
+    ) -> str:
         budget = max_budget or self.default_max_budget
-        logger.debug("Requesting new key from proxy (budget $%.2f)", budget)
+        models = (
+            allowed_models
+            if allowed_models is not None
+            else self.default_allowed_models
+        )
+        logger.debug(
+            "Requesting new key from proxy (budget $%.2f, models=%s)",
+            budget,
+            models or "any",
+        )
+        payload: dict = {"max_budget": budget}
+        if models:
+            payload["allowed_models"] = list(models)
         with httpx.Client(
             base_url=self.proxy_url, timeout=10, headers=self._admin_headers()
         ) as client:
-            resp = client.post("/budget/generate_key", json={"max_budget": budget})
+            resp = client.post("/budget/generate_key", json=payload)
             resp.raise_for_status()
             key = resp.json()["key"]
         self._alive_keys.add(key)

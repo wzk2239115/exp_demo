@@ -1,7 +1,7 @@
 """Shared helpers for agent runners.
 
 Holds functionality common across the concrete agents (Claude Code, Codex,
-Gemini CLI): the firewall prompt description and the default install phase.
+Gemini CLI): the default install phase.
 """
 
 import logging
@@ -12,28 +12,6 @@ from cybergym.evaluation.agents.base import Agent
 from cybergym.task.workspace import TaskType
 
 logger = logging.getLogger(__name__)
-
-
-def get_firewall_description(firewall_env: dict[str, str]) -> str:
-    """Render the firewall section appended to an agent's task prompt."""
-    proxy_url = firewall_env.get("HTTPS_PROXY") or firewall_env.get("HTTP_PROXY")
-    no_proxy = firewall_env.get("NO_PROXY") or firewall_env.get("no_proxy")
-
-    if not proxy_url:
-        raise ValueError(
-            "Proxy URL not found in firewall_env (missing HTTPS_PROXY or HTTP_PROXY)"
-        )
-
-    lines = [
-        "This container is on an internal Docker network with no direct internet route.",
-        f"External HTTP/HTTPS traffic must go through the proxy at {proxy_url}.",
-        "The proxy only allows the LLM API endpoints; all other external domains and IPs are blocked.",
-    ]
-    if no_proxy:
-        lines.append(
-            f"`NO_PROXY` bypasses the proxy only for local addresses: {no_proxy}."
-        )
-    return "\n".join(f"- {line}" for line in lines)
 
 
 # Per-task-type install scripts, run in the container during the install phase

@@ -266,6 +266,19 @@ def parse_args() -> argparse.Namespace:
         default=20.0,
         help="Max budget per task (USD, with proxy or litellm)",
     )
+    parser.add_argument(
+        "--allowed-models",
+        nargs="*",
+        default=None,
+        metavar="MODEL",
+        help=(
+            "Restrict each proxy/litellm key to these model names (others get "
+            "HTTP 403). Only applies with --proxy-url / --litellm-base-url. "
+            "Default: unrestricted. Pass '--allowed-models' with no value to "
+            "scope keys to the run's --model. Include any auxiliary model the "
+            "agent calls internally (e.g. a Gemini classifier model)."
+        ),
+    )
     parser.add_argument("--litellm-user-id", default=None)
     parser.add_argument("--litellm-team-id", default=None)
 
@@ -280,6 +293,10 @@ def parse_args() -> argparse.Namespace:
 
     if args.model is None:
         args.model = AGENT_DEFAULT_MODELS[args.agent]
+
+    # `--allowed-models` with no values means "scope to the run's model".
+    if args.allowed_models == []:
+        args.allowed_models = [args.model]
 
     has_auth = (
         args.use_api_key
@@ -544,6 +561,7 @@ def run_one(
                     api_key=api_key,
                     use_firewall=args.use_firewall,
                     keep_container=args.keep_container,
+                    allowed_models=args.allowed_models,
                 ),
                 key_manager=key_manager,
             )
@@ -568,6 +586,7 @@ def run_one(
                     api_key=api_key,
                     use_firewall=args.use_firewall,
                     keep_container=args.keep_container,
+                    allowed_models=args.allowed_models,
                 ),
                 key_manager=key_manager,
             )
@@ -587,6 +606,7 @@ def run_one(
                     api_key=api_key,
                     use_firewall=args.use_firewall,
                     keep_container=args.keep_container,
+                    allowed_models=args.allowed_models,
                 ),
                 key_manager=key_manager,
             )
