@@ -155,10 +155,17 @@ def docker_cp_dir_from_container_filtered(
     # matches files of at most N bytes. Only `tar -cf -` writes to stdout, so
     # stdout is a clean binary tar stream (no TTY is allocated, so it is not
     # mangled); diagnostics from find/tar go to stderr.
+    #
+    # --ignore-failed-read: the workspace may be a *live* tree (e.g. an
+    # in-progress build) where transient files appear and vanish between find
+    # listing them and tar stat'ing them (e.g. ninja's .ninja_lock). Without
+    # this, tar aborts with "Cannot stat: No such file" (rc=2) and the whole
+    # filtered copy is discarded for an unfiltered fallback. With it, vanished /
+    # unreadable files become non-fatal warnings.
     script = (
         f"cd {shlex.quote(container_dir)} && "
         f"find . \\( -type d -o \\( -type f ! -size +{int(max_bytes)}c \\) \\) "
-        f"-print0 | tar --null --no-recursion -cf - -T -"
+        f"-print0 | tar --null --no-recursion --ignore-failed-read -cf - -T -"
     )
 
     def _fail(msg: str) -> bool:
@@ -186,7 +193,10 @@ def docker_cp_dir_from_container_filtered(
             finally:
                 proc.stdout.close()
                 proc.wait()
-            if proc.returncode != 0:
+            # tar exit codes: 0 = OK; 1 = non-fatal (some files changed or were
+            # removed while being archived — expected for a live workspace, the
+            # archive is still valid); >=2 = fatal. Treat 0/1 as success.
+            if proc.returncode not in (0, 1):
                 errf.seek(0)
                 tail = errf.read().decode(errors="replace").strip()[-300:]
                 return _fail(f"failed (rc={proc.returncode}): {tail}")
