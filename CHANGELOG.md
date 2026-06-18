@@ -2,7 +2,7 @@
 
 Notable changes to the ExploitGym benchmark and tooling.
 
-## 2026-06-16
+## 2026-06-18: 1.1 release
 
 ### Tooling
 
@@ -23,6 +23,7 @@ Notable changes to the ExploitGym benchmark and tooling.
   client-side agent tools are unaffected; pass `--allow-web-search` to disable.
 - LLM proxy keys can be scoped to specific models via `allowed_models`; other
   models are rejected with HTTP 403 (`model_not_allowed`).
+- Update judge prompt and format of scorer results.
 
 ## 2026-06: 1.0 release
 
