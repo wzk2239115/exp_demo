@@ -315,7 +315,10 @@ root `out/run_agent/`). Typical contents:
 - `task.log`: per-task log.
 - `workspace/`: the agent's mounted workspace as shipped.
 - `outputs/`: collected artefacts (flag, PoCs, etc.).
-- `key_usage.json`: budget spend, when a key manager was used.
+- `key_usage.json`: final budget spend, when a key manager was used.
+- `usage/usage_<elapsed>.json`: periodic API-key usage snapshots taken while the
+  agent runs (every ~20 min), when a key manager was used — for mid-run cost /
+  progress visibility on long tasks.
 
 Pass `--overwrite` to remove a stale output directory before re-running.
 Pass `--keep-container` to leave the agent container for post-mortem.

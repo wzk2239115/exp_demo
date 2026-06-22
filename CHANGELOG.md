@@ -23,6 +23,9 @@ Notable changes to the ExploitGym benchmark and tooling.
   client-side agent tools are unaffected; pass `--allow-web-search` to disable.
 - LLM proxy keys can be scoped to specific models via `allowed_models`; other
   models are rejected with HTTP 403 (`model_not_allowed`).
+- Agents (Claude Code, Codex, Gemini CLI) now log intermediate progress while
+  running: every ~20 min they record elapsed time and, with a key manager, a
+  snapshot of API-key usage to `usage/usage_<elapsed>.json`.
 - Update judge prompt and format of scorer results.
 
 ## 2026-06: 1.0 release

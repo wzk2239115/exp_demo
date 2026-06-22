@@ -1,17 +1,75 @@
 """Shared helpers for agent runners.
 
 Holds functionality common across the concrete agents (Claude Code, Codex,
-Gemini CLI): the default install phase.
+Gemini CLI): the default install phase and intermediate-stats logging.
 """
 
 import logging
+import time
+from pathlib import Path
 
 from docker.models.containers import Container
 
 from cybergym.evaluation.agents.base import Agent
 from cybergym.task.workspace import TaskType
+from cybergym.utils import APIKeyManager, save_json
 
 logger = logging.getLogger(__name__)
+
+# Log elapsed time / API-key usage roughly every this many seconds of agent run.
+DEFAULT_STATS_INTERVAL_SECONDS = 1200.0
+
+
+class IntermediateStatsLogger:
+    """``on_chunk`` callback that periodically logs progress while an agent runs.
+
+    Wraps the per-chunk debug logging the stream renderers expect, and on each
+    crossing of *time_interval* seconds also logs how long the agent has been
+    running and (when a key manager is available) fetches the current API-key
+    usage, logging it and saving a ``usage_<elapsed>.json`` snapshot under
+    *usage_dir*. This gives mid-run cost/progress visibility for long agents
+    instead of only a final number.
+    """
+
+    def __init__(
+        self,
+        agent_name: str,
+        log: logging.Logger = logger,
+        api_key: str | None = None,
+        key_manager: APIKeyManager | None = None,
+        usage_dir: Path | None = None,
+        time_interval: float = DEFAULT_STATS_INTERVAL_SECONDS,
+    ) -> None:
+        self.agent_name = agent_name
+        self._log = log
+        self.api_key = api_key
+        self.key_manager = key_manager
+        self.usage_dir = usage_dir
+        self.time_interval = time_interval
+        self.start_time = time.perf_counter()
+        self.last_elapsed = 0.0
+
+    def __call__(self, chunk: str) -> None:
+        self._log.debug(chunk.rstrip())
+        elapsed = time.perf_counter() - self.start_time
+        # Fire once per time_interval window crossing.
+        if elapsed // self.time_interval != self.last_elapsed // self.time_interval:
+            self._log.info(
+                "%s agent has been running for %.1f seconds", self.agent_name, elapsed
+            )
+            if self.key_manager and self.api_key:
+                try:
+                    usage = self.key_manager.get_api_key_usage(self.api_key)
+                    self._log.info("API key usage: %s", usage)
+                    if self.usage_dir is not None:
+                        save_json(
+                            usage,
+                            self.usage_dir / f"usage_{int(elapsed)}.json",
+                            indent=2,
+                        )
+                except Exception as e:
+                    self._log.warning("Failed to fetch API key usage: %s", e)
+        self.last_elapsed = elapsed
 
 
 # Per-task-type install scripts, run in the container during the install phase

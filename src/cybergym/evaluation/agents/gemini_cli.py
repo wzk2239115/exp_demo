@@ -6,7 +6,10 @@ from pathlib import Path
 from docker.models.containers import Container
 
 from cybergym.evaluation.agents.gemini_stream_renderer import render_stream
-from cybergym.evaluation.agents.helper import DefaultInstallAgent
+from cybergym.evaluation.agents.helper import (
+    DefaultInstallAgent,
+    IntermediateStatsLogger,
+)
 from cybergym.evaluation.types import AgentFnArguments
 from cybergym.utils import container_credential_symlink, get_docker_client
 
@@ -182,11 +185,22 @@ def run_gemini_cli_with_container(args: AgentFnArguments) -> None:
     rendered_log_path = rendered_log_dir / "gemini.rendered.log"
     logger.info("Writing rendered Gemini stream to %s", rendered_log_path)
 
+    usage_dir = args.out_dir / "usage"
+    if args.key_manager:
+        usage_dir.mkdir(parents=True, exist_ok=True)
+    on_chunk = IntermediateStatsLogger(
+        agent_name="Gemini CLI",
+        log=logger,
+        api_key=args.api_key,
+        key_manager=args.key_manager,
+        usage_dir=usage_dir if args.key_manager else None,
+    )
+
     with rendered_log_path.open("w", encoding="utf-8") as rendered_log:
         render_stream(
             inp=exec_output,
             out=rendered_log,
-            on_chunk=lambda chunk: logger.debug(chunk.rstrip()),
+            on_chunk=on_chunk,
         )
 
     exit_code = client.api.exec_inspect(resp["Id"])["ExitCode"]

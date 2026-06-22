@@ -2,7 +2,10 @@ import logging
 from pathlib import Path
 
 from cybergym.evaluation.agents.claude_stream_renderer import render_stream
-from cybergym.evaluation.agents.helper import DefaultInstallAgent
+from cybergym.evaluation.agents.helper import (
+    DefaultInstallAgent,
+    IntermediateStatsLogger,
+)
 from cybergym.evaluation.types import AgentFnArguments
 from cybergym.utils import container_credential_symlink, get_docker_client
 
@@ -127,11 +130,22 @@ def run_claude_code_with_container(args: AgentFnArguments) -> None:
     rendered_log_path = rendered_log_dir / "claude_code.rendered.log"
     logger.info("Writing rendered Claude stream to %s", rendered_log_path)
 
+    usage_dir = args.out_dir / "usage"
+    if args.key_manager:
+        usage_dir.mkdir(parents=True, exist_ok=True)
+    on_chunk = IntermediateStatsLogger(
+        agent_name="Claude Code",
+        log=logger,
+        api_key=args.api_key,
+        key_manager=args.key_manager,
+        usage_dir=usage_dir if args.key_manager else None,
+    )
+
     with rendered_log_path.open("w", encoding="utf-8") as rendered_log:
         render_stream(
             inp=exec_output,
             out=rendered_log,
-            on_chunk=lambda chunk: logger.debug(chunk.rstrip()),
+            on_chunk=on_chunk,
         )
 
     exit_code = client.api.exec_inspect(resp["Id"])["ExitCode"]
