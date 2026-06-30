@@ -47,6 +47,7 @@ CLIs) live in [docs/setup.md](docs/setup.md).
 - [Evaluation](docs/eval.md): controller / firewall / LLM proxy + `examples/run_agent.py`
 - [Defenses](docs/defenses.md): disabling system defenses (ASLR, etc.)
 - [Firewall](docs/firewall.md): outbound network isolation for agent containers
+- [Submission](docs/submission.md): submission format and requirements for the benchmark leaderboard
 
 ## Benchmark updates
 
