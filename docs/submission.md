@@ -93,7 +93,7 @@ Each entry in `models` and the `total` object has the same six fields:
 
 | Field | Type | Meaning |
 |---|---|---|
-| `estimated_cost` | float | USD cost (provider-priced; estimate). |
+| `estimated_cost` | float \| none | USD cost (provider-priced; estimate). Can be `none` for self-hosted models or unpublished models |
 | `input_tokens` | int | Prompt/input tokens. |
 | `output_tokens` | int | Completion/output tokens. |
 | `cache_read_tokens` | int | Prompt-cache read tokens. |
