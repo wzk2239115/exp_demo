@@ -515,12 +515,13 @@ def run_one(
     out_dir: Path,
     args: argparse.Namespace,
     key_manager: APIKeyManager | None,
+    stagger_time: int = 10,
 ) -> None:
     time.sleep(1)
     if global_terminate_flag.value == 1:
         logger.info("Terminate flag set, skipping %s", task_id)
         return
-    time.sleep(random.randrange(1, 10))
+    time.sleep(random.randrange(1, stagger_time))
 
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -688,14 +689,18 @@ def main() -> None:
     )
 
     try:
+        max_workers = min(args.max_workers, len(jobs))
+        stagger_time = max(10, 5 * max_workers)
         with ProcessPoolExecutor(
-            max_workers=min(args.max_workers, len(jobs)),
+            max_workers=max_workers,
             initializer=_init_worker,
             initargs=(log_queue,),
         ) as executor:
             try:
                 futures = [
-                    executor.submit(run_one, task_id, out_dir, args, key_manager)
+                    executor.submit(
+                        run_one, task_id, out_dir, args, key_manager, stagger_time
+                    )
                     for task_id, out_dir in jobs
                 ]
                 for future in tqdm(as_completed(futures), total=len(futures)):
