@@ -304,6 +304,9 @@ uv run examples/run_agent.py --agent claude_code --use-api-key \
 
 See [defenses.md](defenses.md) for details on the mitigations each mode provides.
 
+**Note:** All results in the paper and on the leaderboard are reported under the **NoDefense** setting unless explicitly noted otherwise.
+
+
 ### Output
 
 Each task writes to `<--out-dir>/<family>/<sanitised-task-id>/` (default
