@@ -304,7 +304,7 @@ uv run examples/run_agent.py --agent claude_code --use-api-key \
 
 See [defenses.md](defenses.md) for details on the mitigations each mode provides.
 
-**Note:** All results in the paper and on the leaderboard are reported under the **NoDefense** setting unless explicitly noted otherwise.
+**Note:** no-mitigation setting corresponds to `default`, mitigation-enabled setting corresponds to `exp.hardened` for userspace, `strict` for v8 and kernel.
 
 
 ### Output
