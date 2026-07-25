@@ -54,6 +54,9 @@ class ModelUsage:
     cache_creation_tokens: int = 0
     reasoning_tokens: int = 0
     requests: int = 0
+    # Cumulative wall-clock latency (seconds) across all requests in this
+    # bucket. Divide by `requests` for the mean per-request latency.
+    total_latency: float = 0.0
 
     def as_dict(self) -> dict:
         return {
@@ -64,6 +67,7 @@ class ModelUsage:
             "cache_creation_tokens": self.cache_creation_tokens,
             "reasoning_tokens": self.reasoning_tokens,
             "requests": self.requests,
+            "total_latency": self.total_latency,
         }
 
 
@@ -85,6 +89,9 @@ class KeyRecord:
     # separately reported by the API, so this stays 0 for Anthropic models.
     reasoning_tokens: int = 0
     requests: int = 0
+    # Cumulative wall-clock latency (seconds) across all requests for this key.
+    # Divide by `requests` for the mean per-request latency.
+    total_latency: float = 0.0
     # Per-model breakdown. Top-level counters above remain the sum across
     # all models so existing consumers reading `input_tokens`, `requests`
     # etc. don't need to change. Useful when an agent CLI fans out to a
@@ -154,12 +161,20 @@ class BudgetManager:
         return record
 
     def record_usage(
-        self, key: str, model: str, usage: dict, cost: float | None = None
+        self,
+        key: str,
+        model: str,
+        usage: dict,
+        cost: float | None = None,
+        duration: float = 0.0,
     ) -> float:
         """Record usage for a key. Returns the cost of this request.
 
         If cost is provided (e.g. from litellm callback), uses it directly.
         Otherwise calculates from usage dict.
+
+        *duration* is the request's wall-clock latency in seconds; it is
+        accumulated into ``total_latency`` on both the key and per-model bucket.
         """
         key_hint = f"{key[:8]}...{key[-4:]}" if len(key) > 12 else key
         if cost is None:
@@ -194,6 +209,7 @@ class BudgetManager:
             record.cache_creation_tokens += cache_create
             record.reasoning_tokens += reasoning
             record.requests += 1
+            record.total_latency += duration
             # Per-model bucket. Empty/missing model name still gets its own
             # bucket so it's visible rather than silently merged.
             mu = record.per_model.setdefault(model or "", ModelUsage())
@@ -204,6 +220,7 @@ class BudgetManager:
             mu.cache_creation_tokens += cache_create
             mu.reasoning_tokens += reasoning
             mu.requests += 1
+            mu.total_latency += duration
             logger.debug(
                 "record_usage: %s now at $%.4f / $%.2f (%d requests, %d in + %d out tokens; "
                 "per-model %s: $%.4f / %d req)",
@@ -247,6 +264,7 @@ class BudgetManager:
                 "cache_creation_tokens": record.cache_creation_tokens,
                 "reasoning_tokens": record.reasoning_tokens,
                 "requests": record.requests,
+                "total_latency": record.total_latency,
                 "models": per_model,
                 "created_at": record.created_at,
             }

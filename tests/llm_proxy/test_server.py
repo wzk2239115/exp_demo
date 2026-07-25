@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 import pytest
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -325,6 +327,7 @@ class TestPerModelUsage:
                 "cache_creation_tokens": 0,
                 "reasoning_tokens": 0,
                 "requests": 1,
+                "total_latency": 0.0,
             }
         }
 
@@ -883,3 +886,216 @@ class TestModelAllowlist:
         )
         assert denied.status_code == 403
         assert denied.json()["error"]["type"] == "model_not_allowed"
+
+
+# --- Realistic litellm callback payloads -------------------------------------
+#
+# litellm hands our BudgetCallback a `standard_logging_object` (SLO) plus the
+# raw response object after each successful upstream call. These builders mirror
+# the field layout of real provider responses (verified against live payloads;
+# see the docstring on server._extract_usage) so the tests below exercise the
+# same extraction paths production traffic hits.
+
+
+def _anthropic_slo(model: str = "claude-sonnet-4-6", cost: float = 0.0123) -> dict:
+    """SLO shaped like an Anthropic /v1/messages response with prompt caching."""
+    return {
+        "model": model,
+        "response_cost": cost,
+        "prompt_tokens": 1200,
+        "completion_tokens": 350,
+        "response": {
+            "usage": {
+                "prompt_tokens": 1200,
+                "completion_tokens": 350,
+                "cache_read_input_tokens": 800,
+                "cache_creation_input_tokens": 200,
+            }
+        },
+    }
+
+
+def _openai_responses_slo(model: str = "gpt-5.5", cost: float = 0.05) -> dict:
+    """SLO shaped like an OpenAI Responses API call with cached + reasoning tokens."""
+    return {
+        "model": model,
+        "response_cost": cost,
+        "prompt_tokens": 2000,
+        "completion_tokens": 600,
+        "response": {
+            "usage": {
+                "prompt_tokens": 2000,
+                "completion_tokens": 600,
+                "prompt_tokens_details": {"cached_tokens": 1024},
+                "completion_tokens_details": {"reasoning_tokens": 400},
+            }
+        },
+    }
+
+
+async def _fire_callback(
+    manager: BudgetManager,
+    api_key: str,
+    slo: dict,
+    response_obj=None,
+    seconds: float = 1.0,
+) -> None:
+    """Drive BudgetCallback exactly as litellm would after a successful request.
+
+    Sets the per-request api-key context var (normally set by the middleware),
+    then invokes the success hook with start/end times `seconds` apart.
+    """
+    callback = server.BudgetCallback(manager)
+    start = datetime(2024, 1, 1, 12, 0, 0)
+    end = start + timedelta(seconds=seconds)
+    token = server._current_api_key.set(api_key)
+    try:
+        await callback.async_log_success_event(
+            {"standard_logging_object": slo}, response_obj, start, end
+        )
+    finally:
+        server._current_api_key.reset(token)
+
+
+class TestBudgetCallback:
+    """Simulate real provider responses flowing through the litellm callback."""
+
+    @pytest.mark.asyncio
+    async def test_anthropic_request_records_usage_cost_and_latency(self):
+        manager = BudgetManager(default_max_budget=10.0)
+        key = manager.generate_key(max_budget=10.0)
+
+        await _fire_callback(manager, key, _anthropic_slo(cost=0.0123), seconds=2.5)
+
+        usage = manager.get_usage(key)
+        assert usage["requests"] == 1
+        assert usage["input_tokens"] == 1200
+        assert usage["output_tokens"] == 350
+        assert usage["cache_read_tokens"] == 800
+        assert usage["cache_creation_tokens"] == 200
+        assert usage["spend"] == pytest.approx(0.0123)
+        assert usage["total_latency"] == pytest.approx(2.5)
+        # The per-model bucket carries the same latency as the top-level total.
+        assert usage["models"]["claude-sonnet-4-6"]["total_latency"] == pytest.approx(
+            2.5
+        )
+
+    @pytest.mark.asyncio
+    async def test_openai_responses_request_records_reasoning_and_cached_tokens(self):
+        manager = BudgetManager(default_max_budget=10.0)
+        key = manager.generate_key(max_budget=10.0)
+
+        await _fire_callback(
+            manager, key, _openai_responses_slo(cost=0.05), seconds=1.0
+        )
+
+        usage = manager.get_usage(key)
+        assert usage["input_tokens"] == 2000
+        assert usage["output_tokens"] == 600
+        assert usage["cache_read_tokens"] == 1024
+        assert usage["reasoning_tokens"] == 400
+        assert usage["spend"] == pytest.approx(0.05)
+        assert usage["total_latency"] == pytest.approx(1.0)
+
+    @pytest.mark.asyncio
+    async def test_latency_accumulates_across_requests(self):
+        manager = BudgetManager(default_max_budget=10.0)
+        key = manager.generate_key(max_budget=10.0)
+
+        for seconds in (1.5, 2.5, 4.0):
+            await _fire_callback(
+                manager, key, _anthropic_slo(cost=0.01), seconds=seconds
+            )
+
+        usage = manager.get_usage(key)
+        assert usage["requests"] == 3
+        assert usage["total_latency"] == pytest.approx(8.0)
+        # Mean per-request latency is derivable from the cumulative total.
+        assert usage["total_latency"] / usage["requests"] == pytest.approx(8.0 / 3)
+
+    @pytest.mark.asyncio
+    async def test_latency_split_per_model(self):
+        manager = BudgetManager(default_max_budget=10.0)
+        key = manager.generate_key(max_budget=10.0)
+
+        await _fire_callback(manager, key, _anthropic_slo(cost=0.01), seconds=3.0)
+        await _fire_callback(
+            manager, key, _openai_responses_slo(cost=0.02), seconds=1.0
+        )
+
+        usage = manager.get_usage(key)
+        assert usage["total_latency"] == pytest.approx(4.0)
+        assert usage["models"]["claude-sonnet-4-6"]["total_latency"] == pytest.approx(
+            3.0
+        )
+        assert usage["models"]["gpt-5.5"]["total_latency"] == pytest.approx(1.0)
+
+    @pytest.mark.asyncio
+    async def test_no_api_key_in_context_records_nothing(self):
+        manager = BudgetManager(default_max_budget=10.0)
+        key = manager.generate_key(max_budget=10.0)
+        callback = server.BudgetCallback(manager)
+        start = datetime(2024, 1, 1, 12, 0, 0)
+        end = start + timedelta(seconds=1.0)
+
+        # Context var unset (default "") — the callback must not record usage.
+        await callback.async_log_success_event(
+            {"standard_logging_object": _anthropic_slo()}, None, start, end
+        )
+
+        usage = manager.get_usage(key)
+        assert usage["requests"] == 0
+        assert usage["total_latency"] == 0.0
+
+    @pytest.mark.asyncio
+    async def test_missing_timestamps_record_zero_latency(self):
+        manager = BudgetManager(default_max_budget=10.0)
+        key = manager.generate_key(max_budget=10.0)
+        callback = server.BudgetCallback(manager)
+        token = server._current_api_key.set(key)
+        try:
+            # litellm occasionally omits start/end; usage still records, latency 0.
+            await callback.async_log_success_event(
+                {"standard_logging_object": _anthropic_slo(cost=0.01)},
+                None,
+                None,
+                None,
+            )
+        finally:
+            server._current_api_key.reset(token)
+
+        usage = manager.get_usage(key)
+        assert usage["requests"] == 1
+        assert usage["total_latency"] == 0.0
+
+    def test_extract_usage_anthropic(self):
+        assert server._extract_usage(_anthropic_slo(), None) == {
+            "input_tokens": 1200,
+            "output_tokens": 350,
+            "cache_read_input_tokens": 800,
+            "cache_creation_input_tokens": 200,
+            "reasoning_tokens": 0,
+        }
+
+    def test_extract_usage_openai_responses(self):
+        assert server._extract_usage(_openai_responses_slo(), None) == {
+            "input_tokens": 2000,
+            "output_tokens": 600,
+            "cache_read_input_tokens": 1024,
+            "cache_creation_input_tokens": 0,
+            "reasoning_tokens": 400,
+        }
+
+    def test_extract_usage_falls_back_to_response_object(self):
+        # OpenAI Responses API leaves the SLO usage empty; counts arrive only on
+        # the response object. _extract_usage must fall back to it.
+        class _Usage:
+            prompt_tokens = 111
+            completion_tokens = 22
+
+        class _Resp:
+            usage = _Usage()
+
+        usage = server._extract_usage({}, _Resp())
+        assert usage["input_tokens"] == 111
+        assert usage["output_tokens"] == 22

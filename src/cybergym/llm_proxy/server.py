@@ -220,13 +220,16 @@ class BudgetCallback(CustomLogger):
         slo = kwargs.get("standard_logging_object") or {}
         cost = slo.get("response_cost", 0.0)
         model = slo.get("model", kwargs.get("model", ""))
+        duration = (
+            (end_time - start_time).total_seconds() if start_time and end_time else 0.0
+        )
 
         logger.debug(
             "Callback fired: key=%s model=%s cost=$%.6f duration=%.2fs",
             f"{api_key[:8]}...{api_key[-4:]}" if api_key else "<none>",
             model,
             cost,
-            (end_time - start_time).total_seconds() if start_time and end_time else 0,
+            duration,
         )
 
         usage = _extract_usage(slo, response_obj)
@@ -244,7 +247,9 @@ class BudgetCallback(CustomLogger):
         has_usage_or_cost = cost > 0.0 or any(usage.values())
 
         if api_key and has_usage_or_cost:
-            self.manager.record_usage(api_key, model, usage, cost=cost)
+            self.manager.record_usage(
+                api_key, model, usage, cost=cost, duration=duration
+            )
             record = self.manager._keys.get(api_key)
             if record:
                 logger.debug(
