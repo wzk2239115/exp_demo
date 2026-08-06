@@ -372,6 +372,44 @@ check_api() {
 }
 
 # ─────────────────────────────────────────────
+#  自动放行防火墙:容器→宿主机 proxy/controller
+# ─────────────────────────────────────────────
+# 设计成"零打扰":先无提权从容器测一下连通性,通了就立刻返回(组员日常跑不会
+# 被索要 sudo)。只有测出不通、且 firewalld 在跑时,才 sudo 加一条 docker 子网
+# 放行规则(永久 + reload)。规则加一次就长期生效,之后所有人再跑都直接跳过。
+ensure_firewall_open() {
+  local cout
+  cout=$(docker run --rm alpine:3.20 sh -c "wget -S -q -O /dev/null -T 5 'http://$BRIDGE:$PROXY_PORT/' 2>&1 | head -3" 2>&1 || true)
+  if printf '%s' "$cout" | grep -qi 'HTTP/'; then
+    return 0   # 已通,不碰防火墙
+  fi
+
+  command -v firewall-cmd >/dev/null 2>&1 || return 0
+  [[ "$(systemctl is-active firewalld 2>/dev/null || true)" == "active" ]] || return 0
+
+  # 从 docker0 地址推 CIDR(默认 172.17.0.0/16,但有的机器网段不同)
+  local cidr
+  cidr=$(ip -o -4 addr show docker0 2>/dev/null | awk '{print $4; exit}')
+  cidr="${cidr:-172.17.0.0/16}"
+
+  log "容器连不到宿主机服务且 firewalld 在跑 → 放行 docker 子网 $cidr(只第一次需要 sudo)"
+  if [[ $EUID -eq 0 ]]; then
+    firewall-cmd --permanent --add-rich-rule="rule family=ipv4 source address=$cidr accept" \
+      && firewall-cmd --reload \
+      || die "firewalld 规则添加失败,请 root 手动执行:
+    firewall-cmd --permanent --add-rich-rule='rule family=ipv4 source address=$cidr accept'
+    firewall-cmd --reload"
+  else
+    sudo firewall-cmd --permanent --add-rich-rule="rule family=ipv4 source address=$cidr accept" \
+      && sudo firewall-cmd --reload \
+      || die "firewalld 规则添加失败(需要 sudo 权限)。请管理员执行:
+    firewall-cmd --permanent --add-rich-rule='rule family=ipv4 source address=$cidr accept'
+    firewall-cmd --reload"
+  fi
+  log "防火墙规则已添加"
+}
+
+# ─────────────────────────────────────────────
 #  参数解析
 # ─────────────────────────────────────────────
 if [[ "${1:-}" == "--stop" ]]; then
@@ -399,6 +437,7 @@ log "输出=$OUT_DIR"
 
 ensure_controller
 ensure_proxy
+ensure_firewall_open   # 容器→proxy 不通且 firewalld 在跑才加规则(日常不打扰)
 check_api            # host 推理 + 容器连通都过才放行,免得白跑
 
 # 导出给 uv run 子进程(cybergym 代码会读)。
