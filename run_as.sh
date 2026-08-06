@@ -327,47 +327,62 @@ check_agent_tool() {
 }
 
 # ─────────────────────────────────────────────
-#  端到端预检 API:host 真实推理 + 容器视角连通
+#  端到端预检 API:host 发 hi + 容器里发 hi
 # ─────────────────────────────────────────────
 # host 能通不代表容器能通:agent 在容器里访问 $BRIDGE:$PROXY_PORT,宿主机防火墙
 # (firewalld)很可能挡掉 docker 子网到该端口的流量,结果每个任务 ConnectionRefused、
-# 3 分钟拿 0 分。这里两段都测,任一失败就 die。
+# 3 分钟拿 0 分。所以容器侧也真发一个 hi —— 这正是 agent 的完整路径 container→proxy→GLM。
 check_api() {
-  log "端到端预检 API(host 推理 + 容器连通)…"
-  local key resp
+  log "端到端预检 API(host + 容器 各发一个 hi)…"
+  local key
   key=$(curl -s -X POST "http://$BRIDGE:$PROXY_PORT/budget/generate_key" \
         -H "x-admin-key: $CYBERGYM_ADMIN_KEY" -H 'Content-Type: application/json' \
         -d "{\"max_budget\":0.01,\"allowed_models\":[\"$MODEL_ALIAS\"]}" \
       | python3 -c "import sys,json;print(json.load(sys.stdin).get('key',''))" 2>/dev/null || true)
   [[ -n "$key" ]] || die "无法从 proxy 生成测试 key;看 $LOG_DIR/llm_proxy.log"
 
-  resp=$(curl -s -X POST "http://$BRIDGE:$PROXY_PORT/v1/messages" \
+  local body='{"model":"'"$MODEL_ALIAS"'","max_tokens":8,"messages":[{"role":"user","content":"hi"}]}'
+  local url="http://$BRIDGE:$PROXY_PORT/v1/messages"
+
+  # 失败/成功都先清理测试 key 再下结论
+  local hresp
+  hresp=$(curl -s -X POST "$url" \
         -H "x-api-key: $key" -H 'content-type: application/json' \
-        -H 'anthropic-version: 2023-06-01' \
-        -d "{\"model\":\"$MODEL_ALIAS\",\"max_tokens\":8,\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}" 2>&1 || true)
+        -H 'anthropic-version: 2023-06-01' -d "$body" 2>&1 || true)
+
+  local creply=""
+  if command -v docker >/dev/null 2>&1; then
+    # 从容器里发同一个 hi(busybox wget 支持 --post-data / 多个 --header)
+    creply=$(docker run --rm alpine:3.20 sh -c "wget -q -O - \
+        --header='x-api-key: $key' \
+        --header='content-type: application/json' \
+        --header='anthropic-version: 2023-06-01' \
+        --post-data='$body' \
+        '$url' 2>&1" || true)
+  fi
+
   curl -s -X DELETE "http://$BRIDGE:$PROXY_PORT/budget/key/$key" \
         -H "x-admin-key: $CYBERGYM_ADMIN_KEY" >/dev/null 2>&1 || true
 
-  if ! printf '%s' "$resp" | grep -q '"role":"assistant"'; then
-    warn "proxy→GLM 推理预检失败(没拿到模型回复):"
-    printf '%s\n' "$resp" | head -8 | sed 's/^/    /'
+  if ! printf '%s' "$hresp" | grep -q '"role":"assistant"'; then
+    warn "host→proxy→GLM 推理失败(没拿到模型回复):"
+    printf '%s\n' "$hresp" | head -8 | sed 's/^/    /'
     die "确认 GLM 端点 $GLM_BASE_URL 可达、glm_config.yaml 里 $MODEL_ALIAS→openai/$GLM_MODEL 正确"
   fi
   log "host→proxy→GLM 推理 OK"
 
-  if command -v docker >/dev/null 2>&1; then
-    local cout
-    # 任意 HTTP 状态行(含 404)都说明端口可达;只有 refused/timeout 才算不通
-    cout=$(docker run --rm alpine:3.20 sh -c "wget -S -q -O /dev/null -T 5 'http://$BRIDGE:$PROXY_PORT/' 2>&1 | head -3" 2>&1 || true)
-    if printf '%s' "$cout" | grep -qi 'HTTP/'; then
-      log "container→proxy 连通 OK"
-    else
-      warn "容器内连不到 proxy $BRIDGE:$PROXY_PORT:"
-      printf '%s\n' "$cout" | head -4 | sed 's/^/    /'
-      die "很可能是宿主机防火墙挡了容器→proxy。放行 docker 子网后重试:
+  if [[ -z "$creply" ]]; then
+    warn "跳过容器侧 hi 测试(docker 不可用)"
+    return 0
+  fi
+  if printf '%s' "$creply" | grep -q '"role":"assistant"'; then
+    log "container→proxy→GLM 真实推理 OK"
+  else
+    warn "容器内发 hi 失败(容器→proxy→GLM,正是 agent 的路径):"
+    printf '%s\n' "$creply" | head -8 | sed 's/^/    /'
+    die "容器连不到 proxy 或被宿主机防火墙挡。放行 docker 子网后重试:
     firewall-cmd --permanent --add-rich-rule='rule family=ipv4 source address=172.17.0.0/16 accept'
     firewall-cmd --reload"
-    fi
   fi
 }
 
