@@ -5,6 +5,9 @@ from pathlib import Path
 import pytest
 
 from cybergym.server.types import (
+    API_KEY_ENV_VAR,
+    FLAG_SEED_ENV_VAR,
+    SALT_ENV_VAR,
     ContainerResources,
     KernelContainerResources,
     ServerConfig,
@@ -12,6 +15,15 @@ from cybergym.server.types import (
     ServerInfo,
     ServerRequest,
 )
+
+SECRET_ENV_VARS = (SALT_ENV_VAR, FLAG_SEED_ENV_VAR, API_KEY_ENV_VAR)
+
+
+@pytest.fixture
+def no_secret_env(monkeypatch):
+    """Run with the controller secrets absent from the environment."""
+    for var in SECRET_ENV_VARS:
+        monkeypatch.delenv(var, raising=False)
 
 
 class TestServerConfig:
@@ -24,6 +36,35 @@ class TestServerConfig:
         assert config.port == 8666
         assert config.log_dir == Path("./logs")
         assert isinstance(config.salt, str)
+
+    def test_secrets_generated_not_hardcoded(self, no_secret_env):
+        """Salt, flag seed, and API key are minted per instance, never shipped."""
+        first = ServerConfig()
+        second = ServerConfig()
+        for field in ("salt", "flag_seed", "api_key"):
+            assert getattr(first, field)
+            assert getattr(first, field) != getattr(second, field), (
+                f"{field} is not freshly generated"
+            )
+
+    def test_secrets_from_env(self, monkeypatch, no_secret_env):
+        """Exported values win over generation, so both ends can agree."""
+        monkeypatch.setenv(SALT_ENV_VAR, "env_salt")
+        monkeypatch.setenv(FLAG_SEED_ENV_VAR, "env_seed")
+        monkeypatch.setenv(API_KEY_ENV_VAR, "env_key")
+        config = ServerConfig()
+        assert config.salt == "env_salt"
+        assert config.flag_seed == "env_seed"
+        assert config.api_key == "env_key"
+
+    def test_secret_env_round_trip(self, no_secret_env):
+        """secret_env() names the vars the harness must export."""
+        config = ServerConfig()
+        assert config.secret_env() == {
+            SALT_ENV_VAR: config.salt,
+            FLAG_SEED_ENV_VAR: config.flag_seed,
+            API_KEY_ENV_VAR: config.api_key,
+        }
 
     def test_custom_values(self):
         """Test configuration with custom values."""

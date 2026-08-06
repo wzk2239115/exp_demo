@@ -14,10 +14,14 @@ import httpx
 from docker.models.containers import Container
 
 from cybergym.evaluation.base import Evaluator
-from cybergym.evaluation.types import CheckResult, EvalConfig, V8TaskExtraKwargs
-from cybergym.server.types import DEFAULT_API_KEY
+from cybergym.evaluation.types import (
+    CheckResult,
+    EvalConfig,
+    V8TaskExtraKwargs,
+    resolve_controller_secrets,
+)
 from cybergym.task.metadata import V8_TASK_METADATA
-from cybergym.task.token import DEFAULT_FLAG_SEED, generate_flag, generate_token
+from cybergym.task.token import generate_flag, generate_token
 
 logger = logging.getLogger(__name__)
 
@@ -34,23 +38,37 @@ class V8Evaluator(Evaluator):
     Args:
         config: Evaluation configuration. ``task_extra_kwargs`` must include:
             - ``controller_url``: URL of the controller API.
-        expected_flag: The correct flag string.
+        flag_seed: Seed for deriving the expected flag from ``task_info``; must
+            match the controller's. Defaults to ``CYBERGYM_SERVER_FLAG_SEED``.
         flag_path: Path inside the agent container where the flag is written.
-        controller_api_key: API key for private controller endpoints.
+        token_salt: Salt for the task token; must match the controller's.
+            Defaults to ``CYBERGYM_SERVER_SALT``.
+        controller_api_key: API key for private controller endpoints. Defaults
+            to ``CYBERGYM_SERVER_API_KEY``.
         key_manager: Optional LiteLLM API key manager.
+
+    Raises:
+        ValueError: If a secret is given neither explicitly nor via its
+            environment variable — there is no hardcoded fallback.
     """
 
     def __init__(
         self,
         config: EvalConfig,
-        flag_seed: str = DEFAULT_FLAG_SEED,
+        flag_seed: str | None = None,
         flag_path: str = FLAG_CONTAINER_PATH,
-        controller_api_key: str = DEFAULT_API_KEY,
+        controller_api_key: str | None = None,
         key_manager=None,
+        token_salt: str | None = None,
     ) -> None:
         super().__init__(config, key_manager=key_manager)
+        secrets = resolve_controller_secrets(
+            token_salt=token_salt,
+            flag_seed=flag_seed,
+            controller_api_key=controller_api_key,
+        )
         self.flag_path = flag_path
-        self.controller_api_key = controller_api_key
+        self.controller_api_key = secrets.api_key
         self.task_extra_kwargs = cast(V8TaskExtraKwargs, config.task_extra_kwargs)
         self.controller_url = self.task_extra_kwargs["controller_url"]
 
@@ -65,12 +83,12 @@ class V8Evaluator(Evaluator):
         task_info = (
             f"{task_meta.task_id}/nosandbox" if self.no_sandbox else task_meta.task_id
         )
-        self.agent_id, self.agent_token = generate_token(task_info)
+        self.agent_id, self.agent_token = generate_token(task_info, salt=secrets.salt)
         self.task_extra_kwargs["agent_id"] = self.agent_id
         self.task_extra_kwargs["agent_token"] = self.agent_token
 
         # Derive expected flag from seed + task_info (same as controller)
-        self.expected_flag = generate_flag(task_info, seed=flag_seed)
+        self.expected_flag = generate_flag(task_info, seed=secrets.flag_seed)
 
     def _resolve_docker_image(self) -> str:
         task_meta = V8_TASK_METADATA[self.config.task_id]

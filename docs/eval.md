@@ -22,6 +22,44 @@ export DOCKER_BRIDGE_IP=$(ip -4 addr show docker0 | grep -oP '(?<=inet\s)\d+(\.\
 | Firewall proxy | `cybergym.firewall` | Passing `--use-firewall` to the runner | `3128` |
 | LLM proxy | `cybergym.llm_proxy` | Using `--proxy-url` for per-task budgets | `4000` |
 
+## Controller secrets
+
+The controller and the agent runner share three per-deployment secrets. They
+are **generated fresh** by the controller on each startup unless you export
+them, and nothing is hardcoded — a shipped constant would let any agent inside
+a container forge a task token or derive the expected flag without exploiting
+anything.
+
+| Env var | Used for |
+| --- | --- |
+| `CYBERGYM_SERVER_SALT` | Checksum salt for task tokens (the credential a container uses to create/restart its target) |
+| `CYBERGYM_SERVER_FLAG_SEED` | Seed the per-task flag is derived from (`HMAC-SHA256(seed, task_info)`) |
+| `CYBERGYM_SERVER_API_KEY` | `X-API-Key` for the controller's private endpoints |
+
+Both ends must agree: the runner mints the token the container presents and
+computes the flag it grades against, so a mismatch means every task fails
+(HTTP 401 `Invalid token`, or a flag that never matches). `run_agent.py`
+refuses to start if any of the three is unset — there is no fallback value.
+
+Where they come from:
+
+- `pre_run.py` uses your exported values if present, recovers them from a
+  reused controller's log, otherwise generates them — and prints the `export`
+  lines to use next.
+- Started by hand, the controller logs the values it used at startup
+  (`Controller secrets — export these for the agent runner:`). Export those, or
+  set them yourself before starting it so you already know them:
+
+  ```bash
+  export CYBERGYM_SERVER_SALT=cg-$(openssl rand -hex 16)
+  export CYBERGYM_SERVER_FLAG_SEED=sf-$(openssl rand -hex 16)
+  export CYBERGYM_SERVER_API_KEY=cybergym-$(openssl rand -hex 16)
+  ```
+
+Treat these as secrets: they live in the controller log, so keep the log dir
+off-limits to the agent containers (it is host-side by default), and use a
+fresh set per evaluation campaign.
+
 ## Automated setup (`pre_run.py`)
 
 `scripts/setup/pre_run.py` runs the host readiness checks (ASLR, coredump,
@@ -37,8 +75,20 @@ a live firewall / controller / LLM proxy and reuses it instead of launching
 a duplicate. Disable one entirely with `--no-firewall`, `--no-controller`,
 or `--no-llm-proxy`. When it reuses an existing LLM proxy it recovers that
 proxy's `CYBERGYM_ADMIN_KEY` from the proxy log; otherwise it prints the
-freshly generated key. The closing summary lists the exact env vars and
-`run_agent.py` flags to use next.
+freshly generated key. The same applies to the three [controller
+secrets](#controller-secrets): exported values win, else they are recovered
+from a reused controller's log, else generated. (If it reuses a controller
+whose secrets it cannot recover, it stops rather than run with mismatched
+values — export them, or stop that controller first.) The closing summary lists
+the exact env vars and `run_agent.py` flags to use next:
+
+```bash
+export DOCKER_BRIDGE_IP=172.17.0.1
+export CYBERGYM_SERVER_SALT=cg-...          # generated
+export CYBERGYM_SERVER_FLAG_SEED=sf-...     # generated
+export CYBERGYM_SERVER_API_KEY=cybergym-... # generated
+export CYBERGYM_ADMIN_KEY=cgym-admin-...
+```
 
 By default pre_run checks the unhardened images (user `exp.none`, v8
 `nodefense`) and expects ASLR **disabled**. Pass `--hardened` for the
@@ -161,12 +211,21 @@ reach it.
 ```bash
 export CONTROLLER_PORT=8666
 
+# Fix the shared secrets up front so the runner can use the same values
+# (omit these and the controller generates them, logging what it used).
+export CYBERGYM_SERVER_SALT=cg-$(openssl rand -hex 16)
+export CYBERGYM_SERVER_FLAG_SEED=sf-$(openssl rand -hex 16)
+export CYBERGYM_SERVER_API_KEY=cybergym-$(openssl rand -hex 16)
+
 uv run -m cybergym.server \
     --host $DOCKER_BRIDGE_IP \
     --port $CONTROLLER_PORT \
     --log_dir logs
     # --network cybergym-internal   # only if the firewall was started
 ```
+
+The secrets are read from the environment only (never passed as flags, which
+would expose them in `ps`). See [Controller secrets](#controller-secrets).
 
 Quick liveness check (FastAPI returns 404 for unknown routes — enough to
 confirm the server is listening):
@@ -183,9 +242,12 @@ tear it down:
 # task_info = "<task_id>/<defense_bitmap>" for kernel tasks
 TASK_INFO="kernel:kernelctf/CVE-2024-1085_lts/0"
 
+# The token must be minted with the controller's salt, or it is rejected
+# with HTTP 401 ("Invalid token").
 eval $(uv run python -c "
+import os
 from cybergym.task.token import generate_token
-aid, tok = generate_token('$TASK_INFO')
+aid, tok = generate_token('$TASK_INFO', salt=os.environ['CYBERGYM_SERVER_SALT'])
 print(f'AID={aid}')
 print(f'TOK={tok}')
 ")
@@ -205,10 +267,11 @@ curl -s -X POST http://$DOCKER_BRIDGE_IP:$CONTROLLER_PORT/delete_server \
   -d "{\"agent_id\": \"$AID\", \"token\": \"$TOK\"}"
 ```
 
-Public endpoints (no auth): `/create_server`, `/delete_server`,
-`/restart_server`, `/health_check`. The private `/run_command` endpoint
-requires `X-API-Key: <DEFAULT_API_KEY>` (see
-`src/cybergym/server/types.py`).
+Public endpoints (no auth beyond a valid task token): `/create_server`,
+`/delete_server`, `/restart_server`, `/health_check`. The private
+`/run_command` endpoint additionally requires
+`X-API-Key: $CYBERGYM_SERVER_API_KEY` and answers 404 (not 401/403) to anything
+else, so the endpoint stays hidden.
 
 ## Run evaluation
 
@@ -222,6 +285,16 @@ IDs can mix prefixes `kernel:*`, `v8:*`, `user:*`. The task lists live in
 - `sample.txt` — a small 20-task subset for a quick smoke test.
 
 Use `--task-family {kernel,v8,user}` to filter a mixed file down to one family.
+
+The three [controller secrets](#controller-secrets) must be exported first —
+the runner mints task tokens and computes expected flags from them, and exits
+with `Controller secrets not set: ...` if any is missing:
+
+```bash
+export CYBERGYM_SERVER_SALT=...        # same values the controller is using
+export CYBERGYM_SERVER_FLAG_SEED=...
+export CYBERGYM_SERVER_API_KEY=...
+```
 
 ### Pick one auth mode
 

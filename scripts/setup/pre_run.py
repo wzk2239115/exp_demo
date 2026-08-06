@@ -21,6 +21,11 @@ Each service is started only if it is not already running — pre_run auto-detec
 a live instance and reuses it instead of launching a duplicate. Pass the
 matching --no-<service> flag to disable a service entirely.
 
+The controller's per-deployment secrets (token salt, flag seed, API key) are
+taken from the environment if exported, recovered from the log of a reused
+controller, and otherwise minted here; the closing summary prints them as
+export lines, which run_agent.py requires.
+
 Does NOT start the agent.
 
 Usage:
@@ -48,7 +53,13 @@ import docker
 
 from cybergym.evaluation.agents.helper import task_needs_install
 from cybergym.firewall.proxy import INSTALL_PROXY_CONTAINER_NAME, PROXY_CONTAINER_NAME
+from cybergym.server.types import (
+    API_KEY_ENV_VAR,
+    FLAG_SEED_ENV_VAR,
+    SALT_ENV_VAR,
+)
 from cybergym.task.metadata import KERNEL_TASK_METADATA, TASK_METADATA, V8_TASK_METADATA
+from cybergym.task.token import generate_secret
 from cybergym.task.workspace import TaskType
 
 # Map task-id prefixes to their TaskType (for deciding which install scripts
@@ -333,6 +344,61 @@ def detect_llm_proxy_running(bridge_ip: str, port: int) -> bool:
     )
 
 
+# The controller's three per-deployment secrets, with the prefix used when
+# minting one here (mirrors ServerConfig's own default_factory prefixes; the
+# prefix is cosmetic). Nothing is hardcoded: a shipped constant would let any
+# agent forge a task token or derive the expected flag.
+CONTROLLER_SECRET_PREFIXES = {
+    SALT_ENV_VAR: "cg",
+    FLAG_SEED_ENV_VAR: "sf",
+    API_KEY_ENV_VAR: "cybergym",
+}
+
+
+def extract_controller_secrets_from_log(log_path: Path) -> dict[str, str]:
+    """Recover the controller's secrets from a prior run's log.
+
+    The controller logs ``  <ENV_VAR>=<value>`` lines for its salt, flag seed,
+    and API key at startup (cybergym.server.__main__). When we reuse an
+    already-running controller we didn't generate those, so read them back. The
+    log is opened in append mode across runs, so return the most recent match.
+    """
+    try:
+        text = log_path.read_text(errors="replace")
+    except OSError:
+        return {}
+    found = {}
+    for var in CONTROLLER_SECRET_PREFIXES:
+        matches = re.findall(rf"^\s*{re.escape(var)}=(\S+)\s*$", text, re.MULTILINE)
+        if matches:
+            found[var] = matches[-1]
+    return found
+
+
+def resolve_controller_secrets(
+    log_dir: Path, reuse_running: bool
+) -> dict[str, tuple[str, str]]:
+    """Resolve each controller secret to ``(value, provenance)``.
+
+    Per variable: an exported value wins, then (when reusing a controller we
+    did not start) the value recovered from its log, then a freshly minted one.
+    """
+    from_log = (
+        extract_controller_secrets_from_log(log_dir / "controller.log")
+        if reuse_running
+        else {}
+    )
+    resolved: dict[str, tuple[str, str]] = {}
+    for var, prefix in CONTROLLER_SECRET_PREFIXES.items():
+        if os.environ.get(var):
+            resolved[var] = (os.environ[var], "from environment")
+        elif var in from_log:
+            resolved[var] = (from_log[var], f"recovered from {log_dir}/controller.log")
+        else:
+            resolved[var] = (generate_secret(prefix), "generated")
+    return resolved
+
+
 def extract_admin_key_from_log(log_path: Path) -> str | None:
     """Recover the LLM proxy admin key from a prior run's log.
 
@@ -404,9 +470,13 @@ def start_firewall(bridge_ip, log_dir: Path, with_install: bool) -> bool:
     return True
 
 
-def start_controller(bridge_ip, port, log_dir: Path) -> subprocess.Popen | None:
+def start_controller(
+    bridge_ip, port, log_dir: Path, secret_env: dict[str, str]
+) -> subprocess.Popen | None:
     print(f"\n→ Controller (host={bridge_ip}, port={port})")
     log_path = log_dir / "controller.log"
+    env = os.environ.copy()
+    env.update(secret_env)
     proc = _start_background(
         [
             "uv",
@@ -423,6 +493,7 @@ def start_controller(bridge_ip, port, log_dir: Path) -> subprocess.Popen | None:
             "cybergym-internal",
         ],
         log_path,
+        env=env,
     )
     # Poll briefly — FastAPI 404 on / means up
     import urllib.request
@@ -678,8 +749,37 @@ def main():
             sys.exit(1)
 
     controller_proc = None
+    controller_secrets: dict[str, tuple[str, str]] = {}
+    if enabled_controller:
+        controller_secrets = resolve_controller_secrets(
+            log_dir, reuse_running=controller_running
+        )
+        if controller_running:
+            # A controller we didn't start already fixed its own secrets. If we
+            # can neither read them from the environment nor recover them from
+            # its log, minting new ones would silently break every task (forged
+            # tokens rejected, wrong expected flag) — stop instead.
+            unknown = [
+                var
+                for var, (_, source) in controller_secrets.items()
+                if source == "generated"
+            ]
+            if unknown:
+                fail(
+                    "reusing a running controller but its secrets are unknown: "
+                    f"{', '.join(unknown)}. Export them (the controller logged "
+                    f"them at startup; see {log_dir}/controller.log), or stop "
+                    "that controller and let pre_run start a fresh one."
+                )
+                sys.exit(1)
+
     if need_start_controller:
-        controller_proc = start_controller(bridge_ip, args.controller_port, log_dir)
+        controller_proc = start_controller(
+            bridge_ip,
+            args.controller_port,
+            log_dir,
+            {var: value for var, (value, _) in controller_secrets.items()},
+        )
         if controller_proc is None:
             sys.exit(1)
 
@@ -696,6 +796,11 @@ def main():
     print("\n" + "=" * 60)
     print("Services ready. Relevant env for the agent runner:")
     print(f"export DOCKER_BRIDGE_IP={bridge_ip}")
+    if enabled_controller:
+        # run_agent.py refuses to start without these: the evaluators derive
+        # task tokens and the expected flag from the controller's secrets.
+        for var, (value, source) in controller_secrets.items():
+            print(f"export {var}={value}  # {source}")
     if enabled_proxy:
         if proxy_proc is not None:
             print(f"export CYBERGYM_ADMIN_KEY={admin_key}")

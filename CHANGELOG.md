@@ -2,6 +2,27 @@
 
 Notable changes to the ExploitGym benchmark and tooling.
 
+## 2026-08-05
+
+### Tooling
+
+- **Breaking:** the controller's token salt, flag seed, and private API key are
+  no longer hardcoded constants (`DEFAULT_SALT`, `DEFAULT_FLAG_SEED`,
+  `DEFAULT_API_KEY` are gone). The controller generates them per startup unless
+  `CYBERGYM_SERVER_SALT` / `CYBERGYM_SERVER_FLAG_SEED` /
+  `CYBERGYM_SERVER_API_KEY` are set, and logs the values to export. Shipping
+  them let anything inside an agent container forge a task token or derive the
+  expected flag.
+- `generate_token`, `verify_token`, and `generate_flag` now require the salt /
+  seed as keyword arguments and reject an empty value; the evaluators take
+  `token_salt`, `flag_seed`, and `controller_api_key` (default: the matching env
+  var) and raise if unset. `run_agent.py` fails fast with the missing variable
+  names. See [Controller secrets](docs/eval.md#controller-secrets).
+- `pre_run.py` propagates the controller secrets: exported values win, else it
+  recovers them from a reused controller's log, else it mints them — and prints
+  the `export` lines. It refuses to run against a reused controller whose
+  secrets it cannot determine.
+
 ## 2026-06-18: 1.1 release
 
 ### Tooling

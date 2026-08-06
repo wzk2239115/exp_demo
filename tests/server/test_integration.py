@@ -10,13 +10,13 @@ To skip integration tests:
 import asyncio
 import time
 
+import docker
 import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
-import docker
 from cybergym.server.controller import ServerManager
-from cybergym.server.types import DEFAULT_API_KEY, ServerRequest
+from cybergym.server.types import ServerRequest
 from cybergym.task.token import generate_token, verify_token
 
 # Mark for integration tests
@@ -362,9 +362,7 @@ class TestRealTaskIntegration:
         """Test that Docker container has correct properties."""
         agent_id, token = real_agent_and_token
 
-        server_manager = ServerManager(
-            salt=SALT, flag_seed="container_test_seed"
-        )
+        server_manager = ServerManager(salt=SALT, flag_seed="container_test_seed")
         req = ServerRequest(agent_id=agent_id, token=token)
 
         try:
@@ -403,9 +401,7 @@ class TestFastAPIIntegrationWithRealTask:
         agent_id, token = real_agent_and_token
 
         # Create real server manager instance
-        real_manager = ServerManager(
-            salt=SALT, flag_seed="api_integration_test_seed"
-        )
+        real_manager = ServerManager(salt=SALT, flag_seed="api_integration_test_seed")
 
         # Import app
         import cybergym.server.__main__ as main_module
@@ -620,9 +616,7 @@ class TestRunCommandIntegration:
         """Test running command when no server exists."""
         agent_id, token = real_agent_and_token
 
-        server_manager = ServerManager(
-            salt=SALT, flag_seed="no_server_test_seed"
-        )
+        server_manager = ServerManager(salt=SALT, flag_seed="no_server_test_seed")
 
         from cybergym.server.types import RunCommandRequest
 
@@ -639,12 +633,12 @@ class TestRunCommandIntegration:
     def test_run_command_via_api(self, check_docker_available, docker_cleanup):
         """Test run_command via FastAPI endpoint with real container."""
 
-        agent_id, token = generate_token("user:cybergym/arvo_36476/exp.none/EXEC", salt=SALT)
+        agent_id, token = generate_token(
+            "user:cybergym/arvo_36476/exp.none/EXEC", salt=SALT
+        )
 
         # Create real server manager
-        real_manager = ServerManager(
-            salt=SALT, flag_seed="api_run_cmd_seed"
-        )
+        real_manager = ServerManager(salt=SALT, flag_seed="api_run_cmd_seed")
 
         # Import app
         import cybergym.server.__main__ as main_module
@@ -673,7 +667,7 @@ class TestRunCommandIntegration:
                         "token": token,
                         "command": ["echo", "api_test"],
                     },
-                    headers={"X-API-Key": DEFAULT_API_KEY},
+                    headers={"X-API-Key": main_module.server_config.api_key},
                 )
 
                 assert cmd_response.status_code == 200
@@ -712,9 +706,7 @@ class TestRateLimitingIntegration:
         """Test rate limiting when creating servers rapidly."""
         agent_id, token = real_agent_and_token
 
-        server_manager = ServerManager(
-            salt=SALT, flag_seed="rate_limit_test_seed"
-        )
+        server_manager = ServerManager(salt=SALT, flag_seed="rate_limit_test_seed")
         req = ServerRequest(agent_id=agent_id, token=token)
 
         try:
@@ -748,9 +740,7 @@ class TestRateLimitingIntegration:
         """Test rate limiting when restarting servers rapidly."""
         agent_id, token = real_agent_and_token
 
-        server_manager = ServerManager(
-            salt=SALT, flag_seed="restart_rate_limit_seed"
-        )
+        server_manager = ServerManager(salt=SALT, flag_seed="restart_rate_limit_seed")
         req = ServerRequest(agent_id=agent_id, token=token)
 
         try:
@@ -807,12 +797,12 @@ class TestRateLimitingIntegration:
         """Test rate limiting through API endpoints."""
         from cybergym.task.token import generate_token
 
-        agent_id, token = generate_token("user:cybergym/arvo_36476/exp.none/EXEC", salt=SALT)
+        agent_id, token = generate_token(
+            "user:cybergym/arvo_36476/exp.none/EXEC", salt=SALT
+        )
 
         # Create real server manager
-        real_manager = ServerManager(
-            salt=SALT, flag_seed="api_rate_limit_seed"
-        )
+        real_manager = ServerManager(salt=SALT, flag_seed="api_rate_limit_seed")
 
         # Import app
         import cybergym.server.__main__ as main_module
@@ -866,9 +856,7 @@ class TestV8TaskIntegration:
     @pytest.fixture
     def v8_server_manager(self, check_docker_available):
         """Create a ServerManager for V8 tests."""
-        manager = ServerManager(
-            salt=SALT, flag_seed="v8_integration_test_seed"
-        )
+        manager = ServerManager(salt=SALT, flag_seed="v8_integration_test_seed")
         yield manager
         # Cleanup
         for key in list(manager._servers.keys()):

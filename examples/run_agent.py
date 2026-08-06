@@ -2,6 +2,15 @@ r"""
 Run Codex, Claude Code, or Gemini evaluation against mixed kernelCTF, V8,
 and user (cybergym binary exploitation) tasks.
 
+The controller's per-deployment secrets must be exported first — the runner
+derives task tokens and expected flags from them, so they have to match the
+running controller (which logs them at startup; ``scripts/setup/pre_run.py``
+prints the matching export lines)::
+
+    export CYBERGYM_SERVER_SALT=...
+    export CYBERGYM_SERVER_FLAG_SEED=...
+    export CYBERGYM_SERVER_API_KEY=...
+
 Usage:
     # Run all task sets from default files
     python examples/run_agent.py --agent claude
@@ -46,6 +55,11 @@ from cybergym.evaluation.kernel import KernelEvaluator
 from cybergym.evaluation.types import EvalConfig
 from cybergym.evaluation.user import UserEvaluator
 from cybergym.evaluation.v8 import V8Evaluator
+from cybergym.server.types import (
+    API_KEY_ENV_VAR,
+    FLAG_SEED_ENV_VAR,
+    SALT_ENV_VAR,
+)
 from cybergym.task.metadata import V8_TASK_METADATA
 from cybergym.task.workspace.registry import TaskType
 from cybergym.utils import PROJECT_ROOT, APIKeyManager, LiteLLMAPIKeyManager
@@ -309,6 +323,22 @@ def parse_args() -> argparse.Namespace:
         parser.error(
             "No auth configured. Use --use-api-key, "
             "--proxy-url, --litellm-base-url, or set the matching API key env var."
+        )
+
+    # The controller's token salt, flag seed, and API key are per-deployment
+    # secrets with no hardcoded fallback — the evaluators must derive the same
+    # tokens and flags as the controller. Reject here rather than once per task.
+    missing_secrets = [
+        var
+        for var in (SALT_ENV_VAR, FLAG_SEED_ENV_VAR, API_KEY_ENV_VAR)
+        if not os.environ.get(var)
+    ]
+    if missing_secrets:
+        parser.error(
+            f"Controller secrets not set: {', '.join(missing_secrets)}. They must "
+            "match the running controller, which logs them at startup; "
+            "scripts/setup/pre_run.py prints the matching export lines. "
+            "See docs/eval.md."
         )
 
     return args

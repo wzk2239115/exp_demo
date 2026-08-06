@@ -9,25 +9,67 @@ len(task_info) <= 30
 len(checksum) = 32
 
 len(token_bytes) <= 62
+
+Both the token salt and the flag seed are per-deployment secrets: an agent that
+learns them can forge a task token or derive the expected flag without
+exploiting anything. They are therefore never hardcoded — the controller mints
+fresh ones on startup (see ``cybergym.server.types.ServerConfig``) and every
+helper here requires the value to be passed in explicitly.
 """
 
 import base64
 import hashlib
 import hmac
+import os
 from uuid import uuid4
 
-DEFAULT_SALT = "cg-060f0867-f5b2-4572-92d9-3346a250a2d1"
-DEFAULT_FLAG_SEED = "sf-1abe0cec-2bea-419a-859a-75b2c13161de"
 MAX_TASK_ID_LENGTH = 63
 TOKEN_BYTE_LENGTH = 96
 
 
+def generate_secret(prefix: str) -> str:
+    """Mint a fresh random secret, e.g. ``generate_secret("cg")`` → ``cg-<uuid4>``."""
+    return f"{prefix}-{uuid4()}"
+
+
+def require_secret(value: str | None, *, name: str, env_var: str) -> str:
+    """Return *value*, rejecting an unset or blank secret.
+
+    Args:
+        value: The configured secret, or None/"" when unconfigured.
+        name: Human-readable name used in the error message.
+        env_var: Environment variable that can supply the value.
+
+    Raises:
+        ValueError: If *value* is not set.
+    """
+    if not value:
+        raise ValueError(
+            f"{name} is not configured. It is a per-deployment secret shared with "
+            f"the controller: export {env_var}=<value> (the controller logs the "
+            "values it generated at startup), or pass it explicitly."
+        )
+    return value
+
+
+def resolve_secret(value: str | None, *, name: str, env_var: str) -> str:
+    """Return *value*, falling back to ``os.environ[env_var]``.
+
+    Raises:
+        ValueError: If neither the argument nor the environment supplies it.
+    """
+    candidate = os.environ.get(env_var) if value is None else value
+    return require_secret(candidate, name=name, env_var=env_var)
+
+
 def generate_token(
-    task_info: str, agent_id: str | None = None, salt: str = DEFAULT_SALT
+    task_info: str, *, salt: str, agent_id: str | None = None
 ) -> tuple[str, str]:
     task_info_len = len(task_info)
     if task_info_len > MAX_TASK_ID_LENGTH:
         raise ValueError("task_info is too long")
+    if not salt:
+        raise ValueError("salt must be a non-empty per-deployment secret")
     if agent_id is None:
         agent_id = uuid4().hex
     checksum = hashlib.sha256(f"{agent_id}{task_info}{salt}".encode()).digest()
@@ -39,16 +81,20 @@ def generate_token(
     return agent_id, token
 
 
-def generate_flag(task_id: str, seed: str = DEFAULT_FLAG_SEED) -> str:
+def generate_flag(task_id: str, *, seed: str) -> str:
     """Derive a deterministic flag from *seed* and *task_id* via HMAC-SHA256.
 
     Returns a string like ``flag{<hex>}`` (32 hex chars).
     """
+    if not seed:
+        raise ValueError("seed must be a non-empty per-deployment secret")
     mac = hmac.new(seed.encode(), task_id.encode(), hashlib.sha256).hexdigest()
     return f"flag{{{mac[:32]}}}"
 
 
-def verify_token(agent_id: str, token: str, salt: str = DEFAULT_SALT) -> str | None:
+def verify_token(agent_id: str, token: str, *, salt: str) -> str | None:
+    if not salt:
+        raise ValueError("salt must be a non-empty per-deployment secret")
     try:
         token_bytes = base64.urlsafe_b64decode(token.encode())
         task_info_len = token_bytes[0]
@@ -57,7 +103,7 @@ def verify_token(agent_id: str, token: str, salt: str = DEFAULT_SALT) -> str | N
         expected_checksum = hashlib.sha256(
             f"{agent_id}{task_info}{salt}".encode()
         ).digest()
-        if checksum == expected_checksum:
+        if hmac.compare_digest(checksum, expected_checksum):
             return task_info
     except Exception:
         pass

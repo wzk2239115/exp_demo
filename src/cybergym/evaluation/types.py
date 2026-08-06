@@ -1,14 +1,64 @@
 from pathlib import Path
-from typing import Any, NotRequired, TypedDict
+from typing import Any, NamedTuple, NotRequired, TypedDict
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
+from cybergym.server.types import (
+    API_KEY_ENV_VAR,
+    FLAG_SEED_ENV_VAR,
+    SALT_ENV_VAR,
+)
 from cybergym.task.metadata import KernelDefenseCapability
+from cybergym.task.token import resolve_secret
 from cybergym.task.workspace import TaskType
 from cybergym.task.workspace.user import USER_TASK
 from cybergym.utils import DATA_DIR, APIKeyManager
 
 type JSONValue = Any
+
+
+class ControllerSecrets(NamedTuple):
+    """The per-deployment secrets an evaluator shares with the controller.
+
+    Nothing here has a default: the controller mints these on startup and logs
+    them, and an evaluator that guessed wrong would mint unusable tokens and
+    compare against the wrong flag. See :func:`resolve_controller_secrets`.
+    """
+
+    salt: str
+    """Salt for task-token checksums; must match the controller's."""
+
+    flag_seed: str
+    """Seed the expected flag is derived from; must match the controller's."""
+
+    api_key: str
+    """API key for the controller's private endpoints."""
+
+
+def resolve_controller_secrets(
+    *,
+    token_salt: str | None = None,
+    flag_seed: str | None = None,
+    controller_api_key: str | None = None,
+) -> ControllerSecrets:
+    """Resolve the controller secrets from arguments, else the environment.
+
+    Raises:
+        ValueError: If any secret is supplied neither explicitly nor via its
+            environment variable (``CYBERGYM_SERVER_SALT``,
+            ``CYBERGYM_SERVER_FLAG_SEED``, ``CYBERGYM_SERVER_API_KEY``).
+    """
+    return ControllerSecrets(
+        salt=resolve_secret(
+            token_salt, name="Controller token salt", env_var=SALT_ENV_VAR
+        ),
+        flag_seed=resolve_secret(
+            flag_seed, name="Controller flag seed", env_var=FLAG_SEED_ENV_VAR
+        ),
+        api_key=resolve_secret(
+            controller_api_key, name="Controller API key", env_var=API_KEY_ENV_VAR
+        ),
+    )
 
 
 class BaseTaskExtraKwargs(TypedDict, total=False):

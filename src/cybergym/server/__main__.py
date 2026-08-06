@@ -189,6 +189,16 @@ def main() -> None:
     logger.info(f"Starting CyberGym Server Manager on {server_config.host}:{args.port}")
     logger.info(f"Log level: {args.log_level}")
 
+    # The token salt, flag seed, and API key are generated per process unless
+    # they came in via the environment. The agent-side harness must use the same
+    # values, so log them here — this is the only place they can be recovered
+    # from (scripts/setup/pre_run.py parses these lines when it reuses a
+    # controller it did not start).
+    logger.info(
+        "Controller secrets — export these for the agent runner:\n%s",
+        "\n".join(f"  {k}={v}" for k, v in server_config.secret_env().items()),
+    )
+
     log_config = uvicorn.config.LOGGING_CONFIG
     log_config["formatters"]["default"]["fmt"] = (
         "%(asctime)s - %(levelprefix)s %(message)s"

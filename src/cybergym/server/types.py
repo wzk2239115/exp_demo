@@ -3,10 +3,17 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from cybergym.task.token import DEFAULT_FLAG_SEED, DEFAULT_SALT
+from cybergym.task.token import generate_secret
 
-DEFAULT_API_KEY = "cybergym-030a0cd7-5908-4862-8ab9-91f2bfc7b56d"
 API_KEY_NAME = "X-API-Key"
+
+# Environment variables that carry the controller's three per-deployment
+# secrets. They double as the pydantic-settings env names for the matching
+# ``ServerConfig`` fields (env_prefix ``CYBERGYM_SERVER_``), and the agent-side
+# harness reads the same variables so both ends agree on the values.
+SALT_ENV_VAR = "CYBERGYM_SERVER_SALT"
+FLAG_SEED_ENV_VAR = "CYBERGYM_SERVER_FLAG_SEED"
+API_KEY_ENV_VAR = "CYBERGYM_SERVER_API_KEY"
 
 
 class ContainerResources(BaseModel):
@@ -83,17 +90,41 @@ class UserContainerResources(ContainerResources):
 
 
 class ServerConfig(BaseSettings):
-    """Server configuration with defaults that can be overridden by environment variables or arguments."""
+    """Server configuration with defaults that can be overridden by environment variables or arguments.
 
-    salt: str = DEFAULT_SALT
+    The three secrets (``salt``, ``flag_seed``, ``api_key``) are generated
+    fresh per process unless supplied via ``CYBERGYM_SERVER_SALT`` /
+    ``CYBERGYM_SERVER_FLAG_SEED`` / ``CYBERGYM_SERVER_API_KEY``. Nothing is
+    hardcoded: a shipped constant would let any agent forge a task token,
+    derive the expected flag, or call the private controller endpoints. The
+    agent-side harness must be given the same values (the controller logs them
+    on startup) — see ``docs/eval.md``.
+    """
+
+    salt: str = Field(
+        default_factory=lambda: generate_secret("cg"),
+        description=(
+            "Secret salt for task-token checksums "
+            f"(env: {SALT_ENV_VAR}; default: freshly generated)"
+        ),
+    )
     host: str = "127.0.0.1"
     port: int = 8666
-    flag_seed: str = DEFAULT_FLAG_SEED
+    flag_seed: str = Field(
+        default_factory=lambda: generate_secret("sf"),
+        description=(
+            "Secret seed the target flags are derived from "
+            f"(env: {FLAG_SEED_ENV_VAR}; default: freshly generated)"
+        ),
+    )
     log_dir: Path = Path("./logs")
 
     api_key: str = Field(
-        default=DEFAULT_API_KEY,
-        description="API key for authentication",
+        default_factory=lambda: generate_secret("cybergym"),
+        description=(
+            "API key for authenticating the private endpoints "
+            f"(env: {API_KEY_ENV_VAR}; default: freshly generated)"
+        ),
     )
 
     network: str | None = Field(
@@ -112,6 +143,19 @@ class ServerConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="CYBERGYM_SERVER_", env_nested_delimiter="__"
     )
+
+    def secret_env(self) -> dict[str, str]:
+        """The secrets as an env mapping, for handing to the agent-side harness.
+
+        The controller logs this at startup and ``scripts/setup/pre_run.py``
+        both sets it on the controller process and prints it back as ``export``
+        lines, so the runner derives the same tokens and flags.
+        """
+        return {
+            SALT_ENV_VAR: self.salt,
+            FLAG_SEED_ENV_VAR: self.flag_seed,
+            API_KEY_ENV_VAR: self.api_key,
+        }
 
 
 class ServerRequest(BaseModel):

@@ -32,10 +32,20 @@ export OPENAI_API_KEY=...
 export ANTHROPIC_API_KEY=...
 uv run scripts/setup/pre_run.py data/task_ids/sample.txt
 
-# 7. Run the agent
+# 7. Run the agent. Export the env vars pre_run.py printed: the LLM proxy
+#    admin key plus the controller's three generated secrets, which the
+#    runner needs to mint task tokens and derive expected flags
 export CYBERGYM_ADMIN_KEY=...
+export CYBERGYM_SERVER_SALT=...
+export CYBERGYM_SERVER_FLAG_SEED=...
+export CYBERGYM_SERVER_API_KEY=...
 uv run examples/run_agent.py --help
 ```
+
+No secret is baked into the repo: the controller generates its token salt,
+flag seed, and API key on startup (or takes them from those env vars) and
+both ends must use the same values — see
+[Controller secrets](docs/eval.md#controller-secrets).
 
 Detailed setup steps (system dependencies, GDB, static node, agent
 CLIs) live in [docs/setup.md](docs/setup.md).

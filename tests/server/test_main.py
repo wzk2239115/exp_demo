@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from cybergym.server.types import DEFAULT_API_KEY, ServerHealthResponse, ServerInfo
+from cybergym.server.types import ServerHealthResponse, ServerInfo
 
 
 @pytest.fixture
@@ -67,6 +67,18 @@ def test_client(mock_server_manager):
 
         with TestClient(app) as client:
             yield client
+
+
+@pytest.fixture
+def api_key() -> str:
+    """The API key the app actually accepts.
+
+    Generated per process by ServerConfig (there is no shipped default), so
+    tests must read it off the live config rather than hardcode one.
+    """
+    from cybergym.server.__main__ import server_config
+
+    return server_config.api_key
 
 
 class TestCreateServerEndpoint:
@@ -352,9 +364,10 @@ class TestRunCommandEndpoint:
         # Should return 404 (not authorized)
         assert response.status_code == 404
 
-    def test_run_command_with_valid_api_key(self, test_client, mock_server_manager):
+    def test_run_command_with_valid_api_key(
+        self, test_client, mock_server_manager, api_key
+    ):
         """Test run_command with valid API key."""
-        from cybergym.server.types import DEFAULT_API_KEY
 
         # Setup mock to return command result
         mock_server_manager.run_command.return_value = (0, "command output")
@@ -366,7 +379,7 @@ class TestRunCommandEndpoint:
                 "token": "valid_token",
                 "command": ["echo", "hello"],
             },
-            headers={"X-API-Key": DEFAULT_API_KEY},
+            headers={"X-API-Key": api_key},
         )
 
         assert response.status_code == 200
@@ -376,11 +389,11 @@ class TestRunCommandEndpoint:
 
         mock_server_manager.run_command.assert_called_once()
 
-    def test_run_command_server_not_found(self, test_client, mock_server_manager):
+    def test_run_command_server_not_found(
+        self, test_client, mock_server_manager, api_key
+    ):
         """Test run_command when server doesn't exist."""
         from fastapi import HTTPException
-
-        from cybergym.server.types import DEFAULT_API_KEY
 
         mock_server_manager.run_command.side_effect = HTTPException(
             status_code=404, detail="No server found for this agent/task pair"
@@ -393,14 +406,13 @@ class TestRunCommandEndpoint:
                 "token": "valid_token",
                 "command": ["ls"],
             },
-            headers={"X-API-Key": DEFAULT_API_KEY},
+            headers={"X-API-Key": api_key},
         )
 
         assert response.status_code == 404
 
-    def test_run_command_invalid_request(self, test_client):
+    def test_run_command_invalid_request(self, test_client, api_key):
         """Test run_command with invalid request body."""
-        from cybergym.server.types import DEFAULT_API_KEY
 
         response = test_client.post(
             "/run_command",
@@ -409,7 +421,7 @@ class TestRunCommandEndpoint:
                 "token": "valid_token",
                 # Missing 'command' field
             },
-            headers={"X-API-Key": DEFAULT_API_KEY},
+            headers={"X-API-Key": api_key},
         )
 
         assert response.status_code == 422  # Validation error
@@ -450,7 +462,7 @@ class TestPublicPrivateRouting:
         # Without API key, should return 404 (endpoint hidden)
         assert response.status_code == 404
 
-    def test_api_key_header_name(self, test_client, mock_server_manager):
+    def test_api_key_header_name(self, test_client, mock_server_manager, api_key):
         """Test that API key must be in X-API-Key header."""
 
         # Setup mock to return proper tuple for run_command
@@ -464,7 +476,7 @@ class TestPublicPrivateRouting:
                 "token": "valid_token",
                 "command": ["ls"],
             },
-            headers={"Authorization": f"Bearer {DEFAULT_API_KEY}"},
+            headers={"Authorization": f"Bearer {api_key}"},
         )
 
         # Should fail - wrong header name
@@ -478,15 +490,14 @@ class TestPublicPrivateRouting:
                 "token": "valid_token",
                 "command": ["ls"],
             },
-            headers={"X-API-Key": DEFAULT_API_KEY},
+            headers={"X-API-Key": api_key},
         )
 
         # Should succeed (or return error from manager, not auth)
         assert response.status_code in [200, 404]  # 404 if server not found
 
-    def test_api_key_case_sensitive(self, test_client):
+    def test_api_key_case_sensitive(self, test_client, api_key):
         """Test that API key is case sensitive."""
-        from cybergym.server.types import DEFAULT_API_KEY
 
         # Try with wrong case
         response = test_client.post(
@@ -496,11 +507,11 @@ class TestPublicPrivateRouting:
                 "token": "valid_token",
                 "command": ["ls"],
             },
-            headers={"X-API-Key": DEFAULT_API_KEY.upper()},
+            headers={"X-API-Key": api_key.upper()},
         )
 
         # Should fail if key is different case
-        if DEFAULT_API_KEY != DEFAULT_API_KEY.upper():
+        if api_key != api_key.upper():
             assert response.status_code == 404
 
     def test_router_inclusion(self):
