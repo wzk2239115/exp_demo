@@ -121,7 +121,13 @@ assign_or_get_slot() {
 #  GLM 代理配置(全组共享一份)
 # ─────────────────────────────────────────────
 ensure_glm_config() {
-  if [[ -f "$GLM_CONFIG" ]]; then return 0; fi
+  # 文件缺失,或旧文件缺 drop_params(claude_code 会发 reasoning_effort /
+  # context_management,openai/GLM 不认会被 litellm 拒成 400)→ (重新)生成。
+  if [[ -f "$GLM_CONFIG" ]] && grep -q 'drop_params' "$GLM_CONFIG"; then
+    return 0
+  fi
+  [[ -f "$GLM_CONFIG" ]] && log "$GLM_CONFIG 缺 drop_params,重新生成"
+  GLM_CONFIG_REGEN=1   # 通知 ensure_proxy:跑着的旧 proxy 要重启加载新配置
   log "生成 $GLM_CONFIG"
   cat > "$GLM_CONFIG" <<EOF
 model_list:
@@ -141,6 +147,7 @@ model_list:
       output_cost_per_token: 0.0
 litellm_settings:
   use_chat_completions_url_for_anthropic_messages: true
+  drop_params: true   # 丢弃 reasoning_effort/context_management 等 openai 不支持的参数
 EOF
 }
 
@@ -252,6 +259,15 @@ ensure_proxy() {
   local root="http://$BRIDGE:$PROXY_PORT/"
   local admin_key_file="$LOG_DIR/admin.key"
 
+  # glm_config 刚被重生成(加 drop_params 等)且旧 proxy 还在跑 → 杀掉重启加载新配置
+  if [[ "${GLM_CONFIG_REGEN:-0}" == "1" ]] && { listening "$health" || listening "$root"; }; then
+    log "glm_config 变更,重启 proxy 以加载新配置"
+    if [[ -f "$LOG_DIR/proxy.pid" ]] && kill "$(cat "$LOG_DIR/proxy.pid")" 2>/dev/null; then
+      rm -f "$LOG_DIR/proxy.pid"
+      for _ in $(seq 1 20); do listening "$root" || break; sleep 0.3; done
+    fi
+  fi
+
   if listening "$health" || listening "$root"; then
     if [[ -f "$admin_key_file" ]]; then
       CYBERGYM_ADMIN_KEY=$(cat "$admin_key_file")
@@ -341,7 +357,9 @@ check_api() {
       | python3 -c "import sys,json;print(json.load(sys.stdin).get('key',''))" 2>/dev/null || true)
   [[ -n "$key" ]] || die "无法从 proxy 生成测试 key;看 $LOG_DIR/llm_proxy.log"
 
-  local body='{"model":"'"$MODEL_ALIAS"'","max_tokens":8,"messages":[{"role":"user","content":"hi"}]}'
+  # 带上 claude_code 真实会发的 reasoning_effort / context_management ——
+  # 若 proxy 没开 drop_params,litellm 会回 400,预检就能抓住,免得任务里空跑。
+  local body='{"model":"'"$MODEL_ALIAS"'","max_tokens":8,"reasoning_effort":"medium","context_management":null,"messages":[{"role":"user","content":"hi"}]}'
   local url="http://$BRIDGE:$PROXY_PORT/v1/messages"
 
   # 失败/成功都先清理测试 key 再下结论
