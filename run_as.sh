@@ -296,6 +296,37 @@ stop_proxy() {
 }
 
 # ─────────────────────────────────────────────
+#  预检:所选 agent 的 CLI 工具是否真的可用
+# ─────────────────────────────────────────────
+# 之前出现过 claude-code 的 bin/claude.exe 是 500 字节占位、启动即崩、
+# 每个任务 0.28 秒空跑拿 0 分的情况。这里在评测前先跑一遍 --version 把它挡住。
+check_agent_tool() {
+  local launcher
+  case "$AGENT" in
+    claude_code) launcher="claude-code.sh" ;;
+    codex)       launcher="codex.sh" ;;
+    gemini_cli)  launcher="gemini-cli.sh" ;;
+    *) die "未知 AGENT=$AGENT(应为 claude_code / codex / gemini_cli)" ;;
+  esac
+  local bin="$PROJECT_ROOT/data/runtime/node/bin/$launcher"
+  if [[ ! -x "$bin" ]]; then
+    die "agent 工具不可用: $bin 不存在或不可执行。
+  先跑: bash scripts/setup/setup_data.sh
+  (claude-code 若报 claude.exe 占位,见 docs/setup.md 的修复说明)"
+  fi
+
+  log "预检 $AGENT ($launcher --version)…"
+  local out rc
+  out=$(timeout 60 "$bin" --version 2>&1) && rc=0 || rc=$?
+  if [[ $rc -ne 0 ]]; then
+    warn "$AGENT 自检失败 (exit=$rc):"
+    printf '%s\n' "$out" | head -15 | sed 's/^/    /'
+    die "请先修复该 agent 工具再重试。全量检查: bash scripts/setup/validate.sh"
+  fi
+  log "$AGENT 可用 → $(printf '%s' "$out" | head -1 | cut -c1-80)"
+}
+
+# ─────────────────────────────────────────────
 #  参数解析
 # ─────────────────────────────────────────────
 if [[ "${1:-}" == "--stop" ]]; then
@@ -308,6 +339,7 @@ USER_NAME="${1:?用法: bash run_as.sh <名字> [run_agent 额外参数...] ; �
 shift
 
 BRIDGE="$(bridge_ip)"
+check_agent_tool          # 工具不可用就别白起 controller/proxy 了
 ensure_glm_config
 
 SLOT="$(assign_or_get_slot "$USER_NAME")"
