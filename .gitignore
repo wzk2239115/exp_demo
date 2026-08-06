@@ -2,6 +2,8 @@
 /out/
 .vscode/
 /logs/
+.glm_env
+glm_config.yaml
 /cybergym_data/
 /oss-fuzz-data/
 *.7z

@@ -21,11 +21,11 @@
 #   bash run_as.sh wzk --overwrite                      # 重跑已完成的任务
 #   bash run_as.sh --stop wzk                           # 停掉 wzk 的 proxy
 #
-# 可用环境变量覆盖默认值:
-#   GLM_BASE_URL (默认 http://11.131.215.38:8000/v1)
-#   GLM_MODEL    (默认 GLM52_Full,vLLM /v1/models 里的 id)
+# 可用环境变量覆盖默认值(或写进 .glm_env 文件,已 gitignore):
+#   GLM_BASE_URL (默认 https://api.360.cn/v1)
+#   GLM_MODEL    (默认 z-ai/glm-5.2;改 provider/模型时配置会自动重生成)
 #   MODEL_ALIAS  (默认 glm-52-full,run_agent 的 --model)
-#   GLM_API_KEY  (默认 dummy,vLLM 没设 key 就不用改)
+#   GLM_API_KEY  (调用 360 等需要鉴权的 provider 时必填,写进 .glm_env)
 #   TASKS_FILE   (默认 data/task_ids/sample.txt)
 #   AGENT        (默认 claude_code)
 #   BUDGET       (默认 1000)
@@ -42,8 +42,15 @@ cd "$PROJECT_ROOT"
 # ─────────────────────────────────────────────
 #  可配置项
 # ─────────────────────────────────────────────
-GLM_BASE_URL="${GLM_BASE_URL:-http://11.131.215.38:8000/v1}"
-GLM_MODEL="${GLM_MODEL:-GLM52_Full}"
+# 若存在 .glm_env(已 gitignore),先 source 它 —— 组员把 GLM_API_KEY 等放进去,
+# 直接 `bash run_as.sh <名字>` 即可,无需每次在命令行带环境变量。
+if [[ -f "$PROJECT_ROOT/.glm_env" ]]; then
+  # shellcheck disable=SC1091
+  source "$PROJECT_ROOT/.glm_env"
+fi
+
+GLM_BASE_URL="${GLM_BASE_URL:-https://api.360.cn/v1}"
+GLM_MODEL="${GLM_MODEL:-z-ai/glm-5.2}"
 MODEL_ALIAS="${MODEL_ALIAS:-glm-52-full}"
 GLM_API_KEY="${GLM_API_KEY:-dummy}"
 
@@ -121,15 +128,17 @@ assign_or_get_slot() {
 #  GLM 代理配置(全组共享一份)
 # ─────────────────────────────────────────────
 ensure_glm_config() {
-  # 文件缺失,或旧文件缺 drop_params(claude_code 会发 reasoning_effort /
-  # context_management,openai/GLM 不认会被 litellm 拒成 400)→ (重新)生成。
-  if [[ -f "$GLM_CONFIG" ]] && grep -q 'drop_params' "$GLM_CONFIG"; then
+  # 配置由 GLM_BASE_URL/GLM_MODEL/MODEL_ALIAS 派生。把这三个值作为 marker 写进文件,
+  # 任意一个变了(换模型/换 provider)或缺 drop_params → 自动重生成,无需手动删文件。
+  local marker="# src: $GLM_BASE_URL | $GLM_MODEL | $MODEL_ALIAS"
+  if [[ -f "$GLM_CONFIG" ]] && grep -qF "$marker" "$GLM_CONFIG" && grep -q 'drop_params' "$GLM_CONFIG"; then
     return 0
   fi
-  [[ -f "$GLM_CONFIG" ]] && log "$GLM_CONFIG 缺 drop_params,重新生成"
+  [[ -f "$GLM_CONFIG" ]] && log "$GLM_CONFIG 配置已变或缺 drop_params,重新生成"
   GLM_CONFIG_REGEN=1   # 通知 ensure_proxy:跑着的旧 proxy 要重启加载新配置
-  log "生成 $GLM_CONFIG"
+  log "生成 $GLM_CONFIG ($GLM_BASE_URL, model=$GLM_MODEL)"
   cat > "$GLM_CONFIG" <<EOF
+$marker
 model_list:
   - model_name: $MODEL_ALIAS
     litellm_params:
