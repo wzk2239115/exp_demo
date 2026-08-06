@@ -327,6 +327,51 @@ check_agent_tool() {
 }
 
 # ─────────────────────────────────────────────
+#  端到端预检 API:host 真实推理 + 容器视角连通
+# ─────────────────────────────────────────────
+# host 能通不代表容器能通:agent 在容器里访问 $BRIDGE:$PROXY_PORT,宿主机防火墙
+# (firewalld)很可能挡掉 docker 子网到该端口的流量,结果每个任务 ConnectionRefused、
+# 3 分钟拿 0 分。这里两段都测,任一失败就 die。
+check_api() {
+  log "端到端预检 API(host 推理 + 容器连通)…"
+  local key resp
+  key=$(curl -s -X POST "http://$BRIDGE:$PROXY_PORT/budget/generate_key" \
+        -H "x-admin-key: $CYBERGYM_ADMIN_KEY" -H 'Content-Type: application/json' \
+        -d "{\"max_budget\":0.01,\"allowed_models\":[\"$MODEL_ALIAS\"]}" \
+      | python3 -c "import sys,json;print(json.load(sys.stdin).get('key',''))" 2>/dev/null || true)
+  [[ -n "$key" ]] || die "无法从 proxy 生成测试 key;看 $LOG_DIR/llm_proxy.log"
+
+  resp=$(curl -s -X POST "http://$BRIDGE:$PROXY_PORT/v1/messages" \
+        -H "x-api-key: $key" -H 'content-type: application/json' \
+        -H 'anthropic-version: 2023-06-01' \
+        -d "{\"model\":\"$MODEL_ALIAS\",\"max_tokens\":8,\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}" 2>&1 || true)
+  curl -s -X DELETE "http://$BRIDGE:$PROXY_PORT/budget/key/$key" \
+        -H "x-admin-key: $CYBERGYM_ADMIN_KEY" >/dev/null 2>&1 || true
+
+  if ! printf '%s' "$resp" | grep -q '"role":"assistant"'; then
+    warn "proxy→GLM 推理预检失败(没拿到模型回复):"
+    printf '%s\n' "$resp" | head -8 | sed 's/^/    /'
+    die "确认 GLM 端点 $GLM_BASE_URL 可达、glm_config.yaml 里 $MODEL_ALIAS→openai/$GLM_MODEL 正确"
+  fi
+  log "host→proxy→GLM 推理 OK"
+
+  if command -v docker >/dev/null 2>&1; then
+    local cout
+    # 任意 HTTP 状态行(含 404)都说明端口可达;只有 refused/timeout 才算不通
+    cout=$(docker run --rm alpine:3.20 sh -c "wget -S -q -O /dev/null -T 5 'http://$BRIDGE:$PROXY_PORT/' 2>&1 | head -3" 2>&1 || true)
+    if printf '%s' "$cout" | grep -qi 'HTTP/'; then
+      log "container→proxy 连通 OK"
+    else
+      warn "容器内连不到 proxy $BRIDGE:$PROXY_PORT:"
+      printf '%s\n' "$cout" | head -4 | sed 's/^/    /'
+      die "很可能是宿主机防火墙挡了容器→proxy。放行 docker 子网后重试:
+    firewall-cmd --permanent --add-rich-rule='rule family=ipv4 source address=172.17.0.0/16 accept'
+    firewall-cmd --reload"
+    fi
+  fi
+}
+
+# ─────────────────────────────────────────────
 #  参数解析
 # ─────────────────────────────────────────────
 if [[ "${1:-}" == "--stop" ]]; then
@@ -354,6 +399,7 @@ log "输出=$OUT_DIR"
 
 ensure_controller
 ensure_proxy
+check_api            # host 推理 + 容器连通都过才放行,免得白跑
 
 # 导出给 uv run 子进程(cybergym 代码会读)。
 # 三个 CYBERGYM_SERVER_* 已由 ensure_controller 导出,run_agent.py 会强制校验它们。
