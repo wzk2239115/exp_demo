@@ -1,10 +1,10 @@
 # 复制本文件为 .glm_env(已 gitignore),填入真实 key,然后 bash run_as.sh <名字>
 # 即可,无需每次在命令行带环境变量。也可直接在命令行用 GLM_API_KEY=... bash run_as.sh 覆盖。
 
-# 360 API key(必填,调用 z-ai/glm-5.2 等需要鉴权)
+# 360 API key(必填,调用 deepseek-v4-pro 等需要鉴权)
 export GLM_API_KEY=fk替换成你的key
 
 # provider / 模型(默认值如下,需要时改)
 # export GLM_BASE_URL=https://api.360.cn/v1
-# export GLM_MODEL=z-ai/glm-5.2
-# export MODEL_ALIAS=glm-52-full
+# export GLM_MODEL=deepseek/deepseek-v4-pro
+# export MODEL_ALIAS=deepseek-v4-pro

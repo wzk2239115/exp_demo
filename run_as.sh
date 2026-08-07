@@ -23,8 +23,8 @@
 #
 # 可用环境变量覆盖默认值(或写进 .glm_env 文件,已 gitignore):
 #   GLM_BASE_URL (默认 https://api.360.cn/v1)
-#   GLM_MODEL    (默认 z-ai/glm-5.2;改 provider/模型时配置会自动重生成)
-#   MODEL_ALIAS  (默认 glm-52-full,run_agent 的 --model)
+#   GLM_MODEL    (默认 deepseek/deepseek-v4-pro;改 provider/模型时配置会自动重生成)
+#   MODEL_ALIAS  (默认 deepseek-v4-pro,run_agent 的 --model / 路由别名)
 #   GLM_API_KEY  (调用 360 等需要鉴权的 provider 时必填,写进 .glm_env)
 #   TASKS_FILE   (默认 data/task_ids/sample.txt)
 #   AGENT        (默认 claude_code)
@@ -50,8 +50,8 @@ if [[ -f "$PROJECT_ROOT/.glm_env" ]]; then
 fi
 
 GLM_BASE_URL="${GLM_BASE_URL:-https://api.360.cn/v1}"
-GLM_MODEL="${GLM_MODEL:-z-ai/glm-5.2}"
-MODEL_ALIAS="${MODEL_ALIAS:-glm-52-full}"
+GLM_MODEL="${GLM_MODEL:-deepseek/deepseek-v4-pro}"
+MODEL_ALIAS="${MODEL_ALIAS:-deepseek-v4-pro}"
 GLM_API_KEY="${GLM_API_KEY:-dummy}"
 
 AGENT="${AGENT:-claude_code}"
