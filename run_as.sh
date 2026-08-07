@@ -63,7 +63,7 @@ MAX_WORKERS="${MAX_WORKERS:-1}"
 CONTROLLER_PORT="${CONTROLLER_PORT:-8666}"
 PROXY_PORT_BASE="${PROXY_PORT_BASE:-4001}"
 
-GLM_CONFIG="$PROJECT_ROOT/glm_config.yaml"
+GLM_CONFIG=""   # 在 main 里按 per-user 设置(logs/<名字>/glm_config.yaml),避免多人/多模型共用一份互相覆盖
 SLOTS_FILE="$PROJECT_ROOT/logs/user_slots.tsv"
 # controller 的三个共享 secret(token salt / flag seed / api key)持久化到这里。
 # controller 全组共用一个,所以这三个值也得全组一致;run_agent.py 必须读到它们才能
@@ -465,7 +465,6 @@ shift
 
 BRIDGE="$(bridge_ip)"
 check_agent_tool          # 工具不可用就别白起 controller/proxy 了
-ensure_glm_config
 
 SLOT="$(assign_or_get_slot "$USER_NAME")"
 PROXY_PORT=$((PROXY_PORT_BASE + SLOT - 1))
@@ -473,6 +472,10 @@ PROXY_PORT=$((PROXY_PORT_BASE + SLOT - 1))
 OUT_DIR="$PROJECT_ROOT/out/$USER_NAME/run_agent"
 LOG_DIR="$PROJECT_ROOT/logs/$USER_NAME"
 mkdir -p "$OUT_DIR" "$LOG_DIR"
+
+# 每人一份配置(而非项目根共用),这样两个 screen 跑不同模型不会互相覆盖
+GLM_CONFIG="$LOG_DIR/glm_config.yaml"
+ensure_glm_config
 
 log "用户=$USER_NAME  槽位=$SLOT  proxy=:$PROXY_PORT  controller=:$CONTROLLER_PORT"
 log "输出=$OUT_DIR"
