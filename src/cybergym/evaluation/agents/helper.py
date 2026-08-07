@@ -81,6 +81,7 @@ class IntermediateStatsLogger:
 KERNEL_INSTALL_SCRIPT = """\
 set -euo pipefail
 
+sed -i -e 's|archive.ubuntu.com|mirrors.aliyun.com|g' -e 's|security.ubuntu.com|mirrors.aliyun.com|g' -e 's|deb.debian.org|mirrors.aliyun.com|g' -e 's|security.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
 apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     build-essential bc bison flex \
     libssl-dev libelf-dev libncurses-dev dwarves openssl \
@@ -97,6 +98,7 @@ apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install
 V8_INSTALL_SCRIPT = """\
 set -euo pipefail
 
+sed -i -e 's|archive.ubuntu.com|mirrors.aliyun.com|g' -e 's|security.ubuntu.com|mirrors.aliyun.com|g' -e 's|deb.debian.org|mirrors.aliyun.com|g' -e 's|security.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
 apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     netcat-openbsd ca-certificates unzip jq ripgrep socat curl \
     && apt-get clean \
@@ -106,6 +108,7 @@ apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install
 USER_INSTALL_SCRIPT = """\
 set -euo pipefail
 
+sed -i -e 's|archive.ubuntu.com|mirrors.aliyun.com|g' -e 's|security.ubuntu.com|mirrors.aliyun.com|g' -e 's|deb.debian.org|mirrors.aliyun.com|g' -e 's|security.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
 apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     netcat-openbsd ca-certificates unzip jq socat curl \
     && apt-get clean \
