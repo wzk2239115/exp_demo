@@ -149,8 +149,15 @@ ensure_glm_config() {
     settings_block="litellm_settings:
   drop_params: true"
   else
-    # OpenAI 兼容端点(360 的 z-ai/glm-5.2 / deepseek 等走这里,需翻译)
-    model_line="      model: openai/$GLM_MODEL"
+    # OpenAI 兼容端点(360 的 z-ai/glm-5.2 / deepseek 等走这里,需翻译)。
+    # litellm 的 /v1/messages→openai 翻译路径对 "openai/" 前缀会多剥一次:当上游模型
+    # id 本身以 openai/ 开头(如 360 的 openai/gpt-5.5),需要再加一层 openai/ 才能保
+    # 证发出去的是 openai/gpt-5.5(实测 openai/openai/openai/gpt-5.5 → 200)。
+    if [[ "$GLM_MODEL" == openai/* ]]; then
+      model_line="      model: openai/openai/$GLM_MODEL"
+    else
+      model_line="      model: openai/$GLM_MODEL"
+    fi
     base_line="      api_base: \"$GLM_BASE_URL\""
     settings_block="litellm_settings:
   use_chat_completions_url_for_anthropic_messages: true
