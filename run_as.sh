@@ -293,13 +293,17 @@ ensure_proxy() {
   local root="http://$BRIDGE:$PROXY_PORT/"
   local admin_key_file="$LOG_DIR/admin.key"
 
-  # glm_config 刚被重生成(加 drop_params 等)且旧 proxy 还在跑 → 杀掉重启加载新配置
+  # glm_config 刚被重生成 且旧 proxy 还在跑 → 彻底杀掉(按 port,连 litellm 的 python
+  # 子进程一起;只 kill pidfile 会留 uv→python 孤儿继续占端口,导致复用了旧配置)再重启
   if [[ "${GLM_CONFIG_REGEN:-0}" == "1" ]] && { listening "$health" || listening "$root"; }; then
     log "glm_config 变更,重启 proxy 以加载新配置"
-    if [[ -f "$LOG_DIR/proxy.pid" ]] && kill "$(cat "$LOG_DIR/proxy.pid")" 2>/dev/null; then
-      rm -f "$LOG_DIR/proxy.pid"
-      for _ in $(seq 1 20); do listening "$root" || break; sleep 0.3; done
-    fi
+    for _ in $(seq 1 20); do
+      pkill -f "cybergym.llm_proxy.*--port $PROXY_PORT" 2>/dev/null || true
+      command -v fuser >/dev/null 2>&1 && fuser -k "$PROXY_PORT/tcp" 2>/dev/null || true
+      listening "$root" || break
+      sleep 0.3
+    done
+    rm -f "$LOG_DIR/proxy.pid"
   fi
 
   if listening "$health" || listening "$root"; then
@@ -319,12 +323,13 @@ ensure_proxy() {
   export GLM_API_KEY
 
   log "启动 $USER_NAME 的 LLM proxy :$PROXY_PORT"
-  nohup uv run -m cybergym.llm_proxy \
+  # setsid:把 proxy 放进独立会话,Ctrl+C 中断 run_as.sh 时不会被同进程组连坐杀掉
+  setsid uv run -m cybergym.llm_proxy \
     --host "$BRIDGE" --port "$PROXY_PORT" \
     --admin-key "$CYBERGYM_ADMIN_KEY" \
     --config "$GLM_CONFIG" \
     --default-budget "$BUDGET" \
-    > "$LOG_DIR/llm_proxy.log" 2>&1 &
+    > "$LOG_DIR/llm_proxy.log" 2>&1 < /dev/null &
   echo $! > "$LOG_DIR/proxy.pid"
 
   for _ in $(seq 1 40); do
@@ -336,12 +341,15 @@ ensure_proxy() {
 }
 
 stop_proxy() {
-  local pidfile="$PROJECT_ROOT/logs/$USER_NAME/proxy.pid"
-  if [[ -f "$pidfile" ]] && kill "$(cat "$pidfile")" 2>/dev/null; then
-    log "已停止 $USER_NAME 的 proxy (pid $(cat "$pidfile"))"
-    rm -f "$pidfile"
+  # 按用户名(admin key 里含 $USER_NAME)匹配,连 litellm 子进程一起杀
+  local n
+  n=$(pgrep -af "cybergym.llm_proxy.*cgym-admin-$USER_NAME" | wc -l)
+  if [[ "$n" -gt 0 ]]; then
+    pkill -f "cybergym.llm_proxy.*cgym-admin-$USER_NAME" 2>/dev/null
+    rm -f "$PROJECT_ROOT/logs/$USER_NAME/proxy.pid"
+    log "已停止 $USER_NAME 的 proxy"
   else
-    warn "$USER_NAME 没有在跑的 proxy(或 pid 文件缺失)"
+    warn "$USER_NAME 没有在跑的 proxy"
   fi
 }
 
