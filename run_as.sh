@@ -128,35 +128,53 @@ assign_or_get_slot() {
 #  GLM 代理配置(全组共享一份)
 # ─────────────────────────────────────────────
 ensure_glm_config() {
-  # 配置由 GLM_BASE_URL/GLM_MODEL/MODEL_ALIAS 派生。把这三个值作为 marker 写进文件,
-  # 任意一个变了(换模型/换 provider)或缺 drop_params → 自动重生成,无需手动删文件。
-  local marker="# src: $GLM_BASE_URL | $GLM_MODEL | $MODEL_ALIAS"
+  # 配置由 provider/GLM_BASE_URL/GLM_MODEL/MODEL_ALIAS 派生,写进 marker;任一变化或缺
+  # drop_params → 自动重生成。GLM_PROVIDER=anthropic 时走原生 Anthropic 路由(不经
+  # litellm 的 OpenAI→Anthropic 翻译,避免 GLM thinking 块流式被搞坏成 "Content block
+  # not found")。
+  local provider="${GLM_PROVIDER:-openai}"
+  local marker="# src: provider=$provider | $GLM_BASE_URL | $GLM_MODEL | $MODEL_ALIAS"
   if [[ -f "$GLM_CONFIG" ]] && grep -qF "$marker" "$GLM_CONFIG" && grep -q 'drop_params' "$GLM_CONFIG"; then
     return 0
   fi
-  [[ -f "$GLM_CONFIG" ]] && log "$GLM_CONFIG 配置已变或缺 drop_params,重新生成"
+  [[ -f "$GLM_CONFIG" ]] && log "$GLM_CONFIG 配置已变,重新生成"
   GLM_CONFIG_REGEN=1   # 通知 ensure_proxy:跑着的旧 proxy 要重启加载新配置
-  log "生成 $GLM_CONFIG ($GLM_BASE_URL, model=$GLM_MODEL)"
+  log "生成 $GLM_CONFIG (provider=$provider, model=$GLM_MODEL)"
+
+  local model_line base_line settings_block
+  if [[ "$provider" == "anthropic" ]]; then
+    # 原生 Anthropic:litellm 直连 /v1/messages,不做协议翻译
+    model_line="      model: anthropic/$GLM_MODEL"
+    base_line="      api_base: \"${GLM_ANTHROPIC_BASE:-https://api.360.cn}\""
+    settings_block="litellm_settings:
+  drop_params: true"
+  else
+    # OpenAI 兼容端点(360 的 z-ai/glm-5.2 / deepseek 等走这里,需翻译)
+    model_line="      model: openai/$GLM_MODEL"
+    base_line="      api_base: \"$GLM_BASE_URL\""
+    settings_block="litellm_settings:
+  use_chat_completions_url_for_anthropic_messages: true
+  drop_params: true"
+  fi
+
   cat > "$GLM_CONFIG" <<EOF
 $marker
 model_list:
   - model_name: $MODEL_ALIAS
     litellm_params:
-      model: openai/$GLM_MODEL
-      api_base: "$GLM_BASE_URL"
+$model_line
+$base_line
       api_key: "os.environ/GLM_API_KEY"
       input_cost_per_token: 0.0
       output_cost_per_token: 0.0
   - model_name: claude-sonnet-4-6
     litellm_params:
-      model: openai/$GLM_MODEL
-      api_base: "$GLM_BASE_URL"
+$model_line
+$base_line
       api_key: "os.environ/GLM_API_KEY"
       input_cost_per_token: 0.0
       output_cost_per_token: 0.0
-litellm_settings:
-  use_chat_completions_url_for_anthropic_messages: true
-  drop_params: true   # 丢弃 reasoning_effort/context_management 等 openai 不支持的参数
+$settings_block
 EOF
 }
 
