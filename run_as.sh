@@ -133,7 +133,7 @@ ensure_glm_config() {
   # litellm 的 OpenAI→Anthropic 翻译,避免 GLM thinking 块流式被搞坏成 "Content block
   # not found")。
   local provider="${GLM_PROVIDER:-openai}"
-  local marker="# src: provider=$provider | $GLM_BASE_URL | $GLM_MODEL | $MODEL_ALIAS"
+  local marker="# src: v2 | provider=$provider | $GLM_BASE_URL | $GLM_MODEL | $MODEL_ALIAS"
   if [[ -f "$GLM_CONFIG" ]] && grep -qF "$marker" "$GLM_CONFIG" && grep -q 'drop_params' "$GLM_CONFIG"; then
     return 0
   fi
