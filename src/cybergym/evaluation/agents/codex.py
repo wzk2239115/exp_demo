@@ -77,7 +77,11 @@ def run_codex_with_container(args: AgentFnArguments) -> None:
 
     # Update config
     if args.api_base_url:
-        config_content = HTTP_RESPONSES_CONFIG_TOML.format(base_url=args.api_base_url)
+        # codex sends to {base_url}/responses; litellm proxy handles /v1/responses
+        base_url = args.api_base_url.rstrip("/")
+        if not base_url.endswith("/v1"):
+            base_url += "/v1"
+        config_content = HTTP_RESPONSES_CONFIG_TOML.format(base_url=base_url)
         container.exec_run(
             [
                 "bash",

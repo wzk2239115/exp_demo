@@ -129,31 +129,44 @@ assign_or_get_slot() {
 #  GLM 代理配置(全组共享一份)
 # ─────────────────────────────────────────────
 ensure_glm_config() {
-  # 配置由 provider/GLM_BASE_URL/GLM_MODEL/MODEL_ALIAS 派生,写进 marker;任一变化或缺
-  # drop_params → 自动重生成。GLM_PROVIDER=anthropic 时走原生 Anthropic 路由(不经
-  # litellm 的 OpenAI→Anthropic 翻译,避免 GLM thinking 块流式被搞坏成 "Content block
-  # not found")。
+  # 配置由 provider/agent/GLM_BASE_URL/GLM_MODEL/MODEL_ALIAS 派生,写进 marker;任一变化
+  # 或缺 drop_params → 自动重生成。
+  #   provider=anthropic       → 原生 Anthropic /v1/messages(GLM)
+  #   provider=openai + codex  → /v1/responses(gpt-5.6-sol 只支持 responses API)
+  #   provider=openai(默认)    → /v1/messages→chat/completions(claude_code)
   local provider="${GLM_PROVIDER:-openai}"
-  local marker="# src: v3 | provider=$provider | $GLM_BASE_URL | $GLM_MODEL | $MODEL_ALIAS"
+  local marker="# src: v4 | provider=$provider | agent=$AGENT | $GLM_BASE_URL | $GLM_MODEL | $MODEL_ALIAS"
   if [[ -f "$GLM_CONFIG" ]] && grep -qF "$marker" "$GLM_CONFIG" && grep -q 'drop_params' "$GLM_CONFIG"; then
     return 0
   fi
   [[ -f "$GLM_CONFIG" ]] && log "$GLM_CONFIG 配置已变,重新生成"
   GLM_CONFIG_REGEN=1   # 通知 ensure_proxy:跑着的旧 proxy 要重启加载新配置
-  log "生成 $GLM_CONFIG (provider=$provider, model=$GLM_MODEL)"
+  log "生成 $GLM_CONFIG (provider=$provider, agent=$AGENT, model=$GLM_MODEL)"
 
-  local model_line base_line settings_block
+  local model_line base_line settings_block extra_model_entry=""
+
   if [[ "$provider" == "anthropic" ]]; then
     # 原生 Anthropic:litellm 直连 /v1/messages,不做协议翻译
     model_line="      model: anthropic/$GLM_MODEL"
     base_line="      api_base: \"${GLM_ANTHROPIC_BASE:-https://api.360.cn}\""
     settings_block="litellm_settings:
   drop_params: true"
+  elif [[ "$AGENT" == "codex" ]]; then
+    # codex 走 /v1/responses。litellm 对 responses 只剥一次 openai/,
+    # 所以 360 的 openai/gpt-5.6-sol 需要双前缀:openai/openai/gpt-5.6-sol
+    if [[ "$GLM_MODEL" == openai/* ]]; then
+      model_line="      model: openai/openai/$GLM_MODEL"
+    else
+      model_line="      model: openai/$GLM_MODEL"
+    fi
+    base_line="      api_base: \"$GLM_BASE_URL\""
+    settings_block="litellm_settings:
+  drop_params: true"
+    # codex 不需要 claude-sonnet-4-6 别名
+    extra_model_entry="__SKIP__"
   else
-    # OpenAI 兼容端点(360 的 z-ai/glm-5.2 / deepseek 等走这里,需翻译)。
-    # litellm 的 /v1/messages→openai 翻译路径对 "openai/" 前缀会多剥一次:当上游模型
-    # id 本身以 openai/ 开头(如 360 的 openai/gpt-5.5),需要再加一层 openai/ 才能保
-    # 证发出去的是 openai/gpt-5.5(实测 openai/openai/openai/gpt-5.5 → 200)。
+    # claude_code 走 /v1/messages → chat/completions。
+    # litellm 的 /v1/messages→openai 翻译路径对 "openai/" 前缀会多剥一次。
     if [[ "$GLM_MODEL" == openai/* ]]; then
       model_line="      model: openai/openai/$GLM_MODEL"
     else
@@ -165,7 +178,22 @@ ensure_glm_config() {
   drop_params: true"
   fi
 
-  cat > "$GLM_CONFIG" <<EOF
+  # 构建 YAML(根据是否需要 claude-sonnet-4-6 别名)
+  if [[ "$extra_model_entry" == "__SKIP__" ]]; then
+    cat > "$GLM_CONFIG" <<EOF
+$marker
+model_list:
+  - model_name: $MODEL_ALIAS
+    litellm_params:
+$model_line
+$base_line
+      api_key: "os.environ/GLM_API_KEY"
+      input_cost_per_token: 0.0
+      output_cost_per_token: 0.0
+$settings_block
+EOF
+  else
+    cat > "$GLM_CONFIG" <<EOF
 $marker
 model_list:
   - model_name: $MODEL_ALIAS
@@ -184,6 +212,7 @@ $base_line
       output_cost_per_token: 0.0
 $settings_block
 EOF
+  fi
 }
 
 # ─────────────────────────────────────────────
@@ -405,10 +434,18 @@ check_api() {
       | python3 -c "import sys,json;print(json.load(sys.stdin).get('key',''))" 2>/dev/null || true)
   [[ -n "$key" ]] || die "无法从 proxy 生成测试 key;看 $LOG_DIR/llm_proxy.log"
 
-  # 带上 claude_code 真实会发的 reasoning_effort / context_management ——
-  # 若 proxy 没开 drop_params,litellm 会回 400,预检就能抓住,免得任务里空跑。
-  local body='{"model":"'"$MODEL_ALIAS"'","max_tokens":8,"reasoning_effort":"medium","context_management":null,"messages":[{"role":"user","content":"hi"}]}'
-  local url="http://$BRIDGE:$PROXY_PORT/v1/messages"
+  local body url success_pattern
+  if [[ "$AGENT" == "codex" ]]; then
+    # codex 走 responses API
+    body='{"model":"'"$MODEL_ALIAS"'","input":"hi","max_output_tokens":8}'
+    url="http://$BRIDGE:$PROXY_PORT/v1/responses"
+    success_pattern='"status"'
+  else
+    # claude_code 走 messages API
+    body='{"model":"'"$MODEL_ALIAS"'","max_tokens":8,"reasoning_effort":"medium","context_management":null,"messages":[{"role":"user","content":"hi"}]}'
+    url="http://$BRIDGE:$PROXY_PORT/v1/messages"
+    success_pattern='"role":"assistant"'
+  fi
 
   # 失败/成功都先清理测试 key 再下结论
   local hresp
@@ -418,7 +455,6 @@ check_api() {
 
   local creply=""
   if command -v docker >/dev/null 2>&1; then
-    # 从容器里发同一个 hi(busybox wget 支持 --post-data / 多个 --header)
     creply=$(docker run --rm alpine:3.20 sh -c "wget -q -O - \
         --header='x-api-key: $key' \
         --header='content-type: application/json' \
@@ -430,10 +466,10 @@ check_api() {
   curl -s -X DELETE "http://$BRIDGE:$PROXY_PORT/budget/key/$key" \
         -H "x-admin-key: $CYBERGYM_ADMIN_KEY" >/dev/null 2>&1 || true
 
-  if ! printf '%s' "$hresp" | grep -q '"role":"assistant"'; then
+  if ! printf '%s' "$hresp" | grep -q "$success_pattern"; then
     warn "host→proxy→GLM 推理失败(没拿到模型回复):"
     printf '%s\n' "$hresp" | head -8 | sed 's/^/    /'
-    die "确认 GLM 端点 $GLM_BASE_URL 可达、glm_config.yaml 里 $MODEL_ALIAS→openai/$GLM_MODEL 正确"
+    die "确认 GLM 端点 $GLM_BASE_URL 可达、glm_config.yaml 里 $MODEL_ALIAS 配置正确"
   fi
   log "host→proxy→GLM 推理 OK"
 
@@ -441,7 +477,7 @@ check_api() {
     warn "跳过容器侧 hi 测试(docker 不可用)"
     return 0
   fi
-  if printf '%s' "$creply" | grep -q '"role":"assistant"'; then
+  if printf '%s' "$creply" | grep -q "$success_pattern"; then
     log "container→proxy→GLM 真实推理 OK"
   else
     warn "容器内发 hi 失败(容器→proxy→GLM,正是 agent 的路径):"
