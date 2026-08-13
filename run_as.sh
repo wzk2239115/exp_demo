@@ -561,8 +561,42 @@ log "用户=$USER_NAME  槽位=$SLOT  proxy=:$PROXY_PORT  controller=:$CONTROLLE
 log "输出=$OUT_DIR"
 
 ensure_controller
+ensure_firewall_open   # 容器→controller/proxy 不通且 firewalld 在跑才加规则
+
+if [[ "${DIRECT:-0}" == "1" && "$AGENT" == "codex" ]]; then
+  # 直连模式:codex 直接打到 360,不经 litellm proxy(避免 responses 流式被 proxy 搞坏)
+  export CODEX_DIRECT_BASE_URL="${GLM_BASE_URL%/}"
+  export OPENAI_API_KEY="$GLM_API_KEY"
+  log "DIRECT 模式:codex 直连 $CODEX_DIRECT_BASE_URL(跳过 proxy)"
+
+  # 简单预检:直连 360 responses API
+  local rcode
+  rcode=$(curl -sS -o /dev/null -w '%{http_code}' \
+    "${GLM_BASE_URL%/}/responses" \
+    -H "Authorization: Bearer $GLM_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d "{\"model\":\"${GLM_MODEL#openai/}\",\"input\":\"hi\",\"max_output_tokens\":4}" \
+    2>/dev/null || echo "000")
+  if [[ "$rcode" != "200" ]]; then
+    die "直连 360 responses API 失败(HTTP $rcode)。检查 GLM_BASE_URL/GLM_MODEL/GLM_API_KEY"
+  fi
+  log "直连 360 responses API OK"
+
+  log "开始评测(任务文件 $TASKS_FILE,agent=$AGENT,model=$MODEL_ALIAS,workers=$MAX_WORKERS,direct)"
+  exec uv run examples/run_agent.py \
+    --agent "$AGENT" \
+    --model "$MODEL_ALIAS" \
+    --use-api-key \
+    --controller-url "http://$BRIDGE:$CONTROLLER_PORT" \
+    --tasks-file "$TASKS_FILE" \
+    --budget "$BUDGET" \
+    --timeout "$TIMEOUT" \
+    --max-workers "$MAX_WORKERS" \
+    --out-dir "$OUT_DIR" \
+    "$@"
+fi
+
 ensure_proxy
-ensure_firewall_open   # 容器→proxy 不通且 firewalld 在跑才加规则(日常不打扰)
 check_api            # host 推理 + 容器连通都过才放行,免得白跑
 
 # 导出给 uv run 子进程(cybergym 代码会读)。

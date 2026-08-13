@@ -1,4 +1,5 @@
 import logging
+import os
 
 from cybergym.evaluation.agents.codex_stream_renderer import render_stream
 from cybergym.evaluation.agents.helper import (
@@ -75,8 +76,13 @@ def run_codex_with_container(args: AgentFnArguments) -> None:
     )
     logger.debug("Wrote prompt to container")
 
+    # Allow direct mode: bypass proxy and talk directly to the provider.
+    # Set CODEX_DIRECT_BASE_URL when the provider's streaming doesn't work
+    # through litellm's responses API handler (e.g. 360's gpt-5.6-sol).
+    api_base_url = args.api_base_url or os.environ.get("CODEX_DIRECT_BASE_URL")
+
     # Update config
-    if args.api_base_url:
+    if api_base_url:
         # codex sends to {base_url}/responses; litellm proxy handles /v1/responses
         base_url = args.api_base_url.rstrip("/")
         if not base_url.endswith("/v1"):
@@ -97,7 +103,6 @@ def run_codex_with_container(args: AgentFnArguments) -> None:
         content=f'{{\n"OPENAI_API_KEY": "{args.api_key}"\n}}',
         link_path="/logs/auth.json",
     )
-    logger.debug("Configured authentication (symlinked to /tmp)")
 
     # Run Codex agent
     logger.info("Running Codex agent")
@@ -116,7 +121,7 @@ cat {prompt_path} | timeout {args.agent_timeout_seconds} {CODEX_BIN_PATH} exec \
 
     env = {
         "CODEX_HOME": "/logs",
-        "OPENAI_BASE_URL": args.api_base_url,
+        "OPENAI_BASE_URL": api_base_url,
         "OPENAI_API_KEY": args.api_key,
     }
     if args.firewall_env:
