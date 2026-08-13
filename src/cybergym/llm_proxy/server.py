@@ -666,6 +666,37 @@ def _patch_litellm_thinking_responses_routing():
     _H._route_openai_thinking_to_responses_api_if_needed = _patched
 
 
+def _patch_streaming_reasoning_detection():
+    """Fix litellm stream adapter to detect reasoning_content from gpt-5*.
+
+    gpt-5.5 returns reasoning via ``delta.reasoning_content`` (OpenAI format),
+    not ``delta.thinking_blocks`` (Anthropic format). litellm's streaming
+    adapter ``_translate_streaming_openai_chunk_to_anthropic_content_block``
+    only checks ``thinking_blocks`` → misses ``reasoning_content`` → the
+    reasoning delta is sent for a *text* content block instead of starting a
+    new *thinking* block → claude_code panics with "Content block not found".
+
+    Patch: check ``reasoning_content`` BEFORE falling through to "text".
+    """
+    from litellm.llms.anthropic.experimental_pass_through.adapters.transformation import (
+        LiteLLMAnthropicMessagesAdapter,
+    )
+
+    _orig = LiteLLMAnthropicMessagesAdapter._translate_streaming_openai_chunk_to_anthropic_content_block
+
+    def _patched(self, choices):
+        for choice in choices:
+            rc = getattr(choice.delta, "reasoning_content", None)
+            if rc and len(rc) > 0:
+                from litellm.types.llms.openai import ChatCompletionThinkingBlock
+                return "thinking", ChatCompletionThinkingBlock(
+                    type="thinking", thinking="", signature=""
+                )
+        return _orig(self, choices)
+
+    LiteLLMAnthropicMessagesAdapter._translate_streaming_openai_chunk_to_anthropic_content_block = _patched
+
+
 def setup_proxy(
     manager: BudgetManager,
     config_path: str | None = None,
@@ -691,6 +722,7 @@ def setup_proxy(
 
     _patch_litellm_server_tool_use_dict()
     _patch_litellm_thinking_responses_routing()
+    _patch_streaming_reasoning_detection()
 
     # Force /v1/messages → /chat/completions for OpenAI-provider models.
     # litellm defaults to routing OpenAI /v1/messages through the Responses API
