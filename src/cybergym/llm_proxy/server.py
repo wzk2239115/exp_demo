@@ -627,6 +627,19 @@ def setup_proxy(
 
     _patch_litellm_server_tool_use_dict()
 
+    # Force /v1/messages → /chat/completions for OpenAI-provider models.
+    # litellm defaults to routing OpenAI /v1/messages through the Responses API
+    # (_RESPONSES_API_PROVIDERS = {'openai'}), but 360 only supports chat
+    # completions.  The env var LITELLM_USE_CHAT_COMPLETIONS_URL_FOR_ANTHROPIC_MESSAGES
+    # is read at import time and the YAML litellm_settings key should also work,
+    # but we set it here explicitly (same process, after import, before any
+    # request) to be definitive.
+    litellm.use_chat_completions_url_for_anthropic_messages = True
+    logger.info(
+        "use_chat_completions_url_for_anthropic_messages = %s",
+        litellm.use_chat_completions_url_for_anthropic_messages,
+    )
+
     # Set internal master key for litellm proxy
     os.environ["LITELLM_MASTER_KEY"] = INTERNAL_MASTER_KEY
     # Remove DATABASE_URL so litellm skips Prisma/Postgres entirely
