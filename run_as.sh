@@ -570,7 +570,6 @@ if [[ "${DIRECT:-0}" == "1" && "$AGENT" == "codex" ]]; then
   log "DIRECT 模式:codex 直连 $CODEX_DIRECT_BASE_URL(跳过 proxy)"
 
   # 简单预检:直连 360 responses API
-  local rcode
   rcode=$(curl -sS -o /dev/null -w '%{http_code}' \
     "${GLM_BASE_URL%/}/responses" \
     -H "Authorization: Bearer $GLM_API_KEY" \
