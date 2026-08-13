@@ -629,12 +629,20 @@ def setup_proxy(
 
     # Force /v1/messages → /chat/completions for OpenAI-provider models.
     # litellm defaults to routing OpenAI /v1/messages through the Responses API
-    # (_RESPONSES_API_PROVIDERS = {'openai'}), but 360 only supports chat
-    # completions.  The env var LITELLM_USE_CHAT_COMPLETIONS_URL_FOR_ANTHROPIC_MESSAGES
-    # is read at import time and the YAML litellm_settings key should also work,
-    # but we set it here explicitly (same process, after import, before any
-    # request) to be definitive.
+    # (_RESPONSES_API_PROVIDERS = {'openai'}), but 360's gpt-5.5 only works via
+    # chat/completions (the litellm Responses-API translation sends a request
+    # shape 360 rejects with code 1001).  The env var + module attribute approach
+    # works for non-streaming but NOT for streaming (different code path), so we
+    # also empty the provider set that controls the routing — definitive.
     litellm.use_chat_completions_url_for_anthropic_messages = True
+    try:
+        from litellm.llms.anthropic.experimental_pass_through.messages import (
+            handler as _anthropic_msg_handler,
+        )
+        _anthropic_msg_handler._RESPONSES_API_PROVIDERS = frozenset()
+        logger.info("Emptied _RESPONSES_API_PROVIDERS — all /v1/messages → chat/completions")
+    except Exception as e:
+        logger.warning("Could not patch _RESPONSES_API_PROVIDERS: %s", e)
     logger.info(
         "use_chat_completions_url_for_anthropic_messages = %s",
         litellm.use_chat_completions_url_for_anthropic_messages,
