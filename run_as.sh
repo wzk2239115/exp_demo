@@ -574,17 +574,17 @@ if [[ "${DIRECT:-0}" == "1" && "$AGENT" == "codex" ]]; then
     "${GLM_BASE_URL%/}/responses" \
     -H "Authorization: Bearer $GLM_API_KEY" \
     -H "Content-Type: application/json" \
-    -d "{\"model\":\"${GLM_MODEL#openai/}\",\"input\":\"hi\",\"max_output_tokens\":4}" \
+    -d "{\"model\":\"$GLM_MODEL\",\"input\":\"hi\",\"max_output_tokens\":4}" \
     2>/dev/null || echo "000")
   if [[ "$rcode" != "200" ]]; then
     die "直连 360 responses API 失败(HTTP $rcode)。检查 GLM_BASE_URL/GLM_MODEL/GLM_API_KEY"
   fi
   log "直连 360 responses API OK"
 
-  log "开始评测(任务文件 $TASKS_FILE,agent=$AGENT,model=$MODEL_ALIAS,workers=$MAX_WORKERS,direct)"
+  log "开始评测(任务文件 $TASKS_FILE,agent=$AGENT,model=$GLM_MODEL,workers=$MAX_WORKERS,direct)"
   exec uv run examples/run_agent.py \
     --agent "$AGENT" \
-    --model "$MODEL_ALIAS" \
+    --model "$GLM_MODEL" \
     --use-api-key \
     --controller-url "http://$BRIDGE:$CONTROLLER_PORT" \
     --tasks-file "$TASKS_FILE" \
