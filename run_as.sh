@@ -32,7 +32,7 @@
 #   TIMEOUT      (默认 3600 秒)
 #   MAX_WORKERS  (默认 1)
 #   PROXY_PORT_BASE (默认 4001;第 N 个组员用 4000+N)
-#   CONTROLLER_PORT (默认 8666)
+#   CONTROLLER_PORT (留空则按槽位自动派 8700+slot,各人独立,不复用 8666)
 
 set -euo pipefail
 
@@ -60,7 +60,8 @@ BUDGET="${BUDGET:-1000}"
 TIMEOUT="${TIMEOUT:-3600}"
 MAX_WORKERS="${MAX_WORKERS:-1}"
 
-CONTROLLER_PORT="${CONTROLLER_PORT:-8666}"
+CONTROLLER_PORT_BASE="${CONTROLLER_PORT_BASE:-8700}"
+CONTROLLER_PORT="${CONTROLLER_PORT:-}"   # 留空则按槽位自动派(8700+slot-1),避免复用别人在 8666 上的 controller
 PROXY_PORT_BASE="${PROXY_PORT_BASE:-4001}"
 
 GLM_CONFIG=""   # 在 main 里按 per-user 设置(logs/<名字>/glm_config.yaml),避免多人/多模型共用一份互相覆盖
@@ -68,7 +69,7 @@ SLOTS_FILE="$PROJECT_ROOT/logs/user_slots.tsv"
 # controller 的三个共享 secret(token salt / flag seed / api key)持久化到这里。
 # controller 全组共用一个,所以这三个值也得全组一致;run_agent.py 必须读到它们才能
 # 验证 token / flag。文件权限 600(能读到就能伪造 token)。
-CONTROLLER_SECRETS_FILE="$PROJECT_ROOT/logs/controller.secrets.env"
+CONTROLLER_SECRETS_FILE=""   # 在 main 里按 per-user 设置(logs/<名字>/controller.secrets.env)
 
 # ─────────────────────────────────────────────
 #  小工具
@@ -218,11 +219,11 @@ ensure_controller_secrets() {
     return 0
   fi
 
-  # 2) controller 已在跑(被 pre_run 或别人起的)→ 从日志恢复
+  # 2) controller 已在跑(自己之前起的,在本端口)→ 从它的日志恢复
   if listening "$ctl_url"; then
     local logfiles=(
-      "$PROJECT_ROOT/logs/controller.log"
-      "$PROJECT_ROOT/logs/controller/server_manager.log"
+      "$LOG_DIR/controller.log"
+      "$LOG_DIR/controller/server_manager.log"
     )
     local var val lf found=0
     for var in CYBERGYM_SERVER_SALT CYBERGYM_SERVER_FLAG_SEED CYBERGYM_SERVER_API_KEY; do
@@ -253,7 +254,7 @@ ensure_controller_secrets() {
 }
 
 # ─────────────────────────────────────────────
-#  共享 controller(全组一个,自动拉起/复用)
+#  每人独占的 controller(独立端口+secret,绝不复用 8666 上别人的)
 # ─────────────────────────────────────────────
 ensure_controller() {
   local url="http://$BRIDGE:$CONTROLLER_PORT/"
@@ -263,26 +264,27 @@ ensure_controller() {
     log "controller 复用中 :$CONTROLLER_PORT"
     return 0
   fi
-  log "controller 未运行,启动共享实例……"
-  mkdir -p "$PROJECT_ROOT/logs/controller"
+  log "启动 $USER_NAME 的 controller :$CONTROLLER_PORT"
+  mkdir -p "$LOG_DIR/controller"
   (
     flock 9
     if ! listening "$url"; then
-      # 继承已 export 的 CYBERGYM_SERVER_* 给 controller 子进程
-      nohup uv run -m cybergym.server \
+      # 继承已 export 的 CYBERGYM_SERVER_*;setsid 让 Ctrl+C 不连坐;不带 --network,
+      # 目标容器走默认桥,agent(默认桥)够得着
+      setsid uv run -m cybergym.server \
         --host "$BRIDGE" --port "$CONTROLLER_PORT" \
-        --log_dir "$PROJECT_ROOT/logs/controller" \
-        > "$PROJECT_ROOT/logs/controller.log" 2>&1 &
-      echo $! > "$PROJECT_ROOT/logs/controller.pid"
+        --log_dir "$LOG_DIR/controller" \
+        > "$LOG_DIR/controller.log" 2>&1 < /dev/null &
+      echo $! > "$LOG_DIR/controller.pid"
     fi
     for _ in $(seq 1 40); do
       listening "$url" && exit 0
       sleep 0.5
     done
     exit 1
-  ) 9>"$PROJECT_ROOT/logs/controller.start.lock"
-  listening "$url" || die "controller 启动失败,看 logs/controller.log"
-  log "controller 已启动 :$CONTROLLER_PORT (pid $(cat "$PROJECT_ROOT/logs/controller.pid"))"
+  ) 9>"$LOG_DIR/controller.start.lock"
+  listening "$url" || die "controller 启动失败,看 $LOG_DIR/controller.log"
+  log "controller 已启动 :$CONTROLLER_PORT (pid $(cat "$LOG_DIR/controller.pid"))"
 }
 
 # ─────────────────────────────────────────────
@@ -501,10 +503,15 @@ check_agent_tool          # 工具不可用就别白起 controller/proxy 了
 
 SLOT="$(assign_or_get_slot "$USER_NAME")"
 PROXY_PORT=$((PROXY_PORT_BASE + SLOT - 1))
+# controller 也按槽位派独立端口(默认 8700+slot-1),每人自己的,不复用别人在 8666 上的
+[[ -z "${CONTROLLER_PORT:-}" ]] && CONTROLLER_PORT=$((CONTROLLER_PORT_BASE + SLOT - 1))
 
 OUT_DIR="$PROJECT_ROOT/out/$USER_NAME/run_agent"
 LOG_DIR="$PROJECT_ROOT/logs/$USER_NAME"
 mkdir -p "$OUT_DIR" "$LOG_DIR"
+
+# 每人一份 controller secret(独立 controller 用独立 secret)
+CONTROLLER_SECRETS_FILE="$LOG_DIR/controller.secrets.env"
 
 # 每人一份配置(而非项目根共用),这样两个 screen 跑不同模型不会互相覆盖
 GLM_CONFIG="$LOG_DIR/glm_config.yaml"
