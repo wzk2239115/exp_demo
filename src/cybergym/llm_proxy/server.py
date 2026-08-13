@@ -447,6 +447,37 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
                         },
                     )
 
+            # Strip 'thinking' from /v1/messages requests. litellm's completion
+            # adapter re-routes thinking-enabled requests to the Responses API
+            # (adapters/handler.py:_route_openai_thinking_to_responses_api_if_needed),
+            # which 360 and many other providers don't support. Removing the
+            # parameter here (at the HTTP level, before litellm processes it)
+            # forces chat completions unconditionally.
+            if (
+                parsed_body
+                and path == "/v1/messages"
+                and "thinking" in parsed_body
+            ):
+                del parsed_body["thinking"]
+                new_body = json.dumps(parsed_body).encode("utf-8")
+                request._body = new_body
+                request.scope["headers"] = [
+                    (b"content-length", str(len(new_body)).encode("latin-1"))
+                    if k == b"content-length"
+                    else (k, v)
+                    for k, v in request.scope.get("headers", [])
+                ]
+
+                async def _patched_receive():
+                    return {
+                        "type": "http.request",
+                        "body": new_body,
+                        "more_body": False,
+                    }
+
+                request.scope["receive"] = _patched_receive
+                logger.info("Stripped 'thinking' from /v1/messages for key %s", key_hint)
+
         # Swap in master key for litellm and stash original key in metadata header
         # We modify the ASGI scope directly since headers are immutable on Request.
         # ASGI guarantees header names are lowercase bytes (RFC 7230).
