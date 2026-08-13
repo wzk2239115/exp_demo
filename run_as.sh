@@ -155,7 +155,7 @@ ensure_glm_config() {
     # codex 走 /v1/responses。litellm 对 responses 只剥一次 openai/,
     # 所以 360 的 openai/gpt-5.6-sol 需要双前缀:openai/openai/gpt-5.6-sol
     if [[ "$GLM_MODEL" == openai/* ]]; then
-      model_line="      model: openai/openai/$GLM_MODEL"
+      model_line="      model: openai/$GLM_MODEL"
     else
       model_line="      model: openai/$GLM_MODEL"
     fi
