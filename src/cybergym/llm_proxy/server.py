@@ -602,6 +602,39 @@ def _patch_litellm_server_tool_use_dict():
     )
 
 
+def _patch_litellm_thinking_responses_routing():
+    """Prevent litellm from re-routing thinking requests to the Responses API.
+
+    When ``use_chat_completions_url_for_anthropic_messages`` is True we've
+    already forced /v1/messages → chat/completions (see setup_proxy). But
+    litellm's completion adapter has a SECOND routing decision inside
+    ``_route_openai_thinking_to_responses_api_if_needed``
+    (adapters/handler.py:48-117): when the request carries
+    ``thinking={"type":"enabled",...}`` (which Claude Code always sends with
+    an effort level) AND the provider is OpenAI, it prefixes the model name
+    with ``responses/`` to route through the Responses API.
+
+    For providers like 360 that only accept /chat/completions (or whose
+    Responses endpoint mangles the ``openai/`` model prefix), this
+    re-routing causes a 400. Patch the method to respect our
+    ``use_chat_completions_url_for_anthropic_messages`` flag and skip the
+    ``responses/`` prefix when it is set.
+    """
+    from litellm.llms.anthropic.experimental_pass_through.adapters.handler import (
+        LiteLLMMessagesToCompletionTransformationHandler as _H,
+    )
+
+    _orig = _H._route_openai_thinking_to_responses_api_if_needed
+
+    @staticmethod
+    def _patched(completion_kwargs, *, thinking=None):
+        if litellm.use_chat_completions_url_for_anthropic_messages:
+            return  # honour the global flag: stay on chat/completions
+        return _orig(completion_kwargs, thinking=thinking)
+
+    _H._route_openai_thinking_to_responses_api_if_needed = _patched
+
+
 def setup_proxy(
     manager: BudgetManager,
     config_path: str | None = None,
@@ -626,23 +659,16 @@ def setup_proxy(
     logger.info("Admin key for /budget endpoints: %s", _admin_key)
 
     _patch_litellm_server_tool_use_dict()
+    _patch_litellm_thinking_responses_routing()
 
     # Force /v1/messages → /chat/completions for OpenAI-provider models.
     # litellm defaults to routing OpenAI /v1/messages through the Responses API
-    # (_RESPONSES_API_PROVIDERS = {'openai'}), but 360's gpt-5.5 only works via
-    # chat/completions (the litellm Responses-API translation sends a request
-    # shape 360 rejects with code 1001).  The env var + module attribute approach
-    # works for non-streaming but NOT for streaming (different code path), so we
-    # also empty the provider set that controls the routing — definitive.
+    # (_RESPONSES_API_PROVIDERS = {'openai'}), but 360 only supports chat
+    # completions.  The env var LITELLM_USE_CHAT_COMPLETIONS_URL_FOR_ANTHROPIC_MESSAGES
+    # is read at import time and the YAML litellm_settings key should also work,
+    # but we set it here explicitly (same process, after import, before any
+    # request) to be definitive.
     litellm.use_chat_completions_url_for_anthropic_messages = True
-    try:
-        from litellm.llms.anthropic.experimental_pass_through.messages import (
-            handler as _anthropic_msg_handler,
-        )
-        _anthropic_msg_handler._RESPONSES_API_PROVIDERS = frozenset()
-        logger.info("Emptied _RESPONSES_API_PROVIDERS — all /v1/messages → chat/completions")
-    except Exception as e:
-        logger.warning("Could not patch _RESPONSES_API_PROVIDERS: %s", e)
     logger.info(
         "use_chat_completions_url_for_anthropic_messages = %s",
         litellm.use_chat_completions_url_for_anthropic_messages,
