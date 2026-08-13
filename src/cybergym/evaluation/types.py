@@ -161,7 +161,7 @@ class EvalConfig(BaseModel):
     the agent.
     """
 
-    container_mem_limit: str | None = "16g"
+    container_mem_limit: str | None = "64g"
     """Hard memory cap for the agent container (e.g. ``"8g"``, ``"512m"``).
 
     Forwarded to ``docker.containers.run(mem_limit=...)``. ``None`` means
@@ -172,7 +172,7 @@ class EvalConfig(BaseModel):
     """CPU quota in nano-CPUs (1 CPU = 1_000_000_000). Forwarded to
     ``docker.containers.run(nano_cpus=...)``. ``None`` means no limit."""
 
-    container_memswap_limit: str | None = "16g"
+    container_memswap_limit: str | None = "64g"
     """Total memory + swap cap (e.g. ``"8g"``). Set equal to
     ``container_mem_limit`` to disable swap. Forwarded to ``memswap_limit``."""
 
