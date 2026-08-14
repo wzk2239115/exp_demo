@@ -658,7 +658,7 @@ print(aid, tok, flag)
 ")" || die "token 生成失败"
 
   # 创建 target server
-  SRV_IP="?" SRV_PORT="8000"
+  SRV_IP="?"; SRV_PORT="8000"
   SRV_JSON=$(curl -s -X POST "http://$BRIDGE:$CONTROLLER_PORT/create_server" \
     -H 'Content-Type: application/json' \
     -d "{\"agent_id\":\"$AGENT_ID\",\"token\":\"$TOKEN\",\"task_info\":\"$TASK_ID\"}" 2>/dev/null || true)
