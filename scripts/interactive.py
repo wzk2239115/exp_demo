@@ -209,7 +209,7 @@ def main():
 
     os.execvp(
         "docker",
-        ["docker", "exec", "-it", cname, "bash"],
+        ["docker", "exec", "-it", "-w", "/workspace", cname, "bash"],
     )
 
 
