@@ -25,6 +25,21 @@
 
 用法: 跑评测时加 `GLM_PROVIDER=anthropic`。run_as.sh 生成 litellm 原生透传配置
 (`model: anthropic/<GLM_MODEL>`,`api_base: https://api.360.cn`),不走 chat/completions 翻译。
+proxy 中间件在 anthropic 路由下会**自动注入缺失的 `thinking` 参数**(commit 689ab7a)——
+glm-5.3 等常思模型不发 thinking 会 400;deepseek 等可选思模型注入无害(已验证)。
+
+同类官方端点参考(直连 env 即可,无需 litellm):
+- DeepSeek: `https://api.deepseek.com/anthropic`(官方文档 quick_start/agent_integrations/claude_code)
+- 智谱 Z.AI: `https://api.z.ai/api/anthropic`(env 同款写法)
+- 360: `https://api.360.cn/v1/messages`(即上文,已验证)
+
+手动/交互场景可绕开 proxy 直连:
+```bash
+export ANTHROPIC_BASE_URL=https://api.360.cn/v1/messages
+export ANTHROPIC_AUTH_TOKEN=<360 key>
+# 常思模型还需 cc 侧开 thinking 或等 proxy 注入;直连时 cc 不发 thinking → glm-5.3 会 400
+```
+评测跑批仍走 proxy(要预算控制/按槽位发 key/禁 WebSearch)。
 
 ### litellm 翻译层的坑(用 GLM_PROVIDER=anthropic 就能全绕开)
 
