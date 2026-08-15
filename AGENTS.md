@@ -21,7 +21,7 @@
 | deepseek/deepseek-v4-flash | ✓ | ✓ | thinking+text 块规范 |
 | deepseek/deepseek-v4-pro | ✓ | - | |
 | openai/gpt-5.5 | ✓ | - | |
-| z-ai/glm-5.3 | ✓ | - | **必须带 `thinking` 参数**,否则 400 "该模型始终思考" |
+| z-ai/glm-5.3 | ✓ | ✓ | **必须带 `thinking` 参数**,否则 400 "该模型始终思考";tool_use 已验证 ✓ |
 
 用法: 跑评测时加 `GLM_PROVIDER=anthropic`。run_as.sh 生成 litellm 原生透传配置
 (`model: anthropic/<GLM_MODEL>`,`api_base: https://api.360.cn`),不走 chat/completions 翻译。
