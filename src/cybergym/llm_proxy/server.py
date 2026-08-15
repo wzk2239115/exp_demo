@@ -447,43 +447,70 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
                         },
                     )
 
-            # Strip 'thinking' from /v1/messages requests. litellm's completion
+            # Normalize the 'thinking' param on /v1/messages requests.
+            #
+            # chat-completions mode (openai provider): litellm's completion
             # adapter re-routes thinking-enabled requests to the Responses API
             # (adapters/handler.py:_route_openai_thinking_to_responses_api_if_needed),
             # which 360 and many other providers don't support. Removing the
             # parameter here (at the HTTP level, before litellm processes it)
             # forces chat completions unconditionally.
             #
-            # Only do this when /v1/messages is being translated to chat
-            # completions (openai-provider mode). With native anthropic routing
-            # (GLM_PROVIDER=anthropic, e.g. 360's own /v1/messages endpoint)
-            # the parameter must pass through untouched: some models (glm-5.3)
-            # REQUIRE thinking and reject requests without it.
-            if (
-                parsed_body
-                and path == "/v1/messages"
-                and "thinking" in parsed_body
-                and litellm.use_chat_completions_url_for_anthropic_messages
-            ):
-                del parsed_body["thinking"]
-                new_body = json.dumps(parsed_body).encode("utf-8")
-                request._body = new_body
-                request.scope["headers"] = [
-                    (b"content-length", str(len(new_body)).encode("latin-1"))
-                    if k == b"content-length"
-                    else (k, v)
-                    for k, v in request.scope.get("headers", [])
-                ]
-
-                async def _patched_receive():
-                    return {
-                        "type": "http.request",
-                        "body": new_body,
-                        "more_body": False,
+            # native anthropic mode (GLM_PROVIDER=anthropic → 360's own
+            # /v1/messages endpoint): pass an explicit thinking param through
+            # untouched, and INJECT one when missing — claude_code does not send
+            # 'thinking' by default, but always-thinking models (glm-5.3)
+            # reject requests without it: 400 "[1210] 该模型始终思考，不支持
+            # 关闭思考". Injection is harmless for optional-thinking models
+            # (verified: deepseek-v4-flash returns thinking+text, 200 OK).
+            if parsed_body and path == "/v1/messages":
+                if "thinking" in parsed_body:
+                    if litellm.use_chat_completions_url_for_anthropic_messages:
+                        del parsed_body["thinking"]
+                        new_body = json.dumps(parsed_body).encode("utf-8")
+                        logger.info(
+                            "Stripped 'thinking' from /v1/messages for key %s",
+                            key_hint,
+                        )
+                    else:
+                        new_body = None  # pass through untouched
+                elif not litellm.use_chat_completions_url_for_anthropic_messages:
+                    max_tokens = parsed_body.get("max_tokens") or 0
+                    try:
+                        max_tokens = int(max_tokens)
+                    except (TypeError, ValueError):
+                        max_tokens = 0
+                    budget = min(max(1024, max_tokens // 2), max(1025, max_tokens) - 1)
+                    parsed_body["thinking"] = {
+                        "type": "enabled",
+                        "budget_tokens": budget,
                     }
+                    new_body = json.dumps(parsed_body).encode("utf-8")
+                    logger.info(
+                        "Injected 'thinking' (budget=%d) into /v1/messages for key %s",
+                        budget,
+                        key_hint,
+                    )
+                else:
+                    new_body = None
 
-                request.scope["receive"] = _patched_receive
-                logger.info("Stripped 'thinking' from /v1/messages for key %s", key_hint)
+                if new_body is not None:
+                    request._body = new_body
+                    request.scope["headers"] = [
+                        (b"content-length", str(len(new_body)).encode("latin-1"))
+                        if k == b"content-length"
+                        else (k, v)
+                        for k, v in request.scope.get("headers", [])
+                    ]
+
+                    async def _patched_receive():
+                        return {
+                            "type": "http.request",
+                            "body": new_body,
+                            "more_body": False,
+                        }
+
+                    request.scope["receive"] = _patched_receive
 
         # Swap in master key for litellm and stash original key in metadata header
         # We modify the ASGI scope directly since headers are immutable on Request.
