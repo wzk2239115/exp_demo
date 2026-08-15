@@ -453,10 +453,17 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
             # which 360 and many other providers don't support. Removing the
             # parameter here (at the HTTP level, before litellm processes it)
             # forces chat completions unconditionally.
+            #
+            # Only do this when /v1/messages is being translated to chat
+            # completions (openai-provider mode). With native anthropic routing
+            # (GLM_PROVIDER=anthropic, e.g. 360's own /v1/messages endpoint)
+            # the parameter must pass through untouched: some models (glm-5.3)
+            # REQUIRE thinking and reject requests without it.
             if (
                 parsed_body
                 and path == "/v1/messages"
                 and "thinking" in parsed_body
+                and litellm.use_chat_completions_url_for_anthropic_messages
             ):
                 del parsed_body["thinking"]
                 new_body = json.dumps(parsed_body).encode("utf-8")
