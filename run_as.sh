@@ -434,6 +434,29 @@ check_agent_tool() {
 # host 能通不代表容器能通:agent 在容器里访问 $BRIDGE:$PROXY_PORT,宿主机防火墙
 # (firewalld)很可能挡掉 docker 子网到该端口的流量,结果每个任务 ConnectionRefused、
 # 3 分钟拿 0 分。所以容器侧也真发一个 hi —— 这正是 agent 的完整路径 container→proxy→GLM。
+# 从 anthropic /v1/messages 响应里抽出模型回复文本(给预检展示用)
+show_reply() {
+  printf '%s' "$1" | python3 -c '
+import sys, json
+raw = sys.stdin.read()
+try:
+    d = json.loads(raw)
+except Exception:
+    print(raw[:200]); raise SystemExit
+if isinstance(d, dict):
+    if d.get("error"):
+        print("ERROR:", json.dumps(d["error"], ensure_ascii=False)[:300]); raise SystemExit
+    parts = []
+    for b in d.get("content", []) or []:
+        t = b.get("type")
+        if t == "text": parts.append(b.get("text", ""))
+        elif t == "thinking": parts.append("[think]" + (b.get("thinking") or "")[:60])
+        elif t == "tool_use": parts.append("[tool_use:" + b.get("name", "") + "]")
+    if parts: print(" ".join(parts)[:300]); raise SystemExit
+print(raw[:200])
+' 2>/dev/null || true
+}
+
 check_api() {
   log "端到端预检 API(host + 容器 各发一个 hi)…"
   local key
@@ -450,8 +473,9 @@ check_api() {
     url="http://$BRIDGE:$PROXY_PORT/v1/responses"
     success_pattern='"status"'
   else
-    # claude_code 走 messages API
-    body='{"model":"'"$MODEL_ALIAS"'","max_tokens":8,"reasoning_effort":"medium","context_management":null,"messages":[{"role":"user","content":"hi"}]}'
+    # claude_code 走 messages API(纯 Anthropic 协议参数,不带 reasoning_effort 等
+    # OpenAI 风格字段——原生 anthropic 路由下多余字段可能被上游 400)
+    body='{"model":"'"$MODEL_ALIAS"'","max_tokens":64,"messages":[{"role":"user","content":"hi"}]}'
     url="http://$BRIDGE:$PROXY_PORT/v1/messages"
     success_pattern='"role":"assistant"'
   fi
@@ -480,14 +504,14 @@ check_api() {
     printf '%s\n' "$hresp" | head -8 | sed 's/^/    /'
     die "确认 GLM 端点 $GLM_BASE_URL 可达、glm_config.yaml 里 $MODEL_ALIAS 配置正确"
   fi
-  log "host→proxy→GLM 推理 OK"
+  log "host→proxy→GLM 推理 OK,模型回复: $(show_reply "$hresp")"
 
   if [[ -z "$creply" ]]; then
     warn "跳过容器侧 hi 测试(docker 不可用)"
     return 0
   fi
   if printf '%s' "$creply" | grep -q "$success_pattern"; then
-    log "container→proxy→GLM 真实推理 OK"
+    log "container→proxy→GLM 真实推理 OK,模型回复: $(show_reply "$creply")"
   else
     warn "容器内发 hi 失败(容器→proxy→GLM,正是 agent 的路径):"
     printf '%s\n' "$creply" | head -8 | sed 's/^/    /'

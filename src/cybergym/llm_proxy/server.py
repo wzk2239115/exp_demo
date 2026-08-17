@@ -481,7 +481,12 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
                         max_tokens = int(max_tokens)
                     except (TypeError, ValueError):
                         max_tokens = 0
-                    budget = min(max(1024, max_tokens // 2), max(1025, max_tokens) - 1)
+                    budget = min(max(1024, max_tokens // 2), 8192)
+                    if max_tokens <= budget:
+                        # API requires max_tokens > thinking.budget_tokens;
+                        # tiny max_tokens (preflight "hi" tests) must be bumped.
+                        max_tokens = budget + 512
+                        parsed_body["max_tokens"] = max_tokens
                     parsed_body["thinking"] = {
                         "type": "enabled",
                         "budget_tokens": budget,
