@@ -458,15 +458,41 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
             # forces chat completions unconditionally.
             #
             # native anthropic mode (GLM_PROVIDER=anthropic → 360's own
-            # /v1/messages endpoint): pass an explicit thinking param through
-            # untouched, and INJECT one when missing — claude_code does not send
-            # 'thinking' by default, but always-thinking models (glm-5.3)
-            # reject requests without it: 400 "[1210] 该模型始终思考，不支持
-            # 关闭思考". Injection is harmless for optional-thinking models
-            # (verified: deepseek-v4-flash returns thinking+text, 200 OK).
+            # /v1/messages endpoint): normalize 'thinking' so the upstream
+            # always receives {"type":"enabled","budget_tokens":N}.
+            #
+            # claude_code 2.1.x sends thinking={"type":"adaptive"} on every
+            # request (always-thinking default, adaptive for unknown models),
+            # and 360's anthropic endpoint only accepts type
+            # enabled|disabled — adaptive (or disabled, or a missing param on
+            # always-thinking models like glm-5.3) is rejected with 400
+            # "[1210] 该模型始终思考，不支持关闭思考". Verified against 360:
+            # {"type":"enabled","budget_tokens":1024} works for stream +
+            # tool_use + ?beta=true; budget is NOT cross-checked against
+            # max_tokens upstream, but we still keep the official invariant
+            # (budget >= 1024, max_tokens > budget) for safety.
+            def _rewrite_thinking_enabled() -> None:
+                max_tokens = parsed_body.get("max_tokens") or 0
+                try:
+                    max_tokens = int(max_tokens)
+                except (TypeError, ValueError):
+                    max_tokens = 0
+                budget = min(max(1024, max_tokens // 2), 8192)
+                if max_tokens <= budget:
+                    # official API requires max_tokens > thinking.budget_tokens;
+                    # tiny max_tokens (preflight "hi" tests) must be bumped.
+                    max_tokens = budget + 512
+                    parsed_body["max_tokens"] = max_tokens
+                parsed_body["thinking"] = {
+                    "type": "enabled",
+                    "budget_tokens": budget,
+                }
+
             if parsed_body and path == "/v1/messages":
-                if "thinking" in parsed_body:
-                    if litellm.use_chat_completions_url_for_anthropic_messages:
+                if litellm.use_chat_completions_url_for_anthropic_messages:
+                    # chat-completions mode: litellm would re-route thinking
+                    # requests to the Responses API; strip the param entirely.
+                    if "thinking" in parsed_body:
                         del parsed_body["thinking"]
                         new_body = json.dumps(parsed_body).encode("utf-8")
                         logger.info(
@@ -474,31 +500,32 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
                             key_hint,
                         )
                     else:
-                        new_body = None  # pass through untouched
-                elif not litellm.use_chat_completions_url_for_anthropic_messages:
-                    max_tokens = parsed_body.get("max_tokens") or 0
-                    try:
-                        max_tokens = int(max_tokens)
-                    except (TypeError, ValueError):
-                        max_tokens = 0
-                    budget = min(max(1024, max_tokens // 2), 8192)
-                    if max_tokens <= budget:
-                        # API requires max_tokens > thinking.budget_tokens;
-                        # tiny max_tokens (preflight "hi" tests) must be bumped.
-                        max_tokens = budget + 512
-                        parsed_body["max_tokens"] = max_tokens
-                    parsed_body["thinking"] = {
-                        "type": "enabled",
-                        "budget_tokens": budget,
-                    }
-                    new_body = json.dumps(parsed_body).encode("utf-8")
-                    logger.info(
-                        "Injected 'thinking' (budget=%d) into /v1/messages for key %s",
-                        budget,
-                        key_hint,
-                    )
+                        new_body = None
                 else:
-                    new_body = None
+                    # native anthropic mode: only {"type":"enabled"} passes
+                    # through as-is (keep budget_tokens when cc sent one);
+                    # anything else — missing, "adaptive", "disabled", unknown
+                    # — is rewritten to enabled.
+                    thinking = parsed_body.get("thinking")
+                    if (
+                        isinstance(thinking, dict)
+                        and thinking.get("type") == "enabled"
+                    ):
+                        new_body = None
+                    else:
+                        old_desc = (
+                            json.dumps(thinking, ensure_ascii=False)
+                            if thinking is not None
+                            else "absent"
+                        )
+                        _rewrite_thinking_enabled()
+                        new_body = json.dumps(parsed_body).encode("utf-8")
+                        logger.info(
+                            "Rewrote 'thinking' (%s -> enabled) in /v1/messages "
+                            "for key %s",
+                            old_desc,
+                            key_hint,
+                        )
 
                 if new_body is not None:
                     request._body = new_body
