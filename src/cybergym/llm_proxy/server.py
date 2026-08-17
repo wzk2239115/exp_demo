@@ -19,6 +19,7 @@ import os
 import re
 import secrets
 from contextvars import ContextVar
+from pathlib import Path
 from urllib.parse import parse_qsl, urlencode
 from uuid import uuid4
 
@@ -758,17 +759,31 @@ def setup_proxy(
     _patch_litellm_thinking_responses_routing()
     _patch_streaming_reasoning_detection()
 
-    # Force /v1/messages → /chat/completions for OpenAI-provider models.
-    # litellm defaults to routing OpenAI /v1/messages through the Responses API
-    # (_RESPONSES_API_PROVIDERS = {'openai'}), but 360 only supports chat
-    # completions.  The env var LITELLM_USE_CHAT_COMPLETIONS_URL_FOR_ANTHROPIC_MESSAGES
-    # is read at import time and the YAML litellm_settings key should also work,
-    # but we set it here explicitly (same process, after import, before any
-    # request) to be definitive.
-    litellm.use_chat_completions_url_for_anthropic_messages = True
+    # Route /v1/messages based on provider mode (detected from the config).
+    #
+    # Native-anthropic configs (model: anthropic/<name>, i.e. GLM_PROVIDER=
+    # anthropic → 360's own /v1/messages endpoint) MUST keep the flag False so
+    # litellm passes requests through untouched: no chat/completions
+    # translation, no anthropic→chat→anthropic double conversion, and the
+    # middleware injects the 'thinking' param always-thinking models require.
+    #
+    # OpenAI-provider configs force the flag True: litellm would otherwise
+    # route OpenAI /v1/messages through the Responses API
+    # (_RESPONSES_API_PROVIDERS = {'openai'}), which 360 doesn't support —
+    # chat/completions is the only working path there.
+    native_anthropic = False
+    if config_path:
+        try:
+            cfg_text = Path(config_path).read_text()
+            native_anthropic = "anthropic/" in cfg_text
+        except OSError:
+            pass
+    litellm.use_chat_completions_url_for_anthropic_messages = not native_anthropic
     logger.info(
-        "use_chat_completions_url_for_anthropic_messages = %s",
+        "use_chat_completions_url_for_anthropic_messages = %s "
+        "(native_anthropic=%s)",
         litellm.use_chat_completions_url_for_anthropic_messages,
+        native_anthropic,
     )
 
     # Set internal master key for litellm proxy

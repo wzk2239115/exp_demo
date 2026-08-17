@@ -354,10 +354,15 @@ ensure_proxy() {
   export GLM_API_KEY
 
   log "启动 $USER_NAME 的 LLM proxy :$PROXY_PORT"
-  # 关键:claude_code 走 /v1/messages(Anthropic 协议),litellm 默认把 OpenAI 模型的
-  # /v1/messages 路由到 Responses API,而 360 的 gpt-5.5 只支持 /chat/completions。
-  # 此 env var 强制 /v1/messages → /chat/completions(litellm __init__.py:222)。
-  export LITELLM_USE_CHAT_COMPLETIONS_URL_FOR_ANTHROPIC_MESSAGES=true
+  # claude_code 走 /v1/messages(Anthropic 协议)。OpenAI 模型时 litellm 默认路由到
+  # Responses API(360 不支持),此 env var 强制 /v1/messages → /chat/completions;
+  # anthropic provider(原生透传)时必须为 false,否则会做双重协议转换、thinking 被剥。
+  # (server.py setup_proxy 也会按 config 内容再设一次,这里保持 env 一致)
+  if [[ "${GLM_PROVIDER:-openai}" == "anthropic" ]]; then
+    export LITELLM_USE_CHAT_COMPLETIONS_URL_FOR_ANTHROPIC_MESSAGES=false
+  else
+    export LITELLM_USE_CHAT_COMPLETIONS_URL_FOR_ANTHROPIC_MESSAGES=true
+  fi
   # setsid:把 proxy 放进独立会话,Ctrl+C 中断 run_as.sh 时不会被同进程组连坐杀掉
   setsid uv run -m cybergym.llm_proxy \
     --host "$BRIDGE" --port "$PROXY_PORT" \
