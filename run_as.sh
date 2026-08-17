@@ -135,7 +135,11 @@ ensure_glm_config() {
   #   provider=openai + codex  → /v1/responses(gpt-5.6-sol 只支持 responses API)
   #   provider=openai(默认)    → /v1/messages→chat/completions(claude_code)
   local provider="${GLM_PROVIDER:-openai}"
-  local marker="# src: v4 | provider=$provider | agent=$AGENT | $GLM_BASE_URL | $GLM_MODEL | $MODEL_ALIAS"
+  # 把代码版本(git sha)写进 marker:git pull 之后旧 proxy 仍是老代码在跑,
+  # 必须重启才能加载新逻辑。marker 变化 → 重生成配置 → ensure_proxy 重启。
+  local git_sha
+  git_sha=$(git -C "$PROJECT_ROOT" rev-parse --short HEAD 2>/dev/null || echo nogit)
+  local marker="# src: v5 | provider=$provider | agent=$AGENT | $GLM_BASE_URL | $GLM_MODEL | $MODEL_ALIAS | git=$git_sha"
   if [[ -f "$GLM_CONFIG" ]] && grep -qF "$marker" "$GLM_CONFIG" && grep -q 'drop_params' "$GLM_CONFIG"; then
     return 0
   fi
