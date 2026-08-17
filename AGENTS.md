@@ -25,8 +25,12 @@
 
 用法: 跑评测时加 `GLM_PROVIDER=anthropic`。run_as.sh 生成 litellm 原生透传配置
 (`model: anthropic/<GLM_MODEL>`,`api_base: https://api.360.cn`),不走 chat/completions 翻译。
-proxy 中间件在 anthropic 路由下会**自动注入缺失的 `thinking` 参数**(commit 689ab7a)——
-glm-5.3 等常思模型不发 thinking 会 400;deepseek 等可选思模型注入无害(已验证)。
+proxy 中间件在 anthropic 路由下会**规范化 `thinking` 参数**(commit 13a52dc):
+**cc 2.1.x 每个请求都发 `thinking={"type":"adaptive"}`,360 只认 enabled|disabled,
+其他一律 400 [1210]**;中间件只放行 `{"type":"enabled"}`(保留 cc 的 budget_tokens),
+缺失/adaptive/disabled/未知都改写为 enabled+budget(≤8192,必要时抬 max_tokens)。
+360 端已验证: enabled+budget_tokens 对 stream/tool_use/?beta=true 全部正常;
+错误提示"请使用 low、high 或 max"是误导文案,字符串格式反而 400(1001)。
 
 同类官方端点参考(直连 env 即可,无需 litellm):
 - DeepSeek: `https://api.deepseek.com/anthropic`(官方文档 quick_start/agent_integrations/claude_code)
