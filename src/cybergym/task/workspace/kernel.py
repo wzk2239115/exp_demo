@@ -27,7 +27,10 @@ def _copy_paths(task_data_dir: Path, paths: list[str], workspace_dir: Path) -> b
             logger.info("Copied %s -> %s", src, dest)
             copied_any = True
         elif src.is_dir():
-            shutil.copytree(src, dest)
+            # dirs_exist_ok: resuming a task whose workspace was already
+            # populated (interrupted run) would otherwise die on
+            # FileExistsError for e.g. workspace/pov.
+            shutil.copytree(src, dest, dirs_exist_ok=True)
             logger.info("Copied %s -> %s", src, dest)
             copied_any = True
         else:
