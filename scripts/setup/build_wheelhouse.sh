@@ -40,6 +40,13 @@ fi
 # 静默 rc=0 退出(上一版就是这么"成功"地什么都没干)
 docker run --rm -i "${PLATFORM_FLAG[@]}" -v "$WHEELS:/wheels" "$IMAGE" bash -euxo pipefail <<'BUILD'
 export DEBIAN_FRONTEND=noninteractive
+# 国内网络走清华镜像;xenial 已 EOL,常规源已清空,必须用 old-releases(清华有镜像)
+if grep -q xenial /etc/os-release 2>/dev/null; then
+  APT_MIRROR=http://mirrors.tuna.tsinghua.edu.cn/ubuntu-old-releases/ubuntu
+else
+  APT_MIRROR=http://mirrors.tuna.tsinghua.edu.cn/ubuntu
+fi
+echo "deb $APT_MIRROR $(. /etc/os-release && echo $VERSION_CODENAME) main restricted universe multiverse" > /etc/apt/sources.list
 apt-get update -qq >/dev/null
 apt-get install -y -qq python3-pip curl >/dev/null
 
@@ -47,14 +54,18 @@ PYV=$(python3 -c 'import sys;print("%d.%d"%sys.version_info[:2])')
 echo "[wheelhouse] 容器 python: $PYV"
 
 # py3.5 只认 pip<=20.3.4;新 python 会装最新版 —— get-pip 按 python 版本选 URL
-curl -fsSL "https://bootstrap.pypa.io/pip/${PYV}/get-pip.py" -o /tmp/get-pip.py
-python3 /tmp/get-pip.py -q 2>/dev/null || python3 /tmp/get-pip.py "pip==20.3.4" -q
+# pip 下载走清华 PyPI 镜像(容器内有网时);xenial 的 get-pip 走官方 bootstrap
+PIP_INDEX="https://pypi.tuna.tsinghua.edu.cn/simple"
+curl -fsSL "https://bootstrap.pypa.io/pip/${PYV}/get-pip.py" -o /tmp/get-pip.py \
+  || curl -fsSL "https://mirrors.aliyun.com/pypi/get-pip/${PYV}/get-pip.py" -o /tmp/get-pip.py
+python3 /tmp/get-pip.py -q -i "$PIP_INDEX" 2>/dev/null \
+  || python3 /tmp/get-pip.py "pip==20.3.4" -q -i "$PIP_INDEX"
 python3 -m pip --version
 
 # 下载(含依赖)。pip>=9 尊重 python_requires,自动选当前 python 兼容的最新版;
 # --prefer-binary 尽量拿 wheel 免得目标容器里编译。单个失败不连坐。
 for pkg in pwntools ROPgadget ropper checksec.py; do
-  python3 -m pip download --prefer-binary -d /wheels "$pkg" \
+  python3 -m pip download --prefer-binary -i "$PIP_INDEX" -d /wheels "$pkg" \
     || echo "[wheelhouse] WARN: $pkg 下载失败(继续)"
 done
 cp -f /tmp/get-pip.py /wheels/get-pip.py
