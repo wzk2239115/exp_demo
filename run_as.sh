@@ -55,10 +55,24 @@ cd "$PROJECT_ROOT"
 # ─────────────────────────────────────────────
 # 若存在 .glm_env(已 gitignore),先 source 它 —— 组员把 GLM_API_KEY 等放进去,
 # 直接 `bash run_as.sh <名字>` 即可,无需每次在命令行带环境变量。
+# 语义:命令行 > .glm_env > 内置默认。先快照命令行已设的变量,source 后回填,
+# 否则 .glm_env 里的旧 key 会悄悄覆盖命令行传入的新 key(proxy 装错 key → 1004)。
+_ENV_KEYS=(GLM_PROVIDER GLM_BASE_URL GLM_MODEL MODEL_ALIAS GLM_API_KEY GLM_ANTHROPIC_BASE \
+           TASKS_FILE AGENT BUDGET TIMEOUT MAX_WORKERS \
+           PROXY_PORT_BASE CONTROLLER_PORT_BASE CONTROLLER_PORT \
+           FORCE_PROXY_RESTART FORCE_RUN STOP_GRACE INTERACTIVE DIRECT)
+declare -A _CLI_ENV=()
+for _k in "${_ENV_KEYS[@]}"; do
+  if [[ -n "${!_k+x}" ]]; then _CLI_ENV[$_k]=${!_k}; fi
+done
 if [[ -f "$PROJECT_ROOT/.glm_env" ]]; then
   # shellcheck disable=SC1091
   source "$PROJECT_ROOT/.glm_env"
 fi
+for _k in "${!_CLI_ENV[@]}"; do
+  export "$_k=${_CLI_ENV[$_k]}"
+done
+unset _k _ENV_KEYS _CLI_ENV
 
 GLM_BASE_URL="${GLM_BASE_URL:-https://api.360.cn/v1}"
 GLM_MODEL="${GLM_MODEL:-deepseek/deepseek-v4-pro}"
