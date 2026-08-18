@@ -185,7 +185,10 @@ echo "===================="
 # ─────────────────────────────────────────────
 NODE_TARBALL="node-v${NODE_VERSION}.tar.gz"
 NODE_SRC_DIR="node-v${NODE_VERSION}"
-NODE_SRC_URL="https://nodejs.org/download/release/v${NODE_VERSION}/${NODE_TARBALL}"
+# NODE_MIRROR: 可覆盖的 node 源码镜像(国内网络)。
+# 完整 URL 优先级: NODE_SRC_URL > ${NODE_MIRROR}/v${NODE_VERSION}/$NODE_TARBALL > 官方源
+NODE_SRC_URL="${NODE_SRC_URL:-${NODE_MIRROR:+${NODE_MIRROR}/v${NODE_VERSION}/${NODE_TARBALL}}}"
+NODE_SRC_URL="${NODE_SRC_URL:-https://nodejs.org/download/release/v${NODE_VERSION}/${NODE_TARBALL}}"
 
 # Resolve default prefix (must be absolute for docker bind mount)
 if [[ -z "$NODE_PREFIX" ]]; then
