@@ -36,7 +36,9 @@ if [[ "$(uname -m)" != "x86_64" ]]; then
   PLATFORM_FLAG=(--platform linux/amd64)
 fi
 
-docker run --rm "${PLATFORM_FLAG[@]}" -v "$WHEELS:/wheels" "$IMAGE" bash -euxo pipefail <<'BUILD'
+# -i 必须带:heredoc 走 stdin 进容器,没有 -i 时容器里 bash 读到空脚本、
+# 静默 rc=0 退出(上一版就是这么"成功"地什么都没干)
+docker run --rm -i "${PLATFORM_FLAG[@]}" -v "$WHEELS:/wheels" "$IMAGE" bash -euxo pipefail <<'BUILD'
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq >/dev/null
 apt-get install -y -qq python3-pip curl >/dev/null
