@@ -178,6 +178,17 @@ descendant_pids() {
   echo "$pid"
 }
 
+# 谁打开了 run.lock(诊断锁死/泄漏用;持有 fd 的进程 ≈ 持锁进程)
+lock_holders() {
+  local lockfile="$1" p f tgt
+  for p in /proc/[0-9]*; do
+    for f in "$p"/fd/*; do
+      tgt=$(readlink "$f" 2>/dev/null) || continue
+      [[ "$tgt" == "$lockfile" ]] && { echo "${p#/proc/}"; break; }
+    done
+  done
+}
+
 # ─────────────────────────────────────────────
 #  槽位登记(每人一个稳定数字,决定端口)
 # ─────────────────────────────────────────────
@@ -385,10 +396,13 @@ ensure_controller() {
     flock 9
     if ! listening "$url"; then
       # 继承已 export 的 CYBERGYM_SERVER_*;setsid 让 Ctrl+C 不连坐;不带 --network,
-      # 目标容器走默认桥,agent(默认桥)够得着
+      # 目标容器走默认桥,agent(默认桥)够得着。
+      # 8>&- 9>&-:绝不能继承 run.lock(fd8) 和启动锁(fd9) —— controller 常驻,
+      # 泄漏的锁 fd 会让同名互斥锁永久卡死
       setsid uv run -m cybergym.server \
         --host "$BRIDGE" --port "$CONTROLLER_PORT" \
         --log_dir "$LOG_DIR/controller" \
+        8>&- 9>&- \
         > "$LOG_DIR/controller.log" 2>&1 < /dev/null &
       echo $! > "$LOG_DIR/controller.pid"
     fi
@@ -475,11 +489,14 @@ $(pgrep -af -- "cybergym.llm_proxy.* --port $PROXY_PORT " 2>/dev/null | head -3 
     export LITELLM_USE_CHAT_COMPLETIONS_URL_FOR_ANTHROPIC_MESSAGES=true
   fi
   # setsid:把 proxy 放进独立会话,Ctrl+C 中断 run_as.sh 时不会被同进程组连坐杀掉
+  # 8>&-:同样不能继承 run.lock 的 fd —— proxy 跨会话常驻,泄漏锁 fd 会把互斥锁
+  # 卡死到 proxy 被 --stop 为止(而且旧版 --stop 又被锁堵住,死循环)
   setsid uv run -m cybergym.llm_proxy \
     --host "$BRIDGE" --port "$PROXY_PORT" \
     --admin-key "$CYBERGYM_ADMIN_KEY" \
     --config "$GLM_CONFIG" \
     --default-budget "$BUDGET" \
+    8>&- \
     > "$LOG_DIR/llm_proxy.log" 2>&1 < /dev/null &
   echo $! > "$LOG_DIR/proxy.pid"
 
@@ -590,11 +607,14 @@ clean_own_containers() {
 # 防止和"刚好同时新启动的同名会话"竞争。
 stop_slot() {
   stop_runner
+  # flock 只是尽量和"同时在启动的新会话"串行;抢不到也必须继续 —— 下面的清理
+  # (容器按 label、proxy 按 admin key)只碰自己的资源。关键场景:旧版脚本起的
+  # proxy 泄漏持有 run.lock 的 fd,不杀掉它锁永远解不开(--stop 不能被它堵死)。
   (
-    flock -w 5 9 || { warn "$USER_NAME 有新会话刚抢到锁,跳过容器清理与 proxy 停止"; exit 0; }
+    flock -w 5 9 || warn "run.lock 5 秒没拿到(新会话启动中/旧 proxy 泄漏的 fd),继续按身份精确清理"
     clean_own_containers
     stop_proxy
-  ) 9>"$LOG_DIR/run.lock" || true
+  ) 9>>"$LOG_DIR/run.lock" || true
   local cpid
   if [[ -f "$LOG_DIR/controller.pid" ]]; then
     cpid=$(cat "$LOG_DIR/controller.pid" 2>/dev/null || true)
@@ -775,22 +795,28 @@ ensure_firewall_open() {
 # FORCE_RUN=1:先 stop_runner 停旧的再接管。
 # fd 8 故意不用 9(controller 启动子壳在用 9)。
 acquire_run_lock() {
-  local desc="$*"
-  exec 8>"$LOG_DIR/run.lock"
+  local desc="$*" holders="" pid
+  # >> 而不是 >:打不开锁的后来者不能截断文件抹掉持有者信息(旧版这里会清成 "pid 未知")
+  exec 8>>"$LOG_DIR/run.lock"
   if flock -n 8; then
     printf 'pid=%s\nstarted=%s\ncmd=%s\n' "$$" "$(date '+%F %T')" "$desc" > "$LOG_DIR/run.lock"
     return 0
   fi
-  local holder=""
-  holder=$(grep -oP '^pid=\K\d+' "$LOG_DIR/run.lock" 2>/dev/null || true)
+  for pid in $(lock_holders "$LOG_DIR/run.lock"); do
+    holders="${holders:+$holders }$pid:$(cat /proc/$pid/comm 2>/dev/null)"
+  done
   if [[ "${FORCE_RUN:-0}" == "1" ]]; then
-    log "FORCE_RUN=1:接管 $USER_NAME 槽位(先停掉 pid ${holder:-?} 的旧会话)"
+    log "FORCE_RUN=1:接管 $USER_NAME 槽位(停旧 runner,必要时停旧 proxy)"
     stop_runner
-    flock -w "${STOP_GRACE:-90}" 8 || die "等待旧会话退出锁超时;手动检查: logs/$USER_NAME/run.lock"
+    if ! flock -w 10 8; then
+      warn "锁仍被占用(多半是旧版泄漏了 fd 的 proxy),按 admin key 停自己的 proxy 后再等锁"
+      stop_proxy
+      flock -w 10 8 || die "锁还是被占用(持有者: ${holders:-未知});bash run_as.sh --stop $USER_NAME 后重试"
+    fi
     printf 'pid=%s\nstarted=%s\ncmd=%s\n' "$$" "$(date '+%F %T')" "$desc" > "$LOG_DIR/run.lock"
     return 0
   fi
-  die "$USER_NAME 已有一个会话在跑(pid ${holder:-未知},详情: logs/$USER_NAME/run.lock)。
+  die "$USER_NAME 已有一个会话在跑(锁持有者: ${holders:-未知},详情: logs/$USER_NAME/run.lock)。
   并行请用别的名字;接管旧会话: FORCE_RUN=1 bash run_as.sh $USER_NAME …;全停: bash run_as.sh --stop $USER_NAME"
 }
 
