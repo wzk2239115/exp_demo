@@ -80,6 +80,12 @@ def _worker_sigint_handler(signum, frame):
         raise KeyboardInterrupt
 
 
+def _main_sigterm_handler(signum, frame):
+    # Treat SIGTERM like Ctrl+C so `run_as.sh --stop` gets the same graceful
+    # shutdown path (terminate flag + executor shutdown) instead of a hard kill.
+    raise KeyboardInterrupt
+
+
 def _mark_task_active(fn):
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
@@ -369,6 +375,9 @@ def setup_logging(
 
 def _init_worker(log_queue: multiprocessing.Queue) -> None:
     signal.signal(signal.SIGINT, _worker_sigint_handler)
+    # Same semantics for SIGTERM: interrupt the active task (its finally blocks
+    # do container cleanup) but never raise while idle (would deadlock the pool).
+    signal.signal(signal.SIGTERM, _worker_sigint_handler)
 
     qh = logging.handlers.QueueHandler(log_queue)
     qh.setLevel(logging.INFO)
@@ -654,6 +663,9 @@ def run_one(
 
 def main() -> None:
     args = parse_args()
+
+    # SIGTERM -> graceful KeyboardInterrupt shutdown (used by run_as.sh --stop).
+    signal.signal(signal.SIGTERM, _main_sigterm_handler)
 
     out_root = Path(args.out_dir)
     log_queue, listener = setup_logging(out_root)

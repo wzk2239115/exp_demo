@@ -1,6 +1,7 @@
 """Base evaluator class."""
 
 import logging
+import os
 import re
 import time
 from pathlib import Path
@@ -406,6 +407,11 @@ class Evaluator:
                 },
                 **self._extra_volumes(),
             }
+            # Ownership label: lets `run_as.sh --stop <user>` clean up only
+            # that user's leaked containers on a multi-user host. Set the
+            # CYBERGYM_OWNER env var (run_as.sh exports it) to enable.
+            owner = os.environ.get("CYBERGYM_OWNER")
+            labels = {"exploitgym.owner": owner} if owner else None
             self.container = client.containers.run(
                 image=docker_image,
                 command=["tail", "-f", "/dev/null"],
@@ -413,6 +419,7 @@ class Evaluator:
                 name=container_name,
                 network=startup_network,
                 volumes=volumes,
+                labels=labels,
                 **self._resource_container_kwargs(),
                 **self._extra_container_kwargs(),
             )

@@ -7,7 +7,14 @@
 - **不要使用其他人的服务**(尤其 wuheyi 的 controller :8666 / proxy :4000)。
   每个评测槽位(`bash run_as.sh <name>`)用自己的 controller/proxy 端口,由 run_as.sh 自动分配拉起。
 - 360 API key 在服务器 `.glm_env`;deepseek-flash 槽位用的是另一个 key(`fk3478068563....`)。
-- 跑批期间不要再跑同名 `run_as.sh`(`ensure_proxy` 可能 pkill 掉在用的 proxy,cc 会话报 ConnectionRefused)。
+- 同名互斥:同一名字同时只允许一个 `run_as.sh` 会话(`logs/<名字>/run.lock`),第二个自动拒绝。
+  接管在跑的会话: `FORCE_RUN=1 bash run_as.sh <名字>`;并行请用不同名字。
+- 停止评测: `bash run_as.sh --stop <名字>`,分层关停:runner(SIGINT graceful→SIGTERM→SIGKILL,
+  超时秒数 `STOP_GRACE`,默认 90)→ 自己 label 的残留容器(`exploitgym.owner=<名字>`,
+  run_as.sh 导出 `CYBERGYM_OWNER`)→ proxy(按 admin key 精确匹配)。controller 保留。
+- **proxy 永不被脚本自动杀**(旧版 glm_config 变化/git pull 后 sha 变化会 pkill 在跑 proxy,
+  在跑任务全部 exit 137,8/10 的 arvo_30099 就是这么死的)。现在 config 变化只警告;
+  要应用新配置: 先 `--stop` 再重跑,或 `FORCE_PROXY_RESTART=1 bash run_as.sh …`(按 admin key 精确重启)。
 
 ## 模型路由(重要,少踩坑)
 
@@ -93,8 +100,10 @@ find . -name claude_code.rendered.log -exec grep -l "Content block not found" {}
 - 容器内 cc 不在 PATH: `source /workspace/env.sh && /data/node/bin/claude-code.sh --verbose --permission-mode=bypassPermissions --disallowed-tools WebSearch,WebFetch`
   (proxy 默认禁 WebSearch/WebFetch,不禁用会 403 "web_search_blocked")。
 - cc 会话记录在容器 `/logs`,proxy 挂了不丢;proxy 恢复后 `claude-code.sh -c` 续上。
-- proxy 死了(日志见 `INFO: Shutting down` = 收到 SIGTERM): 重启见 run_as.sh ensure_proxy 逻辑,
-  或手工 setsid 拉起同端口同 admin-key 的 proxy。
+- proxy 死了(日志见 `INFO: Shutting down` = 收到 SIGTERM): 标准做法是
+  `bash run_as.sh --stop <name>` 清场后重跑(会重新生成 proxy);别直接 pkill 按端口杀,
+  会误伤撞端口的别人 proxy。
+- 交互会话与跑批同名互斥;要边跑批边打靶,交互用独立名字(独立槽位/端口)。
 
 ## 已知问题/待办
 

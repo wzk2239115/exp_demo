@@ -19,7 +19,15 @@
 #   bash run_as.sh wzk --tasks-file data/task_ids/v1.txt --max-workers 4
 #   bash run_as.sh wzk --first-n 1                      # 只跑 1 个冒烟
 #   bash run_as.sh wzk --overwrite                      # 重跑已完成的任务
-#   bash run_as.sh --stop wzk                           # 停掉 wzk 的 proxy
+#   bash run_as.sh --stop wzk                           # 全停 wzk:runner→残留容器→proxy
+#
+# 安全机制(多用户场景,防止误杀别人/自己在跑的评测):
+#   - 同名互斥:同一名字同时只允许一个会话(logs/<名字>/run.lock)。
+#     第二个会拒绝启动;FORCE_RUN=1 可接管(先停旧的);并行请用不同名字。
+#   - proxy 永不被自动杀:glm_config 变化(含 git pull 后 sha 变化)只警告不重启。
+#     要应用新配置:先 --stop 再跑,或 FORCE_PROXY_RESTART=1(按 admin key 精确重启)。
+#   - 所有 kill 都按唯一身份(admin key / pidfile+cmdline 复核)匹配,绝不按端口裸杀。
+#   - 评测容器带 label exploitgym.owner=<名字>(env CYBERGYM_OWNER),--stop 只清自己的。
 #
 # 可用环境变量覆盖默认值(或写进 .glm_env 文件,已 gitignore):
 #   GLM_BASE_URL (默认 https://api.360.cn/v1)
@@ -33,6 +41,9 @@
 #   MAX_WORKERS  (默认 1)
 #   PROXY_PORT_BASE (默认 4001;第 N 个组员用 4000+N)
 #   CONTROLLER_PORT (留空则按槽位自动派 8700+slot,各人独立,不复用 8666)
+#   FORCE_RUN=1            同名接管:先停掉在跑的会话再启动
+#   FORCE_PROXY_RESTART=1  启动前按 admin key 重启自己的 proxy(加载新 glm_config)
+#   STOP_GRACE (默认 90)   --stop 给 runner 的 graceful 退出时间(秒),超时升级 SIGKILL
 
 set -euo pipefail
 
@@ -94,6 +105,63 @@ bridge_ip() {
   ip=$(ip -4 addr show docker0 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}') || true
   [[ -n "$ip" ]] || die "无法获取 docker0 桥 IP,检查 docker 是否运行"
   echo "$ip"
+}
+
+# ─────────────────────────────────────────────
+#  进程身份与安全 kill
+#  多用户场景铁律:只按唯一身份(admin key / pidfile+cmdline 复核)杀进程,
+#  绝不按端口/PID 裸杀 —— 端口可能撞车,PID 会复用,裸杀就是 8/10 那次事故。
+# ─────────────────────────────────────────────
+# pid 是否活着(zombie 视为已死,等父进程收尸不影响判断)
+proc_alive() {
+  local pid="$1"
+  [[ -d "/proc/$pid" ]] || return 1
+  grep -q '^State:[[:space:]]*Z' "/proc/$pid/status" 2>/dev/null && return 1
+  return 0
+}
+
+# 校验 pid 的 cmdline 匹配 pattern(防 PID 复用误杀无辜进程)。
+# pattern 按 ERE 解释 —— 与 pgrep -f 的匹配语义保持一致,否则 pgrep 匹配上、
+# 复核却失败(比如 "cybergym.llm_proxy.*<key>" 里的 .* 在字面匹配下永远不中)。
+pid_cmdline_matches() {
+  local pid="$1" pattern="$2" cmd
+  [[ -d "/proc/$pid" ]] || return 1
+  cmd=$(tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null) || return 1
+  [[ -z "$cmd" ]] && return 1
+  printf '%s' "$cmd" | grep -qE -- "$pattern"
+}
+
+# 按 pattern 杀进程:pgrep 预筛 + cmdline 逐个复核,先 TERM 后 KILL(超时升级)。
+# 返回 0=杀到过进程,1=没匹配到。
+safe_pkill_wait() {
+  local pattern="$1" timeout="${2:-10}" killed=() pid i alive
+  for pid in $(pgrep -f -- "$pattern" 2>/dev/null); do
+    pid_cmdline_matches "$pid" "$pattern" || continue
+    kill -TERM "$pid" 2>/dev/null || true
+    killed+=("$pid")
+  done
+  if [[ ${#killed[@]} -eq 0 ]]; then return 1; fi
+  for ((i = 0; i < timeout * 10; i++)); do
+    alive=0
+    for pid in "${killed[@]}"; do
+      if proc_alive "$pid"; then alive=1; fi
+    done
+    if [[ "$alive" -eq 0 ]]; then return 0; fi
+    sleep 0.1
+  done
+  for pid in "${killed[@]}"; do
+    if proc_alive "$pid"; then kill -KILL "$pid" 2>/dev/null || true; fi
+  done
+  return 0
+}
+
+# 递归收集 pid 的所有后代(含自身)
+descendant_pids() {
+  local pid="$1" child
+  for child in $(pgrep -P "$pid" 2>/dev/null); do
+    descendant_pids "$child"
+  done
+  echo "$pid"
 }
 
 # ─────────────────────────────────────────────
@@ -328,17 +396,30 @@ ensure_proxy() {
   local root="http://$BRIDGE:$PROXY_PORT/"
   local admin_key_file="$LOG_DIR/admin.key"
 
-  # glm_config 刚被重生成 且旧 proxy 还在跑 → 彻底杀掉(按 port,连 litellm 的 python
-  # 子进程一起;只 kill pidfile 会留 uv→python 孤儿继续占端口,导致复用了旧配置)再重启
+  # glm_config 变了但旧 proxy 还在跑:【绝不】自动杀(自动 pkill 会把在跑任务的
+  # proxy 连坐杀掉 → 全部 ConnectionRefused / exit 137,8/10 事故就是这么来的)。
+  # 默认继续用旧配置跑;要应用新配置二选一:
+  #   1) bash run_as.sh --stop <name> 再重跑(评测中断,断点续跑会补)
+  #   2) FORCE_PROXY_RESTART=1(本次启动前按 admin key 精确重启,不是按端口裸杀)
   if [[ "${GLM_CONFIG_REGEN:-0}" == "1" ]] && { listening "$health" || listening "$root"; }; then
-    log "glm_config 变更,重启 proxy 以加载新配置"
-    for _ in $(seq 1 20); do
-      pkill -f "cybergym.llm_proxy.*--port $PROXY_PORT" 2>/dev/null || true
-      command -v fuser >/dev/null 2>&1 && fuser -k "$PROXY_PORT/tcp" 2>/dev/null || true
-      listening "$root" || break
-      sleep 0.3
-    done
-    rm -f "$LOG_DIR/proxy.pid"
+    if [[ "${FORCE_PROXY_RESTART:-0}" == "1" ]]; then
+      local old_key=""
+      if [[ -f "$admin_key_file" ]]; then
+        old_key=$(cat "$admin_key_file" 2>/dev/null || true)
+      fi
+      if [[ -z "$old_key" ]]; then
+        old_key=$(grep -oP 'Admin key for /budget endpoints:\s*\K\S+' "$LOG_DIR/llm_proxy.log" 2>/dev/null | tail -1 || true)
+      fi
+      if [[ -z "$old_key" ]]; then
+        die "FORCE_PROXY_RESTART 找不到旧 proxy 的 admin key;先跑: bash run_as.sh --stop $USER_NAME 清场后重试"
+      fi
+      log "FORCE_PROXY_RESTART=1 → 按 admin key 重启 proxy 以加载新配置"
+      safe_pkill_wait "cybergym.llm_proxy.*$old_key" 10
+      rm -f "$LOG_DIR/proxy.pid" "$admin_key_file"
+    else
+      warn "glm_config 已重新生成,但在跑的 proxy 继续用旧配置(不自动重启,避免打断在跑任务)
+    应用新配置: FORCE_PROXY_RESTART=1 bash run_as.sh … 或先 bash run_as.sh --stop $USER_NAME 再重跑"
+    fi
   fi
 
   if listening "$health" || listening "$root"; then
@@ -348,8 +429,22 @@ ensure_proxy() {
       CYBERGYM_ADMIN_KEY=$(grep -oP 'Admin key for /budget endpoints:\s*\K\S+' "$LOG_DIR/llm_proxy.log" 2>/dev/null | tail -1 || true)
     fi
     [[ -n "$CYBERGYM_ADMIN_KEY" ]] || die "proxy :$PROXY_PORT 已在跑但找不到 admin key,删 logs/$USER_NAME/llm_proxy.log 后重试,或换 PROXY_PORT_BASE"
+    # 在跑的 proxy 必须持有这个 admin key:防 slots 表被重置导致端口撞车后
+    # 误复用别人的 proxy(那会让任务打到别人的模型/key/预算上)
+    if ! pgrep -f -- "cybergym.llm_proxy.*$CYBERGYM_ADMIN_KEY" >/dev/null 2>&1; then
+      die "端口 :$PROXY_PORT 在监听,但对应进程不持有 $USER_NAME 的 admin key(槽位冲突/别人的 proxy?)。
+  不要 kill 它。检查 logs/user_slots.tsv 是否被动过,或换 PROXY_PORT_BASE 重试。"
+    fi
     log "proxy 复用中 :$PROXY_PORT (admin ${CYBERGYM_ADMIN_KEY:0:20}…)"
     return 0
+  fi
+
+  # 兜底:端口没在正常监听但已有 llm_proxy 进程绑着它(刚启动/挂死/别人的)→
+  # 明确报冲突,不盲启(盲启会 bind 失败绕远路,还看不清是谁占的)
+  if pgrep -f -- "cybergym.llm_proxy.* --port $PROXY_PORT " >/dev/null 2>&1; then
+    die "端口 :$PROXY_PORT 已被某个 llm_proxy 进程占用但未正常监听(启动中/挂死/别人的):
+$(pgrep -af -- "cybergym.llm_proxy.* --port $PROXY_PORT " 2>/dev/null | head -3 | sed 's/^/    /')
+  如果是自己的挂死 proxy: bash run_as.sh --stop $USER_NAME 后重试" 
   fi
 
   CYBERGYM_ADMIN_KEY="cgym-admin-$USER_NAME-$(openssl rand -hex 8)"
@@ -385,16 +480,117 @@ ensure_proxy() {
 }
 
 stop_proxy() {
-  # 按用户名(admin key 里含 $USER_NAME)匹配,连 litellm 子进程一起杀
-  local n
-  n=$(pgrep -af "cybergym.llm_proxy.*cgym-admin-$USER_NAME" | wc -l)
-  if [[ "$n" -gt 0 ]]; then
-    pkill -f "cybergym.llm_proxy.*cgym-admin-$USER_NAME" 2>/dev/null
+  # 优先按完整 admin key 匹配(唯一);找不到 key 才退回用户名前缀。
+  # safe_pkill_wait 会逐个复核 cmdline,不会误杀别人的 proxy。
+  local key="" pattern
+  if [[ -f "$LOG_DIR/admin.key" ]]; then
+    key=$(cat "$LOG_DIR/admin.key" 2>/dev/null || true)
+  fi
+  if [[ -z "$key" ]]; then
+    key=$(grep -oP 'Admin key for /budget endpoints:\s*\K\S+' "$LOG_DIR/llm_proxy.log" 2>/dev/null | tail -1 || true)
+  fi
+  pattern="cybergym.llm_proxy.*cgym-admin-$USER_NAME"
+  if [[ -n "$key" ]]; then
+    pattern="cybergym.llm_proxy.*$key"
+  fi
+  if safe_pkill_wait "$pattern" 10; then
     rm -f "$PROJECT_ROOT/logs/$USER_NAME/proxy.pid"
     log "已停止 $USER_NAME 的 proxy"
   else
     warn "$USER_NAME 没有在跑的 proxy"
   fi
+}
+
+# ─────────────────────────────────────────────
+#  --stop 分层关停:runner → 自己的残留容器 → proxy(controller 保留)
+# ─────────────────────────────────────────────
+# 优雅停掉评测 runner:SIGINT(等价 Ctrl+C,worker 会走 finally 做容器清理/收日志)
+# → 超时 SIGTERM → 再超时 SIGKILL。
+stop_runner() {
+  local pidfile="$LOG_DIR/runner.pid"
+  if [[ ! -f "$pidfile" ]]; then
+    log "没有 runner.pid,$USER_NAME 没有在跑的 runner"
+    return 0
+  fi
+  local pid
+  pid=$(cat "$pidfile" 2>/dev/null || true)
+  if [[ -z "$pid" ]]; then
+    rm -f "$pidfile"
+    return 0
+  fi
+  if ! proc_alive "$pid"; then
+    log "runner (pid $pid) 已不在,清理 stale pidfile"
+    rm -f "$pidfile"
+    return 0
+  fi
+  # cmdline 复核:pid 复用后可能指向无辜进程,绝不能按裸 pid 杀
+  if ! { pid_cmdline_matches "$pid" "run_agent.py" || pid_cmdline_matches "$pid" "interactive.py"; }; then
+    warn "pid $pid 活着但不是 $USER_NAME 的 runner(cmdline 不匹配,可能 PID 复用),跳过"
+    rm -f "$pidfile"
+    return 0
+  fi
+  log "停止 runner (pid $pid): SIGINT(graceful,任务收尾可能要几十秒)…"
+  local p all
+  all=$(descendant_pids "$pid")
+  for p in $all; do kill -INT "$p" 2>/dev/null || true; done
+  local grace="${STOP_GRACE:-90}" i=0
+  while proc_alive "$pid" && (( i < grace )); do
+    sleep 1
+    i=$((i + 1))
+  done
+  if proc_alive "$pid"; then
+    warn "graceful 超时(${grace}s),升级 SIGTERM"
+    kill -TERM "$pid" 2>/dev/null || true
+    i=0
+    while proc_alive "$pid" && (( i < 15 )); do
+      sleep 1
+      i=$((i + 1))
+    done
+    if proc_alive "$pid"; then
+      warn "仍在运行,SIGKILL(强杀可能残留容器/丢部分日志)"
+      all=$(descendant_pids "$pid")
+      for p in $all; do kill -KILL "$p" 2>/dev/null || true; done
+    fi
+  fi
+  rm -f "$pidfile"
+  if proc_alive "$pid"; then
+    warn "runner 未完全退出(pid $pid),手动检查: ps -fp $pid"
+  else
+    log "runner 已停止"
+  fi
+}
+
+# 只清理自己 label 的评测容器(强杀 runner 后的兜底;正常 graceful 退出不会走到有残留)
+clean_own_containers() {
+  command -v docker >/dev/null 2>&1 || return 0
+  local ids
+  ids=$(docker ps -aq --filter "label=exploitgym.owner=$USER_NAME" 2>/dev/null || true)
+  if [[ -z "$ids" ]]; then
+    log "没有 $USER_NAME 的残留评测容器"
+    return 0
+  fi
+  log "清理 $USER_NAME 的残留评测容器(label=exploitgym.owner):$(echo "$ids" | tr '\n' ' ')"
+  # shellcheck disable=SC2086
+  docker rm -f $ids >/dev/null 2>&1 || true
+}
+
+# --stop 的入口:先停 runner,再在 run.lock 保护下清理容器/proxy,
+# 防止和"刚好同时新启动的同名会话"竞争。
+stop_slot() {
+  stop_runner
+  (
+    flock -w 5 9 || { warn "$USER_NAME 有新会话刚抢到锁,跳过容器清理与 proxy 停止"; exit 0; }
+    clean_own_containers
+    stop_proxy
+  ) 9>"$LOG_DIR/run.lock" || true
+  local cpid
+  if [[ -f "$LOG_DIR/controller.pid" ]]; then
+    cpid=$(cat "$LOG_DIR/controller.pid" 2>/dev/null || true)
+    if [[ -n "$cpid" ]] && proc_alive "$cpid"; then
+      log "controller 仍在跑(pid $cpid,无状态服务,不影响别人;要停: kill $cpid)"
+    fi
+  fi
+  log "$USER_NAME 停止完成"
 }
 
 # ─────────────────────────────────────────────
@@ -560,11 +756,39 @@ ensure_firewall_open() {
 }
 
 # ─────────────────────────────────────────────
+#  同名互斥锁
+# ─────────────────────────────────────────────
+# 同一名字同一时间只允许一个 run_as.sh 会话(评测或交互)。锁 fd 保持打开直到
+# 进程组退出(exec 后仍持有),第二个同名会话会在 flock -n 处失败。
+# FORCE_RUN=1:先 stop_runner 停旧的再接管。
+# fd 8 故意不用 9(controller 启动子壳在用 9)。
+acquire_run_lock() {
+  local desc="$*"
+  exec 8>"$LOG_DIR/run.lock"
+  if flock -n 8; then
+    printf 'pid=%s\nstarted=%s\ncmd=%s\n' "$$" "$(date '+%F %T')" "$desc" > "$LOG_DIR/run.lock"
+    return 0
+  fi
+  local holder=""
+  holder=$(grep -oP '^pid=\K\d+' "$LOG_DIR/run.lock" 2>/dev/null || true)
+  if [[ "${FORCE_RUN:-0}" == "1" ]]; then
+    log "FORCE_RUN=1:接管 $USER_NAME 槽位(先停掉 pid ${holder:-?} 的旧会话)"
+    stop_runner
+    flock -w "${STOP_GRACE:-90}" 8 || die "等待旧会话退出锁超时;手动检查: logs/$USER_NAME/run.lock"
+    printf 'pid=%s\nstarted=%s\ncmd=%s\n' "$$" "$(date '+%F %T')" "$desc" > "$LOG_DIR/run.lock"
+    return 0
+  fi
+  die "$USER_NAME 已有一个会话在跑(pid ${holder:-未知},详情: logs/$USER_NAME/run.lock)。
+  并行请用别的名字;接管旧会话: FORCE_RUN=1 bash run_as.sh $USER_NAME …;全停: bash run_as.sh --stop $USER_NAME"
+}
+
+# ─────────────────────────────────────────────
 #  参数解析
 # ─────────────────────────────────────────────
 if [[ "${1:-}" == "--stop" ]]; then
   USER_NAME="${2:?用法: bash run_as.sh --stop <名字>}"
-  stop_proxy
+  LOG_DIR="$PROJECT_ROOT/logs/$USER_NAME"
+  stop_slot
   exit 0
 fi
 
@@ -582,6 +806,12 @@ PROXY_PORT=$((PROXY_PORT_BASE + SLOT - 1))
 OUT_DIR="$PROJECT_ROOT/out/$USER_NAME/run_agent"
 LOG_DIR="$PROJECT_ROOT/logs/$USER_NAME"
 mkdir -p "$OUT_DIR" "$LOG_DIR"
+
+# 同名互斥(必须在 ensure_glm_config/ensure_proxy 之前:那两步可能触发 proxy 重启逻辑)
+acquire_run_lock "agent=${AGENT} tasks=${TASKS_FILE} model=${GLM_MODEL} args=$*"
+
+# 容器打上归属 label(base.py 读 CYBERGYM_OWNER),--stop 只清理自己的容器
+export CYBERGYM_OWNER="$USER_NAME"
 
 # 每人一份 controller secret(独立 controller 用独立 secret)
 CONTROLLER_SECRETS_FILE="$LOG_DIR/controller.secrets.env"
@@ -615,6 +845,7 @@ if [[ "${DIRECT:-0}" == "1" && "$AGENT" == "codex" ]]; then
   log "直连 360 responses API OK"
 
   log "开始评测(任务文件 $TASKS_FILE,agent=$AGENT,model=$GLM_MODEL,workers=$MAX_WORKERS,direct)"
+  echo $$ > "$LOG_DIR/runner.pid"   # exec 不换 pid;--stop 由此找到 runner
   exec uv run examples/run_agent.py \
     --agent "$AGENT" \
     --model "$GLM_MODEL" \
@@ -643,6 +874,7 @@ export GLM_API_KEY
 if [[ "${INTERACTIVE:-0}" == "1" ]]; then
   export BRIDGE PROXY_PORT CONTROLLER_PORT MODEL_ALIAS BUDGET
   export EFFORT="${CLAUDE_CODE_EFFORT_LEVEL:-high}"
+  echo $$ > "$LOG_DIR/runner.pid"   # exec 不换 pid;--stop 由此找到交互会话
   exec uv run python3 scripts/interactive.py "${1:-}" \
     --controller-url "http://$BRIDGE:$CONTROLLER_PORT" \
     --proxy-url "http://$BRIDGE:$PROXY_PORT" \
@@ -651,6 +883,7 @@ if [[ "${INTERACTIVE:-0}" == "1" ]]; then
 fi
 
 log "开始评测(任务文件 $TASKS_FILE,agent=$AGENT,model=$MODEL_ALIAS,workers=$MAX_WORKERS)"
+echo $$ > "$LOG_DIR/runner.pid"   # exec 不换 pid;--stop 由此找到 runner
 exec uv run examples/run_agent.py \
   --agent "$AGENT" \
   --model "$MODEL_ALIAS" \
