@@ -396,30 +396,28 @@ ensure_proxy() {
   local root="http://$BRIDGE:$PROXY_PORT/"
   local admin_key_file="$LOG_DIR/admin.key"
 
-  # glm_config 变了但旧 proxy 还在跑:【绝不】自动杀(自动 pkill 会把在跑任务的
-  # proxy 连坐杀掉 → 全部 ConnectionRefused / exit 137,8/10 事故就是这么来的)。
-  # 默认继续用旧配置跑;要应用新配置二选一:
-  #   1) bash run_as.sh --stop <name> 再重跑(评测中断,断点续跑会补)
-  #   2) FORCE_PROXY_RESTART=1(本次启动前按 admin key 精确重启,不是按端口裸杀)
-  if [[ "${GLM_CONFIG_REGEN:-0}" == "1" ]] && { listening "$health" || listening "$root"; }; then
-    if [[ "${FORCE_PROXY_RESTART:-0}" == "1" ]]; then
-      local old_key=""
-      if [[ -f "$admin_key_file" ]]; then
-        old_key=$(cat "$admin_key_file" 2>/dev/null || true)
-      fi
-      if [[ -z "$old_key" ]]; then
-        old_key=$(grep -oP 'Admin key for /budget endpoints:\s*\K\S+' "$LOG_DIR/llm_proxy.log" 2>/dev/null | tail -1 || true)
-      fi
-      if [[ -z "$old_key" ]]; then
-        die "FORCE_PROXY_RESTART 找不到旧 proxy 的 admin key;先跑: bash run_as.sh --stop $USER_NAME 清场后重试"
-      fi
-      log "FORCE_PROXY_RESTART=1 → 按 admin key 重启 proxy 以加载新配置"
-      safe_pkill_wait "cybergym.llm_proxy.*$old_key" 10
-      rm -f "$LOG_DIR/proxy.pid" "$admin_key_file"
-    else
-      warn "glm_config 已重新生成,但在跑的 proxy 继续用旧配置(不自动重启,避免打断在跑任务)
-    应用新配置: FORCE_PROXY_RESTART=1 bash run_as.sh … 或先 bash run_as.sh --stop $USER_NAME 再重跑"
+  # FORCE_PROXY_RESTART=1:无条件按 admin key 重启自己的 proxy —— 换 GLM_API_KEY
+  # 后必须用这个(key 藏在 proxy 进程环境里,复用旧 proxy = 用旧 key;config marker
+  # 不含 key,不会自动触发)。按 admin key 精确匹配,不按端口裸杀。
+  # 不强制时:glm_config 变了也【绝不】自动杀(在跑任务会被连坐,8/10 事故),
+  # 只警告继续用旧配置。
+  if [[ "${FORCE_PROXY_RESTART:-0}" == "1" ]] && { listening "$health" || listening "$root"; }; then
+    local old_key=""
+    if [[ -f "$admin_key_file" ]]; then
+      old_key=$(cat "$admin_key_file" 2>/dev/null || true)
     fi
+    if [[ -z "$old_key" ]]; then
+      old_key=$(grep -oP 'Admin key for /budget endpoints:\s*\K\S+' "$LOG_DIR/llm_proxy.log" 2>/dev/null | tail -1 || true)
+    fi
+    if [[ -z "$old_key" ]]; then
+      die "FORCE_PROXY_RESTART 找不到旧 proxy 的 admin key;先跑: bash run_as.sh --stop $USER_NAME 清场后重试"
+    fi
+    log "FORCE_PROXY_RESTART=1 → 按 admin key 重启 proxy(加载新 key/新配置)"
+    safe_pkill_wait "cybergym.llm_proxy.*$old_key" 10
+    rm -f "$LOG_DIR/proxy.pid" "$admin_key_file"
+  elif [[ "${GLM_CONFIG_REGEN:-0}" == "1" ]] && { listening "$health" || listening "$root"; }; then
+    warn "glm_config 已重新生成,但在跑的 proxy 继续用旧配置(不自动重启,避免打断在跑任务)
+    应用新配置: FORCE_PROXY_RESTART=1 bash run_as.sh … 或先 bash run_as.sh --stop $USER_NAME 再重跑"
   fi
 
   if listening "$health" || listening "$root"; then
