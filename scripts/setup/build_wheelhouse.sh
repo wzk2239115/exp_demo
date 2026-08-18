@@ -29,7 +29,14 @@ fi
 echo "[wheelhouse] 镜像: $IMAGE"
 echo "[wheelhouse] 产物: $WHEELS"
 
-docker run --rm --platform linux/amd64 -v "$WHEELS:/wheels" "$IMAGE" bash -euxo pipefail <<'BUILD'
+# x86_64 宿主机上的原生镜像不需要 --platform;老 docker daemon 没开 experimental
+# 时 --platform 直接报错。仅当宿主机不是 amd64 才显式指定。
+PLATFORM_FLAG=()
+if [[ "$(uname -m)" != "x86_64" ]]; then
+  PLATFORM_FLAG=(--platform linux/amd64)
+fi
+
+docker run --rm "${PLATFORM_FLAG[@]}" -v "$WHEELS:/wheels" "$IMAGE" bash -euxo pipefail <<'BUILD'
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq >/dev/null
 apt-get install -y -qq python3-pip curl >/dev/null
