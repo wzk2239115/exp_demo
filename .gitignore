@@ -194,3 +194,8 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Local analysis artifacts (rendered logs pulled from eval server, generated reports, scratch)
+/flash_logs/
+/flash_reports/
+/copy/
