@@ -320,6 +320,50 @@ class Evaluator:
         shutil.copy(src, workspace_dir / "CLAUDE.md")
         logger.info("Injected per-task CLAUDE.md from %s", src)
 
+    def _enhance_workspace(self, workspace_dir: Path) -> None:
+        """``EVOL_ENHANCE=1``: copy agent tools + roadmap into the workspace and
+        assemble ``/workspace/CLAUDE.md`` = general guidance + per-task prior
+        notes (so Claude Code auto-loads both in batch mode, same as the
+        interactive ``--enhance`` path).
+
+        Source paths default to the repo layout but are overridable via
+        ``EVOL_TOOLS_DIR`` / ``EVOL_GUIDE_FILE`` / ``EVOL_ROADMAP_FILE``.
+        Supersedes :meth:`_inject_claude_md` when enabled (it does per-task
+        injection too, via ``CLAUDE_MD_DIR``). The LD_PRELOAD tracer is shipped
+        as source + ``build.sh`` and is built on demand by the agent inside the
+        container (not auto-built per task — gcc is absent on kernel/v8 images).
+        """
+        root = Path(__file__).resolve().parents[3]
+        tools = Path(os.environ.get("EVOL_TOOLS_DIR", root / "scripts" / "agent_tools"))
+        guide = Path(os.environ.get("EVOL_GUIDE_FILE", root / "docs" / "agent_claude.md"))
+        roadmap = Path(os.environ.get("EVOL_ROADMAP_FILE", root / "docs" / "exploit_roadmap.md"))
+
+        if tools.is_dir():
+            shutil.copytree(tools, workspace_dir / "tools", dirs_exist_ok=True)
+        if roadmap.is_file():
+            shutil.copy(roadmap, workspace_dir / "exploit_roadmap.md")
+
+        parts = []
+        if guide.is_file():
+            parts.append(guide.read_text(encoding="utf-8", errors="replace"))
+        md_dir = os.environ.get("CLAUDE_MD_DIR")
+        if md_dir and self.config.task_id:
+            sanitized = self.config.task_id.replace(":", "_").replace("/", "_")
+            prior = Path(md_dir) / f"{sanitized}.CLAUDE.md"
+            if prior.is_file():
+                parts.append(
+                    "\n\n## Prior-run notes for this task\n\n"
+                    + prior.read_text(encoding="utf-8", errors="replace")
+                )
+        if parts:
+            (workspace_dir / "CLAUDE.md").write_text(
+                "\n".join(parts), encoding="utf-8"
+            )
+        logger.info(
+            "Enhanced workspace (EVOL_ENHANCE): tools + roadmap + CLAUDE.md%s",
+            " + per-task notes" if len(parts) == 2 else "",
+        )
+
     @staticmethod
     def _switch_network(
         client,
@@ -379,7 +423,10 @@ class Evaluator:
         workspace_dir = self.config.out_dir / "workspace"
         workspace_dir.mkdir(exist_ok=True)
         prompt = self.prepare_workspace(workspace_dir)
-        self._inject_claude_md(workspace_dir)
+        if os.environ.get("EVOL_ENHANCE", "").lower() in ("1", "true", "yes"):
+            self._enhance_workspace(workspace_dir)
+        else:
+            self._inject_claude_md(workspace_dir)
 
         logger.info(
             "Starting evaluation: task=%s image=%s", self.config.task_id, docker_image
