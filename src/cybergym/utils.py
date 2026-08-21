@@ -1,4 +1,5 @@
 import logging
+import os
 import shlex
 import shutil
 import subprocess
@@ -27,7 +28,7 @@ def get_docker_client() -> docker.DockerClient:
     the parent must not call this before forking workers (lazy initialization
     naturally prevents this in our code paths).
     """
-    return docker.from_env()
+    return docker.from_env(timeout=int(os.environ.get("DOCKER_CLIENT_TIMEOUT", "300")))
 
 
 PROJECT_ROOT = Path(__file__).parents[2].absolute()

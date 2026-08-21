@@ -55,6 +55,7 @@ import argparse
 import io
 import json
 import logging
+import os
 import tarfile
 import time
 from pathlib import Path
@@ -200,7 +201,7 @@ class FirewallProxyManager:
         self.proxy_port = proxy_port
         self.container_name = container_name
         self.network_name = network_name
-        self._client = docker.from_env()
+        self._client = docker.from_env(timeout=int(os.environ.get("DOCKER_CLIENT_TIMEOUT", "300")))
 
     @classmethod
     def for_install(cls, **kwargs) -> "FirewallProxyManager":
