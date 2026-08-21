@@ -196,6 +196,7 @@ cython_debug/
 .pypirc
 
 # Local analysis artifacts (rendered logs pulled from eval server, generated reports, scratch)
-/flash_logs/
-/flash_reports/
+# Evolution-loop iterations: evol_loop/<N>/{flash_logs,flash_reports,flash_claude_md}
+# Heavy raw rendered logs are regeneratable on the eval server — keep out of git.
+/evol_loop/*/flash_logs/
 /copy/

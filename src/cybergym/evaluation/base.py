@@ -3,6 +3,7 @@
 import logging
 import os
 import re
+import shutil
 import time
 from pathlib import Path
 from uuid import uuid4
@@ -299,6 +300,26 @@ class Evaluator:
             **self.config.task_extra_kwargs,
         )
 
+    def _inject_claude_md(self, workspace_dir: Path) -> None:
+        """Copy a per-task ``CLAUDE.md`` (if any) into the workspace so Claude
+        Code auto-loads it as project memory from ``workdir=/workspace``.
+
+        Lookup key: ``<sanitized task_id>.CLAUDE.md`` where the sanitized form
+        replaces ``:`` and ``/`` with ``_`` (matching the log/report stem and
+        the output naming of ``scripts/distill_claude_md.py``). The directory
+        is taken from the ``CLAUDE_MD_DIR`` env var; unset disables injection.
+        Missing files are skipped silently so partial distillation is fine.
+        """
+        md_dir = os.environ.get("CLAUDE_MD_DIR")
+        if not md_dir:
+            return
+        sanitized = self.config.task_id.replace(":", "_").replace("/", "_")
+        src = Path(md_dir) / f"{sanitized}.CLAUDE.md"
+        if not src.is_file():
+            return
+        shutil.copy(src, workspace_dir / "CLAUDE.md")
+        logger.info("Injected per-task CLAUDE.md from %s", src)
+
     @staticmethod
     def _switch_network(
         client,
@@ -358,6 +379,7 @@ class Evaluator:
         workspace_dir = self.config.out_dir / "workspace"
         workspace_dir.mkdir(exist_ok=True)
         prompt = self.prepare_workspace(workspace_dir)
+        self._inject_claude_md(workspace_dir)
 
         logger.info(
             "Starting evaluation: task=%s image=%s", self.config.task_id, docker_image
