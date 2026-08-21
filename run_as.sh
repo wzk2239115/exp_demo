@@ -908,16 +908,23 @@ export GLM_API_KEY
 # ─────────────────────────────────────────────
 #  交互模式:不跑评测,直接进容器手动用 cc/codex
 #  用法: INTERACTIVE=1 bash run_as.sh <名字> [task_id]
+#  增强(可选): EVOL_ENHANCE=1 自动把 agent 工具(scripts/agent_tools)
+#    + CLAUDE.md 指引 + exploit_roadmap + 该题蒸馏笔记挂进 /workspace;
+#    不带该变量 = 默认运行,行为不变。
+#    例: INTERACTIVE=1 EVOL_ENHANCE=1 bash run_as.sh wzk-3776 kernel:kernelctf/CVE-2023-3776_lts
 # ─────────────────────────────────────────────
 if [[ "${INTERACTIVE:-0}" == "1" ]]; then
   export BRIDGE PROXY_PORT CONTROLLER_PORT MODEL_ALIAS BUDGET
   export EFFORT="${CLAUDE_CODE_EFFORT_LEVEL:-high}"
+  ENHANCE_ARG=()
+  [[ "${EVOL_ENHANCE:-0}" == "1" ]] && ENHANCE_ARG=(--enhance)
   echo $$ > "$LOG_DIR/runner.pid"   # exec 不换 pid;--stop 由此找到交互会话
   exec uv run python3 scripts/interactive.py "${1:-}" \
     --controller-url "http://$BRIDGE:$CONTROLLER_PORT" \
     --proxy-url "http://$BRIDGE:$PROXY_PORT" \
     --model "$MODEL_ALIAS" --effort "$EFFORT" \
-    --budget "$BUDGET" --tasks-file "${TASKS_FILE:-}"
+    --budget "$BUDGET" --tasks-file "${TASKS_FILE:-}" \
+    "${ENHANCE_ARG[@]}"
 fi
 
 log "开始评测(任务文件 $TASKS_FILE,agent=$AGENT,model=$MODEL_ALIAS,workers=$MAX_WORKERS)"

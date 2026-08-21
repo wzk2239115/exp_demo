@@ -42,6 +42,68 @@ def resolve_task(task_id: str):
     return (m.images.get("exp.none", "?"), m.binary, m.project_name)
 
 
+def _enhance(cname: str, task_id: str) -> None:
+    """Inject agent tools + CLAUDE.md guidance + roadmap + per-task prior notes
+    into the container's /workspace. Triggered by --enhance or EVOL_ENHANCE=1.
+
+    Idempotent: safe to run on an already-prepared workspace. Missing source
+    files are skipped with a warning, never fatal.
+    """
+    root = Path(__file__).resolve().parents[1]  # repo root
+    tools = root / "scripts" / "agent_tools"
+    guide = root / "docs" / "agent_claude.md"
+    roadmap = root / "docs" / "exploit_roadmap.md"
+
+    def cp(src: Path, dst: str) -> bool:
+        if not src.is_file() and not src.is_dir():
+            print(f"[enhance] WARN skip (missing): {src}")
+            return False
+        r = subprocess.run(["docker", "cp", str(src), f"{cname}:{dst}"],
+                            capture_output=True, text=True)
+        if r.returncode != 0:
+            print(f"[enhance] WARN docker cp {src.name} -> {dst}: {r.stderr.strip()[:120]}")
+        return r.returncode == 0
+
+    print("[enhance] mounting agent tools + guidance + roadmap ...")
+    cp(tools, "/workspace/tools")
+    cp(guide, "/workspace/CLAUDE.md")
+    cp(roadmap, "/workspace/exploit_roadmap.md")
+
+    # Per-task prior-run distilled notes: newest evol_loop iteration that has them.
+    stem = task_id.replace(":", "_").replace("/", "_") if task_id else ""
+    prior = None
+    evol = root / "evol_loop"
+    if stem and evol.is_dir():
+        for it in sorted(evol.iterdir(), reverse=True):  # iteration 0,1,2... newest first
+            cand = it / "flash_claude_md" / f"{stem}.CLAUDE.md"
+            if cand.is_file():
+                prior = cand
+                break
+    if prior:
+        cp(prior, "/workspace/PRIOR_NOTES.md")
+        # append to CLAUDE.md so Claude Code auto-loads both general guidance + task notes
+        subprocess.run(["docker", "exec", cname, "bash", "-c",
+                         "printf '\\n\\n## Prior-run notes for this task\\n\\n' "
+                         ">> /workspace/CLAUDE.md && cat /workspace/PRIOR_NOTES.md "
+                         ">> /workspace/CLAUDE.md"], capture_output=True)
+        print(f"[enhance] appended per-task prior notes from {prior.parent.name}/{prior.name}")
+    else:
+        print("[enhance] no per-task prior notes found (ok for first run on this task)")
+
+    # Build LD_PRELOAD lib (needs gcc; kernel/v8 images may lack it — warn, not fatal)
+    r = subprocess.run(
+        ["docker", "exec", "-u", "0", cname, "bash", "-c",
+         "cd /workspace/tools/ldpreload_toolbox 2>/dev/null && bash build.sh >/tmp/_b.log 2>&1; "
+         "chmod +x /workspace/tools/*.sh /workspace/tools/*.py 2>/dev/null; "
+         "tail -1 /tmp/_b.log 2>/dev/null"],
+        capture_output=True, text=True,
+    )
+    if r.stdout.strip():
+        print(f"[enhance] ldpreload build: {r.stdout.strip()[:100]}")
+    print("[enhance] done. /workspace now has: tools/ CLAUDE.md exploit_roadmap.md"
+          + (f" PRIOR_NOTES.md" if prior else ""))
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("task_id", nargs="?", default="")
@@ -51,6 +113,13 @@ def main():
     ap.add_argument("--proxy-url", default="http://172.17.0.1:4000")
     ap.add_argument("--budget", type=float, default=float(os.getenv("BUDGET", "50")))
     ap.add_argument("--tasks-file", default="", help="Fallback if task_id is empty")
+    ap.add_argument(
+        "--enhance",
+        action="store_true",
+        help="Auto-mount agent tools + CLAUDE.md guidance + roadmap + per-task prior "
+        "notes into /workspace (also triggered by EVOL_ENHANCE=1 env). "
+        "Off = unchanged default run.",
+    )
     args = ap.parse_args()
 
     task_id = args.task_id
@@ -204,6 +273,10 @@ def main():
 
     container.exec_run(["chmod", "+x", "/workspace/run.sh", "/workspace/env.sh"])
     print(f"[4/4] Workspace ready")
+
+    if args.enhance or os.environ.get("EVOL_ENHANCE", "").lower() in ("1", "true", "yes"):
+        _enhance(cname, task_id)
+
     print(f"\nDropping into {cname} ...")
     print(f"Cleanup: docker rm -f {cname}\n")
 
