@@ -47,7 +47,14 @@ PY
 
 count=0 skipped=0
 shopt -s nullglob
-for log in "$OUT_ROOT"/*/*/logs/claude_code.rendered.log; do
+LOGS=("$OUT_ROOT"/*/*/logs/claude_code.rendered.log)
+total=${#LOGS[@]}
+width=${#total}
+print_progress() {  # print_progress <done> <total> <当前名>
+  local pct=$(( $1 * 100 / ( $2 > 0 ? $2 : 1 ) ))
+  printf "\r[%*d/%*d] %3d%% | %s" "$width" "$1" "$width" "$2" "$pct" "$3"
+}
+for log in "${LOGS[@]}"; do
   task_dir="${log%/logs/claude_code.rendered.log}"
   name="$(basename "$task_dir")"
   slot="$(basename "$(dirname "$(dirname "$task_dir")")")"
@@ -67,6 +74,8 @@ for log in "$OUT_ROOT"/*/*/logs/claude_code.rendered.log; do
   fi
   cp "$log" "$dst"
   count=$((count+1))
+  print_progress "$count" "$total" "$name"
 done
+[[ $total -gt 0 ]] && printf "\n"
 
 echo "已收集 $count 个日志 → $DEST/ (按状态过滤跳过 $skipped 个)"
