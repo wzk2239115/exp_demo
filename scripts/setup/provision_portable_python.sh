@@ -38,38 +38,65 @@ TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 TARBALL="${PYPS_TARBALL:-}"
 
-fetch() { # fetch <url> <outfile>
-  echo "[python] downloading: $1"
-  curl -fSL --retry 3 --connect-timeout 20 -o "$2" "$1"
+# GitHub release 直连在部分国内网络不可达;ghproxy 类镜像可反代同一 URL。
+# 按序尝试:直连 → 镜像。
+GH_MIRRORS=(
+  "https://github.com"
+  "https://ghproxy.net/https://github.com"
+  "https://gh-proxy.com/https://github.com"
+  "https://ghfast.top/https://github.com"
+)
+
+fetch() { # fetch <github相对URL路径> <outfile>   相对路径形如 /astral-sh/.../download/...
+  local path="$1" out="$2" url base
+  for base in "${GH_MIRRORS[@]}"; do
+    url="$base$path"
+    echo "[python] trying: $url"
+    if curl -fSL --retry 2 --connect-timeout 15 -o "$out" "$url"; then
+      return 0
+    fi
+    echo "[python] failed, trying next source ..."
+  done
+  return 1
 }
 
+STATIC_CANDIDATES=(
+  "20260814 3.12.14"
+  "20241016 3.12.7"
+)
+
 if [ -z "$TARBALL" ]; then
-  # 1a. GitHub API: 最新 release 里挑 cpython-3.12(其次 3.13) x86_64 install_only
-  api="https://api.github.com/repos/astral-sh/python-build-standalone/releases/latest"
-  echo "[python] resolving latest release via GitHub API ..."
-  urls=$(curl -fsSL --connect-timeout 20 "$api" 2>/dev/null \
-    | grep -oE 'https://[^"]+cpython-3\.1[0-9]\.[0-9]+\+[^"]+x86_64-unknown-linux-gnu-install_only\.tar\.gz' \
-    || true)
-  pick=$(echo "$urls" | grep 'cpython-3\.12\.' | head -1)
-  [ -z "$pick" ] && pick=$(echo "$urls" | grep 'cpython-3\.13\.' | head -1)
-  if [ -n "$pick" ]; then
-    fetch "$pick" "$TMP/python.tar.gz" && TARBALL="$TMP/python.tar.gz"
+  # 1a. GitHub API(可走镜像): 最新 release 里挑 cpython-3.12(其次 3.13) x86_64 install_only
+  api_urls="https://api.github.com/repos/astral-sh/python-build-standalone/releases/latest https://ghproxy.net/https://api.github.com/repos/astral-sh/python-build-standalone/releases/latest"
+  rel_path=""
+  for api in $api_urls; do
+    echo "[python] resolving latest release via $api ..."
+    rel_path=$(curl -fsSL --connect-timeout 15 "$api" 2>/dev/null \
+      | grep -oE 'browser_download_url": *"[^"]+' \
+      | grep -oE '/astral-sh/python-build-standalone/releases/download/[^"]+x86_64-unknown-linux-gnu-install_only\.tar\.gz$' \
+      | { grep 'cpython-3\.12\.' || true; } | head -1) || true
+    if [ -z "$rel_path" ]; then
+      rel_path=$(curl -fsSL --connect-timeout 15 "$api" 2>/dev/null \
+        | grep -oE 'browser_download_url": *"[^"]+' \
+        | grep -oE '/astral-sh/python-build-standalone/releases/download/[^"]+x86_64-unknown-linux-gnu-install_only\.tar\.gz$' \
+        | { grep 'cpython-3\.13\.' || true; } | head -1) || true
+    fi
+    [ -n "$rel_path" ] && break
+  done
+  if [ -n "$rel_path" ]; then
+    # 剥成相对路径,统一走 fetch 的镜像链
+    fetch "$rel_path" "$TMP/python.tar.gz" && TARBALL="$TMP/python.tar.gz"
   else
-    echo "[python] API 未解析到 asset(接口限流或网络),退回静态候选"
+    echo "[python] API 未解析到 asset(限流或网络),退回静态候选"
   fi
 fi
 
 if [ -z "$TARBALL" ]; then
   # 1b. 静态兜底: (tag=纯日期, 版本) 对,asset 名 = cpython-<ver>+<tag>-x86_64-...
-  CANDIDATES=(
-    "20260814 3.12.14"
-    "20241016 3.12.7"
-  )
-  [ -n "${PYPS_TAGVER:-}" ] && CANDIDATES=("$PYPS_TAGVER")
-  for cand in "${CANDIDATES[@]}"; do
+  [ -n "${PYPS_TAGVER:-}" ] && STATIC_CANDIDATES=("$PYPS_TAGVER")
+  for cand in "${STATIC_CANDIDATES[@]}"; do
     read -r tag ver <<< "$cand"
-    url="https://github.com/astral-sh/python-build-standalone/releases/download/${tag}/cpython-${ver}+${tag}-x86_64-unknown-linux-gnu-install_only.tar.gz"
-    if fetch "$url" "$TMP/python.tar.gz"; then
+    if fetch "/astral-sh/python-build-standalone/releases/download/${tag}/cpython-${ver}+${tag}-x86_64-unknown-linux-gnu-install_only.tar.gz" "$TMP/python.tar.gz"; then
       TARBALL="$TMP/python.tar.gz"; break
     fi
   done
