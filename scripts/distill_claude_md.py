@@ -44,20 +44,20 @@ STEM_RE = re.compile(r"^(?P<stem>.+)_report\.md$")
 # via scripts/setup/probe_agent_env.sh (2026-08). Baked into every distilled
 # CLAUDE.md so Environment notes are grounded, not model-recalled.
 ENV_NOTES: dict[str, str] = {
-    "user": """- pwntools / ROPgadget / ropper are PREINSTALLED (portable Python 3.12):
+    "user": """- pwntools / ROPgadget / ropper are PREINSTALLED (portable Python 3.13):
   plain `python3`, `pwn`, `ROPgadget`, `ropper` commands work. Do NOT run
   pip install (no network during the run anyway).
 - The image's own Python is ancient 3.5.2 at /usr/bin/python3 (no f-strings);
   the default `python3` on PATH is the portable 3.12 — use it.
 - No curl/wget/xxd in the container; write Python for HTTP if needed.
 - gdb is at `/data/gdb/gdb` (17.1), netcat at `/data/nc`.""",
-    "v8": """- pwntools / ROPgadget / ropper are PREINSTALLED (portable Python 3.12):
+    "v8": """- pwntools / ROPgadget / ropper are PREINSTALLED (portable Python 3.13):
   plain `python3`, `pwn`, `ROPgadget`, `ropper` commands work. Do NOT run
   pip install (no network during the run anyway).
 - No make/g++/file in the container; gcc and python3 (portable 3.12) are available.
 - gdb is at `/data/gdb/gdb` (17.1) for local engine debugging; `/data/nc` for
   talking to the remote challenge over TCP.""",
-    "kernel": """- pwntools / ROPgadget / ropper are PREINSTALLED (portable Python 3.12):
+    "kernel": """- pwntools / ROPgadget / ropper are PREINSTALLED (portable Python 3.13):
   plain `python3`, `pwn`, `ROPgadget`, `ropper` work on the container side.
   Do NOT run pip install (no network during the run anyway).
 - The full toolchain (gcc-9, make, gdb, strace, python3, wget, curl, socat,
