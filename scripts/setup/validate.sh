@@ -58,6 +58,7 @@ check() {
 echo "==> Container runtime (data/runtime/ — mounted into agent containers)"
 check "gdb"               data/runtime/gdb/gdb                     data/runtime/gdb/gdb --version
 check "nc"                data/runtime/nc                          data/runtime/nc -h
+check "python+pwntools"   data/runtime/python/bin/python3          data/runtime/python/bin/python3 -c "import pwn, capstone"
 check "node"              data/runtime/node/bin/node               data/runtime/node/bin/node --version
 check "claude-code"       data/runtime/node/bin/claude-code.sh     data/runtime/node/bin/claude-code.sh --version
 check "codex"             data/runtime/node/bin/codex.sh           data/runtime/node/bin/codex.sh --version

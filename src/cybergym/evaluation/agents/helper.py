@@ -78,7 +78,24 @@ class IntermediateStatsLogger:
 # the install phase is skipped for that task type, so the install proxy is not
 # required. To enable an install phase, add real commands to the script below.
 
-KERNEL_INSTALL_SCRIPT = """\
+# Portable pwn toolchain exposure: /data/python (data/runtime/python,
+# provisioned by scripts/setup/provision_portable_python.sh) is mounted ro
+# into every agent container. Symlink its tools into /usr/local/bin (first on
+# PATH in all images) so `python3`/`pwn`/`ROPgadget`/`ropper` just work —
+# uniformly modern Python even on EOL images (arvo/xenial ships 3.5.2) and on
+# minimal images (bare kernel containers have no python3 at all).
+# Runs BEFORE apt so an EOL-mirror apt failure cannot block it; needs no network.
+TOOLCHAIN_SYMLINKS = """\
+if [ -d /data/python/bin ]; then
+  for b in python3 pwn ROPgadget ropper; do
+    if [ -e "/data/python/bin/$b" ]; then
+      ln -sf "/data/python/bin/$b" "/usr/local/bin/$b"
+    fi
+  done
+fi
+"""
+
+KERNEL_INSTALL_SCRIPT = TOOLCHAIN_SYMLINKS + """\
 set -euo pipefail
 
 sed -i -e 's|archive.ubuntu.com|mirrors.aliyun.com|g' -e 's|security.ubuntu.com|mirrors.aliyun.com|g' -e 's|deb.debian.org|mirrors.aliyun.com|g' -e 's|security.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
@@ -95,7 +112,7 @@ apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install
     && rm -rf /var/lib/apt/lists/*
 """
 
-V8_INSTALL_SCRIPT = """\
+V8_INSTALL_SCRIPT = TOOLCHAIN_SYMLINKS + """\
 set -euo pipefail
 
 sed -i -e 's|archive.ubuntu.com|mirrors.aliyun.com|g' -e 's|security.ubuntu.com|mirrors.aliyun.com|g' -e 's|deb.debian.org|mirrors.aliyun.com|g' -e 's|security.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
@@ -105,7 +122,7 @@ apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install
     && rm -rf /var/lib/apt/lists/*
 """
 
-USER_INSTALL_SCRIPT = """\
+USER_INSTALL_SCRIPT = TOOLCHAIN_SYMLINKS + """\
 set -euo pipefail
 
 sed -i -e 's|archive.ubuntu.com|mirrors.aliyun.com|g' -e 's|security.ubuntu.com|mirrors.aliyun.com|g' -e 's|deb.debian.org|mirrors.aliyun.com|g' -e 's|security.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true

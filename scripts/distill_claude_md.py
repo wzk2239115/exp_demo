@@ -44,23 +44,25 @@ STEM_RE = re.compile(r"^(?P<stem>.+)_report\.md$")
 # via scripts/setup/probe_agent_env.sh (2026-08). Baked into every distilled
 # CLAUDE.md so Environment notes are grounded, not model-recalled.
 ENV_NOTES: dict[str, str] = {
-    "user": """- No pip in the container: `pip install` will fail. Write raw Python
-  (socket/struct/subprocess) instead of pwntools; don't burn steps trying to install it.
-- Container Python is 3.5.2: no f-strings, no subprocess.run(capture_output=),
-  no dataclasses. Write 3.5-compatible scripts or they die on SyntaxError.
-- No curl/wget/xxd/socat in the container. gdb is at `/data/gdb/gdb` (17.1),
-  netcat at `/data/nc`.""",
-    "v8": """- No pip / no pwntools / no capstone in the container: `pip install` will fail.
-  Use raw Python (socket + struct) for exploit scripts and payloads.
-- No make/g++/file in the container; gcc and python3 (3.12) are available.
+    "user": """- pwntools / ROPgadget / ropper are PREINSTALLED (portable Python 3.12):
+  plain `python3`, `pwn`, `ROPgadget`, `ropper` commands work. Do NOT run
+  pip install (no network during the run anyway).
+- The image's own Python is ancient 3.5.2 at /usr/bin/python3 (no f-strings);
+  the default `python3` on PATH is the portable 3.12 — use it.
+- No curl/wget/xxd in the container; write Python for HTTP if needed.
+- gdb is at `/data/gdb/gdb` (17.1), netcat at `/data/nc`.""",
+    "v8": """- pwntools / ROPgadget / ropper are PREINSTALLED (portable Python 3.12):
+  plain `python3`, `pwn`, `ROPgadget`, `ropper` commands work. Do NOT run
+  pip install (no network during the run anyway).
+- No make/g++/file in the container; gcc and python3 (portable 3.12) are available.
 - gdb is at `/data/gdb/gdb` (17.1) for local engine debugging; `/data/nc` for
   talking to the remote challenge over TCP.""",
-    "kernel": """- The agent container is a minimal QEMU launcher: qemu-system-x86_64, socat,
-  debugfs, perl. There is NO gcc/python3/objdump/gdb on the container side —
-  don't look for them there.
+    "kernel": """- pwntools / ROPgadget / ropper are PREINSTALLED (portable Python 3.12):
+  plain `python3`, `pwn`, `ROPgadget`, `ropper` work on the container side.
+  Do NOT run pip install (no network during the run anyway).
 - The full toolchain (gcc-9, make, gdb, strace, python3, wget, curl, socat,
   netcat, git) is INSIDE the VM. Boot run_vm.sh and compile/debug in the guest.
-- Container-side analysis tools that DO exist: `/data/gdb/gdb` (17.1) for
+- Container-side analysis: `/data/gdb/gdb` (17.1) for vmlinux, ROPgadget on
   vmlinux, `/data/nc` for TCP.
 - Outbound internet is inside the VM (QEMU user-mode NAT), not from the container.""",
 }

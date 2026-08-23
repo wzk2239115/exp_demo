@@ -60,10 +60,16 @@ echo "MISS:$miss"
 echo
 echo "== mounted runtime (/data) =="
 for f in /data/gdb/gdb /data/nc /data/node/bin/node /data/node/bin/claude-code.sh \
-         /data/v8/start.sh; do
+         /data/python/bin/python3 /data/python/bin/pwn /data/python/bin/ROPgadget \
+         /data/python/bin/ropper /data/v8/start.sh; do
   if [ -e "$f" ]; then echo "  have: $f"; else echo "  none: $f"; fi
 done
 [ -e /data/gdb/gdb ] && /data/gdb/gdb --version 2>/dev/null | head -1 | sed "s/^/  gdb: /"
+if [ -e /data/python/bin/python3 ]; then
+  /data/python/bin/python3 -V 2>/dev/null | sed "s/^/  portable-python: /"
+  /data/python/bin/python3 -c "import pwn" 2>/dev/null && echo "  portable-python: pwntools ok" \
+    || echo "  portable-python: pwntools MISSING (跑 provision_portable_python.sh)"
+fi
 echo
 echo "== python3 modules =="
 if command -v python3 >/dev/null 2>&1; then
