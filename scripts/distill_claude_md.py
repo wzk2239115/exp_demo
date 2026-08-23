@@ -258,19 +258,30 @@ def main() -> None:
     max_tokens = int(os.environ.get("DISTILL_MAX_TOKENS", "2048"))
     jobs = [(r, out_path_for(r, out_dir)) for r in reports]
 
+    def progress(done: int, total: int, name: str, ok: bool) -> None:
+        pct = done * 100 // max(total, 1)
+        mark = "" if ok else " (FAIL)"
+        print(
+            f"\r[{done}/{total}] {pct:3d}% | {name[:48]}{mark}{' ' * 8}",
+            end="",
+            flush=True,
+        )
+        if done == total:
+            print()
+
     if args.parallel <= 1:
         done = skipped = failed = 0
         for r, o in jobs:
             if o.exists() and not args.force:
                 skipped += 1
                 continue
-            print(f"[distill] {r.name} -> {o.name}")
             try:
                 distill_one(r, o, max_tokens)
                 done += 1
             except Exception as e:
                 failed += 1
-                print(f"[distill] FAIL {r.name}: {e}", file=sys.stderr)
+                print(f"\n[distill] FAIL {r.name}: {e}", file=sys.stderr)
+            progress(done + skipped + failed, len(jobs), o.stem, True)
         print(f"[distill] done={done} skipped={skipped} failed={failed}")
         return
 
@@ -282,13 +293,15 @@ def main() -> None:
         futs = {ex.submit(distill_one, r, o, max_tokens): (r, o) for r, o in todo}
         for fut in as_completed(futs):
             r, o = futs[fut]
+            ok = True
             try:
                 fut.result()
                 done += 1
-                print(f"[distill] ok  {o.name}")
             except Exception as e:
+                ok = False
                 failed += 1
-                print(f"[distill] FAIL {r.name}: {e}", file=sys.stderr)
+                print(f"\n[distill] FAIL {r.name}: {e}", file=sys.stderr)
+            progress(done + failed, len(todo), o.stem, ok)
     print(f"[distill] done={done} skipped={skipped} failed={failed}")
 
 

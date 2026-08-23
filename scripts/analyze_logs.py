@@ -794,6 +794,8 @@ def generate_reports_parallel(
             return log, f"FAIL {type(e).__name__}: {e}"
 
     ok = fail = 0
+    total = len(tasks)
+    width = len(str(total))
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = {pool.submit(job, t): t[0] for t in tasks}
         for fut in as_completed(futures):
@@ -802,7 +804,16 @@ def generate_reports_parallel(
                 ok += 1
             else:
                 fail += 1
-            print(f"[parallel] {status:<5} {log.name}")
+                print(f"\n[parallel] {status} {log.name}", file=sys.stderr)
+            done = ok + fail
+            pct = done * 100 // total
+            print(
+                f"\r[{done:{width}}/{total}] {pct:3d}% ok={ok} fail={fail}"
+                f" | {log.stem[:48]}{' ' * 8}",
+                end="",
+                flush=True,
+            )
+    print()
     print(f"[parallel] 完成: 成功 {ok}, 失败 {fail}")
 
 
