@@ -15,11 +15,16 @@
 # 用法(评测服务器,项目根目录):
 #   bash scripts/setup/provision_portable_python.sh
 # 可用环境变量:
-#   PYPS_VERSION  指定 python-build-standalone tag(默认按候选列表逐个试)
 #   PYPS_TARBALL  直接给本地 tarball 路径(离线场景)
+#   PYPS_TAGVER   静态兜底候选,格式 "日期Tag 版本" 如 "20241016 3.12.7"
 #   PIP_INDEX     pip 源(默认清华,失败回退官方)
 #
-# 幂等: 重复执行会覆盖安装。装完跑 validate.sh 校验。
+# 下载源: astral-sh/python-build-standalone。优先走 GitHub API 解析最新
+# release 的准确 asset 名(tag 是纯日期,版本在文件名里,不能瞎拼);
+# API 不可用时退回静态候选列表。
+#
+# 幂等: 重复执行会先在临时目录解压验证,成功才整体替换旧安装。
+# 装完跑 validate.sh 校验。
 
 set -euo pipefail
 
@@ -33,31 +38,61 @@ TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 TARBALL="${PYPS_TARBALL:-}"
 
+fetch() { # fetch <url> <outfile>
+  echo "[python] downloading: $1"
+  curl -fSL --retry 3 --connect-timeout 20 -o "$2" "$1"
+}
+
 if [ -z "$TARBALL" ]; then
-  # (tag, asset 内部版本串) 候选:新 → 老,逐个试
+  # 1a. GitHub API: 最新 release 里挑 cpython-3.12(其次 3.13) x86_64 install_only
+  api="https://api.github.com/repos/astral-sh/python-build-standalone/releases/latest"
+  echo "[python] resolving latest release via GitHub API ..."
+  urls=$(curl -fsSL --connect-timeout 20 "$api" 2>/dev/null \
+    | grep -oE 'https://[^"]+cpython-3\.1[0-9]\.[0-9]+\+[^"]+x86_64-unknown-linux-gnu-install_only\.tar\.gz' \
+    || true)
+  pick=$(echo "$urls" | grep 'cpython-3\.12\.' | head -1)
+  [ -z "$pick" ] && pick=$(echo "$urls" | grep 'cpython-3\.13\.' | head -1)
+  if [ -n "$pick" ]; then
+    fetch "$pick" "$TMP/python.tar.gz" && TARBALL="$TMP/python.tar.gz"
+  else
+    echo "[python] API 未解析到 asset(接口限流或网络),退回静态候选"
+  fi
+fi
+
+if [ -z "$TARBALL" ]; then
+  # 1b. 静态兜底: (tag=纯日期, 版本) 对,asset 名 = cpython-<ver>+<tag>-x86_64-...
   CANDIDATES=(
-    "3.12.7+20241016"
-    "3.12.6+20240913"
-    "3.13.1+20241210"
+    "20260814 3.12.14"
+    "20241016 3.12.7"
   )
-  [ -n "${PYPS_VERSION:-}" ] && CANDIDATES=("$PYPS_VERSION")
-  for tag in "${CANDIDATES[@]}"; do
-    url="https://github.com/astral-sh/python-build-standalone/releases/download/${tag/+/%2B}/cpython-${tag}-x86_64-unknown-linux-gnu-install_only.tar.gz"
-    echo "[python] trying $tag ..."
-    if curl -fSL --connect-timeout 20 -o "$TMP/python.tar.gz" "$url"; then
+  [ -n "${PYPS_TAGVER:-}" ] && CANDIDATES=("$PYPS_TAGVER")
+  for cand in "${CANDIDATES[@]}"; do
+    read -r tag ver <<< "$cand"
+    url="https://github.com/astral-sh/python-build-standalone/releases/download/${tag}/cpython-${ver}+${tag}-x86_64-unknown-linux-gnu-install_only.tar.gz"
+    if fetch "$url" "$TMP/python.tar.gz"; then
       TARBALL="$TMP/python.tar.gz"; break
     fi
   done
 fi
-[ -n "$TARBALL" ] && [ -f "$TARBALL" ] || { echo "ERROR: 拿不到 python-build-standalone tarball(检查网络,或设 PYPS_TARBALL 用本地包)"; exit 1; }
 
-# ── 2. 解压到 data/runtime/python ─────────────────────────────────
+[ -n "$TARBALL" ] && [ -f "$TARBALL" ] || {
+  echo "ERROR: 拿不到 tarball。检查网络;或手动下载后设 PYPS_TARBALL=<路径> 重跑"
+  exit 1
+}
+
+# ── 2. 临时目录解压验证,成功才替换 DEST ────────────────────────────
+PYSRC="$TMP/pysrc"
+mkdir -p "$PYSRC"
+# install_only tarball 顶层是 python/ 目录
+tar -xzf "$TARBALL" -C "$PYSRC" --strip-components=1
+[ -x "$PYSRC/bin/python3" ] || { echo "ERROR: tarball 布局异常(无 bin/python3)"; exit 1; }
+# glibc 不兼容会在 --version 就炸,此时不动旧安装
+"$PYSRC/bin/python3" --version
+
 rm -rf "$DEST"
-mkdir -p "$DEST"
-# install_only tarball 顶层就是 python/ 目录
-tar -xzf "$TARBALL" -C "$DEST" --strip-components=1
+mkdir -p "$(dirname "$DEST")"
+mv "$PYSRC" "$DEST"
 PY="$DEST/bin/python3"
-"$PY" --version
 
 # ── 3. 装 pwn 工具链 ───────────────────────────────────────────────
 PIP_INDEX="${PIP_INDEX:-https://pypi.tuna.tsinghua.edu.cn/simple}"
