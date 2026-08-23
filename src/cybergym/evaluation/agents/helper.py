@@ -85,6 +85,18 @@ class IntermediateStatsLogger:
 # uniformly modern Python even on EOL images (arvo/xenial ships 3.5.2) and on
 # minimal images (bare kernel containers have no python3 at all).
 # Runs BEFORE apt so an EOL-mirror apt failure cannot block it; needs no network.
+# Per-container apt throttle. With N concurrent containers all
+# apt-installing through the shared install proxy, an unbounded per-container
+# download rate can still saturate the host uplink and stall sibling
+# containers until their task times out (observed at 10-20min with ~50
+# workers). ~4MB/s per container leaves headroom for others. Options also
+# fail fast (short retries/timeouts) instead of hanging the install phase.
+APT_OPTS = (
+    "-o Acquire::http::Dl-Limit=4096 -o Acquire::Retries=3 "
+    "-o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 "
+    "-o Acquire::Queue-Mode=access"
+)
+
 TOOLCHAIN_SYMLINKS = """\
 if [ -d /data/python/bin ]; then
   for b in python3 pwn ROPgadget ropper; do
@@ -99,7 +111,7 @@ KERNEL_INSTALL_SCRIPT = TOOLCHAIN_SYMLINKS + """\
 set -euo pipefail
 
 sed -i -e 's|archive.ubuntu.com|mirrors.aliyun.com|g' -e 's|security.ubuntu.com|mirrors.aliyun.com|g' -e 's|deb.debian.org|mirrors.aliyun.com|g' -e 's|security.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
-apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+apt-get update {APT_OPTS} && DEBIAN_FRONTEND=noninteractive apt-get install {APT_OPTS} -y --no-install-recommends \
     build-essential bc bison flex \
     libssl-dev libelf-dev libncurses-dev dwarves openssl \
     cpio rsync xz-utils zstd lz4 \
@@ -116,7 +128,7 @@ V8_INSTALL_SCRIPT = TOOLCHAIN_SYMLINKS + """\
 set -euo pipefail
 
 sed -i -e 's|archive.ubuntu.com|mirrors.aliyun.com|g' -e 's|security.ubuntu.com|mirrors.aliyun.com|g' -e 's|deb.debian.org|mirrors.aliyun.com|g' -e 's|security.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
-apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+apt-get update {APT_OPTS} && DEBIAN_FRONTEND=noninteractive apt-get install {APT_OPTS} -y --no-install-recommends \
     netcat-openbsd ca-certificates unzip jq ripgrep socat curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -126,16 +138,16 @@ USER_INSTALL_SCRIPT = TOOLCHAIN_SYMLINKS + """\
 set -euo pipefail
 
 sed -i -e 's|archive.ubuntu.com|mirrors.aliyun.com|g' -e 's|security.ubuntu.com|mirrors.aliyun.com|g' -e 's|deb.debian.org|mirrors.aliyun.com|g' -e 's|security.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
-apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+apt-get update {APT_OPTS} && DEBIAN_FRONTEND=noninteractive apt-get install {APT_OPTS} -y --no-install-recommends \
     netcat-openbsd ca-certificates unzip jq socat curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 """
 
 INSTALL_SCRIPTS: dict[TaskType, str] = {
-    TaskType.KERNEL_EXPLOITATION: KERNEL_INSTALL_SCRIPT,
-    TaskType.V8_EXPLOITATION: V8_INSTALL_SCRIPT,
-    TaskType.USER_EXPLOITATION: USER_INSTALL_SCRIPT,
+    TaskType.KERNEL_EXPLOITATION: KERNEL_INSTALL_SCRIPT.format(APT_OPTS=APT_OPTS),
+    TaskType.V8_EXPLOITATION: V8_INSTALL_SCRIPT.format(APT_OPTS=APT_OPTS),
+    TaskType.USER_EXPLOITATION: USER_INSTALL_SCRIPT.format(APT_OPTS=APT_OPTS),
 }
 
 

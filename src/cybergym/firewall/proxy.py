@@ -127,8 +127,17 @@ http_access allow all
 
 http_port {port}
 
-# Disable disk cache
-cache deny all
+# Disk cache: the install phase is highly repetitive across concurrent
+# containers (same apt/pypi URLs, N containers at once). Caching deb/rpm/wheel
+# responses on a named volume lets the 2nd..Nth concurrent container hit the
+# local cache instead of all of them hammering the upstream mirror — the main
+# cause of network congestion at high worker counts (tasks timing out at
+# 10-20min because apt stalls). CONNECT (HTTPS) traffic cannot be cached by a
+# plain forward proxy, so this only helps plain-HTTP downloads — still the
+# majority for the apt mirrors we rewrite to (mirrors.aliyun.com).
+cache_dir aufs /var/spool/squid 2048 16 256
+maximum_object_size 512 MB
+cache_mem 256 MB
 
 # Logging (Squid runs as user 'proxy' which cannot write to /dev/stdout)
 access_log /var/log/squid/access.log
@@ -386,12 +395,20 @@ class FirewallProxyManager:
             pass
 
         # Create container (stopped), copy config files in, then start.
-        # This avoids bind-mounts so the container is self-contained.
+        # This avoids bind-mounts so the container is self-contained —
+        # except the install proxy's cache dir, which lives on a named
+        # volume so the apt/pypi cache survives container restarts.
+        create_kwargs: dict = {
+            "image": self.proxy_image,
+            "name": self.container_name,
+        }
+        if self.allow_all:
+            cache_vol = self._ensure_cache_volume()
+            create_kwargs["volumes"] = {
+                cache_vol: {"bind": "/var/spool/squid", "mode": "rw"}
+            }
         try:
-            proxy = self._client.containers.create(
-                image=self.proxy_image,
-                name=self.container_name,
-            )
+            proxy = self._client.containers.create(**create_kwargs)
 
             # Copy the squid config into the container
             self._put_file(proxy, "/etc/squid/squid.conf", self._generate_squid_conf())
@@ -410,6 +427,18 @@ class FirewallProxyManager:
 
             proxy.start()
 
+            # Squid's aufs store dir must exist and be owned by the 'proxy'
+            # user; the ubuntu/squid entrypoint may not chown a fresh volume.
+            if self.allow_all:
+                proxy.exec_run(
+                    [
+                        "bash",
+                        "-c",
+                        "mkdir -p /var/spool/squid && "
+                        "chown -R proxy:proxy /var/spool/squid",
+                    ]
+                )
+
             # Connect proxy to the internal network so agents can reach it
             net = self._client.networks.get(self.network_name)
             net.connect(proxy)
@@ -420,6 +449,16 @@ class FirewallProxyManager:
                 logger.info("Proxy container created by another thread")
             else:
                 raise
+
+    def _ensure_cache_volume(self) -> str:
+        """Return the named volume for the install proxy's squid cache."""
+        vol_name = "cybergym-install-proxy-cache"
+        try:
+            self._client.volumes.get(vol_name)
+        except NotFound:
+            self._client.volumes.create(vol_name)
+            logger.info("Created squid cache volume %s", vol_name)
+        return vol_name
 
     @staticmethod
     def _put_file(container, path: str, content: str) -> None:
