@@ -239,6 +239,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--timeout", type=int, default=3600, help="Agent timeout (seconds)"
     )
+    parser.add_argument(
+        "--container-mem-limit",
+        type=str,
+        default="64g",
+        help=(
+            "Per-agent-container memory cap, forwarded to docker "
+            "mem_limit/memswap_limit (e.g. 16g, 64g). Lower it when many "
+            "workers share the host so a runaway agent process cannot "
+            "reserve near-host RAM per container (observed: a process "
+            "ballooning to 64G)."
+        ),
+    )
     parser.add_argument("--max-workers", type=int, default=1, help="Parallel workers")
     parser.add_argument(
         "--out-dir",
@@ -617,6 +629,8 @@ def run_one(
                     agent_extra_kwargs=agent_spec.agent_extra_kwargs,
                     agent_timeout_seconds=args.timeout,
                     api_base_url=args.api_base_url,
+                    container_mem_limit=args.container_mem_limit,
+                    container_memswap_limit=args.container_mem_limit,
                     api_key=api_key,
                     use_firewall=args.use_firewall,
                     keep_container=args.keep_container,
@@ -643,6 +657,8 @@ def run_one(
                     agent_extra_kwargs=agent_spec.agent_extra_kwargs,
                     agent_timeout_seconds=args.timeout,
                     api_base_url=args.api_base_url,
+                    container_mem_limit=args.container_mem_limit,
+                    container_memswap_limit=args.container_mem_limit,
                     api_key=api_key,
                     use_firewall=args.use_firewall,
                     keep_container=args.keep_container,
@@ -664,6 +680,8 @@ def run_one(
                     agent_extra_kwargs=agent_spec.agent_extra_kwargs,
                     agent_timeout_seconds=args.timeout,
                     api_base_url=args.api_base_url,
+                    container_mem_limit=args.container_mem_limit,
+                    container_memswap_limit=args.container_mem_limit,
                     api_key=api_key,
                     use_firewall=args.use_firewall,
                     keep_container=args.keep_container,
