@@ -481,7 +481,10 @@ class Evaluator:
             # CYBERGYM_OWNER env var (run_as.sh exports it) to enable.
             owner = os.environ.get("CYBERGYM_OWNER")
             labels = {"exploitgym.owner": owner} if owner else None
-            self.container = client.containers.run(
+            # Retry container creation: under high concurrency the Docker
+            # daemon can be slow to respond (read timeout). Retry with
+            # backoff instead of failing the task outright.
+            run_kwargs = dict(
                 image=docker_image,
                 command=["tail", "-f", "/dev/null"],
                 detach=True,
@@ -492,6 +495,38 @@ class Evaluator:
                 **self._resource_container_kwargs(),
                 **self._extra_container_kwargs(),
             )
+            self.container = None
+            last_err = None
+            for attempt in range(3):
+                try:
+                    self.container = client.containers.run(**run_kwargs)
+                    last_err = None
+                    break
+                except (docker.errors.APIError, OSError) as e:
+                    last_err = e
+                    wait = 5 * (attempt + 1)
+                    logger.warning(
+                        "Container creation attempt %d/3 failed: %s; retrying in %ds",
+                        attempt + 1,
+                        e,
+                        wait,
+                    )
+                    # 409 name conflict: 上一步可能在 daemon 侧已建成(客户端读超时
+                    # 误判),同名孤儿会让后续重试永久冲突。先删冲突容器,再用新
+                    # 随机名重试。
+                    if "already in use" in str(e):
+                        m = re.search(
+                            r'is already in use by container "([0-9a-f]+)"', str(e)
+                        )
+                        if m:
+                            try:
+                                client.containers.get(m.group(1)).remove(force=True)
+                            except Exception:
+                                pass
+                    run_kwargs["name"] = f"{container_name}-{_container_name_suffix()}"
+                    time.sleep(wait)
+            if last_err is not None:
+                raise last_err
             logger.info(
                 "Container started: name=%s id=%s",
                 self.container.name,

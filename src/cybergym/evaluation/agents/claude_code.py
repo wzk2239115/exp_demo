@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 
 from cybergym.evaluation.agents.claude_stream_renderer import render_stream
@@ -92,7 +93,8 @@ def run_claude_code_with_container(args: AgentFnArguments) -> None:
         f"2>&1 | tee /logs/claude_code.log"
     )
     env = {
-        "ANTHROPIC_BASE_URL": args.api_base_url,
+        "ANTHROPIC_BASE_URL": args.api_base_url
+        or os.environ.get("ANTHROPIC_BASE_URL"),
         "ANTHROPIC_API_KEY": args.api_key,
         "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
         "ANTHROPIC_MODEL": claude_model,
