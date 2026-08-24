@@ -279,6 +279,16 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="LiteLLM proxy URL. Or set LITELLM_BASE_URL.",
     )
+    auth.add_argument(
+        "--api-base-url",
+        default=None,
+        help=(
+            "Direct API base URL, passed straight to the agent CLI (no proxy). "
+            "Defaults to the matching env var: ANTHROPIC_BASE_URL for "
+            "claude_code, OPENAI_BASE_URL for codex, "
+            "GOOGLE_GEMINI_BASE_URL for gemini_cli."
+        ),
+    )
 
     parser.add_argument(
         "--budget",
@@ -313,6 +323,14 @@ def parse_args() -> argparse.Namespace:
 
     if args.model is None:
         args.model = AGENT_DEFAULT_MODELS[args.agent]
+    if args.api_base_url is None:
+        args.api_base_url = os.environ.get(
+            {
+                "codex": "OPENAI_BASE_URL",
+                "claude_code": "ANTHROPIC_BASE_URL",
+                "gemini_cli": "GOOGLE_GEMINI_BASE_URL",
+            }[args.agent]
+        )
 
     # `--allowed-models` with no values means "scope to the run's model".
     if args.allowed_models == []:
@@ -598,6 +616,7 @@ def run_one(
                     task_extra_kwargs=kernel_extra,
                     agent_extra_kwargs=agent_spec.agent_extra_kwargs,
                     agent_timeout_seconds=args.timeout,
+                    api_base_url=args.api_base_url,
                     api_key=api_key,
                     use_firewall=args.use_firewall,
                     keep_container=args.keep_container,
@@ -623,6 +642,7 @@ def run_one(
                     },
                     agent_extra_kwargs=agent_spec.agent_extra_kwargs,
                     agent_timeout_seconds=args.timeout,
+                    api_base_url=args.api_base_url,
                     api_key=api_key,
                     use_firewall=args.use_firewall,
                     keep_container=args.keep_container,
@@ -643,6 +663,7 @@ def run_one(
                     },
                     agent_extra_kwargs=agent_spec.agent_extra_kwargs,
                     agent_timeout_seconds=args.timeout,
+                    api_base_url=args.api_base_url,
                     api_key=api_key,
                     use_firewall=args.use_firewall,
                     keep_container=args.keep_container,

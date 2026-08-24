@@ -53,10 +53,10 @@ cd "$PROJECT_ROOT"
 # ─────────────────────────────────────────────
 #  可配置项
 # ─────────────────────────────────────────────
-# 若存在 .glm_env(已 gitignore),先 source 它 —— 组员把 GLM_API_KEY 等放进去,
+# 若存在 .ds_env/.glm_env(均已 gitignore),先 source 它们 —— 组员把 GLM_API_KEY 等放进去,
 # 直接 `bash run_as.sh <名字>` 即可,无需每次在命令行带环境变量。
-# 语义:命令行 > .glm_env > 内置默认。先快照命令行已设的变量,source 后回填,
-# 否则 .glm_env 里的旧 key 会悄悄覆盖命令行传入的新 key(proxy 装错 key → 1004)。
+# 语义:命令行 > env 文件 > 内置默认。先快照命令行已设的变量,source 后回填,
+# 否则 env 文件里的旧 key 会悄悄覆盖命令行传入的新 key(proxy 装错 key → 1004)。
 _ENV_KEYS=(GLM_PROVIDER GLM_BASE_URL GLM_MODEL MODEL_ALIAS GLM_API_KEY GLM_ANTHROPIC_BASE \
            TASKS_FILE AGENT BUDGET TIMEOUT MAX_WORKERS \
            PROXY_PORT_BASE CONTROLLER_PORT_BASE CONTROLLER_PORT \
@@ -65,10 +65,12 @@ declare -A _CLI_ENV=()
 for _k in "${_ENV_KEYS[@]}"; do
   if [[ -n "${!_k+x}" ]]; then _CLI_ENV[$_k]=${!_k}; fi
 done
-if [[ -f "$PROJECT_ROOT/.glm_env" ]]; then
-  # shellcheck disable=SC1091
-  source "$PROJECT_ROOT/.glm_env"
-fi
+for _f in "$PROJECT_ROOT/.glm_env" "$PROJECT_ROOT/.ds_env"; do
+  if [[ -f "$_f" ]]; then
+    # shellcheck disable=SC1091
+    source "$_f"
+  fi
+done
 for _k in "${!_CLI_ENV[@]}"; do
   export "$_k=${_CLI_ENV[$_k]}"
 done
@@ -500,7 +502,7 @@ $(pgrep -af -- "cybergym.llm_proxy.* --port $PROXY_PORT " 2>/dev/null | head -3 
     > "$LOG_DIR/llm_proxy.log" 2>&1 < /dev/null &
   echo $! > "$LOG_DIR/proxy.pid"
 
-  for _ in $(seq 1 40); do
+  for _ in $(seq 1 120); do
     listening "$root" && break
     sleep 0.5
   done
@@ -778,6 +780,12 @@ ensure_firewall_open() {
     firewall-cmd --permanent --add-rich-rule='rule family=ipv4 source address=$cidr accept'
     firewall-cmd --reload"
   else
+    # 非交互(后台/nohup)且 sudo 需密码时跳过自动放行;若容器直连 $BRIDGE 已通,
+    # 这条规则本来就非必需,加不了也不影响评测。
+    if ! [[ -t 1 ]] && ! sudo -n true 2>/dev/null; then
+      warn "非交互且 sudo 需密码 → 跳过防火墙自动放行(docker 子网 $cidr)"
+      return 0
+    fi
     sudo firewall-cmd --permanent --add-rich-rule="rule family=ipv4 source address=$cidr accept" \
       && sudo firewall-cmd --reload \
       || die "firewalld 规则添加失败(需要 sudo 权限)。请管理员执行:
@@ -864,37 +872,73 @@ log "输出=$OUT_DIR"
 ensure_controller
 ensure_firewall_open   # 容器→controller/proxy 不通且 firewalld 在跑才加规则
 
-if [[ "${DIRECT:-0}" == "1" && "$AGENT" == "codex" ]]; then
-  # 直连模式:codex 直接打到 360,不经 litellm proxy(避免 responses 流式被 proxy 搞坏)
-  export CODEX_DIRECT_BASE_URL="${GLM_BASE_URL%/}"
-  export OPENAI_API_KEY="$GLM_API_KEY"
-  log "DIRECT 模式:codex 直连 $CODEX_DIRECT_BASE_URL(跳过 proxy)"
+if [[ "${DIRECT:-0}" == "1" ]]; then
+  if [[ "$AGENT" == "codex" ]]; then
+    # 直连模式:codex 直接打到 360,不经 litellm proxy(避免 responses 流式被 proxy 搞坏)
+    export CODEX_DIRECT_BASE_URL="${GLM_BASE_URL%/}"
+    export OPENAI_API_KEY="$GLM_API_KEY"
+    log "DIRECT 模式:codex 直连 $CODEX_DIRECT_BASE_URL(跳过 proxy)"
 
-  # 简单预检:直连 360 responses API
-  rcode=$(curl -sS -o /dev/null -w '%{http_code}' \
-    "${GLM_BASE_URL%/}/responses" \
-    -H "Authorization: Bearer $GLM_API_KEY" \
-    -H "Content-Type: application/json" \
-    -d "{\"model\":\"$GLM_MODEL\",\"input\":\"hi\",\"max_output_tokens\":4}" \
-    2>/dev/null || echo "000")
-  if [[ "$rcode" != "200" ]]; then
-    die "直连 360 responses API 失败(HTTP $rcode)。检查 GLM_BASE_URL/GLM_MODEL/GLM_API_KEY"
+    # 简单预检:直连 360 responses API
+    rcode=$(curl -sS -o /dev/null -w '%{http_code}' \
+      "${GLM_BASE_URL%/}/responses" \
+      -H "Authorization: Bearer $GLM_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d "{\"model\":\"$GLM_MODEL\",\"input\":\"hi\",\"max_output_tokens\":4}" \
+      2>/dev/null || echo "000")
+    if [[ "$rcode" != "200" ]]; then
+      die "直连 360 responses API 失败(HTTP $rcode)。检查 GLM_BASE_URL/GLM_MODEL/GLM_API_KEY"
+    fi
+    log "直连 360 responses API OK"
+
+    log "开始评测(任务文件 $TASKS_FILE,agent=$AGENT,model=$GLM_MODEL,workers=$MAX_WORKERS,direct)"
+    echo $$ > "$LOG_DIR/runner.pid"   # exec 不换 pid;--stop 由此找到 runner
+    exec uv run examples/run_agent.py \
+      --agent "$AGENT" \
+      --model "$GLM_MODEL" \
+      --use-api-key \
+      --controller-url "http://$BRIDGE:$CONTROLLER_PORT" \
+      --tasks-file "$TASKS_FILE" \
+      --budget "$BUDGET" \
+      --timeout "$TIMEOUT" \
+      --max-workers "$MAX_WORKERS" \
+      --out-dir "$OUT_DIR" \
+      "$@"
+  elif [[ "$AGENT" == "claude_code" ]]; then
+    # 直连模式:claude_code 直接打 360 的 anthropic 兼容端点,不经 litellm proxy
+    # (排障用;常规跑批仍走 proxy,要预算控制/按槽位发 key/禁 WebSearch)
+    export ANTHROPIC_API_KEY="$GLM_API_KEY"
+    export ANTHROPIC_BASE_URL="${GLM_ANTHROPIC_BASE:-https://api.360.cn}"
+    log "DIRECT 模式:claude_code 直连 $ANTHROPIC_BASE_URL(跳过 proxy)"
+
+    # 简单预检:直连 360 anthropic messages API
+    rcode=$(curl -sS -o /dev/null -w '%{http_code}' \
+      "${ANTHROPIC_BASE_URL%/}/v1/messages" \
+      -H "Authorization: Bearer $GLM_API_KEY" \
+      -H "anthropic-version: 2023-06-01" \
+      -H "Content-Type: application/json" \
+      -d "{\"model\":\"$GLM_MODEL\",\"max_tokens\":4,\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}" \
+      2>/dev/null || echo "000")
+    if [[ "$rcode" != "200" ]]; then
+      die "直连 360 messages API 失败(HTTP $rcode)。检查 ANTHROPIC_BASE_URL/GLM_MODEL/GLM_API_KEY"
+    fi
+    log "直连 360 messages API OK"
+
+    log "开始评测(任务文件 $TASKS_FILE,agent=$AGENT,model=$GLM_MODEL,workers=$MAX_WORKERS,direct)"
+    echo $$ > "$LOG_DIR/runner.pid"   # exec 不换 pid;--stop 由此找到 runner
+    exec uv run examples/run_agent.py \
+      --agent "$AGENT" \
+      --model "$GLM_MODEL" \
+      --use-api-key \
+      --api-base-url "$ANTHROPIC_BASE_URL" \
+      --controller-url "http://$BRIDGE:$CONTROLLER_PORT" \
+      --tasks-file "$TASKS_FILE" \
+      --budget "$BUDGET" \
+      --timeout "$TIMEOUT" \
+      --max-workers "$MAX_WORKERS" \
+      --out-dir "$OUT_DIR" \
+      "$@"
   fi
-  log "直连 360 responses API OK"
-
-  log "开始评测(任务文件 $TASKS_FILE,agent=$AGENT,model=$GLM_MODEL,workers=$MAX_WORKERS,direct)"
-  echo $$ > "$LOG_DIR/runner.pid"   # exec 不换 pid;--stop 由此找到 runner
-  exec uv run examples/run_agent.py \
-    --agent "$AGENT" \
-    --model "$GLM_MODEL" \
-    --use-api-key \
-    --controller-url "http://$BRIDGE:$CONTROLLER_PORT" \
-    --tasks-file "$TASKS_FILE" \
-    --budget "$BUDGET" \
-    --timeout "$TIMEOUT" \
-    --max-workers "$MAX_WORKERS" \
-    --out-dir "$OUT_DIR" \
-    "$@"
 fi
 
 ensure_proxy
