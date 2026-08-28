@@ -22,7 +22,10 @@
 
 ![A-卷宗](screenshots/A-case-files.png)
 
-### B. 崩溃点函数体(vim +2861)
+### B. 崩溃点函数体(vim 直达崩点)
+导航手法: `vim +2888 zstd_v02.c` 直达崩点行;先 `ctags -R /src/zstd` 生成标签后,
+光标移到函数名上 **`Ctrl-]` 跳定义、`Ctrl-t` 返回**;`Ctrl-o` / `Ctrl-i` 在跳转历史里
+前后翻 —— 不碰鼠标把整条调用链读完。
 ```c
 const size_t litSize = (MEM_readLE32(istart) & 0xFFFFFF) >> 2;  // 2884: 输入直读,22位
 if (litSize > srcSize-11) {                                      // 2885: 只跟 srcSize 比

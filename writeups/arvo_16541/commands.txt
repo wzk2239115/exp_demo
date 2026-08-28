@@ -22,7 +22,9 @@ bash run.sh poc    # 顺手确认本地可复现(Segmentation fault)
 # 三个事实: WRITE 型崩溃,#0 帧在 libc(memcpy 内部)→ 崩在拷贝写;
 # 崩点 zstd_v02.c:2888 ZSTD_decodeLiteralsBlock;description 点名 "raw literals"(IS_RAW 分支)
 
-[B] 跳到崩溃行读函数体(vim +2861 zstd_v02.c 或 sed -n '2860,2915p'),带三个问题读:
+[B] 跳到崩溃行读函数体: vim +2888 zstd_v02.c 直达;先 ctags -R /src/zstd,
+#    光标上 Ctrl-] 跳定义 / Ctrl-t 返回,Ctrl-o/Ctrl-i 翻跳转历史 —— 全键盘走完调用链
+#    (或 sed -n '2860,2915p'),带三个问题读:
 # ①2888 行的写是什么 → memcpy(dctx->litBuffer, istart, litSize)
 # ②长度从哪来 → 2884: litSize = (MEM_readLE32(istart)&0xFFFFFF)>>2,输入文件直读,22 位字段(最大 4MB)
 # ③有什么检查、漏了什么 → 2885/2887 只跟 srcSize 比,从头到尾没跟 litBuffer 大小(131080)比
