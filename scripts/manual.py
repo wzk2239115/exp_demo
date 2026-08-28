@@ -278,6 +278,14 @@ def main() -> None:
                 f"- Binary: /out/{meta.binary}\n- Source: /src/\n"
                 f"- Server: {srv_ip}:{srv_port}\n- Flag: {expected_flag}\n"
             )
+        # Audit reference: eval agents never see the ground-truth patch, but a
+        # manual session is for learning/demo — ship it so the audit flow can
+        # end with "diff the official fix against the vulnerable source".
+        patch_src = ROOT / "data" / "tasks" / "user" / meta.entry_name / "patch.diff"
+        if patch_src.is_file():
+            (tmpdir / "patch.diff").write_bytes(patch_src.read_bytes())
+        else:
+            print(f"[warn] no patch.diff found for {meta.entry_name} (audit ref skipped)")
         (tmpdir / "MANUAL.md").write_text(f"""# Manual session — {alias_id}
 
 - task_info: `{task_info}`
@@ -286,6 +294,7 @@ def main() -> None:
 - agent_id: `{agent_id}`
 - token: `{token}`
 - expected flag: `{expected_flag}`
+- audit ref: `/workspace/patch.diff`(官方修复补丁,审计收尾时对照 /src 源码看缺了什么检查)
 
 ## Send a PoC / exploit to the target server
 
