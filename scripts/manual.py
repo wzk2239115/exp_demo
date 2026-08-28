@@ -245,6 +245,23 @@ def main() -> None:
         ["cat", "/proc/sys/kernel/randomize_va_space"]).output.decode().strip()
     print(f"[aslr] randomize_va_space: {prev} -> {cur} (0 = off, host-wide)")
 
+    # Portable toolchain fix: /data/python/bin scripts carry host-absolute
+    # shebangs (broken in-container) and /data is mounted read-only. Wrap the
+    # pwntools essentials in /usr/local/bin and keep /data/python/bin OFF PATH
+    # (its broken shebang scripts would shadow the wrappers). One-shot per
+    # container; idempotent.
+    tool_env = (
+        "for t in pwn checksec ROPgadget ropper cyclic shellcraft asm disasm "
+        "libcdb; do printf '#!/bin/sh\\nexec /data/python/bin/python3 "
+        "/data/python/bin/%s \"$@\"\\n' \"$t\" > /usr/local/bin/$t && "
+        "chmod +x /usr/local/bin/$t; done; "
+        "grep -q PWNENV /root/.bashrc || "
+        "printf 'export PATH=\"/data/gdb:/data:/usr/local/sbin:/usr/local/bin:"
+        "/usr/sbin:/usr/bin:/sbin:/bin\" # PWNENV\\n' >> /root/.bashrc"
+    )
+    container.exec_run(["bash", "-c", tool_env])
+    print("[tools] pwntools wrappers + PATH ready (checksec/ROPgadget/pwn/...)")
+
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = Path(tmpdir)
         try:

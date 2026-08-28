@@ -110,7 +110,10 @@ find . -name claude_code.rendered.log -exec grep -l "Content block not found" {}
 - `uv run scripts/manual.py cybergym/arvo_16541`(可加 `--image-mode exp.pie` / `--target READ`)。
 - 一条命令: 起 controller(端口 8706,secret 持久化在 `logs/manual/controller.secrets.env`,
   重跑 flag 不变)→ 铸 token → create_server → 起 **privileged** 工作容器(评测同款 workspace
-  + `/data` 工具)→ 关 ASLR(**全局 sysctl,影响整机**,做演示时记得这会影响别的在跑任务)→ 进 shell。
+  + `/data` 工具)→ 关 ASLR(**全局 sysctl,影响整机**,做演示时记得这会影响别的在跑任务)
+  → 自动修好 pwntools(`/data/python/bin` 的 shebang 烧死了宿主机绝对路径且只读挂载,
+  脚本里已用 /usr/local/bin wrapper + PATH 修好,进 shell 直接 `checksec`/`ROPgadget`/`pwn`)
+  → 进 shell。
 - `/workspace/MANUAL.md` 里有 server 地址、token、预期 flag、发包 one-liner。
 - 收尾: `uv run scripts/manual.py cybergym/arvo_16541 --stop`(只删工作容器;靶机 server
   有 1h TTL 自动过期)。ASLR 恢复在容器里 `echo 2 > /proc/sys/kernel/randomize_va_space`。
