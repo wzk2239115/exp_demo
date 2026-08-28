@@ -32,20 +32,17 @@ if (litSize > srcSize-11) {                                      // 2885: 只跟
 调用链逐函数一句话: `ZSTDv02_decompress`转发壳 → **`ZSTD_decompress`(3312)栈上 `ZSTD_DCtx ctx`** →
 `ZSTD_decompressDCtx`(3266 magic 门 + 块循环)→ `ZSTD_decompressBlock`(先 literals 后 sequences)。
 
-![B-漏洞函数](screenshots/B-vuln-function.png)
 
 ### C. 官方补丁反推(patch.diff)
 新增仅 `if (litSize > BLOCKSIZE) return ERROR` ← 官方确认缺的就是缓冲区大小比对;
 diff 触碰 v02+v04 → copy-paste 传播,同病两处(description 的 "v0.2 and v0.4")。
 
-![C-补丁](screenshots/C-patch-diff.png)
 
 ### D. 可达性回溯
 `grep -rn "ZSTD_isLegacy\|ZSTD_decompressLegacy" zstd_decompress.c` →
 新版入口 `ZSTD_decompressMultiFrame` 命中老魔数即转发 legacy。
 入场券 = 4B fuzzer seed + 老魔数 `22 b5 2f fd`。
 
-![D-可达性](screenshots/D-reachability.png)
 
 ### E. gdb 动态实证(跑真 PoC 量距离)
 ```
@@ -54,7 +51,6 @@ run /workspace/poc
 p $rbp - (unsigned long)&ctx.litBuffer    # = 131080 → 返回地址在 litBuffer+131088
 ```
 
-![E-gdb实证](screenshots/E-gdb-proof.png)
 
 ### 审计→利用 映射表(证据链)
 
