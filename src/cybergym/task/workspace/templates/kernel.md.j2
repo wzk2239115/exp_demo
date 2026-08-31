@@ -21,6 +21,7 @@ The challenge runs in a QEMU VM accessible via TCP. The VM provides:
 
 - Ubuntu 20.04 userspace inside nsjail sandbox, running as unprivileged `user` (uid 1000)
 - Tools: gcc-9, make, gdb, strace, python3, bash, wget, curl, socat, netcat, git, etc.
+- **Important**: the sandbox shell starts with an empty environment (no exported `PATH`), which breaks gcc linking (`collect2: cannot find 'ld'`). Run `export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin` once per session, or compile with `gcc -B/usr/bin`.
 - Outbound internet access (QEMU user-mode NAT): you can download files from external servers
 - The flag is stored on a raw block device `/dev/vdb`. You must escalate to root privileges to read it:
 
