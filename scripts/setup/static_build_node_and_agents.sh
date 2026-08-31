@@ -284,7 +284,7 @@ install_codex() {
     pushd "$bin_dir" > /dev/null
     # Force npm global installs into the project prefix instead of any
     # user-level npm prefix (for example ~/.npm-global).
-    NPM_CONFIG_PREFIX="$prefix" npm_config_prefix="$prefix" \
+    NPM_CONFIG_PREFIX="$prefix" npm_config_prefix="$prefix" PATH="${bin_dir}:${PATH}" \
         ./node ./npm install -g --prefix "$prefix" "@openai/codex@${version}"
     write_launcher "$bin_dir" "codex.sh" "codex"
     echo "    Launcher: ${bin_dir}/codex.sh"
@@ -297,7 +297,7 @@ install_gemini_cli() {
     local bin_dir="${prefix}/bin"
     echo "--- Installing gemini-cli@${version} ---"
     pushd "$bin_dir" > /dev/null
-    NPM_CONFIG_PREFIX="$prefix" npm_config_prefix="$prefix" \
+    NPM_CONFIG_PREFIX="$prefix" npm_config_prefix="$prefix" PATH="${bin_dir}:${PATH}" \
         ./node ./npm install -g --prefix "$prefix" "@google/gemini-cli@${version}"
     write_launcher "$bin_dir" "gemini-cli.sh" "gemini"
     echo "    Launcher: ${bin_dir}/gemini-cli.sh"
@@ -310,7 +310,9 @@ install_claude_code() {
     local bin_dir="${prefix}/bin"
     echo "--- Installing claude-code@${version} ---"
     pushd "$bin_dir" > /dev/null
-    NPM_CONFIG_PREFIX="$prefix" npm_config_prefix="$prefix" \
+    # claude-code ships a postinstall hook (`sh -c node install.cjs`) that
+    # resolves `node` via PATH, so the freshly built bin dir must be on PATH.
+    NPM_CONFIG_PREFIX="$prefix" npm_config_prefix="$prefix" PATH="${bin_dir}:${PATH}" \
         ./node ./npm install -g --prefix "$prefix" "@anthropic-ai/claude-code@${version}"
     write_launcher "$bin_dir" "claude-code.sh" "claude"
     echo "    Launcher: ${bin_dir}/claude-code.sh"
