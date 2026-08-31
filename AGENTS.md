@@ -119,6 +119,48 @@ find . -name claude_code.rendered.log -exec grep -l "Content block not found" {}
   有 1h TTL 自动过期)。ASLR 恢复在容器里 `echo 2 > /proc/sys/kernel/randomize_va_space`。
 - 只支持 user 任务;kernel/v8 请用交互模式。
 
+## claude-code 安装(data/runtime/node 重建必看,2026-08-31 实战记录)
+
+- cc 2.1.x 已是**原生二进制发行**:npm 包里只剩占位符 + `install.cjs` 下载器,
+  不再有可用的 JS/cli.js 兜底。`bin/claude.exe` 是 500 字节文本 = postinstall 没跑
+  或原生 optional 依赖没下载,直接按下面流程装 glibc 变体。
+- 死锁成因: 自建静态 node 是 musl → `install.cjs` 只找 `…-linux-x64-musl`;musl 件
+  动态链接(`interpreter /lib/ld-musl-x86_64.so.1`),glibc 宿主机/agent 容器都没有
+  musl 加载器 → exec 报误导性 "No such file or directory"。npm 按 glibc 宿主又不肯
+  装 musl 变体(EBADPLATFORM)。
+- 正确装法(glibc 变体 `…-linux-x64` 直连,宿主/容器通吃):
+
+```bash
+R=/data/wangzekai/exploitgym/data/runtime/node; cd $R/bin
+# 主包(postinstall 需要 PATH,脚本已修 commit 1e31b47)
+PATH="$R/bin:$PATH" NPM_CONFIG_PREFIX="$R" npm_config_prefix="$R" \
+  ./node ./npm install -g --prefix "$R" --include=optional @anthropic-ai/claude-code@2.1.119
+# glibc 原生包 + 直连二进制(注意: 二进制在包根目录,没有 bin/ 子目录)
+PATH="$R/bin:$PATH" NPM_CONFIG_PREFIX="$R" npm_config_prefix="$R" \
+  ./node ./npm install -g --prefix "$R" --include=optional @anthropic-ai/claude-code-linux-x64@2.1.119
+ln -sf ../lib/node_modules/@anthropic-ai/claude-code-linux-x64/claude $R/bin/claude
+$R/bin/claude-code.sh --version && cd /data/wangzekai/exploitgym && bash scripts/setup/validate.sh
+```
+
+- 变体名单: `npm view @anthropic-ai/claude-code@<ver> optionalDependencies`
+  (无后缀 = glibc,`-musl` = musl)。`claude-code.sh` launcher 的 ELF 分支直跑,
+  运行期不依赖 node。若手动 npm 装过要记得补写 launcher(write_launcher 只在
+  `static_build_node_and_agents.sh` 里做)。
+- 2026-08-31 事故: `data/runtime/` 被不明原因清空(node 被重建、python 丢失),
+  若复发先查谁动的。python 重建: `bash scripts/setup/provision_portable_python.sh`。
+- `validate.sh` 必须从 repo 根跑(相对路径),在深层目录跑会全部假 MISSING。
+
+## kernel VM 内 gcc "cannot find 'ld'"(已定案 2026-08-31)
+
+- 根因: **nsjail 空环境启动 shell**(配置无 `envar: PATH`),bash 合成的默认 PATH
+  **未导出** → collect2 无 PATH 可搜 → 找不到 ld。工具链/binutils 本身完好。
+- workaround(已写进 kernel.md.j2, commit 7917157): 会话先 `export PATH` 或
+  `gcc -B/usr/bin`;`PATH=/usr/bin:$PATH`/`COMPILER_PATH=/usr/bin` 也都有效。
+- 完整证据链/复现命令/受影响靶场清单: `evol_loop/0/TODO.md`。
+  治本 = rootfs 的 nsjail 配置加 `envar: PATH=…`(rootfs 只读,需重烘镜像)。
+- 复现入口: 任意 `cybergym/syzbot-target:<id>` 容器内直接 qemu 启动
+  (qcow2 免转换,`init=/home/user/run.sh`),见 TODO.md。
+
 ## 已知问题/待办
 
 - litellm 翻译层 streaming 块切换丢首字符 bug 未修(绕开方案: 原生 anthropic 路由)。
