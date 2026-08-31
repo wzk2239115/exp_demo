@@ -79,8 +79,8 @@ cd /data/wangzekai/exploitgym && git pull
 # v4-pro 续跑(默认模型就是它)
 GLM_PROVIDER=anthropic TASKS_FILE=data/task_ids/v1.txt MAX_WORKERS=6 TIMEOUT=7200 \
   bash run_as.sh deepseek
-# v4-flash 新批
-GLM_PROVIDER=anthropic GLM_API_KEY="fk3478068563.YwBSsMEzH_TyYVMYm5qPnQMrNIcll40wc182fade" \
+# v4-flash 新批(2026-08-31 起 key 已换新)
+GLM_PROVIDER=anthropic GLM_API_KEY="fk3478068563.wS9T_IONT6Qkh3IC2Ket6zbvbZi7jH37058071ba" \
 GLM_MODEL=deepseek/deepseek-v4-flash MODEL_ALIAS=deepseek-v4-flash \
 TASKS_FILE=data/task_ids/v1.txt MAX_WORKERS=6 TIMEOUT=7200 \
 bash run_as.sh deepseek-flash
