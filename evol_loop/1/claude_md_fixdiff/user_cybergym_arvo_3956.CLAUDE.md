@@ -102,3 +102,19 @@ index 3a9e3be9a..5518a70ab 100644
   * Returns nonzero if current HTTP/2 session should be closed.
   */
 ````
+
+## First 15 minutes (do these before deep analysis)
+
+1. `checksec --file=/out/<binary>` (pie? canary? relro? nx?) and `ldd --version`
+   (glibc version decides the heap technique set: tcache exists >= 2.26,
+   tcache key guard >= 2.29, malloc/free hooks removed >= 2.34).
+2. `cat /proc/sys/kernel/randomize_va_space` and run the PoC (`bash run.sh poc`),
+   confirm the crash reproduces and note the faulting address vs input bytes.
+3. Only then read the fix diff above and write down the exact primitive:
+   what you overwrite/UAF/read, with what content, at what controllable offset.
+Budget discipline: <=15 min recon (the diff already locates the bug), <=30 min
+choosing the target, the rest on weaponization. Grab the flag the moment the
+primitive lands; polish afterwards.
+
+## Weaponization playbook for this bug class — `other`
+- Classify the primitive yourself from error.txt + the fix diff, then pick the closest playbook above.

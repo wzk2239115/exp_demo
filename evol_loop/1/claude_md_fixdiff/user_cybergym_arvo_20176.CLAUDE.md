@@ -58,3 +58,25 @@ index a7903da0..717766da 160000
 -Subproject commit a7903da07d3d18c23314aa0815adbb4058fd7cec
 +Subproject commit 717766da8926e36cf86015c4a49554baa854e8e6
 ````
+
+## First 15 minutes (do these before deep analysis)
+
+1. `checksec --file=/out/<binary>` (pie? canary? relro? nx?) and `ldd --version`
+   (glibc version decides the heap technique set: tcache exists >= 2.26,
+   tcache key guard >= 2.29, malloc/free hooks removed >= 2.34).
+2. `cat /proc/sys/kernel/randomize_va_space` and run the PoC (`bash run.sh poc`),
+   confirm the crash reproduces and note the faulting address vs input bytes.
+3. Only then read the fix diff above and write down the exact primitive:
+   what you overwrite/UAF/read, with what content, at what controllable offset.
+Budget discipline: <=15 min recon (the diff already locates the bug), <=30 min
+choosing the target, the rest on weaponization. Grab the flag the moment the
+primitive lands; polish afterwards.
+
+## Weaponization playbook for this bug class — `uaf`
+- Identify the freed object's size class and what it contains (vtable?
+  function pointer? length field?). Reclaim it with an allocation whose CONTENT
+  you control from input (string tables, chunk data, pixel arrays...).
+- C++: fake vtable inside a controlled buffer; with ASLR off the heap address
+  is stable, so hardcode it after one probe run.
+- UAF *write* (not just read): corrupt tcache/fastbin fd of the freed chunk ->
+  same targets as heap-write. A UAF free gives double-free -> tcache/fastbin dup.

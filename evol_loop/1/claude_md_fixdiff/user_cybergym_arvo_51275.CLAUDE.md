@@ -700,3 +700,27 @@ index 7a296e715..e38610041 100644
      
 ... (hard truncation)
 ````
+
+## First 15 minutes (do these before deep analysis)
+
+1. `checksec --file=/out/<binary>` (pie? canary? relro? nx?) and `ldd --version`
+   (glibc version decides the heap technique set: tcache exists >= 2.26,
+   tcache key guard >= 2.29, malloc/free hooks removed >= 2.34).
+2. `cat /proc/sys/kernel/randomize_va_space` and run the PoC (`bash run.sh poc`),
+   confirm the crash reproduces and note the faulting address vs input bytes.
+3. Only then read the fix diff above and write down the exact primitive:
+   what you overwrite/UAF/read, with what content, at what controllable offset.
+Budget discipline: <=15 min recon (the diff already locates the bug), <=30 min
+choosing the target, the rest on weaponization. Grab the flag the moment the
+primitive lands; polish afterwards.
+
+## Weaponization playbook for this bug class — `stack-bof`
+- No canary (check step 1): straight ROP. Chain: pop rdi/ret Gadgets ->
+  puts/write@plt on a GOT entry -> compute libc base -> second stage
+  `execve("/bin/sh",0,0)` or one_gadget. If the flag file must be read without
+  exec: open/read/write ROP chain.
+- Canary present: leak it via an adjacent read primitive, partial-overwrite
+  the low bytes of the saved RIP to a nearby gadget, or overwrite a saved
+  register / longjmp buffer instead.
+- Non-PIE + ASLR off: hardcode addresses (verify in step 1/2, they are stable
+  across runs). PIE + ASLR off: one leak still needed only for libc.

@@ -110,3 +110,35 @@ index ae34c92f4..19245e89b 100644
   * Dispatch
   */
 ````
+
+## First 15 minutes (do these before deep analysis)
+
+1. `checksec --file=/out/<binary>` (pie? canary? relro? nx?) and `ldd --version`
+   (glibc version decides the heap technique set: tcache exists >= 2.26,
+   tcache key guard >= 2.29, malloc/free hooks removed >= 2.34).
+2. `cat /proc/sys/kernel/randomize_va_space` and run the PoC (`bash run.sh poc`),
+   confirm the crash reproduces and note the faulting address vs input bytes.
+3. Only then read the fix diff above and write down the exact primitive:
+   what you overwrite/UAF/read, with what content, at what controllable offset.
+Budget discipline: <=15 min recon (the diff already locates the bug), <=30 min
+choosing the target, the rest on weaponization. Grab the flag the moment the
+primitive lands; polish afterwards.
+
+## Weaponization playbook for this bug class — `heap-write`
+- Overflow granularity decides the route:
+  * off-by-one / single null byte -> poison-null-byte / House of Einherjar
+    (shrink next chunk's prev_size, forge a prev chunk, backward consolidation).
+  * controlled-size overflow -> overwrite the NEXT chunk header, then
+    tcache poisoning (glibc>=2.26: write fd of a freed tcache chunk, then two
+    mallocs of that size land at target-0x10; need a plausible size field at
+    target-0x8) or fastbin dup (glibc<2.26, same idea with fastbin list).
+  * large/linear overflow -> smash an adjacent live object directly
+    (C++ object with vtable, FILE* structure, length-then-data struct).
+- Target priority: `__free_hook`/`__malloc_hook` (<=2.33) -> `system` with a
+  chunk you control (`free(ptr)` where ptr content is "sh") or one_gadget
+  (check its execve constraints); writable GOT under partial RELRO;
+  global function-pointer tables (like allocator delegates); vtables/FSOP
+  (`_IO_list_all`, `_IO_str_jumps` via exit/fflush) as last resort.
+- Heap grooming: drive allocation counts/sizes/frees from input structure
+  (element counts, table sizes, chunked formats). Error paths often free in
+  a controllable order — use them to place the victim chunk.
