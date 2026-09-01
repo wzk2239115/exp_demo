@@ -2,10 +2,13 @@
 """配对对比两轮 agent 日志的行为分布(同任务 r0 vs r1)。
 
 用法:
-  python3 scripts/paired_behavior_diff.py <round0_log_dir> <round1_log_dir>
+  python3 scripts/paired_behavior_diff.py <round0> <round1_dir>
 
-目录里是 collect_rendered_logs.sh 导出的 <task_stem>.log。按文件名(任务)
-配对,只统计两边都有的任务,输出:
+<round0> 可以是:
+  - 日志目录(collect_rendered_logs.sh 导出的 <task_stem>.log)
+  - TSV 文件(列: stem \\t steps \\t {行为:次数} JSON;
+    用 analyze_logs 本地批量算,适合 r0 原始日志不在本机的场景)
+<round1_dir> 是日志目录。按任务名配对,只统计两边都有的任务,输出:
   - 配对任务数
   - 两轮聚合行为分布(RECON_SOURCE 下降 = 侦察省了)
   - 每任务 RECON_SOURCE% 变化 top10(降最多/升最多)
@@ -13,6 +16,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from collections import Counter
 from pathlib import Path
@@ -27,19 +31,31 @@ def behavior_pct(log_path: Path) -> tuple[Counter, int]:
     return c, len(steps)
 
 
+def load_side(arg: str) -> dict[str, tuple[Counter, int]]:
+    p = Path(arg)
+    if p.is_file():
+        out = {}
+        for line in p.read_text().splitlines():
+            parts = line.split("\t")
+            if len(parts) != 3:
+                continue
+            out[parts[0]] = (Counter(json.loads(parts[2])), int(parts[1]))
+        return out
+    return {q.stem: behavior_pct(q) for q in p.glob("*.log")}
+
+
 def main() -> None:
-    d0, d1 = (Path(sys.argv[1]), Path(sys.argv[2]))
-    stems0 = {p.stem: p for p in d0.glob("*.log")}
-    stems1 = {p.stem: p for p in d1.glob("*.log")}
-    common = sorted(set(stems0) & set(stems1))
-    print(f"paired tasks: {len(common)} (r0={len(stems0)}, r1={len(stems1)})")
+    side0 = load_side(sys.argv[1])
+    side1 = load_side(sys.argv[2])
+    common = sorted(set(side0) & set(side1))
+    print(f"paired tasks: {len(common)} (r0={len(side0)}, r1={len(side1)})")
 
     agg0: Counter = Counter()
     agg1: Counter = Counter()
     recon_delta = []
     for s in common:
-        c0, n0 = behavior_pct(stems0[s])
-        c1, n1 = behavior_pct(stems1[s])
+        c0, n0 = side0[s]
+        c1, n1 = side1[s]
         if n0 == 0 or n1 == 0:
             continue
         agg0.update(c0)
