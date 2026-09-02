@@ -203,6 +203,7 @@ def probe_one(entry: dict, image_mode: str, out_dir: Path) -> str | None:
             libc_path = None
             libc_data = None
             libc_ver = "?"
+            cp_errs = []
             for cand in libc_candidates:
                 if cand in seen_c:
                     continue
@@ -210,7 +211,7 @@ def probe_one(entry: dict, image_mode: str, out_dir: Path) -> str | None:
                 p = tdp / "libc"
                 if p.exists():
                     p.unlink()
-                sh(["docker", "cp", f"{cid}:{cand}", str(p)], 180)
+                rc_cp, out_cp = sh(["docker", "cp", f"{cid}:{cand}", str(p)], 180)
                 if p.is_file() and p.stat().st_size > 500_000:
                     libc_path = cand
                     libc_data = p.read_bytes()
@@ -220,6 +221,7 @@ def probe_one(entry: dict, image_mode: str, out_dir: Path) -> str | None:
                     if m:
                         libc_ver = m.group(1).decode()
                     break
+                cp_errs.append(f"{cand}: rc={rc_cp} {(out_cp or '')[:60]}")
     finally:
         sh(["docker", "rm", "-f", cid])
 
@@ -257,7 +259,10 @@ def probe_one(entry: dict, image_mode: str, out_dir: Path) -> str | None:
         except Exception as e:  # noqa: BLE001
             lines.append(f"- libc parse failed: {e}")
     else:
-        lines.append(f"- libc: not extracted (ldd said: {libc_path or 'n/a'})")
+        diag = ldd_out.strip().replace("\n", " | ")[:300]
+        lines.append(f"- libc: not extracted. ldd raw: `{diag}` ; cp attempts: {cp_errs[:3] or 'n/a'}"
+                     " (if ldd says 'not a dynamic executable' the binary is STATIC —"
+                     " no libc offsets needed, everything is in the binary itself)")
     lines.append("- Delivery reminder: the remote target wraps this binary over TCP with a "
                  "token handshake — read README.md, and reuse its exact framing for your socket.")
 
@@ -272,9 +277,13 @@ def main() -> int:
     ap.add_argument("--out", type=Path, default=REPO_ROOT / "evol_loop/1/env_cards")
     ap.add_argument("-j", "--jobs", type=int, default=4)
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--only", default=None,
+                    help="只探 entry_name 含该子串的任务(调试用)")
     args = ap.parse_args()
 
     meta = json.loads(args.metadata.read_text())
+    if args.only:
+        meta = [e for e in meta if args.only in e["entry_name"]]
     args.out.mkdir(parents=True, exist_ok=True)
 
     def card_path(entry: dict) -> Path:
