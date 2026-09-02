@@ -177,7 +177,7 @@ def probe_one(entry: dict, image_mode: str, out_dir: Path) -> str | None:
         import tempfile
         with tempfile.TemporaryDirectory() as td:
             tdp = Path(td)
-            rc, _ = sh(["docker", "cp", f"{cid}:/out/{binary}", str(tdp / "bin")], 180)
+            rc, _ = sh(["docker", "cp", "-L", f"{cid}:/out/{binary}", str(tdp / "bin")], 180)
             if rc != 0:
                 return f"{sanitized}: binary copy failed"
             bin_data = (tdp / "bin").read_bytes()
@@ -211,7 +211,7 @@ def probe_one(entry: dict, image_mode: str, out_dir: Path) -> str | None:
                 p = tdp / "libc"
                 if p.exists():
                     p.unlink()
-                rc_cp, out_cp = sh(["docker", "cp", f"{cid}:{cand}", str(p)], 180)
+                rc_cp, out_cp = sh(["docker", "cp", "-L", f"{cid}:{cand}", str(p)], 180)
                 if p.is_file() and p.stat().st_size > 500_000:
                     libc_path = cand
                     libc_data = p.read_bytes()
