@@ -395,6 +395,8 @@ def build_claude_md(
     stats: dict,
     crash_type: str | None = None,
     intel_section: str | None = None,
+    env_card: str = "",
+    exemplar: str = "",
 ) -> str:
     parts: list[str] = []
     if prior:
@@ -409,6 +411,10 @@ def build_claude_md(
     note += ".*"
     parts.append(note)
     parts.append("````diff\n" + diff_body.rstrip() + "\n````")
+    if exemplar:
+        parts.append(exemplar)
+    if env_card:
+        parts.append(env_card)
     parts.append(CHECKLIST.rstrip())
     if crash_type:
         parts.append(f"{PLAYBOOK_INTRO} — `{crash_type}`\n{PLAYBOOK.get(crash_type, PLAYBOOK['other'])}")
@@ -436,6 +442,18 @@ def main() -> int:
         default=REPO_ROOT / "evol_loop/1/exp_intel/osv_hits.json",
         help="osv_hits.json from scripts/build_exp_intel.py; missing file skips intel",
     )
+    ap.add_argument(
+        "--env-cards",
+        type=Path,
+        default=REPO_ROOT / "evol_loop/1/env_cards",
+        help="dir of <sanitized>.md cheat sheets from scripts/probe_task_env.py",
+    )
+    ap.add_argument(
+        "--exemplars",
+        type=Path,
+        default=REPO_ROOT / "evol_loop/1/exemplars",
+        help="dir of <project>.md / <crash_type>.md worked-example files",
+    )
     args = ap.parse_args()
 
     meta = json.loads(args.metadata.read_text())
@@ -452,7 +470,7 @@ def main() -> int:
         intel = json.loads(args.intel.read_text())
 
     n_total = n_merged = n_patchonly = n_trunc = n_fallback = 0
-    n_playbook = n_intel = 0
+    n_playbook = n_intel = n_card = n_exemplar = 0
     sizes: list[int] = []
     for entry in meta:
         task_dir = args.task_data / entry["entry_name"]
@@ -472,7 +490,25 @@ def main() -> int:
         )
         crash_type = crash_types.get(entry["entry_name"])
         intel_section = build_intel_section(entry["entry_name"], intel)
-        content = build_claude_md(prior, diff_body, stats, crash_type, intel_section)
+
+        env_card = ""
+        card = args.env_cards / f"{sanitized}.md"
+        if card.is_file():
+            env_card = card.read_text(errors="replace").strip()
+
+        exemplar = ""
+        for cand in (
+            args.exemplars / f"{entry.get('project_name', '')}.md",
+            args.exemplars / f"{crash_type}.md" if crash_type else None,
+        ):
+            if cand and cand.is_file():
+                exemplar = cand.read_text(errors="replace").strip()
+                break
+
+        content = build_claude_md(
+            prior, diff_body, stats, crash_type, intel_section,
+            env_card=env_card, exemplar=exemplar,
+        )
 
         (args.out / f"{sanitized}.CLAUDE.md").write_text(content)
         n_total += 1
@@ -482,6 +518,8 @@ def main() -> int:
         n_fallback += stats["fallback"]
         n_playbook += bool(crash_type)
         n_intel += bool(intel_section)
+        n_card += bool(env_card)
+        n_exemplar += bool(exemplar)
         sizes.append(len(content))
 
     sizes.sort()
@@ -489,7 +527,7 @@ def main() -> int:
         f"generated {n_total} files -> {args.out}\n"
         f"  with prior notes: {n_merged}, patch-only: {n_patchonly}\n"
         f"  truncated (sections omitted): {n_trunc}, raw-fallback: {n_fallback}\n"
-        f"  with playbook: {n_playbook}, with advisory intel: {n_intel}\n"
+        f"  with playbook: {n_playbook}, intel: {n_intel}, env-card: {n_card}, exemplar: {n_exemplar}\n"
         f"  size: min {sizes[0]} p50 {sizes[len(sizes)//2]} p95 {sizes[int(len(sizes)*.95)]} max {sizes[-1]}"
     )
     return 0 if n_total else 1
