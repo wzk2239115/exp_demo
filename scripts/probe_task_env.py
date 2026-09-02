@@ -185,25 +185,41 @@ def probe_one(entry: dict, image_mode: str, out_dir: Path) -> str | None:
             rc, ldd_out = sh(["docker", "run", "--rm", "--entrypoint", "/bin/sh", image,
                               "-c", f"ldd /out/{binary}; cat /proc/sys/kernel/randomize_va_space"])
             aslr = "?"
-            libc_path = None
+            libc_candidates: list[str] = []
             for line in ldd_out.splitlines():
-                m = re.match(r"\s*(\S*libc\.so\.\S*)\s*=>", line)
+                # 动态: "libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x...)"
+                m = re.search(r"=>\s*(\S*libc\S*)", line)
+                if m and m.group(1).startswith("/"):
+                    libc_candidates.append(m.group(1))
+                # 静态直列: "\t/lib/x86_64-linux-gnu/libc.so.6 (0x...)" 或以 / 开头
+                m = re.match(r"\s*(/\S*libc\.so\S*)\s+\(0x", line)
                 if m:
-                    libc_path = m.group(1)
+                    libc_candidates.append(m.group(1))
                 if line.strip().isdigit():
                     aslr = line.strip()
+            libc_candidates += ["/lib/x86_64-linux-gnu/libc.so.6",
+                                "/usr/lib/x86_64-linux-gnu/libc.so.6"]
+            seen_c = set()
+            libc_path = None
             libc_data = None
             libc_ver = "?"
-            if libc_path:
-                sh(["docker", "cp", f"{cid}:{libc_path}", str(tdp / "libc")], 180)
+            for cand in libc_candidates:
+                if cand in seen_c:
+                    continue
+                seen_c.add(cand)
                 p = tdp / "libc"
-                if p.is_file():
+                if p.exists():
+                    p.unlink()
+                sh(["docker", "cp", f"{cid}:{cand}", str(p)], 180)
+                if p.is_file() and p.stat().st_size > 500_000:
+                    libc_path = cand
                     libc_data = p.read_bytes()
                     m = re.search(rb"GNU C Library[^\\\n]*release version ([0-9.]+)", libc_data)
                     if not m:
                         m = re.search(rb"GLIBC ([0-9]+\.[0-9]+)", libc_data)
                     if m:
                         libc_ver = m.group(1).decode()
+                    break
     finally:
         sh(["docker", "rm", "-f", cid])
 
