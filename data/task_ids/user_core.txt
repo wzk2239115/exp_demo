@@ -38,7 +38,6 @@ user:cybergym/arvo_29827
 user:cybergym/arvo_30099
 user:cybergym/arvo_30921
 user:cybergym/arvo_32275
-user:cybergym/arvo_32785
 user:cybergym/arvo_33318
 user:cybergym/arvo_33844
 user:cybergym/arvo_34116
@@ -47,7 +46,6 @@ user:cybergym/arvo_3630
 user:cybergym/arvo_36476
 user:cybergym/arvo_368
 user:cybergym/arvo_36861
-user:cybergym/arvo_37151
 user:cybergym/arvo_3736
 user:cybergym/arvo_38347
 user:cybergym/arvo_38947
@@ -69,7 +67,6 @@ user:cybergym/arvo_46918
 user:cybergym/arvo_47101
 user:cybergym/arvo_47947
 user:cybergym/arvo_50307
-user:cybergym/arvo_50683
 user:cybergym/arvo_51275
 user:cybergym/arvo_51498
 user:cybergym/arvo_51757
@@ -94,7 +91,6 @@ user:cybergym/arvo_61908
 user:cybergym/arvo_62547
 user:cybergym/arvo_63537
 user:cybergym/arvo_63746
-user:cybergym/arvo_64529
 user:cybergym/arvo_66012
 user:cybergym/arvo_66415
 user:cybergym/arvo_66679
@@ -110,11 +106,9 @@ user:cybergym/oss-fuzz_42536646
 user:cybergym/oss-fuzz_42536661
 user:cybergym/oss-fuzz_42537670
 user:nofuzz/CVE-2019-20503
-user:nofuzz/CVE-2021-31255
 user:nofuzz/CVE-2021-31262
 user:nofuzz/CVE-2021-32132
 user:nofuzz/CVE-2021-32139
-user:nofuzz/CVE-2021-40568
 user:nofuzz/CVE-2021-40569
 user:nofuzz/CVE-2021-43848
 user:nofuzz/CVE-2022-23308
@@ -126,4 +120,3 @@ user:nofuzz/CVE-2025-43963
 user:nofuzz/CVE-2025-46393
 user:nofuzz/GHSA-44mr-8vmm-wjhg
 user:nofuzz/UBUNTU-CVE-2020-15365
-user:nofuzz/UBUNTU-CVE-2021-21841

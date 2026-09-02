@@ -32,11 +32,14 @@ def main() -> None:
                     help="只保留核心可武器化类型 (heap-write/uaf/double-free/stack-bof)")
     args = ap.parse_args()
 
-    solved: set[str] = set()
+    def norm(t: str) -> str:
+        return t.replace(":", "_").replace("/", "_")
+
+    solved_n: set[str] = set()
     if args.ledger.is_file():
         for line in args.ledger.read_text().splitlines()[1:]:
             if line.strip():
-                solved.add(line.split("\t")[0])
+                solved_n.add(norm(line.split("\t")[0]))
 
     ctype: dict[str, str] = {}
     if args.crash_types.is_file():
@@ -48,7 +51,7 @@ def main() -> None:
     tasks = [l.strip() for l in args.full.read_text().splitlines() if l.strip()]
     kept, skipped, dropped_noncore = [], 0, 0
     for t in tasks:
-        if t in solved:
+        if norm(t) in solved_n:
             skipped += 1
             continue
         if args.core:
