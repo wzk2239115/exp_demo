@@ -216,3 +216,39 @@ primitive lands; polish afterwards.
   address. If address tracks input (bit-correlation), you have a strong
   pointer-corruption primitive -> treat as arbitrary R/W and use the heap-write
   playbook targets. If it is a fixed NULL/wild deref, timebox 20 min.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2023-455**: Heap-buffer-overflow in bit_TV_to_utf8
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=59571
+
+```
+Crash type: Heap-buffer-overflow WRITE 1
+Crash state:
+bit_TV_to_utf8
+json_cquote
+dwg_geojson_feature
+```
+
+- **OSV-2022-1198**: Heap-buffer-overflow in dwg_json_LTYPE
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=53617
+
+```
+Crash type: Heap-buffer-overflow READ 8
+Crash state:
+dwg_json_LTYPE
+json_objects_write
+dwg_write_json
+```
+
+- **OSV-2023-135**: Heap-buffer-overflow in json_cquote
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=56473
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+json_cquote
+dwg_json_LTYPE
+json_objects_write
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

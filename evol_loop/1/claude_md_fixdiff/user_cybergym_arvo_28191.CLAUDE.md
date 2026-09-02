@@ -103,3 +103,17 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2020-2227**: Heap-buffer-overflow in ieeeNUMBER_fragment_hash
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=28191
+
+```
+Crash type: Heap-buffer-overflow READ 6
+Crash state:
+ieeeNUMBER_fragment_hash
+g_hash_table_insert_internal
+fragment_add_seq_common
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

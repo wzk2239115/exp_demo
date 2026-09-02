@@ -203,3 +203,20 @@ primitive lands; polish afterwards.
 - Viable only when the uninit value is a pointer or an index: fake-object /
   fake-vtable reclaim, or OOB access via the uninit index. Pure uninit integer
   computations are a dead end — timebox 30 min.
+
+## Public advisory intel (may match known exploits)
+- **CVE-2021-45928**: (no summary)
+  - libjxl b02d6b9, as used in libvips 8.11 through 8.11.2 and other products, has an out-of-bounds write in jxl::ModularFrameDecoder::DecodeGroup (called from jxl::FrameDecoder::ProcessACGroup and jxl::ThreadPool::RunCallState<jxl::FrameDecoder::ProcessSections).
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H"}]
+- **OSV-2021-916**: Use-of-uninitialized-value in jxl::ModularFrameDecoder::DecodeAcMetadata
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=35778
+
+```
+Crash type: Use-of-uninitialized-value
+Crash state:
+jxl::ModularFrameDecoder::DecodeAcMetadata
+jxl::FrameDecoder::ProcessDCGroup
+jxl::ThreadPool::RunCallState<jxl::Status
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

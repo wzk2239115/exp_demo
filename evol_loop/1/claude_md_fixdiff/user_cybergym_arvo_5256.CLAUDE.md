@@ -114,3 +114,17 @@ primitive lands; polish afterwards.
 - Heap grooming: drive allocation counts/sizes/frees from input structure
   (element counts, table sizes, chunked formats). Error paths often free in
   a controllable order — use them to place the victim chunk.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2018-19**: Use-of-uninitialized-value in rawspeed::RawImageData::checkMemIsInitialized
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=6796
+
+```
+Crash type: Use-of-uninitialized-value
+Crash state:
+rawspeed::RawImageData::checkMemIsInitialized
+rawspeed::RawDecoder::decodeRaw
+rawspeed::alignedMalloc
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

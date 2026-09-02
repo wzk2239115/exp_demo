@@ -245,3 +245,17 @@ primitive lands; polish afterwards.
 
 ## Weaponization playbook for this bug class — `other`
 - Classify the primitive yourself from error.txt + the fix diff, then pick the closest playbook above.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2021-487**: UNKNOWN READ in blosc_run_decompression_with_context
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=31611
+
+```
+Crash type: UNKNOWN READ
+Crash state:
+blosc_run_decompression_with_context
+blosc2_decompress_ctx
+frame_decompress_chunk
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

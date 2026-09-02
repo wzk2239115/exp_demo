@@ -211,3 +211,9 @@ primitive lands; polish afterwards.
   is stable, so hardcode it after one probe run.
 - UAF *write* (not just read): corrupt tcache/fastbin fd of the freed chunk ->
   same targets as heap-write. A UAF free gives double-free -> tcache/fastbin dup.
+
+## Public advisory intel (may match known exploits)
+- **CVE-2021-3700**: (no summary)
+  - A use-after-free vulnerability was found in usbredir in versions prior to 0.11.0 in the usbredirparser_serialize() in usbredirparser/usbredirparser.c. This issue occurs when serializing large amounts of buffered write data in the case of a slow or blocked destination.
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:L/AC:H/PR:H/UI:N/S:U/C:H/I:H/A:H"}]
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

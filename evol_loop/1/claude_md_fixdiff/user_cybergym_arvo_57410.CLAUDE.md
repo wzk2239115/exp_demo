@@ -138,3 +138,9 @@ primitive lands; polish afterwards.
 - Viable only when the uninit value is a pointer or an index: fake-object /
   fake-vtable reclaim, or OOB access via the uninit index. Pure uninit integer
   computations are a dead end — timebox 30 min.
+
+## Public advisory intel (may match known exploits)
+- **CVE-2025-24928, BIT-java-2025-24928, BIT-java-min-2025-24928**: (no summary)
+  - libxml2 before 2.12.10 and 2.13.x before 2.13.6 has a stack-based buffer overflow in xmlSnprintfElements in valid.c. To exploit this, DTD validation must occur for an untrusted document or untrusted DTD. NOTE: this is similar to CVE-2017-9047.
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:L/AC:H/PR:N/UI:N/S:C/C:H/I:H/A:N"}]
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

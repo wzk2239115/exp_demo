@@ -224,3 +224,17 @@ primitive lands; polish afterwards.
 
 ## Weaponization playbook for this bug class — `other`
 - Classify the primitive yourself from error.txt + the fix diff, then pick the closest playbook above.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2021-830**: Heap-use-after-free in AK::Utf8CodePointIterator::operator*
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=34911
+
+```
+Crash type: Heap-use-after-free READ 1
+Crash state:
+AK::Utf8CodePointIterator::operator*
+AK::URLParser::parse
+AK::URL::URL
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

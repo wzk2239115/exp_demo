@@ -791,3 +791,31 @@ primitive lands; polish afterwards.
   address. If address tracks input (bit-correlation), you have a strong
   pointer-corruption primitive -> treat as arbitrary R/W and use the heap-write
   playbook targets. If it is a fixed NULL/wild deref, timebox 20 min.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2023-184**: UNKNOWN READ in LibRaw::sget4
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=57105
+
+```
+Crash type: UNKNOWN READ
+Crash state:
+LibRaw::sget4
+LibRaw::parseAdobeRAFMakernote
+LibRaw::parse_tiff_ifd
+```
+
+- **OSV-2023-90**: Heap-buffer-overflow in LibRaw_buffer_datastream::scanf_one
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=56160
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+LibRaw_buffer_datastream::scanf_one
+LibRaw::parse_mos
+LibRaw::parse_tiff_ifd
+```
+
+- **CVE-2025-43961**: (no summary)
+  - In LibRaw before 0.21.4, metadata/tiff.cpp has an out-of-bounds read in the Fujifilm 0xf00c tag parser.
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:L/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:L"}]
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

@@ -596,3 +596,17 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2021-1160**: Heap-buffer-overflow in pe_valid_dll_name
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=37443
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+pe_valid_dll_name
+pe_parse_delay_import_dll_name
+pe_parse_delayed_imports
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

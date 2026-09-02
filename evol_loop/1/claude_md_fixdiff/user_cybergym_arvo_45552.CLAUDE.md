@@ -154,3 +154,42 @@ primitive lands; polish afterwards.
 - Heap grooming: drive allocation counts/sizes/frees from input structure
   (element counts, table sizes, chunked formats). Error paths often free in
   a controllable order — use them to place the victim chunk.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2022-231**: Heap-buffer-overflow in do_fileid
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=45430
+
+```
+Crash type: Heap-buffer-overflow WRITE 2
+Crash state:
+do_fileid
+process_command
+process_block
+```
+
+- **OSV-2022-268**: Stack-use-after-return in template_sanity_check
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=45880
+
+```
+Crash type: Stack-use-after-return READ 1
+Crash state:
+template_sanity_check
+process_tmpl
+process_block
+```
+
+- **OSV-2022-282**: Heap-buffer-overflow in cosm_new_file
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=46002
+
+```
+Crash type: Heap-buffer-overflow WRITE 1
+Crash state:
+cosm_new_file
+epassNUMBER_pkcs15_generate_key
+sc_pkcs15init_generate_key
+```
+
+- **CVE-2026-40528**: OpenSC < 0.27.0 Buffer Overrun in do_key_value() via profile.c
+  - OpenSC before 0.27.0, fixed in commit 0358817, contains a stack and heap buffer overrun vulnerability in the do_key_value() function in src/pkcs15init/profile.c that allows attackers to corrupt memory by supplying a crafted profile configuration file. During pkcs15-init invocation, a key value entry beginning with '=' followed by more than sizeof(keybuf) characters is copied into keybuf via memcpy without a length check, causing both stack and heap buffer overruns.
+  - severity: [{"type": "CVSS_V4", "score": "CVSS:4.0/AV:P/AC:H/AT:N/PR:N/UI:P/VC:L/VI:L/VA:L/SC:N/SI:N/SA:N"}]
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

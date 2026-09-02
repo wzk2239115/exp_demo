@@ -133,3 +133,39 @@ primitive lands; polish afterwards.
   address. If address tracks input (bit-correlation), you have a strong
   pointer-corruption primitive -> treat as arbitrary R/W and use the heap-write
   playbook targets. If it is a fixed NULL/wild deref, timebox 20 min.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2021-1489**: UNKNOWN READ in __bpf_object__open
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=40317
+
+```
+Crash type: UNKNOWN READ
+Crash state:
+__bpf_object__open
+bpf_object__open_mem
+bpf-object-fuzzer.c
+```
+
+- **OSV-2021-1562**: Heap-buffer-overflow in __bpf_object__open
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=40868
+
+```
+Crash type: Heap-buffer-overflow WRITE 4
+Crash state:
+__bpf_object__open
+bpf_object__open_mem
+bpf-object-fuzzer.c
+```
+
+- **OSV-2021-1576**: Heap-buffer-overflow in __bpf_object__open
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=40957
+
+```
+Crash type: Heap-buffer-overflow WRITE 8
+Crash state:
+__bpf_object__open
+bpf_object__open_mem
+bpf-object-fuzzer.c
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

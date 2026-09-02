@@ -181,3 +181,22 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **CVE-2020-36138**: (no summary)
+  - An issue was discovered in decode_frame in libavcodec/tiff.c in FFmpeg version 4.3, allows remote attackers to cause a denial of service (DoS).
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"}]
+- **CVE-2022-3109**: (no summary)
+  - An issue was discovered in the FFmpeg package, where vp3_decode_frame in libavcodec/vp3.c lacks check of the return value of av_malloc() and will cause a null pointer dereference, impacting availability.
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"}]
+- **CVE-2024-7055**: FFmpeg pnmdec.c pnm_decode_frame heap-based overflow
+  - A vulnerability was found in FFmpeg up to 7.0.1. It has been classified as critical. This affects the function pnm_decode_frame in the library /libavcodec/pnmdec.c. The manipulation leads to heap-based buffer overflow. It is possible to initiate the attack remotely. The exploit has been disclosed to the public and may be used. Upgrading to version 7.0.2 is able to address this issue. It is recommended to upgrade the affected component. The associated identifier of this vulnerability is VDB-273651.
+  - severity: [{"type": "CVSS_V4", "score": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:L/VI:L/VA:L/SC:N/SI:N/SA:N"}]
+- **CVE-2025-59734**: Heap-buffer-overflow write in FFmpeg SANM process_ftch
+  - It is possible to cause an use-after-free write in SANM decoding with a carefully crafted animation using subversion <2.
+
+When a STOR chunk is present, a subsequent FOBJ chunk will be saved in ctx->stored_frame. Stored frames can later be referenced by FTCH chunks. For files using subversion < 2, the undecoded frame is stored, and decoded again when the FTCH chunks are parsed. However, in process_frame_obj if the frame has an invalid size, there’s an early return, with a value of 0. 
+
+This causes the code in decode_frame to still store the raw frame buffer into ctx->stored_frame. Leaving ctx->
+  - severity: [{"type": "CVSS_V4", "score": "CVSS:4.0/AV:A/AC:H/AT:N/PR:N/UI:P/VC:H/VI:H/VA:N/SC:H/SI:H/SA:N"}]
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

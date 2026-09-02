@@ -228,3 +228,17 @@ primitive lands; polish afterwards.
   address. If address tracks input (bit-correlation), you have a strong
   pointer-corruption primitive -> treat as arbitrary R/W and use the heap-write
   playbook targets. If it is a fixed NULL/wild deref, timebox 20 min.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2021-1767**: Global-buffer-overflow in pdfi_dict_get
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=42957
+
+```
+Crash type: Global-buffer-overflow READ 8
+Crash state:
+pdfi_dict_get
+pdfi_dict_get_int
+pdfi_read_bare_object
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

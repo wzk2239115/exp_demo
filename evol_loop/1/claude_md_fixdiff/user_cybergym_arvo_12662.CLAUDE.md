@@ -308,3 +308,50 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2020-1012**: Heap-buffer-overflow in sas_read8
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=12723
+
+```
+Crash type: Heap-buffer-overflow READ 8
+Crash state:
+sas_read8
+sas7bdat_parse_column_size_subheader
+sas7bdat_parse_page_pass2
+```
+
+- **OSV-2020-300**: Heap-buffer-overflow in sas_read4
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=12978
+
+```
+Crash type: Heap-buffer-overflow READ 4
+Crash state:
+sas_read4
+sas7bdat_parse_page_pass2
+sas7bdat_parse_all_pages_pass2
+```
+
+- **OSV-2020-333**: Heap-buffer-overflow in sas_read8
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=13262
+
+```
+Crash type: Heap-buffer-overflow READ 8
+Crash state:
+sas_read8
+sas7bdat_parse_subheader_pointer
+sas7bdat_parse_page_pass2
+```
+
+- **OSV-2020-1151**: Heap-buffer-overflow in sas_read2
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=12774
+
+```
+Crash type: Heap-buffer-overflow READ 2
+Crash state:
+sas_read2
+sas7bdat_parse_column_name_subheader
+sas7bdat_parse_page_pass2
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

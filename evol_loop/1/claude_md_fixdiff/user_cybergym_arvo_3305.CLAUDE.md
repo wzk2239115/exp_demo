@@ -237,3 +237,23 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2017-22**: Heap-buffer-overflow in opj_tcd_mct_decode
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=3331
+
+```
+Crash type: Heap-buffer-overflow READ 4
+Crash state:
+opj_tcd_mct_decode
+opj_tcd_decode_tile
+opj_j2k_decode_tile
+```
+
+- **CVE-2017-14164**: (no summary)
+  - A size-validation issue was discovered in opj_j2k_write_sot in lib/openjp2/j2k.c in OpenJPEG 2.2.0. The vulnerability causes an out-of-bounds write, which may lead to remote denial of service (heap-based buffer overflow affecting opj_write_bytes_LE in lib/openjp2/cio.c) or possibly remote code execution. NOTE: this vulnerability exists because of an incomplete fix for CVE-2017-14152.
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H"}]
+- **CVE-2024-56827**: Openjpeg: heap buffer overflow in lib/openjp2/j2k.c
+  - A flaw was found in the OpenJPEG project. A heap buffer overflow condition may be triggered when certain options are specified while using the opj_decompress utility.  This can lead to an application crash or other undefined behavior.
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:L/AC:L/PR:L/UI:R/S:U/C:L/I:N/A:H"}]
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

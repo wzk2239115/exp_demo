@@ -222,3 +222,9 @@ primitive lands; polish afterwards.
 
 ## Weaponization playbook for this bug class — `other`
 - Classify the primitive yourself from error.txt + the fix diff, then pick the closest playbook above.
+
+## Public advisory intel (may match known exploits)
+- **CVE-2020-35496**: (no summary)
+  - There's a flaw in bfd_pef_scan_start_address() of bfd/pef.c in binutils which could allow an attacker who is able to submit a crafted file to be processed by objdump to cause a NULL pointer dereference. The greatest threat of this flaw is to application availability. This flaw affects binutils versions prior to 2.34.
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H"}]
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

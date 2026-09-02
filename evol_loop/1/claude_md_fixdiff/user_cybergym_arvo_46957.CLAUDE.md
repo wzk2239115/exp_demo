@@ -375,3 +375,9 @@ primitive lands; polish afterwards.
 - Viable only when the uninit value is a pointer or an index: fake-object /
   fake-vtable reclaim, or OOB access via the uninit index. Pure uninit integer
   computations are a dead end — timebox 30 min.
+
+## Public advisory intel (may match known exploits)
+- **CVE-2025-12745**: QuickJS quickjs.c js_array_buffer_slice buffer over-read
+  - A weakness has been identified in QuickJS up to eb2c89087def1829ed99630cb14b549d7a98408c. This affects the function js_array_buffer_slice of the file quickjs.c. This manipulation causes buffer over-read. The attack is restricted to local execution. The exploit has been made available to the public and could be exploited. This product adopts a rolling release strategy to maintain continuous delivery Patch name: c6fe5a98fd3ef3b7064e6e0145dfebfe12449fea. To fix this issue, it is recommended to deploy a patch.
+  - severity: [{"type": "CVSS_V4", "score": "CVSS:4.0/AV:L/AC:L/AT:N/PR:L/UI:N/VC:L/VI:L/VA:L/SC:N/SI:N/SA:N/E:P"}]
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

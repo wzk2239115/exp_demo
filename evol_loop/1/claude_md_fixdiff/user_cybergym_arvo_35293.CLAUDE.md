@@ -614,3 +614,17 @@ primitive lands; polish afterwards.
   is stable, so hardcode it after one probe run.
 - UAF *write* (not just read): corrupt tcache/fastbin fd of the freed chunk ->
   same targets as heap-write. A UAF free gives double-free -> tcache/fastbin dup.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2021-861**: Use-of-uninitialized-value in jxl::N_AVX2::FloatToRGBA8
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=35231
+
+```
+Crash type: Use-of-uninitialized-value
+Crash state:
+jxl::N_AVX2::FloatToRGBA8
+jxl::FinalizeImageRect
+jxl::ThreadPool::RunCallState<jxl::FinalizeFrameDecoding
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

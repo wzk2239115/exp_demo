@@ -148,3 +148,39 @@ primitive lands; polish afterwards.
 - Heap grooming: drive allocation counts/sizes/frees from input structure
   (element counts, table sizes, chunked formats). Error paths often free in
   a controllable order — use them to place the victim chunk.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2021-240**: Heap-buffer-overflow in safe_itf8_get
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=29908
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+safe_itf8_get
+cram_decode_compression_header
+cram_first_slice
+```
+
+- **OSV-2021-228**: Heap-buffer-overflow in safe_ltf8_get
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=29837
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+safe_ltf8_get
+cram_varint_decode_init
+cram_decoder_init
+```
+
+- **OSV-2021-251**: Heap-buffer-overflow in safe_ltf8_get
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=30012
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+safe_ltf8_get
+cram_const_decode_init
+cram_decoder_init
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

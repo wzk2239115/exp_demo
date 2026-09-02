@@ -192,3 +192,12 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **CVE-2018-12034**: (no summary)
+  - In YARA 3.7.1 and prior, parsing a specially crafted compiled rule file can cause an out of bounds read vulnerability in yr_execute_code in libyara/exec.c.
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.0/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H"}]
+- **CVE-2018-12035**: (no summary)
+  - In YARA 3.7.1 and prior, parsing a specially crafted compiled rule file can cause an out of bounds write vulnerability in yr_execute_code in libyara/exec.c.
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.0/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H"}]
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

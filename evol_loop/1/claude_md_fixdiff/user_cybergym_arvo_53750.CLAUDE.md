@@ -416,3 +416,42 @@ primitive lands; polish afterwards.
 - Heap grooming: drive allocation counts/sizes/frees from input structure
   (element counts, table sizes, chunked formats). Error paths often free in
   a controllable order — use them to place the victim chunk.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2022-403**: Heap-use-after-free in dwg_add_handleref
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=47319
+
+```
+Crash type: Heap-use-after-free READ 8
+Crash state:
+dwg_add_handleref
+dwg_add_STYLE
+decode_preR13_section
+```
+
+- **OSV-2022-1259**: Heap-buffer-overflow in dwg_decode_INSERT_private
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=54228
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+dwg_decode_INSERT_private
+dwg_decode_INSERT
+dwg_decode_add_object
+```
+
+- **OSV-2022-656**: Heap-buffer-overflow in dwg_decode_LWPOLYLINE_private
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=49630
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+dwg_decode_LWPOLYLINE_private
+dwg_decode_LWPOLYLINE
+dwg_decode_add_object
+```
+
+- **CVE-2026-15520, GHSA-qg2f-8389-w95j**: GNU LibreDWG R2004 Section Decompression decode.c decompress_R2004_section heap-based overflow
+  - A vulnerability was determined in GNU LibreDWG 0.13.4-154-g0b573035. This impacts the function decompress_R2004_section of the file src/decode.c of the component R2004 Section Decompression. Executing a manipulation can lead to heap-based buffer overflow. The attack requires local access. The exploit has been publicly disclosed and may be utilized. Upgrading to version 0.14.8396 will fix this issue. This patch is called 3d0f9fc2eddbd6579c99af3111c37c98f03475d0. You should upgrade the affected component.
+  - severity: [{"type": "CVSS_V4", "score": "CVSS:4.0/AV:L/AC:L/AT:N/PR:L/UI:N/VC:L/VI:L/VA:L/SC:N/SI:N/SA:N/E:P"}]
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

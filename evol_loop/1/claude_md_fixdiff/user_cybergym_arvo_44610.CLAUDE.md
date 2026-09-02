@@ -348,3 +348,20 @@ primitive lands; polish afterwards.
 - Heap grooming: drive allocation counts/sizes/frees from input structure
   (element counts, table sizes, chunked formats). Error paths often free in
   a controllable order — use them to place the victim chunk.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2022-199**: Stack-buffer-overflow in check_user_password_preR5
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=44983
+
+```
+Crash type: Stack-buffer-overflow READ {*}
+Crash state:
+check_user_password_preR5
+pdfi_initialise_Decryption
+pdfi_set_input_stream
+```
+
+- **CVE-2024-46952**: (no summary)
+  - An issue was discovered in pdf/pdf_xref.c in Artifex Ghostscript before 10.04.0. There is a buffer overflow during handling of a PDF XRef stream (related to W array values).
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"}]
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

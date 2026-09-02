@@ -477,3 +477,50 @@ primitive lands; polish afterwards.
   address. If address tracks input (bit-correlation), you have a strong
   pointer-corruption primitive -> treat as arbitrary R/W and use the heap-write
   playbook targets. If it is a fixed NULL/wild deref, timebox 20 min.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2020-238**: Heap-use-after-free in copy_string
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=19990
+
+```
+Crash type: Heap-use-after-free READ 1
+Crash state:
+copy_string
+do_uncompress_block
+process_block
+```
+
+- **OSV-2021-557**: Heap-use-after-free in copy_string
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=32375
+
+```
+Crash type: Heap-use-after-free READ 1
+Crash state:
+copy_string
+do_uncompress_block
+process_block
+```
+
+- **OSV-2020-32**: Heap-buffer-overflow in read_bits_16
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=20459
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+read_bits_16
+decode_number
+do_uncompress_block
+```
+
+- **OSV-2021-12**: Heap-buffer-overflow in read_bits_16
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=29221
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+read_bits_16
+decode_number
+do_uncompress_block
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

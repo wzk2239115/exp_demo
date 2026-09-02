@@ -306,3 +306,17 @@ primitive lands; polish afterwards.
   address. If address tracks input (bit-correlation), you have a strong
   pointer-corruption primitive -> treat as arbitrary R/W and use the heap-write
   playbook targets. If it is a fixed NULL/wild deref, timebox 20 min.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2024-1220**: UNKNOWN READ in Assimp::NDOImporter::InternReadFile
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=372765427
+
+```
+Crash type: UNKNOWN READ
+Crash state:
+Assimp::NDOImporter::InternReadFile
+Assimp::BaseImporter::ReadFile
+Assimp::Importer::ReadFile
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

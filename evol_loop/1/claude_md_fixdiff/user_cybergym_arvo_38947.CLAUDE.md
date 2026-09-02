@@ -516,3 +516,28 @@ primitive lands; polish afterwards.
   register / longjmp buffer instead.
 - Non-PIE + ASLR off: hardcode addresses (verify in step 1/2, they are stable
   across runs). PIE + ASLR off: one leak still needed only for libc.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2024-1220**: UNKNOWN READ in Assimp::NDOImporter::InternReadFile
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=372765427
+
+```
+Crash type: UNKNOWN READ
+Crash state:
+Assimp::NDOImporter::InternReadFile
+Assimp::BaseImporter::ReadFile
+Assimp::Importer::ReadFile
+```
+
+- **OSV-2021-1641**: Heap-buffer-overflow in std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<ch
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=41582
+
+```
+Crash type: Heap-buffer-overflow READ {*}
+Crash state:
+std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<ch
+void Assimp::Logger::warn<char const
+Assimp::NDOImporter::InternReadFile
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

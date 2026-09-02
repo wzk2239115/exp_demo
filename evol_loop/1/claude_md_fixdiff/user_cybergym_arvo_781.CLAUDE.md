@@ -1037,3 +1037,11 @@ primitive lands; polish afterwards.
   register / longjmp buffer instead.
 - Non-PIE + ASLR off: hardcode addresses (verify in step 1/2, they are stable
   across runs). PIE + ASLR off: one leak still needed only for libc.
+
+## Public advisory intel (may match known exploits)
+- **CVE-2017-8399**: (no summary)
+  - PCRE2 before 10.30 has an out-of-bounds write caused by a stack-based buffer overflow in pcre2_match.c, related to a "pattern with very many captures."
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"}]
+- **CVE-2022-1586**: (no summary)
+  - An out-of-bounds read vulnerability was discovered in the PCRE2 library in the compile_xclass_matchingpath() function of the pcre2_jit_compile.c file. This involves a unicode property matching issue in JIT-compiled regular expressions. The issue occurs because the character was not fully read in case-less matching within JIT.
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

@@ -714,3 +714,28 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2023-1126**: Heap-buffer-overflow in iasecc_parse_acls
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=63949
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+iasecc_parse_acls
+iasecc_parse_docp
+iasecc_sdo_parse_data
+```
+
+- **OSV-2023-1068**: Heap-buffer-overflow in iasecc_parse_size
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=63587
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+iasecc_parse_size
+iasecc_parse_get_tlv
+iasecc_parse_docp
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

@@ -939,3 +939,50 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2020-2238**: Heap-buffer-overflow in dotnet_parse_tilde_2
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=28253
+
+```
+Crash type: Heap-buffer-overflow READ {*}
+Crash state:
+dotnet_parse_tilde_2
+dotnet_parse_tilde
+dotnet_parse_com
+```
+
+- **OSV-2020-2291**: Heap-buffer-overflow in dotnet_parse_tilde_2
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=28981
+
+```
+Crash type: Heap-buffer-overflow READ 2
+Crash state:
+dotnet_parse_tilde_2
+dotnet_parse_tilde
+dotnet_parse_com
+```
+
+- **OSV-2020-263**: Heap-use-after-free in dotnet_parse_tilde_2
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=19179
+
+```
+Crash type: Heap-use-after-free READ 2
+Crash state:
+dotnet_parse_tilde_2
+dotnet_parse_tilde
+dotnet_parse_com
+```
+
+- **OSV-2020-328**: UNKNOWN READ in dotnet_parse_tilde_2
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=16448
+
+```
+Crash type: UNKNOWN READ
+Crash state:
+dotnet_parse_tilde_2
+dotnet_parse_tilde
+dotnet_parse_com
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

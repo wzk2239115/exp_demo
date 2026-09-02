@@ -167,3 +167,50 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2020-1990**: Heap-buffer-overflow in sc_oberthur_parse_privateinfo
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=26116
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+sc_oberthur_parse_privateinfo
+sc_pkcs15emu_oberthur_init
+sc_pkcs15emu_oberthur_init_ex
+```
+
+- **OSV-2021-474**: Heap-buffer-overflow in sc_pkcs15emu_oberthur_add_cert
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=31540
+
+```
+Crash type: Heap-buffer-overflow READ {*}
+Crash state:
+sc_pkcs15emu_oberthur_add_cert
+sc_oberthur_parse_publicinfo
+sc_pkcs15emu_oberthur_init
+```
+
+- **OSV-2021-537**: Heap-buffer-overflow in sc_pkcs15emu_oberthur_add_pubkey
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=32149
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+sc_pkcs15emu_oberthur_add_pubkey
+sc_oberthur_parse_publicinfo
+sc_pkcs15emu_oberthur_init
+```
+
+- **OSV-2021-538**: Heap-buffer-overflow in sc_pkcs15emu_oberthur_add_pubkey
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=32202
+
+```
+Crash type: Heap-buffer-overflow READ {*}
+Crash state:
+sc_pkcs15emu_oberthur_add_pubkey
+sc_oberthur_parse_publicinfo
+sc_pkcs15emu_oberthur_init
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

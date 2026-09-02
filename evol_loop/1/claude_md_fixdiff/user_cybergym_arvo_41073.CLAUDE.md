@@ -90,3 +90,50 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2022-1029**: Heap-buffer-overflow in dprint
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=52204
+
+```
+Crash type: Heap-buffer-overflow READ 13
+Crash state:
+dprint
+get_hdr_field
+parse_headers
+```
+
+- **OSV-2022-1044**: Heap-buffer-overflow in parse_via
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=52326
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+parse_via
+get_hdr_field
+parse_headers
+```
+
+- **OSV-2022-1165**: Heap-buffer-overflow in parse_content_length
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=53199
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+parse_content_length
+get_hdr_field
+parse_headers
+```
+
+- **OSV-2022-1173**: Heap-buffer-overflow in parse_content_length
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=53397
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+parse_content_length
+get_hdr_field
+parse_headers
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

@@ -175,3 +175,16 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2021-1239**: Heap-buffer-overflow in stbi__load_and_postprocess_8bit
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=38394
+
+```
+Crash type: Heap-buffer-overflow READ 2
+Crash state:
+stbi__load_and_postprocess_8bit
+stb_image.h
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

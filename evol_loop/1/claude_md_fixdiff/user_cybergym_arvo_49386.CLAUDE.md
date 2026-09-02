@@ -180,3 +180,50 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2022-629**: Heap-buffer-overflow in TetrahedralInterp16
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=49455
+
+```
+Crash type: Heap-buffer-overflow READ 2
+Crash state:
+TetrahedralInterp16
+PrelinEval16
+cmsPipelineEval16
+```
+
+- **OSV-2022-711**: Heap-buffer-overflow in _cmsMAT3per
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=50115
+
+```
+Crash type: Heap-buffer-overflow READ 8
+Crash state:
+_cmsMAT3per
+OptimizeMatrixShaper
+_cmsOptimizePipeline
+```
+
+- **OSV-2022-804**: Heap-buffer-overflow in _cmsMAT3per
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=50725
+
+```
+Crash type: Heap-buffer-overflow READ 8
+Crash state:
+_cmsMAT3per
+OptimizeMatrixShaper
+_cmsOptimizePipeline
+```
+
+- **OSV-2022-843**: Heap-buffer-overflow in _cmsMAT3per
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=50956
+
+```
+Crash type: Heap-buffer-overflow READ 8
+Crash state:
+_cmsMAT3per
+OptimizeMatrixShaper
+_cmsOptimizePipeline
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

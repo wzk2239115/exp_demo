@@ -134,3 +134,50 @@ primitive lands; polish afterwards.
 - Viable only when the uninit value is a pointer or an index: fake-object /
   fake-vtable reclaim, or OOB access via the uninit index. Pure uninit integer
   computations are a dead end — timebox 30 min.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2022-819**: Use-of-uninitialized-value in init_main_qtable
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=50835
+
+```
+Crash type: Use-of-uninitialized-value
+Crash state:
+init_main_qtable
+LibRaw::fuji_decode_strip
+LibRaw::fuji_decode_loop
+```
+
+- **OSV-2022-1093**: Heap-buffer-overflow in LibRaw::kodak_rgb_load_raw
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=52672
+
+```
+Crash type: Heap-buffer-overflow WRITE 2
+Crash state:
+LibRaw::kodak_rgb_load_raw
+LibRaw::kodak_thumb_loader
+LibRaw::unpack_thumb
+```
+
+- **OSV-2022-1107**: Heap-buffer-overflow in LibRaw::kodak_rgb_load_raw
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=52802
+
+```
+Crash type: Heap-buffer-overflow WRITE 2
+Crash state:
+LibRaw::kodak_rgb_load_raw
+LibRaw::kodak_thumb_loader
+LibRaw::unpack_thumb
+```
+
+- **OSV-2022-1159**: Heap-buffer-overflow in LibRaw_buffer_datastream::read
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=53158
+
+```
+Crash type: Heap-buffer-overflow WRITE {*}
+Crash state:
+LibRaw_buffer_datastream::read
+LibRaw::uncompressed_fp_dng_load_raw
+LibRaw::unpack
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

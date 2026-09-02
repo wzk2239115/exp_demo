@@ -746,3 +746,28 @@ primitive lands; polish afterwards.
 
 ## Weaponization playbook for this bug class — `other`
 - Classify the primitive yourself from error.txt + the fix diff, then pick the closest playbook above.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2023-381**: UNKNOWN READ in H5FL__blk_gc_list
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=58701
+
+```
+Crash type: UNKNOWN READ
+Crash state:
+H5FL__blk_gc_list
+H5FL_garbage_coll
+H5FL_term_package
+```
+
+- **OSV-2024-380**: Heap-use-after-free in H5FL__blk_gc_list
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=67830
+
+```
+Crash type: Heap-use-after-free READ 8
+Crash state:
+H5FL__blk_gc_list
+H5FL_blk_free
+H5O__free
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

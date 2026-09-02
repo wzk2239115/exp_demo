@@ -220,3 +220,28 @@ primitive lands; polish afterwards.
   is stable, so hardcode it after one probe run.
 - UAF *write* (not just read): corrupt tcache/fastbin fd of the freed chunk ->
   same targets as heap-write. A UAF free gives double-free -> tcache/fastbin dup.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2021-563**: Heap-use-after-free in AK::NonnullOwnPtr<JS::IndexedPropertyStorage>::operator->
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=32459
+
+```
+Crash type: Heap-use-after-free READ 8
+Crash state:
+AK::NonnullOwnPtr<JS::IndexedPropertyStorage>::operator->
+JS::IndexedProperties::array_like_size
+JS::IndexedProperties::append
+```
+
+- **OSV-2021-804**: Heap-use-after-free in AK::NonnullOwnPtr<JS::IndexedPropertyStorage>::operator->
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=34688
+
+```
+Crash type: Heap-use-after-free READ 8
+Crash state:
+AK::NonnullOwnPtr<JS::IndexedPropertyStorage>::operator->
+JS::IndexedProperties::array_like_size
+JS::IndexedProperties::append
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

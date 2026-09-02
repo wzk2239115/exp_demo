@@ -693,3 +693,50 @@ primitive lands; polish afterwards.
   register / longjmp buffer instead.
 - Non-PIE + ASLR off: hardcode addresses (verify in step 1/2, they are stable
   across runs). PIE + ASLR off: one leak still needed only for libc.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2022-1028**: Heap-buffer-overflow in AffixMgr::compound_check
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=52195
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+AffixMgr::compound_check
+SuggestMgr::checkword
+SuggestMgr::testsug
+```
+
+- **OSV-2022-1042**: Heap-buffer-overflow in AffixMgr::compound_check
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=52317
+
+```
+Crash type: Heap-buffer-overflow READ 16
+Crash state:
+AffixMgr::compound_check
+SuggestMgr::checkword
+SuggestMgr::testsug
+```
+
+- **OSV-2022-1004**: Heap-buffer-overflow in AffixMgr::cpdcase_check
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=51988
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+AffixMgr::cpdcase_check
+AffixMgr::compound_check
+HunspellImpl::checkword
+```
+
+- **OSV-2022-1049**: Stack-buffer-overflow in AffixMgr::suffix_check
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=52397
+
+```
+Crash type: Stack-buffer-overflow READ 1
+Crash state:
+AffixMgr::suffix_check
+AffixMgr::affix_check
+AffixMgr::compound_check
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

@@ -147,3 +147,17 @@ primitive lands; polish afterwards.
   address. If address tracks input (bit-correlation), you have a strong
   pointer-corruption primitive -> treat as arbitrary R/W and use the heap-write
   playbook targets. If it is a fixed NULL/wild deref, timebox 20 min.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2024-98**: UNKNOWN READ in PackLinuxElf32::adjABS
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=66287
+
+```
+Crash type: UNKNOWN READ
+Crash state:
+PackLinuxElf32::adjABS
+PackLinuxElf32::un_asl_dynsym
+PackLinuxElf32::un_shlib_1
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

@@ -862,3 +862,17 @@ primitive lands; polish afterwards.
 - Viable only when the uninit value is a pointer or an index: fake-object /
   fake-vtable reclaim, or OOB access via the uninit index. Pure uninit integer
   computations are a dead end — timebox 30 min.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2022-445**: Stack-buffer-overflow in tlsCheckUncommonALPN
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=47730
+
+```
+Crash type: Stack-buffer-overflow WRITE {*}
+Crash state:
+tlsCheckUncommonALPN
+processClientServerHello
+processTLSBlock
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

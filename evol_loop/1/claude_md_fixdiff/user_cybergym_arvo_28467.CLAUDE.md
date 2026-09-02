@@ -88,3 +88,9 @@ primitive lands; polish afterwards.
   is stable, so hardcode it after one probe run.
 - UAF *write* (not just read): corrupt tcache/fastbin fd of the freed chunk ->
   same targets as heap-write. A UAF free gives double-free -> tcache/fastbin dup.
+
+## Public advisory intel (may match known exploits)
+- **CVE-2021-36086**: (no summary)
+  - The CIL compiler in SELinux 3.2 has a use-after-free in cil_reset_classpermission (called from cil_reset_classperms_set and cil_reset_classperms_list).
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L"}]
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

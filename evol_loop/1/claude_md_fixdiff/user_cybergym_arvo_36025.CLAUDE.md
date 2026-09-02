@@ -291,3 +291,17 @@ primitive lands; polish afterwards.
   address. If address tracks input (bit-correlation), you have a strong
   pointer-corruption primitive -> treat as arbitrary R/W and use the heap-write
   playbook targets. If it is a fixed NULL/wild deref, timebox 20 min.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2023-225**: Heap-buffer-overflow in std::__1::enable_if<true, void>::type APFSBtreeNodeIterator<APFSBtreeNode<apfs_o
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=57364
+
+```
+Crash type: Heap-buffer-overflow READ 2
+Crash state:
+std::__1::enable_if<true, void>::type APFSBtreeNodeIterator<APFSBtreeNode<apfs_o
+APFSBtreeNodeIterator<APFSBtreeNode<apfs_omap_key, apfs_omap_value> >::APFSBtree
+APFSBtreeNodeIterator<APFSBtreeNode<apfs_omap_key, apfs_omap_value> > APFSBtreeN
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

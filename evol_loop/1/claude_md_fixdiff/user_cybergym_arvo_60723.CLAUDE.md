@@ -127,3 +127,28 @@ primitive lands; polish afterwards.
 
 ## Weaponization playbook for this bug class — `other`
 - Classify the primitive yourself from error.txt + the fix diff, then pick the closest playbook above.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2023-405**: Heap-buffer-overflow in _lou_stringHash
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=59057
+
+```
+Crash type: Heap-buffer-overflow READ 2
+Crash state:
+_lou_stringHash
+_lou_translate
+lou_translateString
+```
+
+- **OSV-2023-952**: Heap-buffer-overflow in back_passDoAction
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=62875
+
+```
+Crash type: Heap-buffer-overflow READ 10
+Crash state:
+back_passDoAction
+_lou_backTranslate
+lou_backTranslateString
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

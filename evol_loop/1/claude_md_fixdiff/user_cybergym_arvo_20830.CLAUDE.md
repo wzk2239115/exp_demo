@@ -386,3 +386,50 @@ primitive lands; polish afterwards.
 
 ## Weaponization playbook for this bug class — `other`
 - Classify the primitive yourself from error.txt + the fix diff, then pick the closest playbook above.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2020-1131**: Heap-buffer-overflow in ndpi_search_oscar_tcp_connect
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=21000
+
+```
+Crash type: Heap-buffer-overflow READ 4
+Crash state:
+ndpi_search_oscar_tcp_connect
+check_ndpi_tcp_flow_func
+ndpi_detection_process_packet
+```
+
+- **OSV-2020-1133**: Heap-buffer-overflow in ndpi_search_h323
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=21289
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+ndpi_search_h323
+check_ndpi_tcp_flow_func
+ndpi_detection_process_packet
+```
+
+- **OSV-2020-918**: Heap-buffer-overflow in ndpi_search_oracle
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=21780
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+ndpi_search_oracle
+check_ndpi_tcp_flow_func
+ndpi_detection_process_packet
+```
+
+- **OSV-2020-972**: Heap-buffer-overflow in ndpi_search_irc_tcp
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=21346
+
+```
+Crash type: Heap-buffer-overflow READ 7
+Crash state:
+ndpi_search_irc_tcp
+check_ndpi_tcp_flow_func
+ndpi_detection_process_packet
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

@@ -101,3 +101,17 @@ primitive lands; polish afterwards.
 
 ## Weaponization playbook for this bug class — `other`
 - Classify the primitive yourself from error.txt + the fix diff, then pick the closest playbook above.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2022-15**: Global-buffer-overflow in ZSTD_compressBlock_opt0
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=43365
+
+```
+Crash type: Global-buffer-overflow READ 1
+Crash state:
+ZSTD_compressBlock_opt0
+ZSTD_compressBlock_btopt
+ZSTD_buildSeqStore
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

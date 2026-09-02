@@ -119,3 +119,17 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2020-1325**: Global-buffer-overflow in BEInt<unsigned short, 2>::operator unsigned short
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=21769
+
+```
+Crash type: Global-buffer-overflow READ 2
+Crash state:
+BEInt<unsigned short, 2>::operator unsigned short
+OT::IntType<unsigned short, 2u>::operator unsigned int
+CFF::Charset0::get_glyph
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

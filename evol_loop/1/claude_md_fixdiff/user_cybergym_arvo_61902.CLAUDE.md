@@ -279,3 +279,17 @@ primitive lands; polish afterwards.
 
 ## Weaponization playbook for this bug class — `other`
 - Classify the primitive yourself from error.txt + the fix diff, then pick the closest playbook above.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2023-1012**: Global-buffer-overflow in iusace_quantize_lines
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=63230
+
+```
+Crash type: Global-buffer-overflow READ 4
+Crash state:
+iusace_quantize_lines
+iusace_quantize_spec
+iusace_fd_encode
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

@@ -620,3 +620,28 @@ primitive lands; polish afterwards.
 - Heap grooming: drive allocation counts/sizes/frees from input structure
   (element counts, table sizes, chunked formats). Error paths often free in
   a controllable order — use them to place the victim chunk.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2021-676**: Heap-buffer-overflow in op_Const64
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=33554
+
+```
+Crash type: Heap-buffer-overflow WRITE 8
+Crash state:
+op_Const64
+EvaluateExpression
+m3_LoadModule
+```
+
+- **OSV-2021-689**: UNKNOWN WRITE in Runtime_Release
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=33689
+
+```
+Crash type: UNKNOWN WRITE
+Crash state:
+Runtime_Release
+EvaluateExpression
+InitDataSegments
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

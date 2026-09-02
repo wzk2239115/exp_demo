@@ -561,3 +561,24 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2023-736**: Heap-buffer-overflow in HeifContext::interpret_heif_file
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=61718
+
+```
+Crash type: Heap-buffer-overflow READ 4
+Crash state:
+HeifContext::interpret_heif_file
+HeifContext::read_from_memory
+heif_context_read_from_memory
+```
+
+- **CVE-2026-62377, GHSA-9ww4-9v47-m7pj**: libheif: Reachable assertion in HeifContext::get_track() aborts on a valid-but-empty HEIF sequence file (context.cc:2110)
+  - libheif is a HEIF and AVIF file format decoder and encoder. In 1.23.0 and earlier, a crafted HEIF sequence accepted by heif_context_read_from_memory() can leave the context with no registered sequence tracks and crash when heif_context_get_track(ctx, 0) is called. HeifContext::get_track() in libheif/context.cc executes assert(has_sequence()) before its normal error handling, so assert-enabled builds abort instead of allowing the public wrapper in libheif/api/libheif/heif_sequences.cc to return null. In release builds, removing the assertion lets the track_id zero path dereference m_tracks.begi
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:L"}]
+- **GHSA-9ww4-9v47-m7pj**: (alias of matched advisory; recall public analyses for this ID)
+- **CVE-2026-62289, GHSA-jc8f-p23p-5hjg**: libheif: Integer underflow in Fraction constructor via double clap transform application
+  - libheif is a HEIF and AVIF file format decoder and encoder. In 1.23.0 and earlier, a crafted HEIF or AVIF file containing a clean aperture box can reduce an image dimension to zero and crash or corrupt tiling results when heif_image_handle_get_image_tiling(handle, 1, &tiling) is called. ImageItem::get_heif_image_tiling() returns already transformed dimensions, and process_image_transformations_on_tiling() applies the clean aperture transformation again. The second application passes zero to Box_clap::left_rounded(0), where image_width minus one underflows and constructs Fraction(0xFFFFFFFF, 2)
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:L"}]
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

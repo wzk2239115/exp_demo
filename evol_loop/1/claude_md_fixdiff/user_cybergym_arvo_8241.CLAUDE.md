@@ -335,3 +335,10 @@ primitive lands; polish afterwards.
   is stable, so hardcode it after one probe run.
 - UAF *write* (not just read): corrupt tcache/fastbin fd of the freed chunk ->
   same targets as heap-write. A UAF free gives double-free -> tcache/fastbin dup.
+
+## Public advisory intel (may match known exploits)
+- **CVE-2021-4044, BIT-node-2021-4044, BIT-node-min-2021-4044**: (no summary)
+  - Internally libssl in OpenSSL calls X509_verify_cert() on the client side to verify a certificate supplied by a server. That function may return a negative return value to indicate an internal error (for example out of memory). Such a negative return value is mishandled by OpenSSL and will cause an IO function (such as SSL_connect() or SSL_do_handshake()) to not indicate success and a subsequent call to SSL_get_error() to return the value SSL_ERROR_WANT_RETRY_VERIFY. This return value is only supposed to be returned by OpenSSL if the application has previously called SSL_CTX_set_cert_verify_cal
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"}]
+- **GHSA-mmjf-f5jw-w72q**: (alias of matched advisory; recall public analyses for this ID)
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

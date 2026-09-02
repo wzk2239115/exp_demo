@@ -389,3 +389,9 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **CVE-2024-24476**: (no summary)
+  - A buffer overflow in Wireshark before 4.2.0 allows a remote attacker to cause a denial of service via the pan/addr_resolv.c, and ws_manuf_lookup_str(), size components. NOTE: this is disputed by the vendor because neither release 4.2.0 nor any other release was affected.
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"}]
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

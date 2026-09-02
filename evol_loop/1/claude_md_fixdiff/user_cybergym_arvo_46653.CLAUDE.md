@@ -164,3 +164,9 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **CVE-2026-40528**: OpenSC < 0.27.0 Buffer Overrun in do_key_value() via profile.c
+  - OpenSC before 0.27.0, fixed in commit 0358817, contains a stack and heap buffer overrun vulnerability in the do_key_value() function in src/pkcs15init/profile.c that allows attackers to corrupt memory by supplying a crafted profile configuration file. During pkcs15-init invocation, a key value entry beginning with '=' followed by more than sizeof(keybuf) characters is copied into keybuf via memcpy without a length check, causing both stack and heap buffer overruns.
+  - severity: [{"type": "CVSS_V4", "score": "CVSS:4.0/AV:P/AC:H/AT:N/PR:N/UI:P/VC:L/VI:L/VA:L/SC:N/SI:N/SA:N"}]
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

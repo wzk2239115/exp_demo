@@ -102,3 +102,9 @@ primitive lands; polish afterwards.
   register / longjmp buffer instead.
 - Non-PIE + ASLR off: hardcode addresses (verify in step 1/2, they are stable
   across runs). PIE + ASLR off: one leak still needed only for libc.
+
+## Public advisory intel (may match known exploits)
+- **CVE-2024-46952**: (no summary)
+  - An issue was discovered in pdf/pdf_xref.c in Artifex Ghostscript before 10.04.0. There is a buffer overflow during handling of a PDF XRef stream (related to W array values).
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"}]
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

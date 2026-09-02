@@ -226,3 +226,17 @@ primitive lands; polish afterwards.
 - fastbin (<2.26): A->B->A dup; three allocations later you control fd ->
   land a chunk at (target-0x10) where a valid size field exists nearby
   (hooks region usually has one). Then overwrite `__free_hook`/`__malloc_hook`/GOT.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2020-1231**: Heap-buffer-overflow in find_dom
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=15284
+
+```
+Crash type: Heap-buffer-overflow WRITE {*}
+Crash state:
+find_dom
+opt_loop
+bpf_optimize
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

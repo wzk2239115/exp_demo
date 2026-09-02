@@ -248,3 +248,8 @@ primitive lands; polish afterwards.
 - fastbin (<2.26): A->B->A dup; three allocations later you control fd ->
   land a chunk at (target-0x10) where a valid size field exists nearby
   (hooks region usually has one). Then overwrite `__free_hook`/`__malloc_hook`/GOT.
+
+## Public advisory intel (may match known exploits)
+- **CVE-2022-29824**: (no summary)
+  - In libxml2 before 2.9.14, several buffer handling functions in buf.c (xmlBuf*) and tree.c (xmlBuffer*) don't check for integer overflows. This can result in out-of-bounds memory writes. Exploitation requires a victim to open a crafted, multi-gigabyte XML file. Other software using libxml2's buffer functions, for example libxslt through 1.1.35, is affected as well.
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

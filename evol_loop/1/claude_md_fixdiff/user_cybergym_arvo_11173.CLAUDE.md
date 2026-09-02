@@ -175,3 +175,39 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2018-3**: Heap-buffer-overflow in git__strntol64
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=11194
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+git__strntol64
+git__strntol32
+git_signature__parse
+```
+
+- **OSV-2018-177**: Heap-buffer-overflow in prefixcmp
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=11007
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+prefixcmp
+git__prefixcmp
+git_commit__parse_raw
+```
+
+- **OSV-2018-202**: Heap-buffer-overflow in parse_mode
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=11167
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+parse_mode
+git_tree__parse_raw
+git_object__from_raw
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

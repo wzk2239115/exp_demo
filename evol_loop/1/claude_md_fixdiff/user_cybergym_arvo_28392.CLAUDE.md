@@ -295,3 +295,39 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2021-21**: Segv on unknown address in frame_get_lazychunk
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=29295
+
+```
+Crash type: Segv on unknown address
+Crash state:
+frame_get_lazychunk
+frame_decompress_chunk
+blosc2_schunk_decompress_chunk
+```
+
+- **OSV-2021-27**: Heap-buffer-overflow in ZSTD_createDDict_advanced
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=29369
+
+```
+Crash type: Heap-buffer-overflow READ {*}
+Crash state:
+ZSTD_createDDict_advanced
+ZSTD_createDDict
+blosc_run_decompression_with_context
+```
+
+- **OSV-2021-7**: UNKNOWN READ in blosc_d
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=29171
+
+```
+Crash type: UNKNOWN READ
+Crash state:
+blosc_d
+do_job
+blosc_run_decompression_with_context
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

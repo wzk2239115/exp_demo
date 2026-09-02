@@ -140,3 +140,28 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2022-867**: Heap-buffer-overflow in get_utf_8_string
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=51090
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+get_utf_8_string
+dissect_form_urlencoded
+call_dissector_work
+```
+
+- **OSV-2023-175**: UNKNOWN READ in dissect_oran_c_section
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=56990
+
+```
+Crash type: UNKNOWN READ
+Crash state:
+dissect_oran_c_section
+dissect_oran
+call_dissector_work
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

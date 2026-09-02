@@ -138,3 +138,28 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2018-161**: Heap-buffer-overflow in BEInt<unsigned short, 2>::set
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=11081
+
+```
+Crash type: Heap-buffer-overflow WRITE 1
+Crash state:
+BEInt<unsigned short, 2>::set
+OT::Script::subset
+void OT::OffsetTo<OT::Script, OT::IntType<unsigned short, 2u>, true>::serialize_
+```
+
+- **OSV-2018-112**: Heap-buffer-overflow in BEInt<unsigned short, 2>::operator unsigned short
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=10356
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+BEInt<unsigned short, 2>::operator unsigned short
+OT::BinSearchHeader::operator unsigned int
+OT::OffsetTable::find_table_index
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

@@ -446,3 +446,12 @@ primitive lands; polish afterwards.
 - Heap grooming: drive allocation counts/sizes/frees from input structure
   (element counts, table sizes, chunked formats). Error paths often free in
   a controllable order — use them to place the victim chunk.
+
+## Public advisory intel (may match known exploits)
+- **CVE-2025-60359**: (no summary)
+  - radare2 v5.9.8 and before contains a memory leak in the function r_bin_object_new.
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H"}]
+- **CVE-2023-47016**: (no summary)
+  - radare2 5.8.9 has an out-of-bounds read in r_bin_object_set_items in libr/bin/bobj.c, causing a crash in r_read_le32 in libr/include/r_endian.h.
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"}]
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

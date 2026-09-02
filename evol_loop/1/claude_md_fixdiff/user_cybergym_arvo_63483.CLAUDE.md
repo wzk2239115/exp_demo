@@ -483,3 +483,28 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2022-1198**: Heap-buffer-overflow in dwg_json_LTYPE
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=53617
+
+```
+Crash type: Heap-buffer-overflow READ 8
+Crash state:
+dwg_json_LTYPE
+json_objects_write
+dwg_write_json
+```
+
+- **OSV-2023-397**: Heap-buffer-overflow in json_write_TF
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=58915
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+json_write_TF
+json_preR13_header_write_private
+dwg_write_json
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

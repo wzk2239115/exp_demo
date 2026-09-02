@@ -132,3 +132,10 @@ primitive lands; polish afterwards.
   address. If address tracks input (bit-correlation), you have a strong
   pointer-corruption primitive -> treat as arbitrary R/W and use the heap-write
   playbook targets. If it is a fixed NULL/wild deref, timebox 20 min.
+
+## Public advisory intel (may match known exploits)
+- **CVE-2026-47770, GHSA-3pgx-frr7-3jxp**: jq: stack overflow in deep structural equality
+  - jq is a command-line JSON processor. Prior to 1.8.2, comparing two sufficiently deeply nested arrays with the == operator exhausts the C stack on jq's ordinary command-line surface, resulting in denial of service via stack exhaustion (uncontrolled recursion). The crash occurs in jq's recursive structural comparison code, with the recursion repeating through jvp_array_equal() and jv_equal() in src/jv.c when comparing deeply nested arrays; a nearby sort comparator path through jv_cmp() in src/jv_aux.c overflows the stack at a larger nesting depth from  the same missing recursion guard. Anyone ru
+  - severity: [{"type": "CVSS_V4", "score": "CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:P/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N"}]
+- **GHSA-3pgx-frr7-3jxp**: (alias of matched advisory; recall public analyses for this ID)
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

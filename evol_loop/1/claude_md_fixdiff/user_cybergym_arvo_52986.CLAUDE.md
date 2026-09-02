@@ -267,3 +267,39 @@ primitive lands; polish afterwards.
   is stable, so hardcode it after one probe run.
 - UAF *write* (not just read): corrupt tcache/fastbin fd of the freed chunk ->
   same targets as heap-write. A UAF free gives double-free -> tcache/fastbin dup.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2022-1225**: Heap-use-after-free in gs_font_finalize
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=53847
+
+```
+Crash type: Heap-use-after-free READ 8
+Crash state:
+gs_font_finalize
+gs_gc_reclaim
+ireclaim
+```
+
+- **OSV-2023-34**: Heap-use-after-free in gc_trace
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=55443
+
+```
+Crash type: Heap-use-after-free READ 2
+Crash state:
+gc_trace
+gs_gc_reclaim
+ireclaim
+```
+
+- **OSV-2024-251**: Heap-use-after-free in gx_device_forward_finalize
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=67932
+
+```
+Crash type: Heap-use-after-free READ 8
+Crash state:
+gx_device_forward_finalize
+gx_device_finalize
+gs_gc_reclaim
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

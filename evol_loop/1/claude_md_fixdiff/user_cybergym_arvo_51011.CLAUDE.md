@@ -255,3 +255,28 @@ primitive lands; polish afterwards.
 
 ## Weaponization playbook for this bug class — `other`
 - Classify the primitive yourself from error.txt + the fix diff, then pick the closest playbook above.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2022-1021**: Stack-buffer-underflow in gs_type2_interpret
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=52145
+
+```
+Crash type: Stack-buffer-underflow READ 4
+Crash state:
+gs_type2_interpret
+gs_type1_glyph_info
+pdfi_cff_glyph_info
+```
+
+- **OSV-2022-1148**: Stack-buffer-underflow in gs_type2_interpret
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=53054
+
+```
+Crash type: Stack-buffer-underflow READ 4
+Crash state:
+gs_type2_interpret
+gs_type1_glyph_info
+pdfi_cff_glyph_info
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

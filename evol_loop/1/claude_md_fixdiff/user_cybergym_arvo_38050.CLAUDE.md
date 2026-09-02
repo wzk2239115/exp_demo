@@ -153,3 +153,50 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2021-1330**: Heap-buffer-overflow in parse_content_length
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=38909
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+parse_content_length
+get_hdr_field
+parse_headers
+```
+
+- **OSV-2021-1300**: UNKNOWN READ in get_body
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=38750
+
+```
+Crash type: UNKNOWN READ
+Crash state:
+get_body
+parse_sdp
+fuzz_parse_msg.c
+```
+
+- **OSV-2024-1210**: Heap-buffer-overflow in parse_mixed_content
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=372510377
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+parse_mixed_content
+parse_sdp
+fuzz_parse_msg.c
+```
+
+- **OSV-2021-1221**: Heap-buffer-overflow in parse_via_param
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=38307
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+parse_via_param
+parse_via
+get_hdr_field
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

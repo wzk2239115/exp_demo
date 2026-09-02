@@ -157,3 +157,17 @@ primitive lands; polish afterwards.
 
 ## Weaponization playbook for this bug class — `other`
 - Classify the primitive yourself from error.txt + the fix diff, then pick the closest playbook above.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2022-867**: Heap-buffer-overflow in get_utf_8_string
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=51090
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+get_utf_8_string
+dissect_form_urlencoded
+call_dissector_work
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

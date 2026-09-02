@@ -233,3 +233,50 @@ primitive lands; polish afterwards.
 
 ## Weaponization playbook for this bug class — `other`
 - Classify the primitive yourself from error.txt + the fix diff, then pick the closest playbook above.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2022-351**: UNKNOWN READ in ref_stack_counttomark
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=46705
+
+```
+Crash type: UNKNOWN READ
+Crash state:
+ref_stack_counttomark
+zcounttomark
+gs_interpret
+```
+
+- **OSV-2022-97**: Heap-buffer-overflow in gs_interpret
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=44123
+
+```
+Crash type: Heap-buffer-overflow WRITE 16
+Crash state:
+gs_interpret
+gs_main_run_string_with_length
+gs_main_run_string
+```
+
+- **OSV-2021-1689**: Stack-buffer-underflow in read_xref
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=42294
+
+```
+Crash type: Stack-buffer-underflow WRITE 1
+Crash state:
+read_xref
+pdfi_read_xref
+pdfi_set_input_stream
+```
+
+- **OSV-2021-1707**: Negative-size-param in general_endcidrange_func
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=42479
+
+```
+Crash type: Negative-size-param
+Crash state:
+general_endcidrange_func
+cmap_endcidrange_func
+pdfi_pscript_interpret
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

@@ -296,3 +296,28 @@ primitive lands; polish afterwards.
 - Viable only when the uninit value is a pointer or an index: fake-object /
   fake-vtable reclaim, or OOB access via the uninit index. Pure uninit integer
   computations are a dead end — timebox 30 min.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2020-1173**: Use-of-uninitialized-value in psscan
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=21670
+
+```
+Crash type: Use-of-uninitialized-value
+Crash state:
+psscan
+document_load
+spectre_read_fuzzer.c
+```
+
+- **OSV-2020-1175**: Use-of-uninitialized-value in readline
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=21638
+
+```
+Crash type: Use-of-uninitialized-value
+Crash state:
+readline
+psscan
+document_load
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

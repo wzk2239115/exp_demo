@@ -191,3 +191,39 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2021-766**: Negative-size-param in frame_get_vlmetalayers
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=34259
+
+```
+Crash type: Negative-size-param
+Crash state:
+frame_get_vlmetalayers
+frame_to_schunk
+blosc2_schunk_from_buffer
+```
+
+- **OSV-2021-847**: Heap-buffer-overflow in frame_get_vlmetalayers
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=35086
+
+```
+Crash type: Heap-buffer-overflow READ {*}
+Crash state:
+frame_get_vlmetalayers
+frame_to_schunk
+blosc2_schunk_from_buffer
+```
+
+- **OSV-2022-486**: Heap-buffer-overflow in frame_get_vlmetalayers
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=48052
+
+```
+Crash type: Heap-buffer-overflow READ {*}
+Crash state:
+frame_get_vlmetalayers
+frame_to_schunk
+blosc2_schunk_from_buffer
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

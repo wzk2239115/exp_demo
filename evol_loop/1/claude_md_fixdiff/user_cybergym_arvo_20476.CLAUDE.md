@@ -753,3 +753,28 @@ primitive lands; polish afterwards.
 - Viable only when the uninit value is a pointer or an index: fake-object /
   fake-vtable reclaim, or OOB access via the uninit index. Pure uninit integer
   computations are a dead end — timebox 30 min.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2020-1008**: Use-of-uninitialized-value in ihevc_recon_32x32
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=20476
+
+```
+Crash type: Use-of-uninitialized-value
+Crash state:
+ihevc_recon_32x32
+ihevcd_iquant_itrans_recon_ctb
+ihevcd_process
+```
+
+- **OSV-2020-792**: Use-of-uninitialized-value in ihevc_inter_pred_chroma_copy_ssse3
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=23197
+
+```
+Crash type: Use-of-uninitialized-value
+Crash state:
+ihevc_inter_pred_chroma_copy_ssse3
+ihevcd_inter_pred_ctb
+ihevcd_process
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

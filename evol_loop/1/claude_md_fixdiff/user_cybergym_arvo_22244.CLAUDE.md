@@ -190,3 +190,50 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2020-1715**: Stack-buffer-overflow in ndpi_search_kerberos
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=25446
+
+```
+Crash type: Stack-buffer-overflow READ 1
+Crash state:
+ndpi_search_kerberos
+check_ndpi_udp_flow_func
+ndpi_check_flow_func
+```
+
+- **OSV-2020-185**: Heap-buffer-overflow in ndpi_search_kerberos
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=22419
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+ndpi_search_kerberos
+check_ndpi_udp_flow_func
+ndpi_check_flow_func
+```
+
+- **OSV-2020-774**: Heap-buffer-overflow in ndpi_search_kerberos
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=23021
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+ndpi_search_kerberos
+check_ndpi_udp_flow_func
+ndpi_check_flow_func
+```
+
+- **OSV-2020-922**: Heap-buffer-overflow in ndpi_search_h323
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=22342
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+ndpi_search_h323
+check_ndpi_udp_flow_func
+ndpi_detection_process_packet
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

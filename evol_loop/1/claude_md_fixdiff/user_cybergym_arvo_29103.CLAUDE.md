@@ -593,3 +593,20 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2020-2299**: Heap-buffer-overflow in ato16
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=29103
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+ato16
+TLSX_CSR_Parse
+TLSX_Parse
+```
+
+- **CVE-2026-5460**: Heap Use-After-Free in PQC Hybrid KeyShare Error Cleanup in wolfSSL TLS 1.3
+  - A heap use-after-free exists in wolfSSL's TLS 1.3 post-quantum cryptography (PQC) hybrid KeyShare processing. In the error handling path of TLSX_KeyShare_ProcessPqcHybridClient() in src/tls.c, the inner function TLSX_KeyShare_ProcessPqcClient_ex() frees a KyberKey object upon encountering an error. The caller then invokes TLSX_KeyShare_FreeAll(), which attempts to call ForceZero() on the already-freed KyberKey, resulting in writes of zero bytes over freed heap memory.
+  - severity: [{"type": "CVSS_V4", "score": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:N/VI:L/VA:L/SC:N/SI:N/SA:N"}]
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

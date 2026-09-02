@@ -534,3 +534,39 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2023-1370**: Heap-buffer-overflow in process_one_read
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=65383
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+process_one_read
+cram_encode_container
+cram_flush_container_mt
+```
+
+- **OSV-2024-20**: Heap-buffer-overflow in bam_aux_get
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=65820
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+bam_aux_get
+process_one_read
+cram_encode_container
+```
+
+- **OSV-2024-74**: Heap-buffer-overflow in hts_log
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=66369
+
+```
+Crash type: Heap-buffer-overflow READ {*}
+Crash state:
+hts_log
+process_one_read
+cram_encode_container
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

@@ -188,3 +188,39 @@ primitive lands; polish afterwards.
 
 ## Weaponization playbook for this bug class — `other`
 - Classify the primitive yourself from error.txt + the fix diff, then pick the closest playbook above.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2021-1723**: Global-buffer-overflow in ps_font_def_func
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=42613
+
+```
+Crash type: Global-buffer-overflow READ {*}
+Crash state:
+ps_font_def_func
+pdfi_pscript_interpret
+pdfi_read_ps_font
+```
+
+- **OSV-2021-1724**: Segv on unknown address in chunk_obj_alloc
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=42633
+
+```
+Crash type: Segv on unknown address
+Crash state:
+chunk_obj_alloc
+chunk_alloc_bytes
+pdfi_pscript_interpret
+```
+
+- **OSV-2021-1806**: Stack-buffer-overflow in pdfi_open_CIDFont_substitute_file
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=44034
+
+```
+Crash type: Stack-buffer-overflow WRITE {*}
+Crash state:
+pdfi_open_CIDFont_substitute_file
+pdfi_load_font
+pdfi_read_type0_font
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

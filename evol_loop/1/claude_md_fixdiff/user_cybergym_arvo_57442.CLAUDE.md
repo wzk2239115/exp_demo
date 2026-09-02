@@ -401,3 +401,17 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2023-286**: Heap-buffer-overflow in _dwarf_memcpy_noswap_bytes
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=57766
+
+```
+Crash type: Heap-buffer-overflow READ 4
+Crash state:
+_dwarf_memcpy_noswap_bytes
+_dwarf_extract_string_offset_via_str_offsets
+dwarf_formstring
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

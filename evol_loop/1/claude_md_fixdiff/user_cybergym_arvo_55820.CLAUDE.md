@@ -675,3 +675,28 @@ primitive lands; polish afterwards.
 
 ## Weaponization playbook for this bug class — `other`
 - Classify the primitive yourself from error.txt + the fix diff, then pick the closest playbook above.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2023-460**: Segv on unknown address in config__bridge_cleanup
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=59604
+
+```
+Crash type: Segv on unknown address
+Crash state:
+config__bridge_cleanup
+config__cleanup
+mosquitto_fuzz_main
+```
+
+- **OSV-2023-67**: Heap-use-after-free in config__cleanup
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=56009
+
+```
+Crash type: Heap-use-after-free READ 8
+Crash state:
+config__cleanup
+mosquitto_fuzz_main
+run_broker
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

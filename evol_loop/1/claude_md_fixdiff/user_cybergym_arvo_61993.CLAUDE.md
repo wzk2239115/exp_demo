@@ -363,3 +363,17 @@ primitive lands; polish afterwards.
 
 ## Weaponization playbook for this bug class — `other`
 - Classify the primitive yourself from error.txt + the fix diff, then pick the closest playbook above.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2022-573**: Heap-buffer-overflow in zim_ReflectionEnumBackedCase_getBackingValue
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=49068
+
+```
+Crash type: Heap-buffer-overflow READ 4
+Crash state:
+zim_ReflectionEnumBackedCase_getBackingValue
+execute_internal
+fuzzer_execute_internal
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

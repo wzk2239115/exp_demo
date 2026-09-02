@@ -175,3 +175,34 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2022-1089**: Heap-buffer-overflow in parse_subrip
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=52634
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+parse_subrip
+parse_webvtt
+gst_sub_parse_chain
+```
+
+- **OSV-2022-1168**: Heap-buffer-overflow in parse_subrip
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=53210
+
+```
+Crash type: Heap-buffer-overflow WRITE {*}
+Crash state:
+parse_subrip
+parse_webvtt
+gst_sub_parse_chain
+```
+
+- **CVE-2025-47806**: (no summary)
+  - In GStreamer through 1.26.1, the subparse plugin's parse_subrip_time function may write data past the bounds of a stack buffer, leading to a crash.
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:L"}]
+- **CVE-2024-47835**: GHSL-2024-263: Gstreamer NULL-pointer dereference in LRC subtitle parser
+  - GStreamer is a library for constructing graphs of media-handling components. A null pointer dereference vulnerability has been detected in the parse_lrc function within gstsubparse.c. The parse_lrc function calls strchr() to find the character ']' in the string line. The pointer returned by this call is then passed to g_strdup(). However, if the string line does not contain the character ']', strchr() returns NULL, and a call to g_strdup(start + 1) leads to a null pointer dereference. This vulnerability is fixed in 1.24.10.
+  - severity: [{"type": "CVSS_V4", "score": "CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:P/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N"}]
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

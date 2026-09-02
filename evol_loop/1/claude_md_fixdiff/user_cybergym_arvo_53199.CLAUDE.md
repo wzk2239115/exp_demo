@@ -111,3 +111,28 @@ primitive lands; polish afterwards.
 
 ## Weaponization playbook for this bug class — `other`
 - Classify the primitive yourself from error.txt + the fix diff, then pick the closest playbook above.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2022-1165**: Heap-buffer-overflow in parse_content_length
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=53199
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+parse_content_length
+get_hdr_field
+parse_headers
+```
+
+- **OSV-2022-1173**: Heap-buffer-overflow in parse_content_length
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=53397
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+parse_content_length
+get_hdr_field
+parse_headers
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

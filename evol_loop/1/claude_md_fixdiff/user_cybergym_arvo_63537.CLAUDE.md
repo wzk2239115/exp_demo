@@ -112,3 +112,50 @@ primitive lands; polish afterwards.
 - fastbin (<2.26): A->B->A dup; three allocations later you control fd ->
   land a chunk at (target-0x10) where a valid size field exists nearby
   (hooks region usually has one). Then overwrite `__free_hook`/`__malloc_hook`/GOT.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2023-1267**: Heap-buffer-overflow in dwg_free_object
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=64829
+
+```
+Crash type: Heap-buffer-overflow READ 8
+Crash state:
+dwg_free_object
+dwg_free
+llvmfuzz.c
+```
+
+- **OSV-2022-400**: Heap-double-free in dwg_free_XRECORD_private
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=47300
+
+```
+Crash type: Heap-double-free
+Crash state:
+dwg_free_XRECORD_private
+dwg_free_XRECORD
+dwg_free_object
+```
+
+- **OSV-2022-653**: Heap-double-free in dwg_free_common_entity_data
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=49602
+
+```
+Crash type: Heap-double-free
+Crash state:
+dwg_free_common_entity_data
+dwg_free_DIMENSION_ANG2LN
+dwg_free_object
+```
+
+- **OSV-2022-1176**: Heap-double-free in dwg_free
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=53483
+
+```
+Crash type: Heap-double-free
+Crash state:
+dwg_free
+llvmfuzz.c
+dwg_free
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

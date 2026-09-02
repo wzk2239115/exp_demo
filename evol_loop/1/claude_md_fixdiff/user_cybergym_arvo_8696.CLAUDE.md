@@ -531,3 +531,23 @@ primitive lands; polish afterwards.
 - Viable only when the uninit value is a pointer or an index: fake-object /
   fake-vtable reclaim, or OOB access via the uninit index. Pure uninit integer
   computations are a dead end — timebox 30 min.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2020-1158**: Use-of-uninitialized-value in JBIG2HuffmanDecoder::buildTable
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=18802
+
+```
+Crash type: Use-of-uninitialized-value
+Crash state:
+JBIG2HuffmanDecoder::buildTable
+JBIG2Stream::readTextRegionSeg
+JBIG2Stream::readSegments
+```
+
+- **CVE-2024-56378**: (no summary)
+  - libpoppler.so in Poppler through 24.12.0 has an out-of-bounds read vulnerability within the JBIG2Bitmap::combine function in JBIG2Stream.cc.
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:L/A:N"}]
+- **CVE-2025-32365**: (no summary)
+  - Poppler before 25.04.0 allows crafted input files to trigger out-of-bounds reads in the JBIG2Bitmap::combine function in JBIG2Stream.cc because of a misplaced isOk check.
+  - severity: [{"type": "CVSS_V3", "score": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"}]
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

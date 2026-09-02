@@ -334,3 +334,39 @@ primitive lands; polish afterwards.
 - Heap grooming: drive allocation counts/sizes/frees from input structure
   (element counts, table sizes, chunked formats). Error paths often free in
   a controllable order — use them to place the victim chunk.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2023-46**: Heap-buffer-overflow in json_cquote
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=55607
+
+```
+Crash type: Heap-buffer-overflow WRITE 1
+Crash state:
+json_cquote
+json_preR13_header_write_private
+dwg_write_json
+```
+
+- **OSV-2022-1198**: Heap-buffer-overflow in dwg_json_LTYPE
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=53617
+
+```
+Crash type: Heap-buffer-overflow READ 8
+Crash state:
+dwg_json_LTYPE
+json_objects_write
+dwg_write_json
+```
+
+- **OSV-2023-135**: Heap-buffer-overflow in json_cquote
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=56473
+
+```
+Crash type: Heap-buffer-overflow READ 1
+Crash state:
+json_cquote
+dwg_json_LTYPE
+json_objects_write
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

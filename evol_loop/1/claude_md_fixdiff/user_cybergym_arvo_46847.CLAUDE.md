@@ -261,3 +261,50 @@ primitive lands; polish afterwards.
   is stable, so hardcode it after one probe run.
 - UAF *write* (not just read): corrupt tcache/fastbin fd of the freed chunk ->
   same targets as heap-write. A UAF free gives double-free -> tcache/fastbin dup.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2023-1267**: Heap-buffer-overflow in dwg_free_object
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=64829
+
+```
+Crash type: Heap-buffer-overflow READ 8
+Crash state:
+dwg_free_object
+dwg_free
+llvmfuzz.c
+```
+
+- **OSV-2022-400**: Heap-double-free in dwg_free_XRECORD_private
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=47300
+
+```
+Crash type: Heap-double-free
+Crash state:
+dwg_free_XRECORD_private
+dwg_free_XRECORD
+dwg_free_object
+```
+
+- **OSV-2021-620**: Segv on unknown address in dwg_free_summaryinfo
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=33059
+
+```
+Crash type: Segv on unknown address
+Crash state:
+dwg_free_summaryinfo
+dwg_free
+llvmfuzz.c
+```
+
+- **OSV-2022-1176**: Heap-double-free in dwg_free
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=53483
+
+```
+Crash type: Heap-double-free
+Crash state:
+dwg_free
+llvmfuzz.c
+dwg_free
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

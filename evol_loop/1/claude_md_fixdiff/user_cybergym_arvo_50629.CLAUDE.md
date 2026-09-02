@@ -110,3 +110,39 @@ primitive lands; polish afterwards.
 - Otherwise treat as info-leak support for a second bug and timebox it:
   30 min max, then re-read the fix diff for a write primitive you missed
   (same missing bound often guards a write too).
+
+## Public advisory intel (may match known exploits)
+- **OSV-2022-999**: Heap-buffer-overflow in std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<ch
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=51972
+
+```
+Crash type: Heap-buffer-overflow READ {*}
+Crash state:
+std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<ch
+Exiv2::QuickTimeVideo::userDataDecoder
+Exiv2::QuickTimeVideo::tagDecoder
+```
+
+- **OSV-2022-830**: Heap-buffer-overflow in Exiv2::MemIo::read
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=50901
+
+```
+Crash type: Heap-buffer-overflow WRITE 8
+Crash state:
+Exiv2::MemIo::read
+Exiv2::BasicIo::readOrThrow
+Exiv2::QuickTimeVideo::tagDecoder
+```
+
+- **OSV-2023-1161**: Heap-buffer-overflow in std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<ch
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=64151
+
+```
+Crash type: Heap-buffer-overflow READ {*}
+Crash state:
+std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<ch
+Exiv2::QuickTimeVideo::NikonTagsDecoder
+Exiv2::QuickTimeVideo::userDataDecoder
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.

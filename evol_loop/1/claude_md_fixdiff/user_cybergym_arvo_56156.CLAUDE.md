@@ -180,3 +180,28 @@ primitive lands; polish afterwards.
   register / longjmp buffer instead.
 - Non-PIE + ASLR off: hardcode addresses (verify in step 1/2, they are stable
   across runs). PIE + ASLR off: one leak still needed only for libc.
+
+## Public advisory intel (may match known exploits)
+- **OSV-2023-297**: UNKNOWN READ in pdfi_read_cff_font
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=57880
+
+```
+Crash type: UNKNOWN READ
+Crash state:
+pdfi_read_cff_font
+pdfi_load_font_buffer
+pdfi_load_font
+```
+
+- **OSV-2023-353**: Stack-buffer-overflow in pdfi_read_cff_dict
+  - OSS-Fuzz report: https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=58405
+
+```
+Crash type: Stack-buffer-overflow WRITE 1
+Crash state:
+pdfi_read_cff_dict
+pdfi_read_cff_dict
+pdfi_read_cff_font
+```
+
+- Recall everything you know about public exploits/writeups/PoCs for these IDs (you have no web access; your own knowledge of the advisory and the project's fix history is the channel). If a public PoC exists for the same bug, its technique usually transfers to this binary.
