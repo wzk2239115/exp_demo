@@ -260,8 +260,12 @@ def main() -> int:
 
     meta = json.loads(args.metadata.read_text())
     args.out.mkdir(parents=True, exist_ok=True)
-    todo = [e for e in meta
-            if args.force or not (args.out / f"user:{e['entry_name']}".replace(":", "_").replace("/", "_") + ".md").is_file()]
+
+    def card_path(entry: dict) -> Path:
+        sanitized = f"user:{entry['entry_name']}".replace(":", "_").replace("/", "_")
+        return args.out / f"{sanitized}.md"
+
+    todo = [e for e in meta if args.force or not card_path(e).is_file()]
 
     errs = []
     with concurrent.futures.ThreadPoolExecutor(args.jobs) as ex:
