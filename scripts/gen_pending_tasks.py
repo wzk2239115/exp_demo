@@ -30,6 +30,8 @@ def main() -> None:
     ap.add_argument("--output", type=Path, default=DEFAULT_OUT)
     ap.add_argument("--core", action="store_true",
                     help="只保留核心可武器化类型 (heap-write/uaf/double-free/stack-bof)")
+    ap.add_argument("--exclude-file", type=Path, default=None,
+                    help="额外剔除清单(如其他模型已解的题,一行一个 task_id)")
     args = ap.parse_args()
 
     def norm(t: str) -> str:
@@ -41,6 +43,12 @@ def main() -> None:
             if line.strip():
                 solved_n.add(norm(line.split("\t")[0]))
 
+    extra_excl: set[str] = set()
+    if args.exclude_file and args.exclude_file.is_file():
+        for line in args.exclude_file.read_text().splitlines():
+            if line.strip():
+                extra_excl.add(norm(line.strip()))
+
     ctype: dict[str, str] = {}
     if args.crash_types.is_file():
         for line in args.crash_types.read_text().splitlines()[1:]:
@@ -51,7 +59,7 @@ def main() -> None:
     tasks = [l.strip() for l in args.full.read_text().splitlines() if l.strip()]
     kept, skipped, dropped_noncore = [], 0, 0
     for t in tasks:
-        if norm(t) in solved_n:
+        if norm(t) in solved_n or norm(t) in extra_excl:
             skipped += 1
             continue
         if args.core:
