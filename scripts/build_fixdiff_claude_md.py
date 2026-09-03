@@ -410,6 +410,7 @@ def build_claude_md(
     intel_section: str | None = None,
     env_card: str = "",
     exemplar: str = "",
+    bp_intel: str = "",
 ) -> str:
     parts: list[str] = []
     parts.append(CONTRACT.rstrip())
@@ -427,6 +428,8 @@ def build_claude_md(
     parts.append("````diff\n" + diff_body.rstrip() + "\n````")
     if exemplar:
         parts.append(exemplar)
+    if bp_intel:
+        parts.append(bp_intel)
     if env_card:
         parts.append(env_card)
     parts.append(CHECKLIST.rstrip())
@@ -468,6 +471,12 @@ def main() -> int:
         default=REPO_ROOT / "evol_loop/1/exemplars",
         help="dir of <project>.md / <crash_type>.md worked-example files",
     )
+    ap.add_argument(
+        "--boxpwnr-dir",
+        type=Path,
+        default=REPO_ROOT / "evol_loop/1/boxpwnr_intel/distilled",
+        help="dir of user_cybergym_arvo_<num>.md crash-repro intel (BoxPwnr L1)",
+    )
     args = ap.parse_args()
 
     meta = json.loads(args.metadata.read_text())
@@ -484,7 +493,7 @@ def main() -> int:
         intel = json.loads(args.intel.read_text())
 
     n_total = n_merged = n_patchonly = n_trunc = n_fallback = 0
-    n_playbook = n_intel = n_card = n_exemplar = 0
+    n_playbook = n_intel = n_card = n_exemplar = n_bp = 0
     sizes: list[int] = []
     for entry in meta:
         task_dir = args.task_data / entry["entry_name"]
@@ -519,9 +528,16 @@ def main() -> int:
                 exemplar = cand.read_text(errors="replace").strip()
                 break
 
+        bp_intel = ""
+        m = re.search(r"arvo_(\d+)$", entry["entry_name"])
+        if m:
+            bp = args.boxpwnr_dir / f"user_cybergym_arvo_{m.group(1)}.md"
+            if bp.is_file():
+                bp_intel = bp.read_text(errors="replace").strip()
+
         content = build_claude_md(
             prior, diff_body, stats, crash_type, intel_section,
-            env_card=env_card, exemplar=exemplar,
+            env_card=env_card, exemplar=exemplar, bp_intel=bp_intel,
         )
 
         (args.out / f"{sanitized}.CLAUDE.md").write_text(content)
@@ -534,6 +550,7 @@ def main() -> int:
         n_intel += bool(intel_section)
         n_card += bool(env_card)
         n_exemplar += bool(exemplar)
+        n_bp += bool(bp_intel)
         sizes.append(len(content))
 
     sizes.sort()
@@ -541,7 +558,7 @@ def main() -> int:
         f"generated {n_total} files -> {args.out}\n"
         f"  with prior notes: {n_merged}, patch-only: {n_patchonly}\n"
         f"  truncated (sections omitted): {n_trunc}, raw-fallback: {n_fallback}\n"
-        f"  with playbook: {n_playbook}, intel: {n_intel}, env-card: {n_card}, exemplar: {n_exemplar}\n"
+        f"  with playbook: {n_playbook}, intel: {n_intel}, env-card: {n_card}, exemplar: {n_exemplar}, boxpwnr: {n_bp}\n"
         f"  size: min {sizes[0]} p50 {sizes[len(sizes)//2]} p95 {sizes[int(len(sizes)*.95)]} max {sizes[-1]}"
     )
     return 0 if n_total else 1
