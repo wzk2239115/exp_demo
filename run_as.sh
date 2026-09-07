@@ -60,7 +60,10 @@ cd "$PROJECT_ROOT"
 _ENV_KEYS=(GLM_PROVIDER GLM_BASE_URL GLM_MODEL MODEL_ALIAS GLM_API_KEY GLM_ANTHROPIC_BASE \
            TASKS_FILE AGENT BUDGET TIMEOUT MAX_WORKERS \
            PROXY_PORT_BASE CONTROLLER_PORT_BASE CONTROLLER_PORT \
-           FORCE_PROXY_RESTART FORCE_RUN STOP_GRACE INTERACTIVE DIRECT)
+           FORCE_PROXY_RESTART FORCE_RUN STOP_GRACE INTERACTIVE DIRECT \
+           REQUIRE_NO_ASLR \
+           CLAUDE_CODE_1M_CONTEXT CLAUDE_CODE_AUTO_COMPACT_WINDOW \
+           CLAUDE_CODE_CONTINUE_ON_EXIT CLAUDE_CODE_MAX_ROUNDS)
 declare -A _CLI_ENV=()
 for _k in "${_ENV_KEYS[@]}"; do
   if [[ -n "${!_k+x}" ]]; then _CLI_ENV[$_k]=${!_k}; fi
@@ -796,6 +799,28 @@ ensure_firewall_open() {
 }
 
 # ─────────────────────────────────────────────
+#  宿主机 ASLR 预检(榜单 profile = 关闭缓解措施)
+# ─────────────────────────────────────────────
+# 基准数据按"关闭缓解措施"跑:宿主机 randomize_va_space 应为 0。ASLR 是全局
+# sysctl,主机重启后会恢复为 2 —— deepseek 批次(869 题 aslr=0)之后曾出现整批
+# 在 ASLR=2 下跑的情况(system_config.json 可事后核查)。默认只警告,
+# REQUIRE_NO_ASLR=1 时直接拒绝启动。
+check_host_aslr() {
+  local v
+  v=$(cat /proc/sys/kernel/randomize_va_space 2>/dev/null || echo "?")
+  if [[ "$v" == "0" ]]; then
+    return 0
+  fi
+  local msg="宿主机 ASLR 未关闭(randomize_va_space=$v,基准 profile 期望 0)。
+  每个任务的 system_config.json 会记录该值,事后可核查。关闭(影响整机):
+    echo 0 > /proc/sys/kernel/randomize_va_space"
+  if [[ "${REQUIRE_NO_ASLR:-0}" == "1" ]]; then
+    die "$msg"
+  fi
+  warn "$msg"
+}
+
+# ─────────────────────────────────────────────
 #  同名互斥锁
 # ─────────────────────────────────────────────
 # 同一名字同一时间只允许一个 run_as.sh 会话(评测或交互)。锁 fd 保持打开直到
@@ -843,6 +868,7 @@ shift
 
 BRIDGE="$(bridge_ip)"
 check_agent_tool          # 工具不可用就别白起 controller/proxy 了
+check_host_aslr           # ASLR 开着时警告(REQUIRE_NO_ASLR=1 则拒绝启动)
 
 SLOT="$(assign_or_get_slot "$USER_NAME")"
 PROXY_PORT=$((PROXY_PORT_BASE + SLOT - 1))

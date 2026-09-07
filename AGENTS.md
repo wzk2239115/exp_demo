@@ -72,6 +72,37 @@ export ANTHROPIC_AUTH_TOKEN=<360 key>
 - 超时按任务 7200s(2h)设置: `TIMEOUT=7200`。
 - 别给正在续跑的 out 目录改名加日期后缀,会导致续跑找不到旧结果。
 
+## cc 上下文窗口 / 自动压缩 / 提前退出(2026-09-07 修复)
+
+背景: cc 2.1.x 对**未知模型名**(deepseek-v4-pro 等 proxy 别名)按 200K 窗口记账,
+自动压缩在 ~160K 触发(deepseek 批次实测 arvo_22244 在 162,454 tokens 压缩,
+70 分钟丢光利用状态后原地打转到超时)。cc 2.1.119 二进制逆向确认的机制:
+
+- 模型最大窗口: 模型名带 `[1m]` 后缀 → cc 记 1M(`D2()`);未知模型 fallback 200K。
+  `[1m]` 在发请求前被剥离,proxy/allowed_models 侧模型名不变;会附加
+  `context-1m-2025-08-07` beta header(cc 本来每请求就带多个 beta,360 已容忍)。
+- 压缩阈值: env `CLAUDE_CODE_AUTO_COMPACT_WINDOW`(cc 侧 clamp [100K, 1M]),
+  实际生效值 = min(模型窗口, 配置值) → **必须同时开 `[1m]` 才能到 768K**。
+
+`claude_code.py` 现在默认注入(`[1m]` 后缀 + 768K 阈值),并带**提前退出续跑循环**:
+cc 退出(幻觉 end_turn / API 崩溃)但 `/workspace/flag.txt` 仍为空时,用 `--continue`
++ 续跑提示词重新拉起(恢复同一会话),直到 flag 出现 / 超时 / 轮数上限。
+管道加了 `set -o pipefail`,exit code 不再被 tee 吃掉(原来恒 0,crash 与 timeout 124 全被掩盖)。
+
+host 侧环境变量(可写 `.glm_env`,见 run_as.sh `_ENV_KEYS`):
+
+- `CLAUDE_CODE_1M_CONTEXT`(默认 1): cc 侧模型名加 `[1m]` 后缀。
+  **真实窗口 <1M 的模型(如 gpt-5.5)必须设 0**,否则超长请求上游 400。
+- `CLAUDE_CODE_AUTO_COMPACT_WINDOW`(默认 768000)。
+- `CLAUDE_CODE_CONTINUE_ON_EXIT`(默认 1): 提前退出续跑;0 = 旧行为单发。
+- `CLAUDE_CODE_MAX_ROUNDS`(默认 8): 每任务最多拉起次数(超时仍兜底)。
+- `REQUIRE_NO_ASLR`(默认 0): 1 = 宿主机 `randomize_va_space != 0` 时 run_as.sh
+  拒绝启动。默认只警告(重启后 ASLR 恢复 2 曾导致整批跑在 ASLR 开启下;
+  base.py 也会把警告写进每个任务的 task.log,system_config.json 可事后核查)。
+
+升级 cc 到 2.1.252(支持 /goal): 见下文安装一节,把版本号换成 2.1.252 重装即可;
+`static_build_node_and_agents.sh` 默认值已同步改。
+
 ### 标准续跑命令
 
 ```bash
@@ -134,10 +165,10 @@ find . -name claude_code.rendered.log -exec grep -l "Content block not found" {}
 R=/data/wangzekai/exploitgym/data/runtime/node; cd $R/bin
 # 主包(postinstall 需要 PATH,脚本已修 commit 1e31b47)
 PATH="$R/bin:$PATH" NPM_CONFIG_PREFIX="$R" npm_config_prefix="$R" \
-  ./node ./npm install -g --prefix "$R" --include=optional @anthropic-ai/claude-code@2.1.119
+  ./node ./npm install -g --prefix "$R" --include=optional @anthropic-ai/claude-code@2.1.252
 # glibc 原生包 + 直连二进制(注意: 二进制在包根目录,没有 bin/ 子目录)
 PATH="$R/bin:$PATH" NPM_CONFIG_PREFIX="$R" npm_config_prefix="$R" \
-  ./node ./npm install -g --prefix "$R" --include=optional @anthropic-ai/claude-code-linux-x64@2.1.119
+  ./node ./npm install -g --prefix "$R" --include=optional @anthropic-ai/claude-code-linux-x64@2.1.252
 ln -sf ../lib/node_modules/@anthropic-ai/claude-code-linux-x64/claude $R/bin/claude
 $R/bin/claude-code.sh --version && cd /data/wangzekai/exploitgym && bash scripts/setup/validate.sh
 ```

@@ -26,7 +26,7 @@ from pathlib import Path
 import docker
 import requests
 
-from cybergym.task.metadata import TASK_METADATA, V8_TASK_METADATA, KERNEL_TASK_METADATA
+from cybergym.task.metadata import KERNEL_TASK_METADATA, TASK_METADATA, V8_TASK_METADATA
 from cybergym.task.token import generate_flag, generate_token
 from cybergym.task.workspace import TaskType, prepare_workspace
 
@@ -63,10 +63,13 @@ def _enhance(cname: str, task_id: str) -> None:
         if not src.is_file() and not src.is_dir():
             print(f"[enhance] WARN skip (missing): {src}")
             return False
-        r = subprocess.run(["docker", "cp", str(src), f"{cname}:{dst}"],
-                            capture_output=True, text=True)
+        r = subprocess.run(
+            ["docker", "cp", str(src), f"{cname}:{dst}"], capture_output=True, text=True
+        )
         if r.returncode != 0:
-            print(f"[enhance] WARN docker cp {src.name} -> {dst}: {r.stderr.strip()[:120]}")
+            print(
+                f"[enhance] WARN docker cp {src.name} -> {dst}: {r.stderr.strip()[:120]}"
+            )
         return r.returncode == 0
 
     print("[enhance] mounting agent tools + guidance + roadmap ...")
@@ -79,7 +82,9 @@ def _enhance(cname: str, task_id: str) -> None:
     prior = None
     evol = root / "evol_loop"
     if stem and evol.is_dir():
-        for it in sorted(evol.iterdir(), reverse=True):  # iteration 0,1,2... newest first
+        for it in sorted(
+            evol.iterdir(), reverse=True
+        ):  # iteration 0,1,2... newest first
             cand = it / "flash_claude_md" / f"{stem}.CLAUDE.md"
             if cand.is_file():
                 prior = cand
@@ -87,26 +92,48 @@ def _enhance(cname: str, task_id: str) -> None:
     if prior:
         cp(prior, "/workspace/PRIOR_NOTES.md")
         # append to CLAUDE.md so Claude Code auto-loads both general guidance + task notes
-        subprocess.run(["docker", "exec", cname, "bash", "-c",
-                         "printf '\\n\\n## Prior-run notes for this task\\n\\n' "
-                         ">> /workspace/CLAUDE.md && cat /workspace/PRIOR_NOTES.md "
-                         ">> /workspace/CLAUDE.md"], capture_output=True)
-        print(f"[enhance] appended per-task prior notes from {prior.parent.name}/{prior.name}")
+        subprocess.run(
+            [
+                "docker",
+                "exec",
+                cname,
+                "bash",
+                "-c",
+                "printf '\\n\\n## Prior-run notes for this task\\n\\n' "
+                ">> /workspace/CLAUDE.md && cat /workspace/PRIOR_NOTES.md "
+                ">> /workspace/CLAUDE.md",
+            ],
+            capture_output=True,
+        )
+        print(
+            f"[enhance] appended per-task prior notes from {prior.parent.name}/{prior.name}"
+        )
     else:
         print("[enhance] no per-task prior notes found (ok for first run on this task)")
 
     # Build LD_PRELOAD lib (needs gcc; kernel/v8 images may lack it — warn, not fatal)
     r = subprocess.run(
-        ["docker", "exec", "-u", "0", cname, "bash", "-c",
-         "cd /workspace/tools/ldpreload_toolbox 2>/dev/null && bash build.sh >/tmp/_b.log 2>&1; "
-         "chmod +x /workspace/tools/*.sh /workspace/tools/*.py 2>/dev/null; "
-         "tail -1 /tmp/_b.log 2>/dev/null"],
-        capture_output=True, text=True,
+        [
+            "docker",
+            "exec",
+            "-u",
+            "0",
+            cname,
+            "bash",
+            "-c",
+            "cd /workspace/tools/ldpreload_toolbox 2>/dev/null && bash build.sh >/tmp/_b.log 2>&1; "
+            "chmod +x /workspace/tools/*.sh /workspace/tools/*.py 2>/dev/null; "
+            "tail -1 /tmp/_b.log 2>/dev/null",
+        ],
+        capture_output=True,
+        text=True,
     )
     if r.stdout.strip():
         print(f"[enhance] ldpreload build: {r.stdout.strip()[:100]}")
-    print("[enhance] done. /workspace now has: tools/ CLAUDE.md exploit_roadmap.md"
-          + (f" PRIOR_NOTES.md" if prior else ""))
+    print(
+        "[enhance] done. /workspace now has: tools/ CLAUDE.md exploit_roadmap.md"
+        + (" PRIOR_NOTES.md" if prior else "")
+    )
 
 
 def main():
@@ -139,7 +166,10 @@ def main():
     flag_seed = os.environ.get("CYBERGYM_SERVER_FLAG_SEED", "")
     admin_key = os.environ.get("CYBERGYM_ADMIN_KEY", "")
     if not salt or not flag_seed:
-        print("ERROR: CYBERGYM_SERVER_SALT / CYBERGYM_SERVER_FLAG_SEED not set", file=sys.stderr)
+        print(
+            "ERROR: CYBERGYM_SERVER_SALT / CYBERGYM_SERVER_FLAG_SEED not set",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     image, binary, entry_name = resolve_task(task_id)
@@ -220,21 +250,36 @@ def main():
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = Path(tmpdir)
 
+        # cc-side model name: "[1m]" suffix makes cc account a 1M context
+        # window for unknown models (suffix is stripped before requests hit
+        # the proxy); pair with CLAUDE_CODE_AUTO_COMPACT_WINDOW so compaction
+        # fires at 768k instead of ~160k tokens (cc default: 200k window).
+        cc_model = args.model
+        if os.environ.get("CLAUDE_CODE_1M_CONTEXT", "1").strip().lower() not in (
+            "0",
+            "false",
+            "no",
+            "off",
+        ) and not cc_model.lower().endswith("[1m]"):
+            cc_model = f"{args.model}[1m]"
+
         (tmpdir / "env.sh").write_text(
             "#!/bin/bash\n"
             f"export ANTHROPIC_BASE_URL={args.proxy_url}\n"
             f"export ANTHROPIC_API_KEY={proxy_key}\n"
-            f"export ANTHROPIC_MODEL={args.model}\n"
+            f"export ANTHROPIC_MODEL={cc_model}\n"
             "export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1\n"
             "export IS_SANDBOX=1\n"
             "export CLAUDE_CONFIG_DIR=/logs\n"
             "export API_TIMEOUT_MS=3000000\n"
             "export CLAUDE_CODE_MAX_RETRIES=10\n"
             f"export CLAUDE_CODE_EFFORT_LEVEL={args.effort}\n"
-            f"export ANTHROPIC_DEFAULT_SONNET_MODEL={args.model}\n"
-            f"export ANTHROPIC_DEFAULT_OPUS_MODEL={args.model}\n"
-            f"export ANTHROPIC_DEFAULT_HAIKU_MODEL={args.model}\n"
-            f"export CLAUDE_CODE_SUBAGENT_MODEL={args.model}\n"
+            "export CLAUDE_CODE_AUTO_COMPACT_WINDOW="
+            f"{os.environ.get('CLAUDE_CODE_AUTO_COMPACT_WINDOW') or '768000'}\n"
+            f"export ANTHROPIC_DEFAULT_SONNET_MODEL={cc_model}\n"
+            f"export ANTHROPIC_DEFAULT_OPUS_MODEL={cc_model}\n"
+            f"export ANTHROPIC_DEFAULT_HAIKU_MODEL={cc_model}\n"
+            f"export CLAUDE_CODE_SUBAGENT_MODEL={cc_model}\n"
         )
 
         if not task_id.startswith("kernel:"):
@@ -243,11 +288,11 @@ def main():
                 "export ASAN_OPTIONS=handle_segv=0:handle_sigbus=0:handle_abort=0"
                 ":disable_coredump=0:abort_on_error=1\n"
                 "export UBSAN_OPTIONS=handle_segv=0:halt_on_error=1:abort_on_error=1\n"
-                f'if nm /out/{binary} | grep -q __afl_area_ptr 2>/dev/null; then\n'
+                f"if nm /out/{binary} | grep -q __afl_area_ptr 2>/dev/null; then\n"
                 f'    exec /out/{binary} "$@"\n'
-                f'else\n'
+                f"else\n"
                 f'    exec /out/{binary} -handle_segv=0 -handle_abrt=0 -verbosity=0 "$@"\n'
-                f'fi\n'
+                f"fi\n"
             )
 
         # Render the REAL evaluation workspace (task README + task data such as
@@ -262,29 +307,36 @@ def main():
             }
             if task_id.startswith("kernel:"):
                 readme_text = prepare_workspace(
-                    TaskType.KERNEL_EXPLOITATION, task_id, tmpdir,
-                    include_pov=True, **common,
+                    TaskType.KERNEL_EXPLOITATION,
+                    task_id,
+                    tmpdir,
+                    include_pov=True,
+                    **common,
                 )
             elif task_id.startswith("v8:"):
                 m = V8_TASK_METADATA[task_id]
                 readme_text = prepare_workspace(
-                    TaskType.V8_EXPLOITATION, task_id, tmpdir,
+                    TaskType.V8_EXPLOITATION,
+                    task_id,
+                    tmpdir,
                     no_sandbox=bool(getattr(m, "image_no_sandbox", None)),
                     **common,
                 )
             else:
                 readme_text = prepare_workspace(
-                    TaskType.USER_EXPLOITATION, task_id, tmpdir,
-                    target="EXEC", **common,
+                    TaskType.USER_EXPLOITATION,
+                    task_id,
+                    tmpdir,
+                    target="EXEC",
+                    **common,
                 )
-            print(f"[4/4] Eval workspace rendered (README + task data)")
+            print("[4/4] Eval workspace rendered (README + task data)")
         except Exception as e:
             print(f"[4/4] WARN: eval workspace unavailable ({e}); generic README")
 
         if readme_text:
             (tmpdir / "README.md").write_text(
-                readme_text
-                + "\n\n## Interactive session notes\n\n"
+                readme_text + "\n\n## Interactive session notes\n\n"
                 "This is an interactive session (same task, same rules as evaluation).\n\n"
                 "- Start the agent:\n"
                 "  ```bash\n"
@@ -338,12 +390,20 @@ def main():
         )
 
     container.exec_run(
-        ["bash", "-c", "chmod +x /workspace/env.sh /workspace/run.sh "
-         "/workspace/run_vm.sh 2>/dev/null || true"]
+        [
+            "bash",
+            "-c",
+            "chmod +x /workspace/env.sh /workspace/run.sh "
+            "/workspace/run_vm.sh 2>/dev/null || true",
+        ]
     )
-    print(f"[4/4] Workspace ready")
+    print("[4/4] Workspace ready")
 
-    if args.enhance or os.environ.get("EVOL_ENHANCE", "").lower() in ("1", "true", "yes"):
+    if args.enhance or os.environ.get("EVOL_ENHANCE", "").lower() in (
+        "1",
+        "true",
+        "yes",
+    ):
         _enhance(cname, task_id)
 
     print(f"\nDropping into {cname} ...")

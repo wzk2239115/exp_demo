@@ -117,7 +117,7 @@ verify() {
 reproduce() {
   local ver
   ver=$(grep -m1 '"version"' "$CLAUDE_DIR/package.json" | sed -E 's/.*"version"[^0-9]*([0-9.]+)".*/\1/' 2>/dev/null)
-  [ -n "$ver" ] || ver="2.1.119"
+  [ -n "$ver" ] || ver="2.1.252"
   warn "---- 复现模式：重装 @anthropic-ai/claude-code@${ver}（需要 npmjs 网络）----"
   [ -x "$NODE_PREFIX/bin/node" ] && [ -x "$NODE_PREFIX/bin/npm" ] || die "静态 node/npm 不存在，无法复现"
   # 坑 1：npm lifecycle 脚本需要 node 在 PATH 上，否则 postinstall 报 127

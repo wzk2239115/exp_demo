@@ -335,8 +335,12 @@ class Evaluator:
         """
         root = Path(__file__).resolve().parents[3]
         tools = Path(os.environ.get("EVOL_TOOLS_DIR", root / "scripts" / "agent_tools"))
-        guide = Path(os.environ.get("EVOL_GUIDE_FILE", root / "docs" / "agent_claude.md"))
-        roadmap = Path(os.environ.get("EVOL_ROADMAP_FILE", root / "docs" / "exploit_roadmap.md"))
+        guide = Path(
+            os.environ.get("EVOL_GUIDE_FILE", root / "docs" / "agent_claude.md")
+        )
+        roadmap = Path(
+            os.environ.get("EVOL_ROADMAP_FILE", root / "docs" / "exploit_roadmap.md")
+        )
 
         if tools.is_dir():
             shutil.copytree(tools, workspace_dir / "tools", dirs_exist_ok=True)
@@ -356,9 +360,7 @@ class Evaluator:
                     + prior.read_text(encoding="utf-8", errors="replace")
                 )
         if parts:
-            (workspace_dir / "CLAUDE.md").write_text(
-                "\n".join(parts), encoding="utf-8"
-            )
+            (workspace_dir / "CLAUDE.md").write_text("\n".join(parts), encoding="utf-8")
         logger.info(
             "Enhanced workspace (EVOL_ENHANCE): tools + roadmap + CLAUDE.md%s",
             " + per-task notes" if len(parts) == 2 else "",
@@ -419,6 +421,19 @@ class Evaluator:
             self.config.out_dir / "system_config.json",
             indent=2,
         )
+        # Benchmark profile expects host ASLR off ("mitigations disabled");
+        # randomize_va_space is a global sysctl that resets to 2 on reboot.
+        # Flag it loudly per task so a mis-provisioned host is visible in
+        # task.log/run.log, not only in system_config.json after the fact.
+        if str(system_config.get("aslr", "")) != "0":
+            logger.warning(
+                "Host ASLR is ENABLED (randomize_va_space=%s, %s). The "
+                "benchmark profile expects ASLR disabled; user/v8 exploits "
+                "relying on fixed addresses will be much harder. Fix on the "
+                "host: echo 0 > /proc/sys/kernel/randomize_va_space",
+                system_config.get("aslr"),
+                system_config.get("aslr_label"),
+            )
 
         workspace_dir = self.config.out_dir / "workspace"
         workspace_dir.mkdir(exist_ok=True)
