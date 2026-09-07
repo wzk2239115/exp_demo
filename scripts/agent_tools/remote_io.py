@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
-"""remote_io.py — 远程靶机交互封装,防"无输出反复发 PoC"。
+"""remote_io.py — remote-target interaction wrapper; prevents "fire PoCs repeatedly with no output".
 
-封装:socket 连接+超时重试、输出缓冲、stderr 捕获、二进制安全传输、
-输出通道验证(正常 vs 异常输入对比,确认 stdout/stderr 转不转发)。
+Wraps: socket connect + timeout/retry, output buffering, stderr capture,
+binary-safe transfer, and output-channel verification (normal vs abnormal input
+comparison to see whether stdout/stderr are forwarded).
 
-用法(在容器内):
+Usage (inside the container):
     from remote_io import RemoteTarget
     t = RemoteTarget("1.2.3.4", 8000)
-    # 先验证输出通道(第一次连就做)
+    # verify the output channel first (do it on the first connection)
     t.verify_channel()
-    # 发 PoC 拿输出
+    # send a PoC and get output
     resp = t.send(b"\\xff\\xff\\xff\\xff" + open("poc","rb").read(), timeout=5)
-    # 大文件:分块 base64 或 HTTP 拉
+    # large files: chunked base64 or HTTP pull
     t.upload_b64(open("exploit","rb").read(), dest="/tmp/exploit")
 """
 from __future__ import annotations
@@ -20,7 +21,7 @@ import base64, socket, sys, time, os
 class RemoteTarget:
     def __init__(self, host: str, port: int, verbose: bool = True):
         self.host, self.port, self.verbose = host, port, verbose
-        self.channel = {"stdout": None, "stderr": None}  # None=未知, True=转发, False=不转发
+        self.channel = {"stdout": None, "stderr": None}  # None=unknown, True=forwarded, False=not forwarded
 
     def _log(self, *a):
         if self.verbose:
@@ -32,20 +33,22 @@ class RemoteTarget:
         return s
 
     def verify_channel(self, timeout: float = 5.0) -> dict:
-        """正常 vs 异常输入对比,确认输出通道。第一次连远程就做,别闷头发 PoC。
+        """Normal vs abnormal input comparison to confirm the output channel. Do this on
+        the first remote connection; don't blindly fire PoCs.
 
-        发一个正常输入看 stdout 有无回显;再发一个会触发 stderr 的输入看 stderr 转不转发。
-        退出码/文件副作用/时序差作为无回显时的判据。
+        Send a normal input and see if stdout echoes; then send an input that triggers
+        stderr and see whether stderr is forwarded. Use exit code / file side effects /
+        timing differences as criteria when nothing is echoed.
         """
         results = {}
-        # 正常输入:看 stdout
+        # Normal input: watch stdout
         try:
             s = self._connect(timeout)
             s.sendall(b"AAAA\n")
             time.sleep(0.5)
             try:
                 data = s.recv(4096)
-                self.channel["stdout"] = bool(data) and b"AAAA" not in data  # 回显≠banner
+                self.channel["stdout"] = bool(data) and b"AAAA" not in data  # echo != banner
                 results["stdout_echo"] = bool(data)
                 results["stdout_sample"] = data[:80]
             except socket.timeout:
@@ -55,10 +58,10 @@ class RemoteTarget:
         except Exception as e:
             results["stdout_error"] = str(e)
 
-        # 异常输入(触发崩溃/stderr)
+        # Abnormal input (trigger crash/stderr)
         try:
             s = self._connect(timeout)
-            s.sendall(b"\xff\xff\xff\xff\n")  # 非法 magic
+            s.sendall(b"\xff\xff\xff\xff\n")  # illegal magic
             time.sleep(0.5)
             try:
                 data = s.recv(4096)
@@ -72,15 +75,15 @@ class RemoteTarget:
         except Exception as e:
             results["stderr_error"] = str(e)
 
-        self._log("通道验证:", results)
+        self._log("channel verification:", results)
         if not self.channel["stdout"]:
-            self._log("stdout 不转发 → 别靠 stdout 调试,用退出码/文件副作用/时序差")
+            self._log("stdout not forwarded -> don't debug via stdout; use exit code / file side effects / timing")
         if not self.channel["stderr"]:
-            self._log("stderr 不转发 → 别靠 stderr,同上")
+            self._log("stderr not forwarded -> don't rely on stderr; same as above")
         return results
 
     def send(self, payload: bytes, timeout: float = 10.0, read_secs: float = 2.0) -> bytes:
-        """发 payload,读 read_secs 秒输出。失败重试 3 次。"""
+        """Send a payload, read output for read_secs seconds. Retries 3 times on failure."""
         last_err = None
         for attempt in range(3):
             try:
@@ -107,16 +110,16 @@ class RemoteTarget:
         raise ConnectionError(f"send failed after 3 tries: {last_err}")
 
     def send_with_size(self, poc: bytes, timeout: float = 10.0) -> bytes:
-        """很多靶场协议:先发 8 字节 hex 长度,再发 poc。"""
+        """Many target protocols: send an 8-byte hex length first, then the poc."""
         size_hex = f"{len(poc):08x}".encode()
         return self.send(size_hex + poc, timeout=timeout)
 
     def upload_b64(self, data: bytes, dest: str = "/tmp/upload",
                    chunk: int = 8000, timeout: float = 5.0) -> bool:
-        """二进制安全传输:分块 base64,服务端拼回。绕大小限制。
+        """Binary-safe transfer: chunked base64, reassembled server-side. Bypasses size limits.
 
-        假设服务端能执行 shell(已 RCE 后期传文件,或协议允许命令注入)。
-        无 RCE 时用 HTTP 拉取替代。
+        Assumes the server can run a shell (file transfer after RCE, or the protocol
+        allows command injection). Without RCE, use an HTTP pull instead.
         """
         b64 = base64.b64encode(data).decode()
         self._log(f"upload {len(data)} bytes -> {dest} ({len(b64)} b64 chars, {chunk}/chunk)")
@@ -135,7 +138,7 @@ class RemoteTarget:
         return True
 
     def probe_exit_code(self, payload: bytes, timeout: float = 5.0) -> int | None:
-        """无回显时,用退出码判断(payload 后加 `; echo $?`)。"""
+        """With no echo, use the exit code as the signal (append `; echo $?` to the payload)."""
         resp = self.send(payload + b"; echo EXITCODE:$?\n", timeout=timeout, read_secs=1.0)
         for line in resp.split(b"\n"):
             if b"EXITCODE:" in line:

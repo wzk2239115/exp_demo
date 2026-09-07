@@ -1,15 +1,15 @@
-/* malloc_trace.c — LD_PRELOAD malloc/free 追踪,绕 ptrace 限制。
+/* malloc_trace.c — LD_PRELOAD malloc/free tracing; sidesteps ptrace restrictions.
 
-设计要点(避免上一轮的 fprintf 递归崩溃):
-  - 用 write(2) 直出,绝不用 printf/fprintf(它们内部调 malloc → 递归段错误)
-  - 重入保护:__thread 标志,防 hook 内再触发 hook
-  - 默认只记大小/地址,可 env 控制(MTRACE=1 全量,MTRACE_BACKTRACE=1 带栈)
+Design notes (avoiding last round's fprintf recursion crash):
+  - Emit via write(2) directly; never printf/fprintf (they call malloc internally -> recursive segfault)
+  - Reentrancy guard: __thread flag prevents the hook from re-triggering itself
+  - Records size/address by default; env-controlled (MTRACE=1 full, MTRACE_BACKTRACE=1 with stack)
 
-编译: gcc -shared -fPIC -o malloc_trace.so malloc_trace.c -ldl -rdynamic
-用法:
+Build: gcc -shared -fPIC -o malloc_trace.so malloc_trace.c -ldl -rdynamic
+Usage:
   LD_PRELOAD=/workspace/tools/ldpreload_toolbox/malloc_trace.so MTRACE=1 ./vuln
-  LD_PRELOAD=.../malloc_trace.so MTRACE_BACKTRACE=1 ./vuln < poc   # 带栈
-  LD_PRELOAD=.../malloc_trace.so MTRACE_FILTER=128 ./vuln          # 只看 128 字节 chunk
+  LD_PRELOAD=.../malloc_trace.so MTRACE_BACKTRACE=1 ./vuln < poc   # with stack
+  LD_PRELOAD=.../malloc_trace.so MTRACE_FILTER=128 ./vuln          # watch only 128-byte chunks
 */
 #define _GNU_SOURCE
 #include <dlfcn.h>
@@ -24,7 +24,7 @@ static void  (*real_free)(void*) = NULL;
 static void* (*real_calloc)(size_t, size_t) = NULL;
 static void* (*real_realloc)(void*, size_t) = NULL;
 
-static __thread int in_hook = 0;        /* 重入保护 */
+static __thread int in_hook = 0;        /* reentrancy guard */
 static int trace_on = -1, bt_on = -1, filter_sz = 0;
 
 static void init_real(void) {
@@ -34,7 +34,7 @@ static void init_real(void) {
     real_free   = dlsym(RTLD_NEXT, "free");
 }
 
-static void wbuf(const char* s, int n) { ssize_t _r = write(2, s, n); (void)_r; }  /* 直出 stderr */
+static void wbuf(const char* s, int n) { ssize_t _r = write(2, s, n); (void)_r; }  /* direct write to stderr */
 
 static int env_on(const char* name, int* cached) {
     if (*cached < 0) *cached = getenv(name) != NULL ? 1 : 0;
@@ -50,17 +50,17 @@ static void emit(const char* op, void* p, size_t sz) {
     if (env_on("MTRACE_BACKTRACE", &bt_on)) {
         void* frames[12];
         int nf = backtrace(frames, 12);
-        backtrace_symbols_fd(frames, nf, 2);  /* 直出 fd 2,不经 printf */
+        backtrace_symbols_fd(frames, nf, 2);  /* direct write to fd 2, bypassing printf */
     }
 }
 
-/* 构造期 calloc 不能用 dlsym 的结果(可能递归),用静态缓冲 */
+/* Constructor-time calloc can't use the dlsym result (may recurse); use a static buffer */
 static char tmpbuf[8192]; static size_t tmpoff = 0;
 void* calloc(size_t n, size_t sz) {
     if (!real_calloc) {
         if (in_hook) { size_t need=n*sz; if(tmpoff+need<=sizeof(tmpbuf)){void*p=tmpbuf+tmpoff;tmpoff+=need;return p;} return tmpbuf; }
         in_hook=1; init_real(); in_hook=0;
-        if (!real_calloc) { /* 仍没有 */ size_t need=n*sz; if(tmpoff+need<=sizeof(tmpbuf)){void*p=tmpbuf+tmpoff;tmpoff+=need;return p;} return tmpbuf; }
+        if (!real_calloc) { /* still unavailable */ size_t need=n*sz; if(tmpoff+need<=sizeof(tmpbuf)){void*p=tmpbuf+tmpoff;tmpoff+=need;return p;} return tmpbuf; }
     }
     void* p = real_calloc(n, sz);
     if (!in_hook) { in_hook=1; emit("calloc", p, n*sz); in_hook=0; }
@@ -80,12 +80,12 @@ void* realloc(void* old, size_t sz) {
 }
 void free(void* p) {
     if (!real_free) { init_real(); }
-    if (p && (char*)p >= tmpbuf && (char*)p < tmpbuf+sizeof(tmpbuf)) return; /* 静态缓冲,跳过 */
+    if (p && (char*)p >= tmpbuf && (char*)p < tmpbuf+sizeof(tmpbuf)) return; /* static buffer; skip */
     if (real_free) real_free(p);
     if (!in_hook && p) { in_hook=1; emit("free", p, 0); in_hook=0; }
 }
 
-/* 库加载时初始化 filter */
+/* Initialize the filter at library load time */
 __attribute__((constructor))
 static void _init_box(void) {
     const char* f = getenv("MTRACE_FILTER");

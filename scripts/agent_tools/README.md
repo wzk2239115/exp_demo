@@ -1,33 +1,36 @@
-# agent_tools — 给 agent 用的工具箱 + 指引
+# agent_tools — toolbox + guidance for the agent
 
-部署进容器(交互验证用):
+Deploy into the container (for interactive verification):
 ```bash
-# 起交互容器后,在宿主机跑(把工具+指引拷进容器 /workspace):
-CNAME=interactive-xxx  # 你的容器名
+# After starting an interactive container, run on the host (copies tools + guidance
+# into the container's /workspace):
+CNAME=interactive-xxx  # your container name
 docker cp scripts/agent_tools "$CNAME:/workspace/tools"
 docker cp docs/agent_claude.md "$CNAME:/workspace/CLAUDE.md"
 docker cp docs/exploit_roadmap.md "$CNAME:/workspace/exploit_roadmap.md"
 docker exec -u0 "$CNAME" chmod +x /workspace/tools/*.sh /workspace/tools/*.py
-# LD_PRELOAD 库在容器内构建:
+# Build the LD_PRELOAD library inside the container:
 docker exec -u0 -w /workspace/tools/ldpreload_toolbox "$CNAME" bash build.sh
 ```
 
-agent 在 /workspace 跑 cc 时自动加载 CLAUDE.md(指引),卡住时读 exploit_roadmap.md(技法地图)。
+When the agent runs cc in /workspace it auto-loads CLAUDE.md (the guide), and reads
+exploit_roadmap.md (the technique map) when stuck.
 
-## 工具清单
+## Tools
 
-| 文件 | 干什么 | 对应卡点 |
+| File | What it does | Stuck point it addresses |
 |---|---|---|
-| env_check.sh | 开局环境预检,输出 facts.json | 环境/工具、时间(省前20步) |
-| remote_io.py | 远程交互封装+输出通道验证 | 远程交互未打通 |
-| core_analyzer.py | ptrace 禁时读 core dump | 环境/工具限制 |
-| check_fact.py | 已验证结论缓存,防重复验证 | 静态审计死循环 |
-| ldpreload_toolbox/ | malloc/free 追踪(绕 ptrace) | 环境限制(166×最高频) |
-| vm_lifecycle.sh | VM 起/等/传/清 | 内核题环境混乱 |
+| env_check.sh | Startup environment pre-check; writes facts.json | Environment/tools, time (saves the first ~20 steps) |
+| remote_io.py | Remote interaction wrapper + output-channel verification | Remote interaction not established |
+| core_analyzer.py | Read core dumps when ptrace is banned | Environment/tool restrictions |
+| check_fact.py | Cache of verified facts; prevents re-verification | Static-audit dead loops |
+| ldpreload_toolbox/ | malloc/free tracing (bypasses ptrace) | Environment restrictions (166x most frequent) |
+| vm_lifecycle.sh | VM start/wait/transfer/cleanup | Kernel-task environment confusion |
+| skel/ | Per-vuln-class exploit skeletons (bof/uaf/heap/ghostscript); start by filling in a template | Low willingness to write code / low exploit completion |
 
-## 指引/地图
+## Guidance / maps
 
-| 文件 | 干什么 |
+| File | What it does |
 |---|---|
-| agent_claude.md | 流程纪律(B1-B4 skill + C1-C3 prompt),放 /workspace/CLAUDE.md |
-| exploit_roadmap.md | 思路地图+冷门技法,放 /workspace/exploit_roadmap.md |
+| agent_claude.md | Process discipline (B1-B4 skills + C1-C3 prompts); placed at /workspace/CLAUDE.md |
+| exploit_roadmap.md | Idea map + obscure techniques; placed at /workspace/exploit_roadmap.md |

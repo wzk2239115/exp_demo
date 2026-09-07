@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""check_fact.py — 已验证结论缓存,防重复验证同一事实(防审计死循环)。
+"""check_fact.py — cache of verified facts; prevents re-verifying the same fact (audit dead loops).
 
-env_check.sh 写入 /workspace/facts.json;本工具在其上增删查。
-行动前先 query,已验证就别再验;新结论 add 进去。
+env_check.sh writes /workspace/facts.json; this tool queries/adds to it.
+Query before acting: if it's already verified, don't verify again; add new conclusions.
 
-用法:
-    python3 /workspace/tools/check_fact.py query ptrace        # 查
+Usage:
+    python3 /workspace/tools/check_fact.py query ptrace        # query a fact
     python3 /workspace/tools/check_fact.py add heap_layout "drr_class=112B->km128" step=15
-    python3 /workspace/tools/check_fact.py list                # 全列
-    python3 /workspace/tools/check_fact.py dup "grep cls_fw"   # 这个动作做过了吗
+    python3 /workspace/tools/check_fact.py list                # list all
+    python3 /workspace/tools/check_fact.py dup "grep cls_fw"   # has this action been done before?
 """
 from __future__ import annotations
 import json, os, sys, time
@@ -39,9 +39,9 @@ def main() -> None:
         v = d.get(key)
         if v is not None:
             print(f"[fact] {key} = {v}")
-            sys.exit(0)  # 已验证,别再验
+            sys.exit(0)  # verified; don't re-verify
         else:
-            print(f"[fact] {key} 未记录,需要验证")
+            print(f"[fact] {key} not recorded; needs verification")
             sys.exit(2)
 
     if cmd == "add":
@@ -54,12 +54,12 @@ def main() -> None:
                 meta["step"] = a[5:]
         d[key] = meta
         save(d)
-        print(f"[fact] 记录 {key} = {val}")
+        print(f"[fact] recorded {key} = {val}")
         return
 
     if cmd == "list":
         if not d:
-            print("(无已记录事实)"); return
+            print("(no recorded facts)"); return
         for k, v in d.items():
             if isinstance(v, dict):
                 print(f"  {k} = {v.get('value', v)}")
@@ -68,17 +68,17 @@ def main() -> None:
         return
 
     if cmd == "dup":
-        # 这个动作/命令做过了吗(防死循环重复执行同一 grep/objdump)
+        # Has this action/command been done before? (prevents dead-looping the same grep/objdump)
         needle = sys.argv[2]
         actions = d.get("_actions", [])
         count = sum(1 for a in actions if needle in a.get("cmd", ""))
         if count >= 3:
-            print(f"[fact] '{needle}' 已执行 {count} 次 → 收益递减,强制切换策略!")
+            print(f"[fact] '{needle}' already executed {count} times -> diminishing returns; force a strategy switch!")
             sys.exit(0)
         actions.append({"cmd": needle, "t": time.time()})
-        d["_actions"] = actions[-50:]  # 只留最近 50 个动作
+        d["_actions"] = actions[-50:]  # keep only the last 50 actions
         save(d)
-        print(f"[fact] '{needle}' 第 {count+1} 次")
+        print(f"[fact] '{needle}' occurrence {count+1}")
         return
 
     print(__doc__); sys.exit(1)
