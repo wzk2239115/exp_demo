@@ -15,8 +15,10 @@ covering exactly its tool_use ids, and it has no sidechain children.
 Usage:
   python3 scripts/distill_trajectory.py <session.jsonl> --no-model   # heuristic only
   python3 scripts/distill_trajectory.py <session.jsonl>              # + model judging
-  python3 scripts/distill_trajectory.py <session.jsonl> --in-place   # overwrite, backup .original.jsonl
   python3 scripts/distill_trajectory.py <session.jsonl> --dry-run    # stats only, no output
+
+The source file is NEVER modified (read-only): output always goes to a new
+<new_session_id>.jsonl next to it, plus a <new_session_id>.distill_report.json.
 
 API config (model judging):
   ANTHROPIC_BASE_URL or GLM_BASE_URL  (default https://api.360.cn, /v1/messages appended)
@@ -352,8 +354,6 @@ def main() -> None:
     ap.add_argument("--model", default=os.environ.get("GLM_MODEL", "deepseek/deepseek-v4-flash"))
     ap.add_argument("--no-model", action="store_true", help="heuristic collapse only")
     ap.add_argument("--batch", type=int, default=120, help="ops per judge call")
-    ap.add_argument("--in-place", action="store_true",
-                    help="overwrite <sid>.jsonl (backup to <sid>.original.jsonl)")
     ap.add_argument("--dry-run", action="store_true", help="no output file, stats only")
     args = ap.parse_args()
 
@@ -421,11 +421,8 @@ def main() -> None:
         return
 
     out_path = src.parent / f"{new_sid}.jsonl"
-    if args.in_place:
-        backup = src.with_suffix(".original.jsonl")
-        if not backup.exists():
-            backup.write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
-        out_path = src
+    if out_path.resolve() == src.resolve():
+        ap.error("refusing to overwrite the source session file")
     out_path.write_text("".join(json.dumps(e, ensure_ascii=False) + "\n"
                                 for e in out_entries), encoding="utf-8")
 
