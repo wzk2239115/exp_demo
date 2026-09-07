@@ -244,24 +244,33 @@ def op_full_text(op: Op, max_chars: int) -> str:
     return text
 
 
-JUDGE_SYSTEM = """You are auditing an AI agent's exploit-development session transcript. You see the FULL original content of each operation (tool call + its result), with its token cost. Decide which operations to KEEP when the session is resumed.
+JUDGE_SYSTEM = """You are auditing an AI agent's exploit-development session transcript. You see the FULL original content of each operation (tool call + its result), with its token cost. You have two tasks:
 
+TASK 1 — Decide which operations to KEEP when the session is resumed:
 KEEP (include in keep list):
 - anything that writes or edits files (Write/Edit), or runs an exploit/PoC
 - results that reveal new addresses, offsets, crashes, behaviors, or flags
 - first exploration of any area, and anything later operations depend on
 - operations whose output is referenced by later operations
-
 DROP (omit from keep list):
 - re-reads / re-greps of the same thing already seen earlier with no new outcome
 - failed commands retried unchanged, or errors that yielded no information
 - exploration branches the agent explicitly abandoned and never used again
 - pure noise (repeated ls, identical status checks, no-op commands)
 - operations whose results merely confirm earlier findings
-
 If the session exceeds the context budget, be more aggressive. If under budget, prefer keeping. When unsure, KEEP.
 
-Answer with STRICT JSON only: {"keep": [<op numbers to KEEP>], "notes": "<one short paragraph: where the agent got stuck and what to try next>"}"""
+TASK 2 — Write a mentor message for the agent to read when it resumes. This message will be injected as the last user message in the compressed session. It should help the agent continue productively instead of repeating dead ends. Structure it as:
+### Progress
+- what the agent has accomplished so far (reference specific kept operations)
+### Blocker
+- the specific technical reason the agent got stuck (be precise: what exactly fails and why)
+### Next steps
+- 2-4 concrete, actionable steps to try (not generic advice — specific to THIS task)
+### Key facts
+- critical addresses, offsets, heap layouts, behaviors discovered (so the agent doesn't re-derive them)
+
+Answer with STRICT JSON only: {"keep": [<op numbers to KEEP>], "guidance": "<the mentor message above>"}"""
 
 
 def build_judge_prompt(goal: str, chunk: list[Op], total_ops: int,
@@ -273,7 +282,7 @@ def build_judge_prompt(goal: str, chunk: list[Op], total_ops: int,
         lines.append(f"[{op.no}] (~{op.tokens}tok)")
         lines.append(op_full_text(op, max_op_chars))
         lines.append("")
-    lines.append('Return JSON: {"keep": [numbers to keep], "notes": "..."}')
+    lines.append('Return JSON: {"keep": [numbers to keep], "guidance": "<mentor message>"}')
     return "\n".join(lines)
 
 
@@ -286,9 +295,9 @@ def api_messages(url: str, key: str, model: str, system: str, prompt: str,
     }
     if thinking:
         body_dict["thinking"] = {"type": "enabled", "budget_tokens": budget_tokens}
-        body_dict["max_tokens"] = budget_tokens + 4096
+        body_dict["max_tokens"] = budget_tokens + 8192
     else:
-        body_dict["max_tokens"] = 4096
+        body_dict["max_tokens"] = 8192
     body = json.dumps(body_dict).encode()
     req = urllib.request.Request(url, data=body, method="POST", headers={
         "content-type": "application/json",
@@ -315,7 +324,7 @@ def api_messages(url: str, key: str, model: str, system: str, prompt: str,
 
 
 def parse_judge_reply(reply: str, all_nums: set) -> tuple:
-    """Returns (keep_set, notes). keep_set=None means parse failure -> keep all."""
+    """Returns (keep_set, guidance). keep_set=None means parse failure -> keep all."""
     s = reply.strip()
     if s.startswith("```"):
         s = s.strip("`")
@@ -333,16 +342,16 @@ def parse_judge_reply(reply: str, all_nums: set) -> tuple:
                 pass
     if data is None:
         return None, ""
-    notes = str(data.get("notes", ""))
+    guidance = str(data.get("guidance") or data.get("notes") or "")
     if "keep" in data:
-        return {int(x) for x in data["keep"]}, notes
+        return {int(x) for x in data["keep"]}, guidance
     if "drop" in data:
-        return all_nums - {int(x) for x in data["drop"]}, notes
-    return None, notes
+        return all_nums - {int(x) for x in data["drop"]}, guidance
+    return None, guidance
 
 
 def judge_ops(ops: list[Op], goal: str, url: str, key: str, model: str, batch: int,
-              notes_out: list, thinking: bool, budget_tokens: int,
+              guidance_out: list, thinking: bool, budget_tokens: int,
               orig_tokens: int, context_budget: int,
               max_op_tokens: int, judge_limit: int) -> None:
     pending = [op for op in ops if op.verdict != "drop"]
@@ -363,12 +372,13 @@ def judge_ops(ops: list[Op], goal: str, url: str, key: str, model: str, batch: i
         prompt = build_judge_prompt(goal, chunk, len(pending),
                                     orig_tokens, context_budget, max_op_chars)
         reply = api_messages(url, key, model, JUDGE_SYSTEM, prompt, thinking, budget_tokens)
-        keep_set, notes = parse_judge_reply(reply, all_nums)
-        if notes:
-            notes_out.append(notes)
+        keep_set, guidance = parse_judge_reply(reply, all_nums)
+        if guidance:
+            guidance_out.append(guidance)
         if keep_set is None:
             print(f"  judged {chunk[0].no}..{chunk[-1].no}: parse failed, keeping all",
                   file=sys.stderr)
+            print(f"  raw reply (first 500 chars): {reply[:500]}", file=sys.stderr)
             continue
         for op in chunk:
             if op.no not in keep_set:
@@ -457,6 +467,9 @@ def main() -> None:
                     help="max tokens of original content shown per op in judge prompt")
     ap.add_argument("--judge-context-limit", type=int, default=0,
                     help="max input tokens for a single judge call (0=auto: 900k for glm, 100k otherwise)")
+    ap.add_argument("--inject", action="store_true",
+                    help="append model-generated guidance as a user message at the end of the "
+                         "compressed session (for round-2 resume with mentor steering)")
     ap.add_argument("--dry-run", action="store_true", help="no output file, stats only")
     args = ap.parse_args()
 
@@ -488,7 +501,7 @@ def main() -> None:
 
     thinking = (args.thinking == "on"
                 or (args.thinking == "auto" and "glm" in args.model.lower()))
-    notes: list[str] = []
+    guidance: list[str] = []
     if not args.no_model and ops:
         base = (os.environ.get("ANTHROPIC_BASE_URL") or os.environ.get("GLM_BASE_URL")
                 or "https://api.360.cn").rstrip("/")
@@ -504,7 +517,7 @@ def main() -> None:
             judge_limit = 900000 if "glm" in args.model.lower() else 100000
         print(f"judging {len(ops) - heur_dropped} ops with {args.model} "
               f"(full content, max {args.max_op_tokens}tok/op) ...", file=sys.stderr)
-        judge_ops(ops, goal, url, key, args.model, args.batch, notes,
+        judge_ops(ops, goal, url, key, args.model, args.batch, guidance,
                   thinking, args.budget_tokens, orig_tokens, args.context_budget,
                   args.max_op_tokens, judge_limit)
 
@@ -520,6 +533,27 @@ def main() -> None:
 
     new_sid = str(uuid.uuid4())
     out_entries = rewrite(chain, floating, drop_uuids, old_sid, new_sid)
+
+    guidance_text = "\n\n".join(g for g in guidance if g.strip())
+    injected = False
+    if args.inject and guidance_text:
+        kept_chain = [e for e in out_entries if e.get("type") in CHAIN_TYPES]
+        last_uuid = kept_chain[-1].get("uuid") if kept_chain else None
+        guide_entry = {
+            "type": "user",
+            "uuid": str(uuid.uuid4()),
+            "parentUuid": last_uuid,
+            "sessionId": new_sid,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "cwd": "/workspace",
+            "userType": "external",
+            "version": "2.1.119",
+            "message": {"role": "user",
+                        "content": f"## Round 2 Mentor Guidance\n\n{guidance_text}"},
+        }
+        chain_end = len(kept_chain)
+        out_entries.insert(chain_end, guide_entry)
+        injected = True
 
     total = len(chain)
     dropped = len(drop_uuids)
@@ -539,8 +573,8 @@ def main() -> None:
     print(f"new session:   {new_sid}")
 
     if args.dry_run:
-        for line in notes:
-            print(f"\n[judge notes] {line}")
+        for line in guidance:
+            print(f"\n[guidance] {line}")
         return
 
     out_path = src.parent / f"{new_sid}.jsonl"
@@ -566,7 +600,8 @@ def main() -> None:
                   "orig_tokens": orig_tokens, "distilled_tokens": distilled_tokens,
                   "context_budget": args.context_budget,
                   "over_budget": distilled_tokens > args.context_budget},
-        "judge_notes": notes,
+        "judge_notes": guidance,
+        "guidance_injected": injected,
         "drops": [{"no": o.no, "reason": o.reason, "summary": o.summary}
                   for o in ops if o.verdict == "drop"],
     }
@@ -575,6 +610,8 @@ def main() -> None:
 
     print(f"\nwrote:         {out_path}")
     print(f"report:        {report_path}")
+    if injected:
+        print(f"guidance:      injected as last user message ({len(guidance_text)} chars)")
     print(f"\nresume with:   cp {out_path.name} <config>/projects/-workspace/ && "
           f"cd /workspace && claude-code.sh -r {new_sid}")
 
