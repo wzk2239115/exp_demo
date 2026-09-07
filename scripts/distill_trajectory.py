@@ -17,8 +17,15 @@ Usage:
   python3 scripts/distill_trajectory.py <session.jsonl>              # + model judging
   python3 scripts/distill_trajectory.py <session.jsonl> --dry-run    # stats only, no output
 
+glm-5.2/5.3 as judge (360 native endpoint requires thinking=enabled):
+  python3 scripts/distill_trajectory.py <session.jsonl> --model z-ai/glm-5.2
+
 The source file is NEVER modified (read-only): output always goes to a new
 <new_session_id>.jsonl next to it, plus a <new_session_id>.distill_report.json.
+
+After distillation, token estimates are printed and compared to --context-budget
+(default 120000): if the distilled session still exceeds the budget, a warning
+is shown and the judge is told to drop more aggressively on re-run.
 
 API config (model judging):
   ANTHROPIC_BASE_URL or GLM_BASE_URL  (default https://api.360.cn, /v1/messages appended)
@@ -60,15 +67,35 @@ class Op:
         self.reason = ""
         self.summary = ""
         self.fingerprint = ""
+        self.tokens = 0
 
     @property
     def uuid(self):
         return self.a.get("uuid")
 
 
+CHARS_PER_TOKEN = 3.5
+
+
 def blocks(entry: dict) -> list:
     c = entry.get("message", {}).get("content")
     return c if isinstance(c, list) else []
+
+
+def msg_chars(entry: dict) -> int:
+    c = entry.get("message", {}).get("content")
+    if isinstance(c, str):
+        return len(c)
+    if isinstance(c, list):
+        return sum(len(json.dumps(b, ensure_ascii=False)) for b in c if isinstance(b, dict))
+    return 0
+
+
+def estimate_tokens(entries) -> int:
+    if entries and isinstance(entries[0], dict):
+        return int(sum(msg_chars(e) for e in entries if e.get("type") in CHAIN_TYPES)
+                   / CHARS_PER_TOKEN)
+    return int(sum(getattr(e, "tokens", 0) for e in entries))
 
 
 def text_of(block: dict, limit: int) -> str:
@@ -160,7 +187,9 @@ def build_ops(chain: list[dict], sidechain_parents: set) -> list[Op]:
             continue
         if e.get("uuid") in sidechain_parents:
             continue
-        ops.append(Op(len(ops), e, pair))
+        op = Op(len(ops), e, pair)
+        op.tokens = int((msg_chars(e) + msg_chars(pair)) / CHARS_PER_TOKEN)
+        ops.append(op)
     return ops
 
 
@@ -202,29 +231,40 @@ Always KEEP:
 - anything that writes or edits files (Write/Edit), or runs an exploit/PoC
 - results that reveal new addresses, offsets, crashes, behaviors, or flags
 - first exploration of any area, and anything later operations likely depend on
-- when unsure, KEEP (target: remove 20-50% of clearly dead operations, not more)
+- when unsure, KEEP; but if the session exceeds the context budget, be more
+  aggressive and drop operations whose results merely confirm earlier findings
 
 Answer with STRICT JSON only: {"drop": [<op numbers to DROP>], "notes": "<one short paragraph: where the agent got stuck and what to try next>"}"""
 
 
-def build_judge_prompt(goal: str, chunk: list[Op]) -> str:
+def build_judge_prompt(goal: str, chunk: list[Op], target_pct: int,
+                       orig_tokens: int, context_budget: int) -> str:
     lines = [f"SESSION GOAL (truncated): {goal}", "",
+             f"Session ~{orig_tokens} tokens, context budget {context_budget}. "
+             f"Target: drop ~{target_pct}% of clearly dead operations to fit.",
              f"Operations {chunk[0].no}..{chunk[-1].no} of this session:"]
     for op in chunk:
-        lines.append(f"[{op.no}] " + " ;; ".join(summarize_input(t) for t in op.tool_uses)
+        lines.append(f"[{op.no}] (~{op.tokens}tok) "
+                     + " ;; ".join(summarize_input(t) for t in op.tool_uses)
                      + "  =>  " + summarize_result(op))
     lines.append("")
     lines.append('Return JSON: {"drop": [...], "notes": "..."}')
     return "\n".join(lines)[:180000]
 
 
-def api_messages(url: str, key: str, model: str, system: str, prompt: str) -> str:
-    body = json.dumps({
+def api_messages(url: str, key: str, model: str, system: str, prompt: str,
+                 thinking: bool = False, budget_tokens: int = 8192) -> str:
+    body_dict: dict = {
         "model": model,
-        "max_tokens": 2000,
         "system": system,
         "messages": [{"role": "user", "content": prompt}],
-    }).encode()
+    }
+    if thinking:
+        body_dict["thinking"] = {"type": "enabled", "budget_tokens": budget_tokens}
+        body_dict["max_tokens"] = budget_tokens + 2048
+    else:
+        body_dict["max_tokens"] = 2000
+    body = json.dumps(body_dict).encode()
     req = urllib.request.Request(url, data=body, method="POST", headers={
         "content-type": "application/json",
         "x-api-key": key,
@@ -270,12 +310,17 @@ def parse_judge_reply(reply: str) -> tuple[set, str]:
 
 
 def judge_ops(ops: list[Op], goal: str, url: str, key: str, model: str, batch: int,
-              notes_out: list) -> None:
+              notes_out: list, thinking: bool, budget_tokens: int,
+              orig_tokens: int, context_budget: int) -> None:
     pending = [op for op in ops if op.verdict != "drop"]
+    over_pct = max(0, int(100 * (orig_tokens - context_budget) / max(orig_tokens, 1)))
+    target_pct = max(20, over_pct) if orig_tokens > context_budget else 30
+    print(f"  target drop ~{target_pct}% (session ~{orig_tokens} tok, budget {context_budget})",
+          file=sys.stderr)
     for i in range(0, len(pending), batch):
         chunk = pending[i:i + batch]
-        prompt = build_judge_prompt(goal, chunk)
-        reply = api_messages(url, key, model, JUDGE_SYSTEM, prompt)
+        prompt = build_judge_prompt(goal, chunk, target_pct, orig_tokens, context_budget)
+        reply = api_messages(url, key, model, JUDGE_SYSTEM, prompt, thinking, budget_tokens)
         drop_set, notes = parse_judge_reply(reply)
         if notes:
             notes_out.append(notes)
@@ -354,6 +399,13 @@ def main() -> None:
     ap.add_argument("--model", default=os.environ.get("GLM_MODEL", "deepseek/deepseek-v4-flash"))
     ap.add_argument("--no-model", action="store_true", help="heuristic collapse only")
     ap.add_argument("--batch", type=int, default=120, help="ops per judge call")
+    ap.add_argument("--thinking", choices=["auto", "on", "off"], default="auto",
+                    help="glm models via 360 require thinking=enabled (default auto: on when "
+                         "model name contains 'glm')")
+    ap.add_argument("--budget-tokens", type=int, default=8192,
+                    help="thinking budget_tokens (360 requires <=8192)")
+    ap.add_argument("--context-budget", type=int, default=120000,
+                    help="target max tokens for the distilled session (resume must fit)")
     ap.add_argument("--dry-run", action="store_true", help="no output file, stats only")
     args = ap.parse_args()
 
@@ -381,7 +433,10 @@ def main() -> None:
     ops = build_ops(chain, find_sidechain_parents(chain))
     heuristic_collapse(ops)
     heur_dropped = sum(1 for o in ops if o.verdict == "drop")
+    orig_tokens = estimate_tokens(chain)
 
+    thinking = (args.thinking == "on"
+                or (args.thinking == "auto" and "glm" in args.model.lower()))
     notes: list[str] = []
     if not args.no_model and ops:
         base = (os.environ.get("ANTHROPIC_BASE_URL") or os.environ.get("GLM_BASE_URL")
@@ -390,8 +445,12 @@ def main() -> None:
         key = (os.environ.get("ANTHROPIC_AUTH_TOKEN") or os.environ.get("GLM_API_KEY") or "")
         if not key:
             ap.error("no API key: set ANTHROPIC_AUTH_TOKEN or GLM_API_KEY (or use --no-model)")
+        if thinking:
+            print(f"thinking enabled (budget_tokens={args.budget_tokens}) for {args.model}",
+                  file=sys.stderr)
         print(f"judging {len(ops) - heur_dropped} ops with {args.model} ...", file=sys.stderr)
-        judge_ops(ops, goal, url, key, args.model, args.batch, notes)
+        judge_ops(ops, goal, url, key, args.model, args.batch, notes,
+                  thinking, args.budget_tokens, orig_tokens, args.context_budget)
 
     protect = {e.get("uuid") for e in chain[:DROP_SAFE_LAST] + chain[-DROP_SAFE_LAST:]}
     drop_uuids = set()
@@ -409,10 +468,18 @@ def main() -> None:
     total = len(chain)
     dropped = len(drop_uuids)
     pct = 100.0 * dropped / total if total else 0.0
+    kept_chain = [e for e in out_entries if e.get("type") in CHAIN_TYPES]
+    distilled_tokens = estimate_tokens(kept_chain)
     print(f"\nsource:        {src}")
     print(f"entries:       {total} chain (+{len(floating)} floating, {bad} bad lines)")
     print(f"ops analyzed:  {len(ops)}  (heuristic drop {heur_dropped})")
     print(f"dropped:       {dropped} entries ({pct:.1f}%)")
+    print(f"est. tokens:   ~{orig_tokens} -> ~{distilled_tokens}  "
+          f"(budget {args.context_budget})", end="")
+    if distilled_tokens > args.context_budget:
+        print(f"  *** OVER by ~{distilled_tokens - args.context_budget} ***")
+    else:
+        print(f"  fits")
     print(f"new session:   {new_sid}")
 
     if args.dry_run:
@@ -439,7 +506,10 @@ def main() -> None:
         "created": datetime.now(timezone.utc).isoformat(),
         "model": None if args.no_model else args.model,
         "stats": {"chain_entries": total, "dropped": dropped, "ops": len(ops),
-                  "heuristic_dropped": heur_dropped},
+                  "heuristic_dropped": heur_dropped,
+                  "orig_tokens": orig_tokens, "distilled_tokens": distilled_tokens,
+                  "context_budget": args.context_budget,
+                  "over_budget": distilled_tokens > args.context_budget},
         "judge_notes": notes,
         "drops": [{"no": o.no, "reason": o.reason, "summary": o.summary}
                   for o in ops if o.verdict == "drop"],
