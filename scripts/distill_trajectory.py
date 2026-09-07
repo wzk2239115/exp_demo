@@ -217,39 +217,64 @@ def heuristic_collapse(ops: list[Op]) -> None:
             prev_key = key
 
 
-JUDGE_SYSTEM = """You are auditing an AI agent's exploit-development session transcript to decide which tool operations to DELETE before the session is resumed.
+def full_text(block: dict) -> str:
+    c = block.get("content")
+    if isinstance(c, str):
+        return c
+    if isinstance(c, list):
+        return " ".join(p.get("text", "") for p in c
+                        if isinstance(p, dict) and p.get("type") == "text")
+    return ""
 
-For each numbered operation (an assistant tool call plus its result), decide KEEP or DROP.
 
-DROP only when clearly safe:
-- re-reads / re-greps of the same thing already seen earlier with no new outcome
-- failed commands that were retried unchanged, or errors that yielded no information
-- exploration branches the agent explicitly abandoned and never used again
-- pure noise (repeated ls, identical status checks, no-op commands)
+def op_full_text(op: Op, max_chars: int) -> str:
+    parts = []
+    for tu in op.tool_uses:
+        parts.append(f"TOOL: {tu.get('name', '?')}")
+        parts.append(f"INPUT: {json.dumps(tu.get('input', {}), ensure_ascii=False)}")
+    if op.u is not None:
+        for b in blocks(op.u):
+            if isinstance(b, dict) and b.get("type") == "tool_result":
+                tag = " (ERROR)" if b.get("is_error") else ""
+                parts.append(f"RESULT{tag}:")
+                parts.append(full_text(b))
+    text = "\n".join(parts)
+    if len(text) > max_chars:
+        text = text[:max_chars] + f"\n... (truncated, {len(text) - max_chars} more chars)"
+    return text
 
-Always KEEP:
+
+JUDGE_SYSTEM = """You are auditing an AI agent's exploit-development session transcript. You see the FULL original content of each operation (tool call + its result), with its token cost. Decide which operations to KEEP when the session is resumed.
+
+KEEP (include in keep list):
 - anything that writes or edits files (Write/Edit), or runs an exploit/PoC
 - results that reveal new addresses, offsets, crashes, behaviors, or flags
-- first exploration of any area, and anything later operations likely depend on
-- when unsure, KEEP; but if the session exceeds the context budget, be more
-  aggressive and drop operations whose results merely confirm earlier findings
+- first exploration of any area, and anything later operations depend on
+- operations whose output is referenced by later operations
 
-Answer with STRICT JSON only: {"drop": [<op numbers to DROP>], "notes": "<one short paragraph: where the agent got stuck and what to try next>"}"""
+DROP (omit from keep list):
+- re-reads / re-greps of the same thing already seen earlier with no new outcome
+- failed commands retried unchanged, or errors that yielded no information
+- exploration branches the agent explicitly abandoned and never used again
+- pure noise (repeated ls, identical status checks, no-op commands)
+- operations whose results merely confirm earlier findings
+
+If the session exceeds the context budget, be more aggressive. If under budget, prefer keeping. When unsure, KEEP.
+
+Answer with STRICT JSON only: {"keep": [<op numbers to KEEP>], "notes": "<one short paragraph: where the agent got stuck and what to try next>"}"""
 
 
-def build_judge_prompt(goal: str, chunk: list[Op], target_pct: int,
-                       orig_tokens: int, context_budget: int) -> str:
-    lines = [f"SESSION GOAL (truncated): {goal}", "",
-             f"Session ~{orig_tokens} tokens, context budget {context_budget}. "
-             f"Target: drop ~{target_pct}% of clearly dead operations to fit.",
-             f"Operations {chunk[0].no}..{chunk[-1].no} of this session:"]
+def build_judge_prompt(goal: str, chunk: list[Op], total_ops: int,
+                       orig_tokens: int, context_budget: int, max_op_chars: int) -> str:
+    lines = [f"SESSION GOAL:\n{goal}", "",
+             f"Session ~{orig_tokens} tokens, context budget {context_budget}.",
+             f"Showing {len(chunk)} operations (of {total_ops} total) with FULL content:", ""]
     for op in chunk:
-        lines.append(f"[{op.no}] (~{op.tokens}tok) "
-                     + " ;; ".join(summarize_input(t) for t in op.tool_uses)
-                     + "  =>  " + summarize_result(op))
-    lines.append("")
-    lines.append('Return JSON: {"drop": [...], "notes": "..."}')
-    return "\n".join(lines)[:180000]
+        lines.append(f"[{op.no}] (~{op.tokens}tok)")
+        lines.append(op_full_text(op, max_op_chars))
+        lines.append("")
+    lines.append('Return JSON: {"keep": [numbers to keep], "notes": "..."}')
+    return "\n".join(lines)
 
 
 def api_messages(url: str, key: str, model: str, system: str, prompt: str,
@@ -261,9 +286,9 @@ def api_messages(url: str, key: str, model: str, system: str, prompt: str,
     }
     if thinking:
         body_dict["thinking"] = {"type": "enabled", "budget_tokens": budget_tokens}
-        body_dict["max_tokens"] = budget_tokens + 2048
+        body_dict["max_tokens"] = budget_tokens + 4096
     else:
-        body_dict["max_tokens"] = 2000
+        body_dict["max_tokens"] = 4096
     body = json.dumps(body_dict).encode()
     req = urllib.request.Request(url, data=body, method="POST", headers={
         "content-type": "application/json",
@@ -274,7 +299,7 @@ def api_messages(url: str, key: str, model: str, system: str, prompt: str,
     last_err = None
     for _ in range(3):
         try:
-            with urllib.request.urlopen(req, timeout=180) as r:
+            with urllib.request.urlopen(req, timeout=300) as r:
                 data = json.loads(r.read().decode())
             return "".join(b.get("text", "") for b in data.get("content", [])
                            if b.get("type") == "text")
@@ -289,47 +314,69 @@ def api_messages(url: str, key: str, model: str, system: str, prompt: str,
     raise RuntimeError(f"API call failed: {last_err}")
 
 
-def parse_judge_reply(reply: str) -> tuple[set, str]:
+def parse_judge_reply(reply: str, all_nums: set) -> tuple:
+    """Returns (keep_set, notes). keep_set=None means parse failure -> keep all."""
     s = reply.strip()
     if s.startswith("```"):
         s = s.strip("`")
         if s.startswith("json"):
             s = s[4:]
+    data = None
     try:
         data = json.loads(s)
-        return {int(x) for x in data.get("drop", [])}, str(data.get("notes", ""))
     except Exception:
         start, end = s.find("{"), s.rfind("}")
         if start >= 0 and end > start:
             try:
                 data = json.loads(s[start:end + 1])
-                return {int(x) for x in data.get("drop", [])}, str(data.get("notes", ""))
             except Exception:
                 pass
-    return set(), ""
+    if data is None:
+        return None, ""
+    notes = str(data.get("notes", ""))
+    if "keep" in data:
+        return {int(x) for x in data["keep"]}, notes
+    if "drop" in data:
+        return all_nums - {int(x) for x in data["drop"]}, notes
+    return None, notes
 
 
 def judge_ops(ops: list[Op], goal: str, url: str, key: str, model: str, batch: int,
               notes_out: list, thinking: bool, budget_tokens: int,
-              orig_tokens: int, context_budget: int) -> None:
+              orig_tokens: int, context_budget: int,
+              max_op_tokens: int, judge_limit: int) -> None:
     pending = [op for op in ops if op.verdict != "drop"]
-    over_pct = max(0, int(100 * (orig_tokens - context_budget) / max(orig_tokens, 1)))
-    target_pct = max(20, over_pct) if orig_tokens > context_budget else 30
-    print(f"  target drop ~{target_pct}% (session ~{orig_tokens} tok, budget {context_budget})",
-          file=sys.stderr)
-    for i in range(0, len(pending), batch):
-        chunk = pending[i:i + batch]
-        prompt = build_judge_prompt(goal, chunk, target_pct, orig_tokens, context_budget)
+    max_op_chars = max_op_tokens * int(CHARS_PER_TOKEN)
+    total_judge_tokens = sum(op.tokens for op in pending) + len(goal) // 4 + 4000
+
+    if total_judge_tokens <= judge_limit:
+        chunks = [pending]
+        print(f"  single call: {len(pending)} ops, ~{total_judge_tokens} tok "
+              f"(limit {judge_limit})", file=sys.stderr)
+    else:
+        chunks = [pending[i:i + batch] for i in range(0, len(pending), batch)]
+        print(f"  batched: {len(pending)} ops in {len(chunks)} calls "
+              f"(~{total_judge_tokens} tok > limit {judge_limit})", file=sys.stderr)
+
+    for chunk in chunks:
+        all_nums = {op.no for op in chunk}
+        prompt = build_judge_prompt(goal, chunk, len(pending),
+                                    orig_tokens, context_budget, max_op_chars)
         reply = api_messages(url, key, model, JUDGE_SYSTEM, prompt, thinking, budget_tokens)
-        drop_set, notes = parse_judge_reply(reply)
+        keep_set, notes = parse_judge_reply(reply, all_nums)
         if notes:
             notes_out.append(notes)
+        if keep_set is None:
+            print(f"  judged {chunk[0].no}..{chunk[-1].no}: parse failed, keeping all",
+                  file=sys.stderr)
+            continue
         for op in chunk:
-            if op.no in drop_set:
+            if op.no not in keep_set:
                 op.verdict = "drop"
-                op.reason = "model: judged dead operation"
-        print(f"  judged {chunk[0].no}..{chunk[-1].no}: drop {len(drop_set)}/{len(chunk)}",
-              file=sys.stderr)
+                op.reason = "model: not in keep set"
+        kept = len(keep_set & all_nums)
+        print(f"  judged {chunk[0].no}..{chunk[-1].no}: keep {kept}/{len(chunk)}, "
+              f"drop {len(chunk) - kept}", file=sys.stderr)
 
 
 def rewrite(chain: list[dict], floating: list[dict], drop_uuids: set,
@@ -406,6 +453,10 @@ def main() -> None:
                     help="thinking budget_tokens (360 requires <=8192)")
     ap.add_argument("--context-budget", type=int, default=120000,
                     help="target max tokens for the distilled session (resume must fit)")
+    ap.add_argument("--max-op-tokens", type=int, default=8000,
+                    help="max tokens of original content shown per op in judge prompt")
+    ap.add_argument("--judge-context-limit", type=int, default=0,
+                    help="max input tokens for a single judge call (0=auto: 900k for glm, 100k otherwise)")
     ap.add_argument("--dry-run", action="store_true", help="no output file, stats only")
     args = ap.parse_args()
 
@@ -448,9 +499,14 @@ def main() -> None:
         if thinking:
             print(f"thinking enabled (budget_tokens={args.budget_tokens}) for {args.model}",
                   file=sys.stderr)
-        print(f"judging {len(ops) - heur_dropped} ops with {args.model} ...", file=sys.stderr)
+        judge_limit = args.judge_context_limit
+        if judge_limit == 0:
+            judge_limit = 900000 if "glm" in args.model.lower() else 100000
+        print(f"judging {len(ops) - heur_dropped} ops with {args.model} "
+              f"(full content, max {args.max_op_tokens}tok/op) ...", file=sys.stderr)
         judge_ops(ops, goal, url, key, args.model, args.batch, notes,
-                  thinking, args.budget_tokens, orig_tokens, args.context_budget)
+                  thinking, args.budget_tokens, orig_tokens, args.context_budget,
+                  args.max_op_tokens, judge_limit)
 
     protect = {e.get("uuid") for e in chain[:DROP_SAFE_LAST] + chain[-DROP_SAFE_LAST:]}
     drop_uuids = set()
