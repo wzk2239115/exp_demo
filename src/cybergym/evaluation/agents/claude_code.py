@@ -9,12 +9,17 @@ from cybergym.evaluation.agents.helper import (
     IntermediateStatsLogger,
 )
 from cybergym.evaluation.types import AgentFnArguments
-from cybergym.utils import container_credential_symlink, get_docker_client
+from cybergym.utils import (
+    container_credential_symlink,
+    docker_cp_to_container,
+    get_docker_client,
+)
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_CLAUDE_MODEL = "claude-sonnet-4-6"
 CLAUDE_CODE_BIN_PATH = "/data/node/bin/claude-code.sh"
+CC_SESSIONS_DIR = "/logs/projects/-workspace"
 
 VALID_EFFORT_LEVELS = {"low", "medium", "high", "xhigh", "max", "auto"}
 
@@ -61,6 +66,12 @@ def run_claude_code_with_container(args: AgentFnArguments) -> None:
         - "reasoning_effort": one of "low", "medium", "high", "xhigh", "max",
           "auto". When set, exported to the container as
           ``CLAUDE_CODE_EFFORT_LEVEL``; unset means the CLI's own default.
+        - "resume_session_file": host path to a prior cc session jsonl (e.g.
+          a distilled round-2 session). It is copied into the container's
+          ``CLAUDE_CONFIG_DIR`` and the first round starts with
+          ``--resume <id>`` instead of a fresh session. Later rounds use
+          ``--continue`` as usual.
+        - "resume_session_id": optional session id; defaults to the file stem.
 
     Context window / auto-compact (cc 2.1.x, verified against 2.1.119):
     cc derives the model's max context from its internal registry and falls
@@ -115,6 +126,28 @@ def run_claude_code_with_container(args: AgentFnArguments) -> None:
     container = client.containers.get(args.container_id)
 
     container.exec_run(["mkdir", "-p", "/logs", "/pocs"])
+
+    # Round-2 resume: plant the prior (distilled) session into the container's
+    # CLAUDE_CONFIG_DIR so cc can pick it up with --resume <id>.
+    resume_file = args.extra_kwargs.get("resume_session_file")
+    resume_sid = args.extra_kwargs.get("resume_session_id")
+    if resume_file:
+        resume_src = Path(resume_file)
+        if not resume_src.is_file():
+            raise FileNotFoundError(f"resume_session_file not found: {resume_src}")
+        if not resume_sid:
+            resume_sid = resume_src.stem
+        container.exec_run(["mkdir", "-p", CC_SESSIONS_DIR])
+        docker_cp_to_container(
+            args.container_id,
+            str(resume_src),
+            f"{CC_SESSIONS_DIR}/{resume_sid}.jsonl",
+        )
+        logger.info(
+            "Planted resume session %s (%d bytes) into container",
+            resume_sid,
+            resume_src.stat().st_size,
+        )
 
     cred_link_path: str | None = None
     if args.credential_path:
@@ -191,7 +224,8 @@ def run_claude_code_with_container(args: AgentFnArguments) -> None:
         return res.exit_code == 0
 
     round_no = 0
-    resume_session = False
+    # next round's launch mode: "fresh" | "continue" | "resume"
+    next_action = "resume" if resume_sid else "fresh"
     exit_code = 0
 
     logger.info("Running Claude Code agent")
@@ -206,7 +240,15 @@ def run_claude_code_with_container(args: AgentFnArguments) -> None:
             )
             break
 
-        round_prompt = prompt if not resume_session else CONTINUATION_PROMPT
+        if next_action == "resume":
+            resume_flag = f"--resume {resume_sid} "
+            round_prompt = CONTINUATION_PROMPT
+        elif next_action == "continue":
+            resume_flag = "--continue "
+            round_prompt = CONTINUATION_PROMPT
+        else:
+            resume_flag = ""
+            round_prompt = prompt
         container.exec_run(
             [
                 "bash",
@@ -218,7 +260,6 @@ def run_claude_code_with_container(args: AgentFnArguments) -> None:
         # set -o pipefail: without it the pipeline's exit code is tee's (0),
         # hiding cc crashes and `timeout` kills (124) from the loop below.
         # tee -a: continuation rounds append instead of truncating round 1.
-        resume_flag = "--continue " if resume_session else ""
         claude_command = (
             "set -o pipefail; "
             f"cat {prompt_path} | timeout {max(remaining, 1)} "
@@ -232,10 +273,10 @@ def run_claude_code_with_container(args: AgentFnArguments) -> None:
 
         if round_no > 0:
             logger.info(
-                "Claude Code round %d/%d (resume=%s, %ds left of timeout)",
+                "Claude Code round %d/%d (mode=%s, %ds left of timeout)",
                 round_no + 1,
                 max_rounds,
-                resume_session,
+                next_action,
                 remaining,
             )
 
@@ -254,7 +295,7 @@ def run_claude_code_with_container(args: AgentFnArguments) -> None:
             if round_no > 0:
                 rendered_log.write(
                     f"\n===== round {round_no + 1} "
-                    f"(resume={resume_session}, {remaining}s left) =====\n\n"
+                    f"(mode={next_action}, {remaining}s left) =====\n\n"
                 )
             render_stream(
                 inp=exec_output,
@@ -264,7 +305,11 @@ def run_claude_code_with_container(args: AgentFnArguments) -> None:
 
         exit_code = client.api.exec_inspect(resp["Id"])["ExitCode"]
         round_no += 1
-        logger.info("Claude Code round %d exit code: %d", round_no, exit_code)
+        logger.info(
+            "Claude Code round %d exit code: %d",
+            round_no,
+            exit_code,
+        )
 
         if flag_present():
             logger.info("Flag file present after round %d; done", round_no)
@@ -278,17 +323,18 @@ def run_claude_code_with_container(args: AgentFnArguments) -> None:
         if remaining <= 60:
             break
 
-        if exit_code != 0 and resume_session:
-            # --continue itself failed (e.g. corrupt session after a crash):
-            # fall back to a fresh session with the original task prompt.
+        if exit_code != 0 and next_action != "fresh":
+            # --resume/--continue itself failed (e.g. corrupt session after a
+            # crash): fall back to a fresh session with the original prompt.
             logger.warning(
-                "Continuation round failed (exit=%d); restarting a fresh "
+                "Round launched with %s failed (exit=%d); restarting a fresh "
                 "session next round",
+                next_action,
                 exit_code,
             )
-            resume_session = False
+            next_action = "fresh"
         else:
-            resume_session = True
+            next_action = "continue"
         time.sleep(2)
 
     logger.info("Claude Code exit code: %d (after %d round(s))", exit_code, round_no)

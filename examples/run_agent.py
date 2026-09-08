@@ -33,6 +33,7 @@ User (cybergym) tasks are always run with the EXEC target.
 
 import argparse
 import functools
+import json
 import logging
 import logging.handlers
 import multiprocessing
@@ -40,6 +41,8 @@ import os
 import random
 import shutil
 import signal
+import subprocess
+import sys
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
@@ -268,6 +271,42 @@ def parse_args() -> argparse.Namespace:
         "--keep-container",
         action="store_true",
         help="Don't remove agent container after run",
+    )
+
+    round2 = parser.add_argument_group(
+        "round-2 (distilled resume of a previous run's failures)"
+    )
+    round2.add_argument(
+        "--round2-from",
+        type=Path,
+        default=None,
+        metavar="SRC_OUT_ROOT",
+        help=(
+            "Round-2 mode: rerun the FAILED tasks from a previous run root "
+            "(e.g. out/pro-r1/run_agent). For each task, its cc session is "
+            "distilled (dead-end ops dropped, mentor guidance injected as the "
+            "last user message via scripts/distill_trajectory.py), the "
+            "distilled session is planted into a fresh container, and cc "
+            "resumes it with the full --timeout budget. Solved tasks are "
+            "skipped. Jobs come from SRC_OUT_ROOT; --tasks-file/--task-ids "
+            "are ignored. Writes to --out-dir as usual."
+        ),
+    )
+    round2.add_argument(
+        "--round2-judge-model",
+        default="glm-52-full",
+        help=(
+            "Model used by the distiller to judge keep/drop and write the "
+            "mentor guidance (needs GLM_API_KEY / ANTHROPIC_AUTH_TOKEN env)."
+        ),
+    )
+    round2.add_argument(
+        "--round2-no-distill",
+        action="store_true",
+        help=(
+            "Round-2 without distillation: resume the original session as-is "
+            "(1M window makes this viable; no mentor guidance)."
+        ),
     )
 
     auth = parser.add_argument_group("authentication")
@@ -525,6 +564,85 @@ def infer_task_family(task_id: str) -> TaskFamily:
     raise ValueError(f"Unsupported task id: {task_id}")
 
 
+def _task_score(result_path: Path) -> float:
+    try:
+        data = json.loads(result_path.read_text(encoding="utf-8"))
+        return sum(float(c.get("score", 0)) for c in data.get("checks", []))
+    except Exception:
+        return 0.0
+
+
+def scan_round2_jobs(src_root: Path) -> list[tuple[str, Path]]:
+    """Collect (task_id, session_file) for every failed task with a cc session.
+
+    A task qualifies when its result.json is missing (crashed/interrupted) or
+    scores 0, and ``logs/projects/-workspace/*.jsonl`` contains at least one
+    session. When several session files exist (fresh-session fallbacks), the
+    largest is taken — the main conversation lives there.
+    """
+    jobs: list[tuple[str, Path]] = []
+    for cfg in sorted(src_root.glob("*/*/config.json")):
+        task_dir = cfg.parent
+        try:
+            task_id = json.loads(cfg.read_text(encoding="utf-8")).get("task_id")
+        except Exception:
+            continue
+        if not task_id:
+            continue
+        result = task_dir / "result.json"
+        if result.exists() and _task_score(result) > 0:
+            continue
+        sessions_dir = task_dir / "logs" / "projects" / "-workspace"
+        sessions = sorted(
+            (p for p in sessions_dir.glob("*.jsonl") if p.is_file()),
+            key=lambda p: p.stat().st_size,
+            reverse=True,
+        )
+        if not sessions:
+            logger.warning(
+                "round2: %s failed but has no session jsonl; skipping", task_id
+            )
+            continue
+        jobs.append((task_id, sessions[0]))
+    return jobs
+
+
+def distill_for_round2(
+    session: Path, work_dir: Path, judge_model: str
+) -> tuple[Path, str] | None:
+    """Distill one session with mentor injection.
+
+    The session is copied into *work_dir* first so all distiller outputs
+    (new jsonl + report) land there, leaving the source run directory
+    untouched. Returns (distilled_file, new_session_id) or None on failure.
+    """
+    work_dir.mkdir(parents=True, exist_ok=True)
+    local = work_dir / session.name
+    shutil.copy2(session, local)
+    script = PROJECT_ROOT / "scripts" / "distill_trajectory.py"
+    cmd = [sys.executable, str(script), str(local), "--model", judge_model, "--inject"]
+    logger.info("round2 distill: %s (judge=%s)", local, judge_model)
+    try:
+        proc = subprocess.run(
+            cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=1800
+        )
+    except subprocess.TimeoutExpired:
+        logger.warning("round2 distill timed out after 1800s: %s", local)
+        return None
+    if proc.returncode != 0:
+        tail = (proc.stderr or proc.stdout or "")[-500:]
+        logger.warning("round2 distill failed (rc=%s): %s", proc.returncode, tail)
+        return None
+    for line in proc.stdout.splitlines():
+        if line.startswith("new session:"):
+            sid = line.split(":", 1)[1].strip()
+            out = work_dir / f"{sid}.jsonl"
+            if out.is_file():
+                return out, sid
+    logger.warning("round2 distill produced no session file: %s", local)
+    return None
+
+
 def build_agent_spec(args: argparse.Namespace) -> SimpleNamespace:
     if args.agent == "codex":
         return SimpleNamespace(
@@ -585,6 +703,7 @@ def run_one(
     args: argparse.Namespace,
     key_manager: APIKeyManager | None,
     stagger_time: int = 10,
+    round2_session: Path | None = None,
 ) -> None:
     time.sleep(1)
     if global_terminate_flag.value == 1:
@@ -601,6 +720,26 @@ def run_one(
     root.addHandler(task_fh)
 
     agent_spec = build_agent_spec(args)
+    if round2_session is not None:
+        if args.round2_no_distill:
+            resume_file, resume_sid = round2_session, round2_session.stem
+            logger.info("round2 %s: resuming original session (no distill)", task_id)
+        else:
+            distilled = distill_for_round2(
+                round2_session, out_dir / "round2_distill", args.round2_judge_model
+            )
+            if distilled is not None:
+                resume_file, resume_sid = distilled
+            else:
+                resume_file, resume_sid = round2_session, round2_session.stem
+                logger.warning(
+                    "round2 %s: distill failed; resuming original session", task_id
+                )
+        agent_spec.agent_extra_kwargs = {
+            **agent_spec.agent_extra_kwargs,
+            "resume_session_file": str(resume_file),
+            "resume_session_id": resume_sid,
+        }
     api_key: SecretStr | None = None
     if args.use_api_key:
         raw_api_key = os.environ.get(agent_spec.direct_api_key_env)
@@ -709,7 +848,26 @@ def main() -> None:
     out_root = Path(args.out_dir)
     log_queue, listener = setup_logging(out_root)
     key_manager = build_key_manager(args)
-    task_ids = resolve_task_ids(args)
+
+    round2_sessions: dict[str, Path] = {}
+    if args.round2_from is not None:
+        src_root = args.round2_from.resolve()
+        if not src_root.is_dir():
+            logger.error("round2: source dir does not exist: %s", src_root)
+            return
+        pairs = scan_round2_jobs(src_root)
+        for task_id, session in pairs:
+            round2_sessions[task_id] = session
+        task_ids = list(round2_sessions)
+        logger.info(
+            "round2: %d failed task(s) with sessions under %s (distill=%s, judge=%s)",
+            len(task_ids),
+            src_root,
+            not args.round2_no_distill,
+            args.round2_judge_model,
+        )
+    else:
+        task_ids = resolve_task_ids(args)
 
     jobs: list[tuple[str, Path]] = []
     for task_id in task_ids:
@@ -780,7 +938,13 @@ def main() -> None:
             try:
                 futures = [
                     executor.submit(
-                        run_one, task_id, out_dir, args, key_manager, stagger_time
+                        run_one,
+                        task_id,
+                        out_dir,
+                        args,
+                        key_manager,
+                        stagger_time,
+                        round2_sessions.get(task_id),
                     )
                     for task_id, out_dir in jobs
                 ]

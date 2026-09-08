@@ -103,6 +103,29 @@ host 侧环境变量(可写 `.glm_env`,见 run_as.sh `_ENV_KEYS`):
 升级 cc 到 2.1.252(支持 /goal): 见下文安装一节,把版本号换成 2.1.252 重装即可;
 `static_build_node_and_agents.sh` 默认值已同步改。
 
+## round-2:失败题蒸馏续跑(2026-09-08)
+
+对某个旧跑批 out 目录里的失败题自动做"蒸馏 + 导师注入 + resume 再跑 2h":
+
+```bash
+GLM_PROVIDER=anthropic GLM_API_KEY=<360 key> \
+TASKS_FILE=data/task_ids/user_pending.txt MAX_WORKERS=6 TIMEOUT=7200 \
+bash run_as.sh pro-r1-r2 --round2-from out/pro-r1/run_agent
+```
+
+- `--round2-from` 指旧 out 根目录:自动扫出「result.json 缺失或 0 分且有 cc 会话」
+  的任务,成功的跳过,任务文件参数被忽略。
+- 每题先把会话 jsonl 拷到新任务目录 `round2_distill/` 再调
+  `scripts/distill_trajectory.py --inject`(死胡同操作丢弃 + 导师消息注入为最后
+  一条 user 消息,研判模型 `--round2-judge-model`,默认 glm-52-full,吃 GLM_API_KEY),
+  产物落在新目录,旧 out 目录不动。
+- 蒸馏产物 docker cp 进新容器 `/logs/projects/-workspace/`,cc 首轮
+  `--resume <新sid>`(续跑提示词开局),后续轮 `--continue`,2h 超时兜底。
+- 蒸馏失败自动降级为 resume 原始会话(1M 窗口下通常也能装下);
+  `--round2-no-distill` 可直接跳过蒸馏。
+- 老批次(deepseek/glm52 时代)多数 user 任务没收集 session jsonl,会被跳过并告警;
+  新代码跑的批次(带 projects/ 日志)才有完整会话。
+
 ### 标准续跑命令
 
 ```bash
