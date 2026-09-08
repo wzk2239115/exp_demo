@@ -117,7 +117,8 @@ bash run_as.sh pro-r1-r2 --round2-from out/pro-r1/run_agent
   的任务,成功的跳过,任务文件参数被忽略。
 - 每题先把会话 jsonl 拷到新任务目录 `round2_distill/` 再调
   `scripts/distill_trajectory.py --inject`(死胡同操作丢弃 + 导师消息注入为最后
-  一条 user 消息,研判模型 `--round2-judge-model`,默认 glm-52-full,吃 GLM_API_KEY),
+  一条 user 消息,研判模型 `--round2-judge-model`,默认 z-ai/glm-5.3 —— 360 的
+  真实模型 id,distill 直连 /v1/messages 不经 proxy,吃 GLM_API_KEY),
   产物落在新目录,旧 out 目录不动。
 - 蒸馏产物 docker cp 进新容器 `/logs/projects/-workspace/`,cc 首轮
   `--resume <新sid>`(续跑提示词开局),后续轮 `--continue`,2h 超时兜底。

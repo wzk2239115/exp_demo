@@ -294,10 +294,11 @@ def parse_args() -> argparse.Namespace:
     )
     round2.add_argument(
         "--round2-judge-model",
-        default="glm-52-full",
+        default="z-ai/glm-5.3",
         help=(
             "Model used by the distiller to judge keep/drop and write the "
-            "mentor guidance (needs GLM_API_KEY / ANTHROPIC_AUTH_TOKEN env)."
+            "mentor guidance (needs GLM_API_KEY / ANTHROPIC_AUTH_TOKEN env; "
+            "this is the real 360 model id, hit directly without the proxy)."
         ),
     )
     round2.add_argument(
