@@ -26,7 +26,12 @@ from pathlib import Path
 import docker
 import requests
 
-from cybergym.task.metadata import KERNEL_TASK_METADATA, TASK_METADATA, V8_TASK_METADATA
+from cybergym.task.metadata import (
+    KERNEL_TASK_METADATA,
+    TASK_METADATA,
+    V8_TASK_METADATA,
+    capabilities_to_bitmap,
+)
 from cybergym.task.token import generate_flag, generate_token
 from cybergym.task.workspace import TaskType, prepare_workspace
 
@@ -173,11 +178,28 @@ def main():
         sys.exit(1)
 
     image, binary, entry_name = resolve_task(task_id)
-    # Token and flag must be derived from entry_name (not the task_id alias):
-    # the controller extracts task_info from the token, dispatches the task
-    # handler on its prefix, and derives the real flag from that same string.
-    agent_id, token = generate_token(entry_name, salt=salt)
-    expected_flag = generate_flag(entry_name, seed=flag_seed)
+    # Token/flag must be derived from the controller's task_info string — the
+    # family-specific format the handlers parse back (user "…/<mode>/<target>",
+    # kernel "…/<defense_bitmap>", v8 "…[/nosandbox]"), matching the
+    # evaluators in cybergym/evaluation/. The old bare entry_name form made
+    # create_server 400 with "Unknown task_id" (and derived a bogus flag).
+    if task_id.startswith("v8:"):
+        v8_meta = V8_TASK_METADATA[task_id]
+        token_task = f"{task_id}/nosandbox" if v8_meta.image_no_sandbox else task_id
+    elif task_id.startswith("kernel:"):
+        kernel_meta = KERNEL_TASK_METADATA[task_id]
+        # Mirror KernelEvaluator's default (no explicit defense_capabilities):
+        # the task's original_capabilities → bitmap → same VM the batch runs.
+        bitmap = capabilities_to_bitmap(
+            list(
+                (kernel_meta.raw_metadata or {}).get("original_capabilities", []) or []
+            )
+        )
+        token_task = f"{task_id}/{bitmap}"
+    else:
+        token_task = f"{task_id}/exp.none/EXEC"
+    agent_id, token = generate_token(token_task, salt=salt)
+    expected_flag = generate_flag(token_task, seed=flag_seed)
 
     print(f"Task:       {task_id}")
     print(f"Entry:      {entry_name}")
@@ -191,7 +213,7 @@ def main():
     try:
         r = requests.post(
             f"{args.controller_url}/create_server",
-            json={"agent_id": agent_id, "token": token, "task_info": entry_name},
+            json={"agent_id": agent_id, "token": token},
             timeout=30,
         )
         if r.status_code == 200:
