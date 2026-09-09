@@ -478,6 +478,29 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
                 except (TypeError, ValueError):
                     max_tokens = 0
                 budget = min(max(1024, max_tokens // 2), 8192)
+                # Optional thinking-depth control for deepseek models on the
+                # 360 anthropic path (verified 2026-09-09): the endpoint
+                # accepts a top-level reasoning_effort with real tiers
+                # low/high(default)/max (medium/xhigh map to high), plus
+                # budget_tokens as a ceiling that also accepts >8192 (glm
+                # stays capped at 8192, so both knobs are deepseek-only).
+                # Env is read from the PROXY process: restart it
+                # (FORCE_PROXY_RESTART=1) to apply changes.
+                model_name = str(parsed_body.get("model") or "")
+                if "deepseek" in model_name.lower():
+                    effort = os.environ.get("REASONING_EFFORT", "").strip().lower()
+                    if effort in ("low", "medium", "high", "xhigh", "max"):
+                        parsed_body["reasoning_effort"] = effort
+                        if not os.environ.get("THINKING_BUDGET"):
+                            # leave headroom so high/max effort isn't clipped
+                            # by the default 8192 budget
+                            budget = max(budget, 16384)
+                    try:
+                        tb = int(os.environ.get("THINKING_BUDGET", "") or 0)
+                    except ValueError:
+                        tb = 0
+                    if tb > 0:
+                        budget = max(1024, min(tb, 65536))
                 if max_tokens <= budget:
                     # official API requires max_tokens > thinking.budget_tokens;
                     # tiny max_tokens (preflight "hi" tests) must be bumped.
@@ -507,10 +530,7 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
                     # anything else — missing, "adaptive", "disabled", unknown
                     # — is rewritten to enabled.
                     thinking = parsed_body.get("thinking")
-                    if (
-                        isinstance(thinking, dict)
-                        and thinking.get("type") == "enabled"
-                    ):
+                    if isinstance(thinking, dict) and thinking.get("type") == "enabled":
                         new_body = None
                     else:
                         old_desc = (
@@ -756,6 +776,7 @@ def _patch_streaming_reasoning_detection():
             rc = getattr(choice.delta, "reasoning_content", None)
             if rc and len(rc) > 0:
                 from litellm.types.llms.openai import ChatCompletionThinkingBlock
+
                 return "thinking", ChatCompletionThinkingBlock(
                     type="thinking", thinking="", signature=""
                 )
@@ -812,8 +833,7 @@ def setup_proxy(
             pass
     litellm.use_chat_completions_url_for_anthropic_messages = not native_anthropic
     logger.info(
-        "use_chat_completions_url_for_anthropic_messages = %s "
-        "(native_anthropic=%s)",
+        "use_chat_completions_url_for_anthropic_messages = %s (native_anthropic=%s)",
         litellm.use_chat_completions_url_for_anthropic_messages,
         native_anthropic,
     )

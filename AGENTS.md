@@ -99,6 +99,13 @@ host 侧环境变量(可写 `.glm_env`,见 run_as.sh `_ENV_KEYS`):
 - `REQUIRE_NO_ASLR`(默认 0): 1 = 宿主机 `randomize_va_space != 0` 时 run_as.sh
   拒绝启动。默认只警告(重启后 ASLR 恢复 2 曾导致整批跑在 ASLR 开启下;
   base.py 也会把警告写进每个任务的 task.log,system_config.json 可事后核查)。
+- `REASONING_EFFORT` / `THINKING_BUDGET`(deepseek 专用,2026-09-09 实测):
+  360 anthropic 路径对 deepseek-v4 支持 `reasoning_effort` 三档
+  **low / high(默认) / max**(medium/xhigh 映射为 high),以及 >8192 的
+  `budget_tokens` 上限(glm 仍限 8192,故这两个旋钮只对模型名含 deepseek 的
+  槽位生效)。proxy 中间件会注入;env 在 **proxy 进程**里读,改档后需
+  `FORCE_PROXY_RESTART=1` 重启 proxy 才生效。例: `REASONING_EFFORT=max
+  THINKING_BUDGET=32768`。
 
 升级 cc 到 2.1.252(支持 /goal): 见下文安装一节,把版本号换成 2.1.252 重装即可;
 `static_build_node_and_agents.sh` 默认值已同步改。
