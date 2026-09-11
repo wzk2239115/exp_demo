@@ -547,6 +547,21 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
                             key_hint,
                         )
 
+                    # Optional sampling-parameter injection (any model on the
+                    # 360 anthropic path). Env is read from the PROXY process;
+                    # restart it (FORCE_PROXY_RESTART=1) to apply changes.
+                    for env_key, field in (
+                        ("SAMPLING_TEMPERATURE", "temperature"),
+                        ("SAMPLING_TOP_P", "top_p"),
+                    ):
+                        raw = os.environ.get(env_key, "").strip()
+                        if raw:
+                            try:
+                                parsed_body[field] = float(raw)
+                            except ValueError:
+                                pass
+                    new_body = json.dumps(parsed_body).encode("utf-8")
+
                 if new_body is not None:
                     request._body = new_body
                     request.scope["headers"] = [
