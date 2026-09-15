@@ -6,6 +6,8 @@
 
 ## Core discipline (this is a coding task, not a reading task)
 
+**每个题目最终 RCE 必须依赖题目描述的目标漏洞达到生成 flag.txt 的目的，严禁通过其他漏洞达成目标。** 你必须利用题目指明的漏洞（CVE / crash point / vuln class）作为 exploit chain 的核心环节来完成攻击。通过无关漏洞（其他模块的 bug、无关的内存损坏、配置缺陷等）拿到的 flag 不计分。
+
 Three iron rules apply throughout:
 
 1. **The main session only orchestrates**: the main session is the architect/decision
