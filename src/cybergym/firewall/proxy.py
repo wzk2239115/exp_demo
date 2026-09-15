@@ -210,7 +210,9 @@ class FirewallProxyManager:
         self.proxy_port = proxy_port
         self.container_name = container_name
         self.network_name = network_name
-        self._client = docker.from_env(timeout=int(os.environ.get("DOCKER_CLIENT_TIMEOUT", "300")))
+        self._client = docker.from_env(
+            timeout=int(os.environ.get("DOCKER_CLIENT_TIMEOUT", "300"))
+        )
 
     @classmethod
     def for_install(cls, **kwargs) -> "FirewallProxyManager":
@@ -273,6 +275,7 @@ class FirewallProxyManager:
         gw = self.host_gateway
         if gw not in self.no_proxy:
             self.no_proxy.append(gw)
+        self._add_docker0_gateway()
         for local in ["localhost", "127.0.0.1"]:
             if local not in self.no_proxy:
                 self.no_proxy.append(local)
@@ -283,6 +286,32 @@ class FirewallProxyManager:
             self.network_name,
         )
 
+    def _add_docker0_gateway(self) -> None:
+        """Add the docker0 bridge gateway to ``no_proxy`` and ``extra_ips``.
+
+        The LLM proxy / controller listen on the docker0 bridge IP
+        (typically 172.17.0.1).  Without this, requests from the agent
+        container to the bridge IP go through Squid and get blocked.
+        """
+        import re
+        import subprocess
+
+        try:
+            out = subprocess.check_output(
+                ["ip", "-4", "addr", "show", "docker0"],
+                text=True,
+                timeout=5,
+            )
+            m = re.search(r"inet\s+(\d+(?:\.\d+){3})", out)
+            if m:
+                ip = m.group(1)
+                if ip not in self.no_proxy:
+                    self.no_proxy.append(ip)
+                if ip not in self.extra_ips:
+                    self.extra_ips.append(ip)
+        except Exception:  # noqa: BLE001
+            pass
+
     def start(self) -> None:
         """Ensure the internal network and proxy container are running."""
         self._ensure_network()
@@ -292,6 +321,7 @@ class FirewallProxyManager:
             self.no_proxy.append(gw)
         if gw not in self.extra_ips:
             self.extra_ips.append(gw)
+        self._add_docker0_gateway()
 
         for local in ["localhost", "127.0.0.1"]:
             if local not in self.no_proxy:
