@@ -287,11 +287,18 @@ class FirewallProxyManager:
         )
 
     def _add_docker0_gateway(self) -> None:
-        """Add the docker0 bridge gateway to ``no_proxy`` and ``extra_ips``.
+        """Add the docker0 bridge gateway to ``extra_ips`` (Squid IP allowlist).
 
         The LLM proxy / controller listen on the docker0 bridge IP
-        (typically 172.17.0.1).  Without this, requests from the agent
-        container to the bridge IP go through Squid and get blocked.
+        (typically 172.17.0.1).  Agent containers on ``cybergym-internal``
+        have no direct route to that IP — their requests must go through
+        Squid, which IS connected to the default bridge and can reach it.
+        Adding the IP to ``extra_ips`` puts it in the Squid IP allowlist so
+        Squid forwards the request instead of blocking it.
+
+        Do NOT add it to ``no_proxy``: that would make the agent bypass Squid
+        and attempt a direct connection that has no route from the internal
+        network.
         """
         import re
         import subprocess
@@ -305,8 +312,6 @@ class FirewallProxyManager:
             m = re.search(r"inet\s+(\d+(?:\.\d+){3})", out)
             if m:
                 ip = m.group(1)
-                if ip not in self.no_proxy:
-                    self.no_proxy.append(ip)
                 if ip not in self.extra_ips:
                     self.extra_ips.append(ip)
         except Exception:  # noqa: BLE001
