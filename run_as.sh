@@ -402,13 +402,17 @@ ensure_controller() {
   (
     flock 9
     if ! listening "$url"; then
-      # 继承已 export 的 CYBERGYM_SERVER_*;setsid 让 Ctrl+C 不连坐;不带 --network,
-      # 目标容器走默认桥,agent(默认桥)够得着。
+      # 继承已 export 的 CYBERGYM_SERVER_*;setsid 让 Ctrl+C 不连坐。
+      # --use-firewall 时目标容器也走 cybergym-internal(agent 所在网络),
+      # 否则 agent 在内网够不着默认桥上的目标。
       # 8>&- 9>&-:绝不能继承 run.lock(fd8) 和启动锁(fd9) —— controller 常驻,
       # 泄漏的锁 fd 会让同名互斥锁永久卡死
+      local net_arg=()
+      [[ -n "${RUN_NETWORK:-}" ]] && net_arg=(--network "$RUN_NETWORK")
       setsid uv run -m cybergym.server \
         --host "$BRIDGE" --port "$CONTROLLER_PORT" \
         --log_dir "$LOG_DIR/controller" \
+        "${net_arg[@]}" \
         8>&- 9>&- \
         > "$LOG_DIR/controller.log" 2>&1 < /dev/null &
       echo $! > "$LOG_DIR/controller.pid"
@@ -871,6 +875,13 @@ shift
 BRIDGE="$(bridge_ip)"
 check_agent_tool          # 工具不可用就别白起 controller/proxy 了
 check_host_aslr           # ASLR 开着时警告(REQUIRE_NO_ASLR=1 则拒绝启动)
+
+# --use-firewall 透传给 run_agent.py;同时设置 RUN_NETWORK 让 controller
+# 把目标容器也放到 cybergym-internal(agent 所在网络),否则 agent 够不着目标。
+if printf '%s\n' "$@" | grep -q -- '--use-firewall'; then
+  RUN_NETWORK="${RUN_NETWORK:-cybergym-internal}"
+  export RUN_NETWORK
+fi
 
 SLOT="$(assign_or_get_slot "$USER_NAME")"
 PROXY_PORT=$((PROXY_PORT_BASE + SLOT - 1))
