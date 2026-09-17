@@ -331,6 +331,32 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
                 },
             )
 
+        # cc calls /v1/messages/count_tokens for context-window accounting.
+        # litellm hard-codes this to api.anthropic.com (not our api_base),
+        # so the 360 key gets a 401. Intercept and return a local estimate
+        # so the request never leaves our proxy.
+        if path == "/v1/messages/count_tokens":
+            try:
+                body = await request.json()
+                total = sum(
+                    len(m.get("content", ""))
+                    if isinstance(m.get("content"), str)
+                    else sum(
+                        len(c.get("text", ""))
+                        for c in m["content"]
+                        if isinstance(c, dict)
+                    )
+                    for m in body.get("messages", [])
+                )
+                # rough: ~4 chars per token
+                estimate = max(1, total // 4)
+            except Exception:  # noqa: BLE001
+                estimate = 1
+            return JSONResponse(
+                status_code=200,
+                content={"input_tokens": estimate},
+            )
+
         logger.debug("Incoming request: %s %s", request.method, path)
 
         # Extract API key from headers
