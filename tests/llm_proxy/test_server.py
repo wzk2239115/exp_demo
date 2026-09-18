@@ -814,14 +814,7 @@ class TestWebSearchBlocking:
             json=payload,
         )
         assert response.status_code == 200
-        received = response.json()["received"]
-        # The middleware rewrites 'thinking' (absent -> enabled) and bumps
-        # max_tokens on the native-anthropic path, so only check that the
-        # original payload fields survived the body replay.
-        assert received["model"] == payload["model"]
-        assert received["messages"] == payload["messages"]
-        assert received["thinking"]["type"] == "enabled"
-        assert received["max_tokens"] > received["thinking"]["budget_tokens"]
+        assert response.json()["received"] == payload
 
 
 class TestModelAllowlist:

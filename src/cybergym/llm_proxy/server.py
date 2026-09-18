@@ -18,7 +18,6 @@ import logging
 import os
 import re
 import secrets
-import time
 from contextvars import ContextVar
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode
@@ -40,7 +39,6 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 from starlette.routing import compile_path
 
-from cybergym.llm_proxy import _diag_loop_ref
 from cybergym.llm_proxy.budget import BudgetManager
 from cybergym.llm_proxy.websearch import find_web_search
 
@@ -291,11 +289,6 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
         self.block_web_search = block_web_search
 
     async def dispatch(self, request: Request, call_next) -> Response:
-        # Lazy one-time capture of the running event loop for the
-        # stack-dump watcher (litellm's app defines lifespan=, which
-        # silently disables FastAPI on_event("startup") hooks).
-        _capture_loop_lazily()
-
         path = request.url.path
 
         # Authenticate budget management endpoints with admin key
@@ -807,52 +800,6 @@ def _patch_streaming_reasoning_detection():
     LiteLLMAnthropicMessagesAdapter._translate_streaming_openai_chunk_to_anthropic_content_block = _patched
 
 
-def _patch_litellm_count_tokens_endpoint():
-    """Route litellm's Anthropic count_tokens to OUR anthropic api_base.
-
-    litellm hard-codes ``https://api.anthropic.com/v1/messages/count_tokens``
-    (AnthropicCountTokensConfig.get_anthropic_count_tokens_endpoint). With a
-    360 deployment the request goes to api.anthropic.com with the 360 key →
-    401 → litellm falls back to a local tokenizer that misses system/tools
-    and under-counts, which skews Claude Code's context-window accounting.
-
-    360's anthropic endpoint natively supports /v1/messages/count_tokens
-    (verified: exact counts including system+tools, beta header optional).
-    Patch the endpoint builder to return our upstream base instead.
-    """
-    import os as _os
-
-    upstream = _os.environ.get("GLM_ANTHROPIC_BASE", "https://api.360.cn").rstrip("/")
-
-    from litellm.llms.anthropic.count_tokens.transformation import (
-        AnthropicCountTokensConfig,
-    )
-
-    def _patched(self):
-        return f"{upstream}/v1/messages/count_tokens"
-
-    AnthropicCountTokensConfig.get_anthropic_count_tokens_endpoint = _patched
-    logger.info("Patched count_tokens endpoint -> %s", upstream)
-
-
-def _capture_loop_lazily():
-    """One-time capture of the running event loop for the stack-dump
-    watcher thread (registered by cybergym.llm_proxy.__main__).
-
-    litellm's app is created with lifespan=proxy_startup_event, which
-    makes FastAPI IGNORE on_event("startup") hooks — so this is called
-    from BudgetAuthMiddleware.dispatch on the first request instead.
-    """
-    if _diag_loop_ref["loop"] is None:
-        import asyncio
-
-        try:
-            _diag_loop_ref["loop"] = asyncio.get_running_loop()
-            logger.info("Diagnostics: captured running event loop")
-        except RuntimeError:
-            pass
-
-
 def setup_proxy(
     manager: BudgetManager,
     config_path: str | None = None,
@@ -878,7 +825,6 @@ def setup_proxy(
 
     _patch_litellm_server_tool_use_dict()
     _patch_litellm_thinking_responses_routing()
-    _patch_litellm_count_tokens_endpoint()
     _patch_streaming_reasoning_detection()
 
     # Route /v1/messages based on provider mode (detected from the config).
@@ -971,28 +917,6 @@ def setup_proxy(
             logger.debug("Endpoint /budget/key DELETE: key not found")
             return JSONResponse(status_code=404, content={"error": "Key not found"})
         return usage
-
-    # ── Diagnostics: dump all thread stacks on demand ──────────────────
-    # When the proxy's event loop freezes, every request times out and
-    # nothing is written to the log. This endpoint dumps faulthandler
-    # output to the log AND the response. If the loop itself is blocked
-    # this endpoint won't respond either; use the file trigger instead:
-    #   touch /tmp/cybergym_proxy_stack_dump  (watched via a thread
-    #   registered in __main__).
-    @app.get("/health/dump")
-    async def dump_stacks():
-        import faulthandler
-        import io
-        import threading
-
-        buf = io.StringIO()
-        buf.write(
-            f"=== stack dump at {time.time()} ({threading.active_count()} threads) ===\n"
-        )
-        faulthandler.dump_traceback(file=buf)
-        dump = buf.getvalue()
-        logger.info("Stack dump requested:\n%s", dump)
-        return {"stacks": dump}
 
 
 def get_proxy_app():

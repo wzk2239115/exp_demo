@@ -9,7 +9,7 @@ class _FakeKeyManager:
     def __init__(self):
         self.calls = 0
 
-    def get_api_key_usage(self, api_key: str, timeout: float | None = None) -> dict:
+    def get_api_key_usage(self, api_key: str) -> dict:
         self.calls += 1
         return {"spend": 0.5, "requests": self.calls}
 

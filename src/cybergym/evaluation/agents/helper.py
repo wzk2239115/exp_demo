@@ -59,7 +59,7 @@ class IntermediateStatsLogger:
             )
             if self.key_manager and self.api_key:
                 try:
-                    usage = self.key_manager.get_api_key_usage(self.api_key, timeout=5)
+                    usage = self.key_manager.get_api_key_usage(self.api_key)
                     self._log.info("API key usage: %s", usage)
                     if self.usage_dir is not None:
                         save_json(
@@ -107,9 +107,7 @@ if [ -d /data/python/bin ]; then
 fi
 """
 
-KERNEL_INSTALL_SCRIPT = (
-    TOOLCHAIN_SYMLINKS
-    + """\
+KERNEL_INSTALL_SCRIPT = TOOLCHAIN_SYMLINKS + """\
 set -euo pipefail
 
 sed -i -e 's|archive.ubuntu.com|mirrors.aliyun.com|g' -e 's|security.ubuntu.com|mirrors.aliyun.com|g' -e 's|deb.debian.org|mirrors.aliyun.com|g' -e 's|security.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
@@ -125,11 +123,8 @@ apt-get update {APT_OPTS} && DEBIAN_FRONTEND=noninteractive apt-get install {APT
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 """
-)
 
-V8_INSTALL_SCRIPT = (
-    TOOLCHAIN_SYMLINKS
-    + """\
+V8_INSTALL_SCRIPT = TOOLCHAIN_SYMLINKS + """\
 set -euo pipefail
 
 sed -i -e 's|archive.ubuntu.com|mirrors.aliyun.com|g' -e 's|security.ubuntu.com|mirrors.aliyun.com|g' -e 's|deb.debian.org|mirrors.aliyun.com|g' -e 's|security.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
@@ -138,11 +133,8 @@ apt-get update {APT_OPTS} && DEBIAN_FRONTEND=noninteractive apt-get install {APT
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 """
-)
 
-USER_INSTALL_SCRIPT = (
-    TOOLCHAIN_SYMLINKS
-    + """\
+USER_INSTALL_SCRIPT = TOOLCHAIN_SYMLINKS + """\
 set -euo pipefail
 
 sed -i -e 's|archive.ubuntu.com|mirrors.aliyun.com|g' -e 's|security.ubuntu.com|mirrors.aliyun.com|g' -e 's|deb.debian.org|mirrors.aliyun.com|g' -e 's|security.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
@@ -151,7 +143,6 @@ apt-get update {APT_OPTS} && DEBIAN_FRONTEND=noninteractive apt-get install {APT
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 """
-)
 
 INSTALL_SCRIPTS: dict[TaskType, str] = {
     TaskType.KERNEL_EXPLOITATION: KERNEL_INSTALL_SCRIPT.format(APT_OPTS=APT_OPTS),
