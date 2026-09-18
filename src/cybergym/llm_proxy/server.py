@@ -18,6 +18,7 @@ import logging
 import os
 import re
 import secrets
+import time
 from contextvars import ContextVar
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode
@@ -982,6 +983,34 @@ def setup_proxy(
             logger.debug("Endpoint /budget/key DELETE: key not found")
             return JSONResponse(status_code=404, content={"error": "Key not found"})
         return usage
+
+    # ── Diagnostics: dump all thread stacks on demand ──────────────────
+    # When the proxy's event loop freezes, every request times out and
+    # nothing is written to the log. This endpoint dumps faulthandler
+    # output (all thread stacks, including what's blocking the loop) to
+    # the log AND the response, so a single curl pinpoints the culprit.
+    # NOTE: faulthandler.dump_traceback is signal-safe and can be called
+    # from any thread — but if the event loop itself is blocked this
+    # endpoint won't respond either; use the file trigger instead:
+    #   touch /tmp/cybergym_proxy_stack_dump  (watched via faulthandler
+    #   registered in __main__).
+    _diag_state = {"last_dump": ""}
+
+    @app.get("/health/dump")
+    async def dump_stacks():
+        import faulthandler
+        import io
+        import threading
+
+        buf = io.StringIO()
+        buf.write(
+            f"=== stack dump at {time.time()} ({threading.active_count()} threads) ===\n"
+        )
+        faulthandler.dump_traceback(file=buf)
+        dump = buf.getvalue()
+        _diag_state["last_dump"] = dump
+        logger.info("Stack dump requested:\n%s", dump)
+        return {"stacks": dump}
 
 
 def get_proxy_app():

@@ -23,6 +23,7 @@ Example proxy_config.yaml:
 
 import argparse
 import logging
+import sys
 
 import uvicorn
 
@@ -61,6 +62,34 @@ def main():
         ),
     )
     args = parser.parse_args()
+
+    # Diagnostics: when the event loop freezes, HTTP endpoints stop
+    # responding too. A watcher thread (works even when the loop is dead)
+    # dumps ALL thread stacks to stderr (→ llm_proxy.log) when this file
+    # appears:
+    #   touch /tmp/cybergym_proxy_stack_dump
+    import faulthandler
+    import tempfile
+    import threading
+    import time as _time
+    from pathlib import Path as _Path
+
+    dump_file = _Path(tempfile.gettempdir()) / "cybergym_proxy_stack_dump"
+    dump_file.unlink(missing_ok=True)
+
+    def _watch_dump_file():
+        while True:
+            if dump_file.exists():
+                print(
+                    f"\n=== STACK DUMP TRIGGERED at {_time.strftime('%F %T')} ===",
+                    file=sys.stderr,
+                    flush=True,
+                )
+                faulthandler.dump_traceback()
+                dump_file.unlink(missing_ok=True)
+            _time.sleep(1)
+
+    threading.Thread(target=_watch_dump_file, daemon=True, name="stack-dump").start()
 
     logging.basicConfig(
         format="%(asctime)s [%(name)s] [%(levelname)s] %(message)s",
