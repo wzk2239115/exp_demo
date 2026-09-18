@@ -464,6 +464,8 @@ class BudgetAuthMiddleware:
         enforce_models = record.allowed_models is not None
         new_body: bytes | None = None
         parsed_body = None
+        raw_body: bytes | None = None
+        body_was_read = False
 
         if (self.block_web_search or enforce_models) and scope["method"] in (
             "POST",
@@ -471,6 +473,7 @@ class BudgetAuthMiddleware:
             "PATCH",
         ):
             raw_body = await _read_body(receive)
+            body_was_read = True
             if raw_body:
                 try:
                     parsed_body = json.loads(raw_body)
@@ -632,19 +635,26 @@ class BudgetAuthMiddleware:
                         "more_body": False,
                     }
                 return {"type": "http.request", "body": b"", "more_body": False}
-        else:
+        elif body_was_read:
+            # Body was read for policy checks but not modified — replay it.
+            # Do NOT call _read_body(receive) again: the original receive is
+            # already exhausted and would deadlock → ReadTimeout.
             _sent = [False]
-            cached_body = await _read_body(receive) if parsed_body else b""
+            _replay_body = raw_body or b""
 
             async def _patched_receive():
                 if not _sent[0]:
                     _sent[0] = True
                     return {
                         "type": "http.request",
-                        "body": cached_body,
+                        "body": _replay_body,
                         "more_body": False,
                     }
                 return {"type": "http.request", "body": b"", "more_body": False}
+        else:
+            # Body was never read (e.g., GET request) — pass through the
+            # original receive unchanged.
+            _patched_receive = receive
 
         # Set context var so the callback knows which key made this request
         token = _current_api_key.set(api_key)
