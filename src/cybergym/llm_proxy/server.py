@@ -161,6 +161,26 @@ async def _read_body(receive) -> bytes:
     return body
 
 
+class _ReplayReceive:
+    """ASGI receive callable that replays a fixed body once.
+
+    Each instance is independent (no shared mutable state) so concurrent
+    requests don't clobber each other's state.
+    """
+
+    __slots__ = ("_body", "_sent")
+
+    def __init__(self, body: bytes):
+        self._body = body
+        self._sent = False
+
+    async def __call__(self):
+        if not self._sent:
+            self._sent = True
+            return {"type": "http.request", "body": self._body, "more_body": False}
+        return {"type": "http.request", "body": b"", "more_body": False}
+
+
 async def _send_json(send, status_code: int, content: dict) -> None:
     """Send a JSON response directly via ASGI send callable."""
     body = json.dumps(content).encode("utf-8")
@@ -622,45 +642,22 @@ class BudgetAuthMiddleware:
                     [(k, v) for k, v in pairs if k != "key"]
                 ).encode("latin-1")
 
-        # Set up the receive callable
+        # Set up the receive callable. Use a class (not a closure) to avoid
+        # variable capture bugs under concurrent requests (closures capture
+        # variable references, so concurrent __call__ invocations would
+        # clobber each other's _sent[0] / new_body / _replay_body).
         if new_body is not None:
-            _sent = [False]
-
-            async def _patched_receive():
-                if not _sent[0]:
-                    _sent[0] = True
-                    return {
-                        "type": "http.request",
-                        "body": new_body,
-                        "more_body": False,
-                    }
-                return {"type": "http.request", "body": b"", "more_body": False}
+            receive_callable = _ReplayReceive(new_body)
         elif body_was_read:
-            # Body was read for policy checks but not modified — replay it.
-            # Do NOT call _read_body(receive) again: the original receive is
-            # already exhausted and would deadlock → ReadTimeout.
-            _sent = [False]
-            _replay_body = raw_body or b""
-
-            async def _patched_receive():
-                if not _sent[0]:
-                    _sent[0] = True
-                    return {
-                        "type": "http.request",
-                        "body": _replay_body,
-                        "more_body": False,
-                    }
-                return {"type": "http.request", "body": b"", "more_body": False}
+            receive_callable = _ReplayReceive(raw_body or b"")
         else:
-            # Body was never read (e.g., GET request) — pass through the
-            # original receive unchanged.
-            _patched_receive = receive
+            receive_callable = receive
 
         # Set context var so the callback knows which key made this request
         token = _current_api_key.set(api_key)
         logger.debug("Forwarding request to litellm: %s %s", scope["method"], path)
         try:
-            await self.app(modified_scope, _patched_receive, send)
+            await self.app(modified_scope, receive_callable, send)
         finally:
             _current_api_key.reset(token)
 
