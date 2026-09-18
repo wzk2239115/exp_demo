@@ -407,29 +407,12 @@ class BudgetAuthMiddleware:
             )
             return
 
-        # cc calls /v1/messages/count_tokens for context-window accounting.
-        # litellm hard-codes this to api.anthropic.com (not our api_base),
-        # so the 360 key gets a 401. Intercept and return a local estimate
-        # so the request never leaves our proxy.
-        if path == "/v1/messages/count_tokens":
-            body = await _read_body(receive)
-            try:
-                parsed = json.loads(body) if body else {}
-                total = sum(
-                    len(m.get("content", ""))
-                    if isinstance(m.get("content"), str)
-                    else sum(
-                        len(c.get("text", ""))
-                        for c in m["content"]
-                        if isinstance(c, dict)
-                    )
-                    for m in parsed.get("messages", [])
-                )
-                estimate = max(1, total // 4)
-            except Exception:  # noqa: BLE001
-                estimate = 1
-            await _send_json(send, 200, {"input_tokens": estimate})
-            return
+        # /v1/messages/count_tokens is no longer intercepted locally.
+        # litellm's count_tokens endpoint is patched (see
+        # _patch_litellm_count_tokens_endpoint) to forward to OUR upstream
+        # (e.g. 360's native count_tokens), which returns exact counts
+        # including system+tools. The old local estimate (~4 chars/token,
+        # messages-only) under-counted and skewed cc's context accounting.
 
         logger.debug("Incoming request: %s %s", scope["method"], path)
 
@@ -833,6 +816,34 @@ def _patch_litellm_thinking_responses_routing():
     _H._route_openai_thinking_to_responses_api_if_needed = _patched
 
 
+def _patch_litellm_count_tokens_endpoint():
+    """Route litellm's Anthropic count_tokens to OUR anthropic api_base.
+
+    litellm hard-codes ``https://api.anthropic.com/v1/messages/count_tokens``
+    (AnthropicCountTokensConfig.get_anthropic_count_tokens_endpoint). With a
+    360 deployment the request goes to api.anthropic.com with the 360 key →
+    401 → litellm falls back to a local tokenizer that misses system/tools
+    and under-counts, which skews Claude Code's context-window accounting.
+
+    360's anthropic endpoint natively supports /v1/messages/count_tokens
+    (verified: exact counts including system+tools, beta header optional).
+    Patch the endpoint builder to return our upstream base instead.
+    """
+    import os as _os
+
+    upstream = _os.environ.get("GLM_ANTHROPIC_BASE", "https://api.360.cn").rstrip("/")
+
+    from litellm.llms.anthropic.count_tokens.transformation import (
+        AnthropicCountTokensConfig,
+    )
+
+    def _patched(self):
+        return f"{upstream}/v1/messages/count_tokens"
+
+    AnthropicCountTokensConfig.get_anthropic_count_tokens_endpoint = _patched
+    logger.info("Patched count_tokens endpoint -> %s", upstream)
+
+
 def _patch_streaming_reasoning_detection():
     """Fix litellm stream adapter to detect reasoning_content from gpt-5*.
 
@@ -890,6 +901,7 @@ def setup_proxy(
 
     _patch_litellm_server_tool_use_dict()
     _patch_litellm_thinking_responses_routing()
+    _patch_litellm_count_tokens_endpoint()
     _patch_streaming_reasoning_detection()
 
     # Route /v1/messages based on provider mode (detected from the config).

@@ -254,13 +254,22 @@ async def test_middleware_rejects_missing_key(middleware):
 
 
 @pytest.mark.asyncio
-async def test_middleware_count_tokens_intercept(middleware):
+async def test_middleware_count_tokens_passes_through(middleware):
+    """/v1/messages/count_tokens now passes through to the downstream app
+    (litellm), whose endpoint is patched to forward to OUR upstream (360
+    native count_tokens). The old local estimate (~4 chars/token,
+    messages-only) under-counted and skewed cc's context accounting."""
     mw, app = middleware
     manager = mw.manager
     key = _make_valid_key(manager)
 
     body = json.dumps(
-        {"messages": [{"role": "user", "content": "hello world this is a test"}]}
+        {
+            "model": "deepseek-v4.1-flash",
+            "messages": [{"role": "user", "content": "hello world"}],
+            "system": "You are a test.",
+            "tools": [{"name": "bash", "description": "run bash"}],
+        }
     ).encode()
     scope = _make_scope(path="/v1/messages/count_tokens", api_key=key, body=body)
     receive = _make_receive(body)
@@ -268,12 +277,14 @@ async def test_middleware_count_tokens_intercept(middleware):
 
     await mw(scope, receive, send)
 
-    assert send.status == 200
-    result = json.loads(send.body)
-    assert "input_tokens" in result
-    assert result["input_tokens"] > 0
-    # Should NOT reach the downstream app
-    assert app.call_count == 0
+    # Reaches the downstream app (litellm count_tokens route)
+    assert app.call_count == 1
+    # Body forwarded intact (incl. system + tools)
+    forwarded = json.loads(app.received_bodies[0])
+    assert forwarded["system"] == "You are a test."
+    assert forwarded["tools"][0]["name"] == "bash"
+    # Auth header swapped to master key
+    assert app.received_headers[0].get("x-api-key") == INTERNAL_MASTER_KEY
 
 
 # ── Concurrency test: the critical regression test ────────────────────
