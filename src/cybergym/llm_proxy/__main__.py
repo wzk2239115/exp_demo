@@ -86,6 +86,36 @@ def main():
                     flush=True,
                 )
                 faulthandler.dump_traceback()
+                # Thread stacks show suspend points only; dump ALL asyncio
+                # task stacks to see what the event loop's tasks are doing.
+                try:
+                    import asyncio
+                    import traceback
+
+                    loop = asyncio.get_event_loop()
+                    tasks = asyncio.all_tasks(loop)
+                    print(
+                        f"\n=== {len(tasks)} asyncio tasks ===",
+                        file=sys.stderr,
+                        flush=True,
+                    )
+                    for t in tasks:
+                        print(
+                            f"\n--- task {t.get_name()} "
+                            f"(done={t.done()}, cancelled={t.cancelled()}) ---",
+                            file=sys.stderr,
+                            flush=True,
+                        )
+                        tb = t.get_stack(limit=None)
+                        if tb:
+                            traceback.print_stack(tb[0])
+                        else:
+                            print(
+                                "(no frames — suspended without stack info)",
+                                file=sys.stderr,
+                            )
+                except Exception as e:  # noqa: BLE001
+                    print(f"asyncio dump failed: {e}", file=sys.stderr, flush=True)
                 dump_file.unlink(missing_ok=True)
             _time.sleep(1)
 
