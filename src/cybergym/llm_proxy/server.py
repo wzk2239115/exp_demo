@@ -38,6 +38,7 @@ os.environ.setdefault("NO_OPENAPI", "true")
 from litellm.proxy.proxy_server import app
 from starlette.routing import compile_path
 
+from cybergym.llm_proxy import _diag_loop_ref
 from cybergym.llm_proxy.budget import BudgetManager
 from cybergym.llm_proxy.websearch import find_web_search
 
@@ -358,6 +359,11 @@ class BudgetAuthMiddleware:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
+
+        # Lazy one-time capture of the running event loop for the
+        # stack-dump watcher (litellm's app defines lifespan=, which
+        # silently disables FastAPI on_event("startup") hooks).
+        _capture_loop_lazily()
 
         path = scope["path"]
 
@@ -1024,16 +1030,23 @@ def setup_proxy(
         logger.info("Stack dump requested:\n%s", dump)
         return {"stacks": dump}
 
-    # Capture the running event loop for the stack-dump watcher thread
-    # (registered by cybergym.llm_proxy.__main__). Runs once at startup.
-    @app.on_event("startup")
-    async def _capture_loop_for_diagnostics():
+
+def _capture_loop_lazily():
+    """One-time capture of the running event loop for the stack-dump
+    watcher thread (registered by cybergym.llm_proxy.__main__).
+
+    litellm's app is created with lifespan=proxy_startup_event, which
+    makes FastAPI IGNORE on_event("startup") hooks — so this is called
+    from BudgetAuthMiddleware.__call__ on the first request instead.
+    """
+    if _diag_loop_ref["loop"] is None:
         import asyncio
 
-        from cybergym.llm_proxy import _diag_loop_ref
-
-        _diag_loop_ref["loop"] = asyncio.get_running_loop()
-        logger.info("Diagnostics: captured running event loop")
+        try:
+            _diag_loop_ref["loop"] = asyncio.get_running_loop()
+            logger.info("Diagnostics: captured running event loop")
+        except RuntimeError:
+            pass
 
 
 def get_proxy_app():
