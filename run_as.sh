@@ -502,21 +502,49 @@ $(pgrep -af -- "cybergym.llm_proxy.* --port $PROXY_PORT " 2>/dev/null | head -3 
   # setsid:把 proxy 放进独立会话,Ctrl+C 中断 run_as.sh 时不会被同进程组连坐杀掉
   # 8>&-:同样不能继承 run.lock 的 fd —— proxy 跨会话常驻,泄漏锁 fd 会把互斥锁
   # 卡死到 proxy 被 --stop 为止(而且旧版 --stop 又被锁堵住,死循环)
-  setsid uv run -m cybergym.llm_proxy \
-    --host "$BRIDGE" --port "$PROXY_PORT" \
-    --admin-key "$CYBERGYM_ADMIN_KEY" \
-    --config "$GLM_CONFIG" \
-    --default-budget "$BUDGET" \
-    8>&- \
-    > "$LOG_DIR/llm_proxy.log" 2>&1 < /dev/null &
-  echo $! > "$LOG_DIR/proxy.pid"
+   setsid uv run -m cybergym.llm_proxy \
+     --host "$BRIDGE" --port "$PROXY_PORT" \
+     --admin-key "$CYBERGYM_ADMIN_KEY" \
+     --config "$GLM_CONFIG" \
+     --default-budget "$BUDGET" \
+     8>&- \
+     > "$LOG_DIR/llm_proxy.log" 2>&1 < /dev/null &
+   echo $! > "$LOG_DIR/proxy.pid"
 
-  for _ in $(seq 1 120); do
-    listening "$root" && break
-    sleep 0.5
-  done
-  listening "$root" || die "proxy 启动失败,看 $LOG_DIR/llm_proxy.log"
-  log "proxy 已启动 :$PROXY_PORT"
+   for _ in $(seq 1 120); do
+     listening "$root" && break
+     sleep 0.5
+   done
+   listening "$root" || die "proxy 启动失败,看 $LOG_DIR/llm_proxy.log"
+   log "proxy 已启动 :$PROXY_PORT"
+
+   # 启动 proxy 看门狗:proxy 死了自动重启(不打断在跑的任务,新任务能继续)
+   setsid bash -c '
+     while true; do
+       sleep 30
+       if ! curl -s --max-time 5 "http://'"$BRIDGE"':'"$PROXY_PORT"'/health/liveliness" >/dev/null 2>&1; then
+         echo "$(date) [watchdog] proxy 死了,重启中..." >> "'$LOG_DIR'/proxy_watchdog.log"
+         # 杀残留 proxy 进程
+         pkill -f "cybergym.llm_proxy.*--port '"$PROXY_PORT"' " 2>/dev/null
+         sleep 2
+         # 重启
+         cd "'$PROJECT_ROOT'"
+         setsid uv run -m cybergym.llm_proxy \
+           --host "'"$BRIDGE"'" --port "'"$PROXY_PORT"'" \
+           --admin-key "'"$CYBERGYM_ADMIN_KEY"'" \
+           --config "'"$GLM_CONFIG"'" \
+           --default-budget "'"$BUDGET"'" \
+           > "'$LOG_DIR'/llm_proxy.log" 2>&1 < /dev/null &
+         echo $! > "'$LOG_DIR'/proxy.pid"
+         sleep 10
+         if curl -s --max-time 5 "http://'"$BRIDGE"':'"$PROXY_PORT"'/health/liveliness" >/dev/null 2>&1; then
+           echo "$(date) [watchdog] proxy 重启成功" >> "'$LOG_DIR'/proxy_watchdog.log"
+         else
+           echo "$(date) [watchdog] proxy 重启失败,等下一轮" >> "'$LOG_DIR'/proxy_watchdog.log"
+         fi
+       fi
+     done
+   ' 8>&- 9>&- &
 }
 
 stop_proxy() {

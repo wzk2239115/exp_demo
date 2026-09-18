@@ -112,11 +112,23 @@ class ProxyKeyManager:
         )
         return key
 
-    def get_api_key_usage(self, api_key: str) -> dict:
+    def get_api_key_usage(self, api_key: str, timeout: float | None = None) -> dict:
         key_hint = f"{api_key[:8]}...{api_key[-4:]}" if len(api_key) > 12 else api_key
         logger.debug("Fetching usage for key %s", key_hint)
-        resp = self._request_with_retry("get", f"/budget/usage/{api_key}")
-        data = resp.json()
+        if timeout is not None:
+            # Fast path: single attempt, short timeout (for mid-run stats
+            # that must not block the worker thread when the proxy is busy).
+            with httpx.Client(
+                base_url=self.proxy_url,
+                timeout=timeout,
+                headers=self._admin_headers(),
+            ) as client:
+                resp = client.get(f"/budget/usage/{api_key}")
+                resp.raise_for_status()
+                data = resp.json()
+        else:
+            resp = self._request_with_retry("get", f"/budget/usage/{api_key}")
+            data = resp.json()
         logger.debug(
             "Usage for %s: spend=$%.4f remaining=$%.4f requests=%d",
             key_hint,
