@@ -35,8 +35,6 @@ os.environ.setdefault("NO_REDOC", "true")
 os.environ.setdefault("NO_OPENAPI", "true")
 
 from litellm.proxy.proxy_server import app
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import Response
 from starlette.routing import compile_path
 
 from cybergym.llm_proxy.budget import BudgetManager
@@ -134,6 +132,49 @@ def _extract_api_key(request: Request) -> str:
         or request.headers.get("authorization", "").removeprefix("Bearer ").strip()
         or request.headers.get("x-litellm-api-key", "").removeprefix("Bearer ").strip()
     )
+
+
+def _extract_api_key_from_scope(scope) -> str:
+    """Extract API key from ASGI scope headers (no Request object needed)."""
+    headers = {}
+    for k, v in scope.get("headers", []):
+        headers[k.decode("latin-1")] = v.decode("latin-1")
+    return (
+        headers.get("x-api-key")
+        or headers.get("x-goog-api-key")
+        or headers.get("api-key")
+        or headers.get("authorization", "").removeprefix("Bearer ").strip()
+        or headers.get("x-litellm-api-key", "").removeprefix("Bearer ").strip()
+    )
+
+
+async def _read_body(receive) -> bytes:
+    """Read the complete request body from an ASGI receive callable."""
+    body = b""
+    while True:
+        message = await receive()
+        if message["type"] != "http.request":
+            continue
+        body += message.get("body", b"")
+        if not message.get("more_body", False):
+            break
+    return body
+
+
+async def _send_json(send, status_code: int, content: dict) -> None:
+    """Send a JSON response directly via ASGI send callable."""
+    body = json.dumps(content).encode("utf-8")
+    await send(
+        {
+            "type": "http.response.start",
+            "status": status_code,
+            "headers": [
+                (b"content-type", b"application/json"),
+                (b"content-length", str(len(body)).encode("latin-1")),
+            ],
+        }
+    )
+    await send({"type": "http.response.body", "body": body, "more_body": False})
 
 
 # Internal master key for litellm proxy auth. Never exposed externally.
@@ -267,13 +308,17 @@ class BudgetCallback(CustomLogger):
             logger.debug("Skipping record_usage: no usage or cost data available")
 
 
-class BudgetAuthMiddleware(BaseHTTPMiddleware):
-    """ASGI middleware that validates custom keys and swaps in master key.
+class BudgetAuthMiddleware:
+    """Pure ASGI middleware that validates custom keys and swaps in master key.
 
     For /budget/* endpoints: passes through directly.
     For all other endpoints: validates our cgym-* key, checks budget,
     replaces with litellm master key, and stashes original key in
     request headers for the callback to pick up.
+
+    Implemented as a raw ASGI middleware (not BaseHTTPMiddleware) to avoid
+    starlette's TaskGroup/ExceptionGroup crash under high concurrency
+    (see https://github.com/encode/starlette/issues/1438).
     """
 
     def __init__(
@@ -283,61 +328,72 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
         master_key: str,
         block_web_search: bool = True,
     ):
-        super().__init__(app)
+        self.app = app
         self.manager = manager
         self.master_key = master_key
         self.block_web_search = block_web_search
 
-    async def dispatch(self, request: Request, call_next) -> Response:
-        path = request.url.path
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        path = scope["path"]
 
         # Authenticate budget management endpoints with admin key
         if path.startswith("/budget/"):
+            headers_dict = dict(
+                (k.decode("latin-1"), v.decode("latin-1"))
+                for k, v in scope.get("headers", [])
+            )
             admin_key = (
-                request.headers.get("x-admin-key")
-                or request.headers.get("authorization", "")
-                .removeprefix("Bearer ")
-                .strip()
+                headers_dict.get("x-admin-key")
+                or headers_dict.get("authorization", "").removeprefix("Bearer ").strip()
             )
             if not admin_key or not secrets.compare_digest(admin_key, _admin_key):
                 logger.debug("Rejected budget request: invalid admin key")
-                return JSONResponse(
-                    status_code=401,
-                    content={
-                        "error": {"message": "Invalid admin key", "type": "auth_error"}
-                    },
+                await _send_json(
+                    send,
+                    401,
+                    {"error": {"message": "Invalid admin key", "type": "auth_error"}},
                 )
-            logger.debug("Authenticated budget endpoint: %s %s", request.method, path)
-            return await call_next(request)
+                return
+            logger.debug("Authenticated budget endpoint: %s %s", scope["method"], path)
+            await self.app(scope, receive, send)
+            return
 
-        # Pass through litellm internal endpoints — LiteLLM enforces its own auth.
+        # Pass through litellm internal endpoints
         if path in ("/health", "/health/liveliness", "/health/readiness"):
             logger.debug("Passthrough health endpoint: %s", path)
-            return await call_next(request)
+            await self.app(scope, receive, send)
+            return
 
         if not _is_inference_route(path):
             logger.debug(
                 "Rejected route outside inference allowlist: %s %s",
-                request.method,
+                scope["method"],
                 path,
             )
-            return JSONResponse(
-                status_code=403,
-                content={
+            await _send_json(
+                send,
+                403,
+                {
                     "error": {
                         "message": f"Route not allowed for budget-scoped API keys: {path}",
                         "type": "forbidden_route",
                     }
                 },
             )
+            return
 
         # cc calls /v1/messages/count_tokens for context-window accounting.
         # litellm hard-codes this to api.anthropic.com (not our api_base),
         # so the 360 key gets a 401. Intercept and return a local estimate
         # so the request never leaves our proxy.
         if path == "/v1/messages/count_tokens":
+            body = await _read_body(receive)
             try:
-                body = await request.json()
+                parsed = json.loads(body) if body else {}
                 total = sum(
                     len(m.get("content", ""))
                     if isinstance(m.get("content"), str)
@@ -346,25 +402,23 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
                         for c in m["content"]
                         if isinstance(c, dict)
                     )
-                    for m in body.get("messages", [])
+                    for m in parsed.get("messages", [])
                 )
-                # rough: ~4 chars per token
                 estimate = max(1, total // 4)
             except Exception:  # noqa: BLE001
                 estimate = 1
-            return JSONResponse(
-                status_code=200,
-                content={"input_tokens": estimate},
-            )
+            await _send_json(send, 200, {"input_tokens": estimate})
+            return
 
-        logger.debug("Incoming request: %s %s", request.method, path)
+        logger.debug("Incoming request: %s %s", scope["method"], path)
 
         # Extract API key from headers
-        api_key = _extract_api_key(request)
+        api_key = _extract_api_key_from_scope(scope)
 
         if not api_key:
             logger.debug("Rejected: no API key in headers")
-            return JSONResponse(status_code=401, content={"error": "Missing API key"})
+            await _send_json(send, 401, {"error": "Missing API key"})
+            return
 
         key_hint = f"{api_key[:8]}...{api_key[-4:]}"
         logger.debug("Extracted key %s", key_hint)
@@ -380,20 +434,24 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
                     usage["spend"],
                     usage["max_budget"],
                 )
-                return JSONResponse(
-                    status_code=429,
-                    content={
+                await _send_json(
+                    send,
+                    429,
+                    {
                         "error": {
                             "message": f"Budget exhausted: ${usage['spend']:.2f} / ${usage['max_budget']:.2f}",
                             "type": "budget_exceeded",
                         }
                     },
                 )
+                return
             logger.debug("Rejected key %s: not found", key_hint)
-            return JSONResponse(
-                status_code=401,
-                content={"error": {"message": "Invalid API key", "type": "auth_error"}},
+            await _send_json(
+                send,
+                401,
+                {"error": {"message": "Invalid API key", "type": "auth_error"}},
             )
+            return
 
         logger.debug(
             "Validated key %s (spend $%.4f / $%.2f)",
@@ -402,31 +460,24 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
             record.max_budget,
         )
 
-        # Body-level policy checks. We parse the JSON body once and run both the
-        # external-retrieval guard and the per-key model allowlist on it, here in
-        # the one chokepoint that sees every route including the provider
-        # pass-through prefixes (litellm's pass-through handlers skip its
-        # guardrail pre-call hooks). Starlette's BaseHTTPMiddleware caches
-        # request.body() and replays it to the downstream app, so reading it
-        # here does not consume the stream.
+        # Body-level policy checks
         enforce_models = record.allowed_models is not None
-        if (self.block_web_search or enforce_models) and request.method in (
+        new_body: bytes | None = None
+        parsed_body = None
+
+        if (self.block_web_search or enforce_models) and scope["method"] in (
             "POST",
             "PUT",
             "PATCH",
         ):
-            raw_body = await request.body()
-            parsed_body = None
+            raw_body = await _read_body(receive)
             if raw_body:
                 try:
                     parsed_body = json.loads(raw_body)
                 except ValueError:
                     parsed_body = None
 
-            # Reject provider-side external retrieval (web search, web fetch,
-            # remote MCP, file/URL inputs, hosted code execution, deep-research
-            # models) — these run on the provider's servers and bypass the
-            # container firewall. Disabled via --allow-web-search.
+            # Reject provider-side external retrieval
             if self.block_web_search:
                 reason = find_web_search(parsed_body, path)
                 if reason is not None:
@@ -434,23 +485,22 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
                         "Rejected external-retrieval request for key %s (%s): %s %s",
                         key_hint,
                         reason,
-                        request.method,
+                        scope["method"],
                         path,
                     )
-                    return JSONResponse(
-                        status_code=403,
-                        content={
+                    await _send_json(
+                        send,
+                        403,
+                        {
                             "error": {
-                                "message": (
-                                    "Request blocked by proxy policy "
-                                    f"(external retrieval disabled): {reason}"
-                                ),
+                                "message": f"Request blocked by proxy policy (external retrieval disabled): {reason}",
                                 "type": "web_search_blocked",
                             }
                         },
                     )
+                    return
 
-            # Enforce the per-key model allowlist (when set on the key).
+            # Enforce the per-key model allowlist
             if enforce_models:
                 model = _request_model(parsed_body, path)
                 if model is not None and model not in record.allowed_models:
@@ -459,44 +509,22 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
                         model,
                         key_hint,
                         sorted(record.allowed_models),
-                        request.method,
+                        scope["method"],
                         path,
                     )
-                    return JSONResponse(
-                        status_code=403,
-                        content={
+                    await _send_json(
+                        send,
+                        403,
+                        {
                             "error": {
-                                "message": (
-                                    f"Model '{model}' is not allowed for this key"
-                                ),
+                                "message": f"Model '{model}' is not allowed for this key",
                                 "type": "model_not_allowed",
                             }
                         },
                     )
+                    return
 
-            # Normalize the 'thinking' param on /v1/messages requests.
-            #
-            # chat-completions mode (openai provider): litellm's completion
-            # adapter re-routes thinking-enabled requests to the Responses API
-            # (adapters/handler.py:_route_openai_thinking_to_responses_api_if_needed),
-            # which 360 and many other providers don't support. Removing the
-            # parameter here (at the HTTP level, before litellm processes it)
-            # forces chat completions unconditionally.
-            #
-            # native anthropic mode (GLM_PROVIDER=anthropic → 360's own
-            # /v1/messages endpoint): normalize 'thinking' so the upstream
-            # always receives {"type":"enabled","budget_tokens":N}.
-            #
-            # claude_code 2.1.x sends thinking={"type":"adaptive"} on every
-            # request (always-thinking default, adaptive for unknown models),
-            # and 360's anthropic endpoint only accepts type
-            # enabled|disabled — adaptive (or disabled, or a missing param on
-            # always-thinking models like glm-5.3) is rejected with 400
-            # "[1210] 该模型始终思考，不支持关闭思考". Verified against 360:
-            # {"type":"enabled","budget_tokens":1024} works for stream +
-            # tool_use + ?beta=true; budget is NOT cross-checked against
-            # max_tokens upstream, but we still keep the official invariant
-            # (budget >= 1024, max_tokens > budget) for safety.
+            # Normalize the 'thinking' param on /v1/messages requests
             def _rewrite_thinking_enabled() -> None:
                 max_tokens = parsed_body.get("max_tokens") or 0
                 try:
@@ -504,22 +532,12 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
                 except (TypeError, ValueError):
                     max_tokens = 0
                 budget = min(max(1024, max_tokens // 2), 8192)
-                # Optional thinking-depth control for deepseek models on the
-                # 360 anthropic path (verified 2026-09-09): the endpoint
-                # accepts a top-level reasoning_effort with real tiers
-                # low/high(default)/max (medium/xhigh map to high), plus
-                # budget_tokens as a ceiling that also accepts >8192 (glm
-                # stays capped at 8192, so both knobs are deepseek-only).
-                # Env is read from the PROXY process: restart it
-                # (FORCE_PROXY_RESTART=1) to apply changes.
                 model_name = str(parsed_body.get("model") or "")
                 if "deepseek" in model_name.lower():
                     effort = os.environ.get("REASONING_EFFORT", "").strip().lower()
                     if effort in ("low", "medium", "high", "xhigh", "max"):
                         parsed_body["reasoning_effort"] = effort
                         if not os.environ.get("THINKING_BUDGET"):
-                            # leave headroom so high/max effort isn't clipped
-                            # by the default 8192 budget
                             budget = max(budget, 16384)
                     try:
                         tb = int(os.environ.get("THINKING_BUDGET", "") or 0)
@@ -528,33 +546,21 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
                     if tb > 0:
                         budget = max(1024, min(tb, 65536))
                 if max_tokens <= budget:
-                    # official API requires max_tokens > thinking.budget_tokens;
-                    # tiny max_tokens (preflight "hi" tests) must be bumped.
                     max_tokens = budget + 512
                     parsed_body["max_tokens"] = max_tokens
-                parsed_body["thinking"] = {
-                    "type": "enabled",
-                    "budget_tokens": budget,
-                }
+                parsed_body["thinking"] = {"type": "enabled", "budget_tokens": budget}
 
             if parsed_body and path == "/v1/messages":
                 if litellm.use_chat_completions_url_for_anthropic_messages:
-                    # chat-completions mode: litellm would re-route thinking
-                    # requests to the Responses API; strip the param entirely.
                     if "thinking" in parsed_body:
                         del parsed_body["thinking"]
                         new_body = json.dumps(parsed_body).encode("utf-8")
                         logger.info(
-                            "Stripped 'thinking' from /v1/messages for key %s",
-                            key_hint,
+                            "Stripped 'thinking' from /v1/messages for key %s", key_hint
                         )
                     else:
                         new_body = None
                 else:
-                    # native anthropic mode: only {"type":"enabled"} passes
-                    # through as-is (keep budget_tokens when cc sent one);
-                    # anything else — missing, "adaptive", "disabled", unknown
-                    # — is rewritten to enabled.
                     thinking = parsed_body.get("thinking")
                     if isinstance(thinking, dict) and thinking.get("type") == "enabled":
                         new_body = None
@@ -567,15 +573,11 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
                         _rewrite_thinking_enabled()
                         new_body = json.dumps(parsed_body).encode("utf-8")
                         logger.info(
-                            "Rewrote 'thinking' (%s -> enabled) in /v1/messages "
-                            "for key %s",
+                            "Rewrote 'thinking' (%s -> enabled) in /v1/messages for key %s",
                             old_desc,
                             key_hint,
                         )
 
-                    # Optional sampling-parameter injection (any model on the
-                    # 360 anthropic path). Env is read from the PROXY process;
-                    # restart it (FORCE_PROXY_RESTART=1) to apply changes.
                     for env_key, field in (
                         ("SAMPLING_TEMPERATURE", "temperature"),
                         ("SAMPLING_TOP_P", "top_p"),
@@ -588,29 +590,10 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
                                 pass
                     new_body = json.dumps(parsed_body).encode("utf-8")
 
-                if new_body is not None:
-                    request._body = new_body
-                    request.scope["headers"] = [
-                        (b"content-length", str(len(new_body)).encode("latin-1"))
-                        if k == b"content-length"
-                        else (k, v)
-                        for k, v in request.scope.get("headers", [])
-                    ]
-
-                    async def _patched_receive():
-                        return {
-                            "type": "http.request",
-                            "body": new_body,
-                            "more_body": False,
-                        }
-
-                    request.scope["receive"] = _patched_receive
-
-        # Swap in master key for litellm and stash original key in metadata header
-        # We modify the ASGI scope directly since headers are immutable on Request.
-        # ASGI guarantees header names are lowercase bytes (RFC 7230).
+        # Build modified scope with new body (if any) and swapped auth headers
+        modified_scope = dict(scope)
         new_headers = []
-        for k, v in request.scope["headers"]:
+        for k, v in scope.get("headers", []):
             name = k.decode("latin-1")
             if name == _AUTHORIZATION_HEADER:
                 new_headers.append((k, f"Bearer {self.master_key}".encode("latin-1")))
@@ -618,31 +601,56 @@ class BudgetAuthMiddleware(BaseHTTPMiddleware):
                 new_headers.append((k, self.master_key.encode("latin-1")))
             else:
                 new_headers.append((k, v))
-        request.scope["headers"] = new_headers
+        if new_body is not None:
+            new_headers = [
+                (b"content-length", str(len(new_body)).encode("latin-1"))
+                if k == b"content-length"
+                else (k, v)
+                for k, v in new_headers
+            ]
+        modified_scope["headers"] = new_headers
 
-        # Strip ?key=... — LiteLLM falls back to this query param for Gemini
-        # generate_content auth. No inference route uses `key` for anything else.
-        query_string: bytes = request.scope.get("query_string", b"")
+        # Strip ?key=... from query string
+        query_string: bytes = scope.get("query_string", b"")
         if query_string:
             pairs = parse_qsl(query_string.decode("latin-1"), keep_blank_values=True)
             if any(k == "key" for k, _ in pairs):
-                request.scope["query_string"] = urlencode(
+                modified_scope["query_string"] = urlencode(
                     [(k, v) for k, v in pairs if k != "key"]
                 ).encode("latin-1")
 
+        # Set up the receive callable
+        if new_body is not None:
+            _sent = [False]
+
+            async def _patched_receive():
+                if not _sent[0]:
+                    _sent[0] = True
+                    return {
+                        "type": "http.request",
+                        "body": new_body,
+                        "more_body": False,
+                    }
+                return {"type": "http.request", "body": b"", "more_body": False}
+        else:
+            _sent = [False]
+            cached_body = await _read_body(receive) if parsed_body else b""
+
+            async def _patched_receive():
+                if not _sent[0]:
+                    _sent[0] = True
+                    return {
+                        "type": "http.request",
+                        "body": cached_body,
+                        "more_body": False,
+                    }
+                return {"type": "http.request", "body": b"", "more_body": False}
+
         # Set context var so the callback knows which key made this request
         token = _current_api_key.set(api_key)
-        logger.debug("Forwarding request to litellm: %s %s", request.method, path)
+        logger.debug("Forwarding request to litellm: %s %s", scope["method"], path)
         try:
-            response = await call_next(request)
-            logger.debug(
-                "Response for key %s: %s %s -> %d",
-                key_hint,
-                request.method,
-                path,
-                response.status_code,
-            )
-            return response
+            await self.app(modified_scope, _patched_receive, send)
         finally:
             _current_api_key.reset(token)
 
@@ -677,45 +685,68 @@ def _redact_tracebacks(data: object) -> bool:
     return modified
 
 
-class TracebackRedactionMiddleware(BaseHTTPMiddleware):
-    """Strip LiteLLM tracebacks from JSON error response bodies."""
+class TracebackRedactionMiddleware:
+    """Strip LiteLLM tracebacks from JSON error response bodies.
 
-    async def dispatch(self, request: Request, call_next) -> Response:
-        response = await call_next(request)
-        if response.status_code < 400:
-            return response
-        content_type = response.headers.get("content-type", "")
-        if "application/json" not in content_type:
-            return response
+    Pure ASGI middleware (no BaseHTTPMiddleware) to avoid TaskGroup crashes.
+    """
 
-        body = b""
-        async for chunk in response.body_iterator:
-            body += chunk
+    def __init__(self, app):
+        self.app = app
 
-        try:
-            data = json.loads(body)
-        except ValueError:
-            # Not JSON despite the content-type; pass through unchanged.
-            return Response(
-                content=body,
-                status_code=response.status_code,
-                headers=dict(response.headers),
-                media_type=content_type,
-            )
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
 
-        if _redact_tracebacks(data):
-            body = json.dumps(data).encode("utf-8")
+        status_code = {"value": 200}
+        content_type = {"value": ""}
+        collected_body = bytearray()
 
-        # content-length is recomputed by Response; drop the stale one.
-        headers = {
-            k: v for k, v in response.headers.items() if k.lower() != "content-length"
-        }
-        return Response(
-            content=body,
-            status_code=response.status_code,
-            headers=headers,
-            media_type=content_type,
-        )
+        async def send_wrapper(message):
+            if message["type"] == "http.response.start":
+                status_code["value"] = message.get("status", 200)
+                for k, v in message.get("headers", []):
+                    if k == b"content-type":
+                        content_type["value"] = v.decode("latin-1")
+                        break
+                await send(message)
+            elif message["type"] == "http.response.body":
+                if (
+                    status_code["value"] >= 400
+                    and "application/json" in content_type["value"]
+                ):
+                    collected_body.extend(message.get("body", b""))
+                    if message.get("more_body", False):
+                        return  # wait for all chunks
+                    # All body collected — process
+                    body_bytes = bytes(collected_body)
+                    try:
+                        data = json.loads(body_bytes)
+                    except ValueError:
+                        await send(
+                            {
+                                "type": "http.response.body",
+                                "body": body_bytes,
+                                "more_body": False,
+                            }
+                        )
+                        return
+                    if _redact_tracebacks(data):
+                        body_bytes = json.dumps(data).encode("utf-8")
+                    await send(
+                        {
+                            "type": "http.response.body",
+                            "body": body_bytes,
+                            "more_body": False,
+                        }
+                    )
+                else:
+                    await send(message)
+            else:
+                await send(message)
+
+        await self.app(scope, receive, send_wrapper)
 
 
 def _patch_litellm_server_tool_use_dict():
@@ -894,7 +925,9 @@ def setup_proxy(
     litellm.callbacks.append(callback)
     logger.debug("Registered BudgetCallback with litellm")
 
-    # Add auth middleware
+    # Add auth middleware (pure ASGI, no BaseHTTPMiddleware to avoid
+    # starlette TaskGroup/ExceptionGroup crash under high concurrency).
+    app.middleware_stack = None
     app.add_middleware(
         BudgetAuthMiddleware,
         manager=manager,
@@ -903,8 +936,7 @@ def setup_proxy(
     )
     logger.debug("Added BudgetAuthMiddleware (block_web_search=%s)", block_web_search)
 
-    # Add traceback-redaction middleware last so it wraps outside of everything
-    # else and sees the final error body before it leaves the server.
+    # Add traceback-redaction middleware (pure ASGI).
     app.add_middleware(TracebackRedactionMiddleware)
     logger.debug("Added TracebackRedactionMiddleware")
 
