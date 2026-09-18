@@ -65,8 +65,8 @@ def main():
 
     # Diagnostics: when the event loop freezes, HTTP endpoints stop
     # responding too. A watcher thread (works even when the loop is dead)
-    # dumps ALL thread stacks to stderr (→ llm_proxy.log) when this file
-    # appears:
+    # dumps ALL thread stacks + all asyncio task stacks to stderr
+    # (→ llm_proxy.log) when this file appears:
     #   touch /tmp/cybergym_proxy_stack_dump
     import faulthandler
     import tempfile
@@ -74,8 +74,8 @@ def main():
     import time as _time
     from pathlib import Path as _Path
 
-    dump_file = _Path(tempfile.gettempdir()) / "cybergym_proxy_stack_dump"
-    dump_file.unlink(missing_ok=True)
+    # Shared handle to the running event loop, captured by server.py's
+    # app-startup hook (see cybergym.llm_proxy._diag_loop_ref).
 
     def _watch_dump_file():
         while True:
@@ -86,39 +86,48 @@ def main():
                     flush=True,
                 )
                 faulthandler.dump_traceback()
-                # Thread stacks show suspend points only; dump ALL asyncio
-                # task stacks to see what the event loop's tasks are doing.
                 try:
                     import asyncio
                     import traceback
 
-                    loop = asyncio.get_event_loop()
-                    tasks = asyncio.all_tasks(loop)
-                    print(
-                        f"\n=== {len(tasks)} asyncio tasks ===",
-                        file=sys.stderr,
-                        flush=True,
-                    )
-                    for t in tasks:
+                    from cybergym.llm_proxy import _diag_loop_ref
+
+                    loop = _diag_loop_ref.get("loop")
+                    if loop is not None:
+                        tasks = [t for t in asyncio.all_tasks(loop) if not t.done()]
                         print(
-                            f"\n--- task {t.get_name()} "
-                            f"(done={t.done()}, cancelled={t.cancelled()}) ---",
+                            f"\n=== {len(tasks)} pending asyncio tasks ===",
                             file=sys.stderr,
                             flush=True,
                         )
-                        tb = t.get_stack(limit=None)
-                        if tb:
-                            traceback.print_stack(tb[0])
-                        else:
+                        for t in tasks:
                             print(
-                                "(no frames — suspended without stack info)",
+                                f"\n[task] {t.get_name()} (cancelled={t.cancelled()})",
                                 file=sys.stderr,
+                                flush=True,
                             )
+                            tb = t.get_stack(limit=None)
+                            if tb:
+                                traceback.print_stack(tb[0])
+                            else:
+                                print(
+                                    "  (suspended, no frames)",
+                                    file=sys.stderr,
+                                    flush=True,
+                                )
+                    else:
+                        print(
+                            "no loop captured (proxy still starting?)",
+                            file=sys.stderr,
+                            flush=True,
+                        )
                 except Exception as e:  # noqa: BLE001
                     print(f"asyncio dump failed: {e}", file=sys.stderr, flush=True)
                 dump_file.unlink(missing_ok=True)
             _time.sleep(1)
 
+    dump_file = _Path(tempfile.gettempdir()) / "cybergym_proxy_stack_dump"
+    dump_file.unlink(missing_ok=True)
     threading.Thread(target=_watch_dump_file, daemon=True, name="stack-dump").start()
 
     logging.basicConfig(

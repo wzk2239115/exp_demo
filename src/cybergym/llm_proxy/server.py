@@ -1024,6 +1024,17 @@ def setup_proxy(
         logger.info("Stack dump requested:\n%s", dump)
         return {"stacks": dump}
 
+    # Capture the running event loop for the stack-dump watcher thread
+    # (registered by cybergym.llm_proxy.__main__). Runs once at startup.
+    @app.on_event("startup")
+    async def _capture_loop_for_diagnostics():
+        import asyncio
+
+        from cybergym.llm_proxy import _diag_loop_ref
+
+        _diag_loop_ref["loop"] = asyncio.get_running_loop()
+        logger.info("Diagnostics: captured running event loop")
+
 
 def get_proxy_app():
     """Get the configured litellm proxy FastAPI app."""
