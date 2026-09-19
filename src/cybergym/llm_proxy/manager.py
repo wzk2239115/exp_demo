@@ -7,10 +7,18 @@ The proxy wraps litellm and supports Anthropic, OpenAI, Vertex AI, etc.
 """
 
 import logging
+import time
 
 import httpx
 
 logger = logging.getLogger(__name__)
+
+# Under high concurrency (30+ workers) the proxy's event loop may take
+# >10s to respond to budget endpoints while processing inference requests.
+# Use a generous timeout with retry to survive startup spikes.
+_BUDGET_TIMEOUT = 30.0
+_BUDGET_RETRIES = 3
+_BUDGET_RETRY_DELAY = 2.0
 
 
 class ProxyKeyManager:
@@ -50,6 +58,33 @@ class ProxyKeyManager:
             return {"x-admin-key": self.admin_key}
         return {}
 
+    def _request_with_retry(self, method: str, url: str, **kwargs) -> httpx.Response:
+        """Send a budget request with retry on timeout/connection error."""
+        last_exc: Exception | None = None
+        for attempt in range(_BUDGET_RETRIES):
+            try:
+                with httpx.Client(
+                    base_url=self.proxy_url,
+                    timeout=_BUDGET_TIMEOUT,
+                    headers=self._admin_headers(),
+                ) as client:
+                    resp = getattr(client, method)(url, **kwargs)
+                    resp.raise_for_status()
+                    return resp
+            except (httpx.TimeoutException, httpx.ConnectError) as e:
+                last_exc = e
+                logger.warning(
+                    "Budget request %s %s failed (attempt %d/%d): %s",
+                    method,
+                    url,
+                    attempt + 1,
+                    _BUDGET_RETRIES,
+                    e,
+                )
+                if attempt < _BUDGET_RETRIES - 1:
+                    time.sleep(_BUDGET_RETRY_DELAY)
+        raise last_exc  # type: ignore[misc]
+
     def generate_api_key(
         self,
         max_budget: float | None = None,
@@ -69,12 +104,8 @@ class ProxyKeyManager:
         payload: dict = {"max_budget": budget}
         if models:
             payload["allowed_models"] = list(models)
-        with httpx.Client(
-            base_url=self.proxy_url, timeout=10, headers=self._admin_headers()
-        ) as client:
-            resp = client.post("/budget/generate_key", json=payload)
-            resp.raise_for_status()
-            key = resp.json()["key"]
+        resp = self._request_with_retry("post", "/budget/generate_key", json=payload)
+        key = resp.json()["key"]
         self._alive_keys.add(key)
         logger.info(
             "Generated proxy key %s...%s (budget $%.2f)", key[:8], key[-4:], budget
@@ -84,12 +115,8 @@ class ProxyKeyManager:
     def get_api_key_usage(self, api_key: str) -> dict:
         key_hint = f"{api_key[:8]}...{api_key[-4:]}" if len(api_key) > 12 else api_key
         logger.debug("Fetching usage for key %s", key_hint)
-        with httpx.Client(
-            base_url=self.proxy_url, timeout=10, headers=self._admin_headers()
-        ) as client:
-            resp = client.get(f"/budget/usage/{api_key}")
-            resp.raise_for_status()
-            data = resp.json()
+        resp = self._request_with_retry("get", f"/budget/usage/{api_key}")
+        data = resp.json()
         logger.debug(
             "Usage for %s: spend=$%.4f remaining=$%.4f requests=%d",
             key_hint,
@@ -102,11 +129,7 @@ class ProxyKeyManager:
     def delete_api_key(self, api_key: str):
         key_hint = f"{api_key[:8]}...{api_key[-4:]}" if len(api_key) > 12 else api_key
         logger.debug("Deleting key %s from proxy", key_hint)
-        with httpx.Client(
-            base_url=self.proxy_url, timeout=10, headers=self._admin_headers()
-        ) as client:
-            resp = client.delete(f"/budget/key/{api_key}")
-            resp.raise_for_status()
+        self._request_with_retry("delete", f"/budget/key/{api_key}")
         self._alive_keys.discard(api_key)
         logger.info("Deleted proxy key %s...%s", api_key[:8], api_key[-4:])
 
