@@ -533,12 +533,81 @@ stop_proxy() {
   if [[ -n "$key" ]]; then
     pattern="cybergym.llm_proxy.*$key"
   fi
+  stop_proxy_watchdog
   if safe_pkill_wait "$pattern" 10; then
     rm -f "$PROJECT_ROOT/logs/$USER_NAME/proxy.pid"
     log "已停止 $USER_NAME 的 proxy"
   else
     warn "$USER_NAME 没有在跑的 proxy"
   fi
+}
+
+# ─────────────────────────────────────────────
+#  proxy 看门狗:每 30s 探 /health/liveliness;proxy 死了(OOM/崩/被杀)
+#  就按原参数重启。关键:重启前先确认 runner 还活着,否则是 --stop 正在
+#  关停,绝不复活 proxy(--stop 会因此失败)。runner 没了 → 看门狗自行退出。
+#  代价:重启会丢 BudgetManager 内存里的 in-flight key,那些题当轮 401 失败,
+#  但批继续跑、后续题正常,远胜"proxy 死了烧 2h 全挂"。
+# ─────────────────────────────────────────────
+start_proxy_watchdog() {
+  local wd_pidfile="$LOG_DIR/watchdog.pid"
+  if [[ -f "$wd_pidfile" ]] && kill -0 "$(cat "$wd_pidfile" 2>/dev/null)" 2>/dev/null; then
+    return 0
+  fi
+  WD_BRIDGE="$BRIDGE" WD_PORT="$PROXY_PORT" \
+  WD_ADMIN_KEY="$CYBERGYM_ADMIN_KEY" WD_CONFIG="$GLM_CONFIG" \
+  WD_BUDGET="$BUDGET" WD_LOGDIR="$LOG_DIR" \
+  WD_RUNNER_PIDFILE="$LOG_DIR/runner.pid" WD_CWD="$PWD" \
+  setsid bash -c '
+    cd "$WD_CWD"
+    health="http://$WD_BRIDGE:$WD_PORT/health/liveliness"
+    root="http://$WD_BRIDGE:$WD_PORT/"
+    restart_cmd=(setsid uv run -m cybergym.llm_proxy \
+      --host "$WD_BRIDGE" --port "$WD_PORT" \
+      --admin-key "$WD_ADMIN_KEY" --config "$WD_CONFIG" \
+      --default-budget "$WD_BUDGET")
+    while true; do
+      sleep 30
+      rpid=$(cat "$WD_RUNNER_PIDFILE" 2>/dev/null || true)
+      if [[ -z "$rpid" ]] || ! kill -0 "$rpid" 2>/dev/null; then
+        echo "[watchdog $(date +%H:%M:%S)] runner gone (pid=${rpid:-none}), exiting"
+        exit 0
+      fi
+      if curl -s -o /dev/null -m 3 "$health" 2>/dev/null; then continue; fi
+      sleep 5
+      if curl -s -o /dev/null -m 3 "$health" 2>/dev/null; then continue; fi
+      echo "[watchdog $(date +%H:%M:%S)] proxy dead (health down), restarting (admin=${WD_ADMIN_KEY:0:24}…)"
+      "${restart_cmd[@]}" 8>&- >> "$WD_LOGDIR/llm_proxy.log" 2>&1 < /dev/null &
+      new_pid=$!
+      echo "$new_pid" > "$WD_LOGDIR/proxy.pid"
+      for _ in $(seq 1 60); do
+        curl -s -o /dev/null -m 2 "$root" 2>/dev/null && break
+        sleep 0.5
+      done
+      if curl -s -o /dev/null -m 2 "$root" 2>/dev/null; then
+        echo "[watchdog $(date +%H:%M:%S)] proxy restarted (pid=$new_pid)"
+      else
+        echo "[watchdog $(date +%H:%M:%S)] proxy failed to come up (pid=$new_pid), retry next tick"
+      fi
+    done
+  ' >> "$LOG_DIR/watchdog.log" 2>&1 < /dev/null &
+  echo $! > "$wd_pidfile"
+  log "proxy 看门狗已启动 (pid $(cat "$wd_pidfile"), 每 30s 探活, 死了自动重启)"
+}
+
+stop_proxy_watchdog() {
+  local wd_pidfile="$LOG_DIR/watchdog.pid"
+  [[ -f "$wd_pidfile" ]] || return 0
+  local wpid
+  wpid=$(cat "$wd_pidfile" 2>/dev/null || true)
+  if [[ -n "$wpid" ]] && kill -0 "$wpid" 2>/dev/null; then
+    kill -TERM "$wpid" 2>/dev/null || true
+    local i=0
+    while kill -0 "$wpid" 2>/dev/null && (( i < 2 )); do sleep 1; i=$((i+1)); done
+    kill -0 "$wpid" 2>/dev/null && kill -KILL "$wpid" 2>/dev/null || true
+  fi
+  rm -f "$wd_pidfile"
+  log "已停止 $USER_NAME 的 proxy 看门狗"
 }
 
 # ─────────────────────────────────────────────
@@ -1010,6 +1079,7 @@ if [[ "${INTERACTIVE:-0}" == "1" ]]; then
     "${ENHANCE_ARG[@]}"
 fi
 
+start_proxy_watchdog
 log "开始评测(任务文件 $TASKS_FILE,agent=$AGENT,model=$MODEL_ALIAS,workers=$MAX_WORKERS)"
 echo $$ > "$LOG_DIR/runner.pid"   # exec 不换 pid;--stop 由此找到 runner
 exec uv run examples/run_agent.py \
