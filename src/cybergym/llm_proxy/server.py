@@ -142,6 +142,10 @@ INTERNAL_MASTER_KEY = f"sk-internal-{uuid4().hex}"
 # Admin key for /budget/* endpoints. Set during setup_proxy().
 _admin_key: str = ""
 
+# Root ASGI dispatcher: /budget/* → pure-ASGI budget app, everything else →
+# litellm. Set during setup_proxy(), returned by get_proxy_app().
+_root_app = None
+
 # Context var to pass original key from middleware to callback within same request
 _current_api_key: ContextVar[str] = ContextVar("_current_api_key", default="")
 
@@ -800,6 +804,164 @@ def _patch_streaming_reasoning_detection():
     LiteLLMAnthropicMessagesAdapter._translate_streaming_openai_chunk_to_anthropic_content_block = _patched
 
 
+# ---------------------------------------------------------------------------
+# Pure-ASGI /budget/* endpoints
+#
+# Budget operations (generate_key / get_usage / delete_key) are in-memory dict
+# ops on BudgetManager — microseconds. They were previously registered as
+# FastAPI routes on the litellm app and reached through BudgetAuthMiddleware
+# (BaseHTTPMiddleware). Under high concurrency (39+ workers) litellm's event
+# loop gets saturated by inference request setup and lazy init (model_cost
+# table load, prisma init on first request), starving the trivial budget
+# handlers until the client's 10s timeout fires.
+#
+# Serving /budget/* on a separate pure-ASGI path that never enters litellm's
+# app/middleware stack means budget requests can never be blocked by inference
+# contention. Admin-key auth is replicated inline (same check the middleware
+# did for /budget/*). The root dispatcher below routes /budget/* here and
+# everything else to the litellm app (with BudgetAuthMiddleware +
+# TracebackRedactionMiddleware).
+# ---------------------------------------------------------------------------
+
+
+async def _read_json_body(receive) -> dict | None:
+    """Read and parse the full request body as JSON. None on empty/invalid."""
+    body = b""
+    more = True
+    while more:
+        msg = await receive()
+        if msg.get("type") != "http.request":
+            return None
+        body += msg.get("body", b"")
+        more = msg.get("more_body", False)
+    if not body:
+        return None
+    try:
+        return json.loads(body)
+    except ValueError:
+        return None
+
+
+def _admin_key_from_scope(scope) -> str:
+    """Extract admin key from headers (x-admin-key, else Authorization Bearer)."""
+    xadmin = ""
+    authz = ""
+    for name, value in scope.get("headers", []):
+        if name == b"x-admin-key":
+            xadmin = value.decode("latin-1").strip()
+        elif name == b"authorization":
+            authz = value.decode("latin-1")
+    return xadmin or authz.removeprefix("Bearer ").strip()
+
+
+async def _send_json(send, status: int, obj: dict) -> None:
+    payload = json.dumps(obj).encode("utf-8")
+    await send(
+        {
+            "type": "http.response.start",
+            "status": status,
+            "headers": [
+                (b"content-type", b"application/json"),
+                (b"content-length", str(len(payload)).encode("latin-1")),
+            ],
+        }
+    )
+    await send({"type": "http.response.body", "body": payload, "more_body": False})
+
+
+class _BudgetASGI:
+    """Pure-ASGI handler for /budget/* — bypasses litellm entirely.
+
+    Admin-key auth is inline (mirrors BudgetAuthMiddleware's /budget/* branch)
+    so budget requests never touch litellm's middleware stack or event loop.
+    """
+
+    def __init__(self, manager: BudgetManager):
+        self.manager = manager
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return
+        method = scope["method"]
+        path = scope["path"]
+
+        candidate = _admin_key_from_scope(scope)
+        if not candidate or not _admin_key or not secrets.compare_digest(
+            candidate, _admin_key
+        ):
+            await _send_json(
+                send,
+                401,
+                {"error": {"message": "Invalid admin key", "type": "auth_error"}},
+            )
+            return
+
+        if path == "/budget/generate_key" and method == "POST":
+            body = await _read_json_body(receive)
+            if not isinstance(body, dict):
+                await _send_json(
+                    send,
+                    400,
+                    {"error": {"message": "Invalid JSON body", "type": "bad_request"}},
+                )
+                return
+            max_budget = body.get("max_budget", self.manager.default_max_budget)
+            allowed_models = body.get("allowed_models")
+            logger.debug(
+                "/budget/generate_key: max_budget=$%.2f models=%s",
+                max_budget,
+                allowed_models or "any",
+            )
+            key = self.manager.generate_key(
+                max_budget=max_budget, allowed_models=allowed_models
+            )
+            await _send_json(
+                send,
+                200,
+                {"key": key, "max_budget": max_budget, "allowed_models": allowed_models},
+            )
+            return
+
+        if path.startswith("/budget/usage/") and method == "GET":
+            key = path[len("/budget/usage/") :]
+            usage = self.manager.get_usage(key)
+            if usage is None:
+                await _send_json(send, 404, {"error": "Key not found"})
+                return
+            await _send_json(send, 200, usage)
+            return
+
+        if path.startswith("/budget/key/") and method == "DELETE":
+            key = path[len("/budget/key/") :]
+            usage = self.manager.delete_key(key)
+            if usage is None:
+                await _send_json(send, 404, {"error": "Key not found"})
+                return
+            await _send_json(send, 200, usage)
+            return
+
+        await _send_json(send, 404, {"error": "Not found"})
+
+
+class _RootASGI:
+    """Dispatch /budget/* to the pure-ASGI budget app; everything else to litellm.
+
+    Lifespan and other non-http messages are forwarded to the litellm app
+    (the budget app has no lifespan), so litellm's startup/teardown is
+    unchanged.
+    """
+
+    def __init__(self, budget_app: _BudgetASGI, litellm_app):
+        self.budget = budget_app
+        self.litellm = litellm_app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http" and scope["path"].startswith("/budget/"):
+            await self.budget(scope, receive, send)
+            return
+        await self.litellm(scope, receive, send)
+
+
 def setup_proxy(
     manager: BudgetManager,
     config_path: str | None = None,
@@ -819,7 +981,7 @@ def setup_proxy(
         block_web_search: When True (default), reject requests that would
             invoke provider-side web search. Set False to allow web search.
     """
-    global _admin_key
+    global _admin_key, _root_app
     _admin_key = admin_key or f"cgym-admin-{uuid4().hex[:24]}"
     logger.info("Admin key for /budget endpoints: %s", _admin_key)
 
@@ -882,43 +1044,14 @@ def setup_proxy(
     app.add_middleware(TracebackRedactionMiddleware)
     logger.debug("Added TracebackRedactionMiddleware")
 
-    # Add budget management endpoints
-    @app.post("/budget/generate_key")
-    async def generate_key(request: Request):
-        body = await request.json()
-        max_budget = body.get("max_budget", manager.default_max_budget)
-        allowed_models = body.get("allowed_models")
-        logger.debug(
-            "Endpoint /budget/generate_key: max_budget=$%.2f models=%s",
-            max_budget,
-            allowed_models or "any",
-        )
-        key = manager.generate_key(max_budget=max_budget, allowed_models=allowed_models)
-        return {
-            "key": key,
-            "max_budget": max_budget,
-            "allowed_models": allowed_models,
-        }
-
-    @app.get("/budget/usage/{key}")
-    async def get_usage(key: str):
-        logger.debug("Endpoint /budget/usage: key=%s...%s", key[:8], key[-4:])
-        usage = manager.get_usage(key)
-        if usage is None:
-            logger.debug("Endpoint /budget/usage: key not found")
-            return JSONResponse(status_code=404, content={"error": "Key not found"})
-        return usage
-
-    @app.delete("/budget/key/{key}")
-    async def delete_key(key: str):
-        logger.debug("Endpoint /budget/key DELETE: key=%s...%s", key[:8], key[-4:])
-        usage = manager.delete_key(key)
-        if usage is None:
-            logger.debug("Endpoint /budget/key DELETE: key not found")
-            return JSONResponse(status_code=404, content={"error": "Key not found"})
-        return usage
+    # Serve /budget/* on a separate pure-ASGI path so budget ops (in-memory,
+    # microsecond) can never be starved by litellm's event loop under high
+    # concurrency. The root dispatcher routes /budget/* to _BudgetASGI and
+    # everything else to the litellm app (with the middleware above).
+    _root_app = _RootASGI(_BudgetASGI(manager), app)
+    logger.debug("Mounted pure-ASGI /budget/* app (bypasses litellm)")
 
 
 def get_proxy_app():
-    """Get the configured litellm proxy FastAPI app."""
-    return app
+    """Get the root ASGI app: /budget/* → pure-ASGI budget app, else litellm."""
+    return _root_app or app
