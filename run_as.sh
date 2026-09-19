@@ -572,10 +572,11 @@ start_proxy_watchdog() {
       --default-budget "$WD_BUDGET" \
       --budget-state "$WD_LOGDIR/budget_state.json")
     probe_alive() {
-      local code
-      code=$(curl -s -o /dev/null -m 5 -w "%{http_code}" \
-        -H "x-admin-key: $WD_ADMIN_KEY" "$probe" 2>/dev/null || echo 000)
-      [[ "$code" != "000" ]]
+      # 任何 HTTP 响应(401/404 都算)= 活;连不上/超时 = 死。
+      # 直接用 curl 退出码:不能拿 -w %{http_code} 和 "000" 比字符串 —
+      # curl 连接失败时 -w 仍输出 000 且 exit≠0,再 || echo 000 会拼成
+      # "000000",!= "000" 恒真 → proxy 真死也判活(98d881f 引入,实测坐实)。
+      curl -s -o /dev/null -m 5 -H "x-admin-key: $WD_ADMIN_KEY" "$probe" 2>/dev/null
     }
     while true; do
       sleep 30
