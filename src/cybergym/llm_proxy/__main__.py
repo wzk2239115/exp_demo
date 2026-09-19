@@ -42,6 +42,15 @@ def main():
         help="Default max budget per key (USD)",
     )
     parser.add_argument(
+        "--budget-state",
+        default=None,
+        help=(
+            "Path to persist budget keys across restarts "
+            "(env: CYBERGYM_BUDGET_STATE). Keys survive watchdog "
+            "auto-restart instead of invalidating every in-flight task."
+        ),
+    )
+    parser.add_argument(
         "--admin-key",
         default=None,
         help="Admin key for /budget endpoints (default: auto-generated, env: CYBERGYM_ADMIN_KEY)",
@@ -83,7 +92,12 @@ def main():
 
     admin_key = args.admin_key or os.environ.get("CYBERGYM_ADMIN_KEY")
 
-    manager = BudgetManager(default_max_budget=args.default_budget)
+    manager = BudgetManager(
+        default_max_budget=args.default_budget,
+        state_path=(
+            args.budget_state or os.environ.get("CYBERGYM_BUDGET_STATE")
+        ),
+    )
     setup_proxy(
         manager,
         config_path=config_path,

@@ -507,6 +507,7 @@ $(pgrep -af -- "cybergym.llm_proxy.* --port $PROXY_PORT " 2>/dev/null | head -3 
     --admin-key "$CYBERGYM_ADMIN_KEY" \
     --config "$GLM_CONFIG" \
     --default-budget "$BUDGET" \
+    --budget-state "$LOG_DIR/budget_state.json" \
     8>&- \
     > "$LOG_DIR/llm_proxy.log" 2>&1 < /dev/null &
   echo $! > "$LOG_DIR/proxy.pid"
@@ -560,12 +561,22 @@ start_proxy_watchdog() {
   WD_RUNNER_PIDFILE="$LOG_DIR/runner.pid" WD_CWD="$PWD" \
   setsid bash -c '
     cd "$WD_CWD"
-    health="http://$WD_BRIDGE:$WD_PORT/health/liveliness"
+    # 探活走 /budget/*(纯 ASGI,不进 litellm):loop 活着就秒回,与推理负载无关;
+    # /health/liveliness 是 litellm 路由,高负载下 3s 答不上来 → 曾经整场误判。
+    # 判定标准:有任何 HTTP 响应(401/404 都算活),000 = 连不上 = 真死/卡死。
+    probe="http://$WD_BRIDGE:$WD_PORT/budget/usage/__watchdog__"
     root="http://$WD_BRIDGE:$WD_PORT/"
     restart_cmd=(setsid uv run -m cybergym.llm_proxy \
       --host "$WD_BRIDGE" --port "$WD_PORT" \
       --admin-key "$WD_ADMIN_KEY" --config "$WD_CONFIG" \
-      --default-budget "$WD_BUDGET")
+      --default-budget "$WD_BUDGET" \
+      --budget-state "$WD_LOGDIR/budget_state.json")
+    probe_alive() {
+      local code
+      code=$(curl -s -o /dev/null -m 5 -w "%{http_code}" \
+        -H "x-admin-key: $WD_ADMIN_KEY" "$probe" 2>/dev/null || echo 000)
+      [[ "$code" != "000" ]]
+    }
     while true; do
       sleep 30
       rpid=$(cat "$WD_RUNNER_PIDFILE" 2>/dev/null || true)
@@ -573,19 +584,28 @@ start_proxy_watchdog() {
         echo "[watchdog $(date +%H:%M:%S)] runner gone (pid=${rpid:-none}), exiting"
         exit 0
       fi
-      if curl -s -o /dev/null -m 3 "$health" 2>/dev/null; then continue; fi
+      if probe_alive; then continue; fi
       sleep 5
-      if curl -s -o /dev/null -m 3 "$health" 2>/dev/null; then continue; fi
-      echo "[watchdog $(date +%H:%M:%S)] proxy dead (health down), restarting (admin=${WD_ADMIN_KEY:0:24}…)"
+      if probe_alive; then continue; fi
+      echo "[watchdog $(date +%H:%M:%S)] proxy dead (probe down), replacing (admin=${WD_ADMIN_KEY:0:24}…)"
+      # 先按 admin key 精确杀旧进程(可能挂死但还占着端口),再起新的,
+      # 否则新进程 bind 失败变哑炮(2026-09-19 实测 20 连发哑炮)。
+      pkill -f -- "cybergym.llm_proxy.*$WD_ADMIN_KEY" 2>/dev/null || true
+      for _ in $(seq 1 20); do
+        pgrep -f -- "cybergym.llm_proxy.*$WD_ADMIN_KEY" >/dev/null 2>&1 || break
+        sleep 0.5
+      done
+      pkill -9 -f -- "cybergym.llm_proxy.*$WD_ADMIN_KEY" 2>/dev/null || true
+      # 落盘恢复:--budget-state 让新进程载回旧 key 表,在跑任务无感继续
       "${restart_cmd[@]}" 8>&- >> "$WD_LOGDIR/llm_proxy.log" 2>&1 < /dev/null &
       new_pid=$!
       echo "$new_pid" > "$WD_LOGDIR/proxy.pid"
-      for _ in $(seq 1 60); do
+      for _ in $(seq 1 120); do
         curl -s -o /dev/null -m 2 "$root" 2>/dev/null && break
         sleep 0.5
       done
       if curl -s -o /dev/null -m 2 "$root" 2>/dev/null; then
-        echo "[watchdog $(date +%H:%M:%S)] proxy restarted (pid=$new_pid)"
+        echo "[watchdog $(date +%H:%M:%S)] proxy replaced (pid=$new_pid), budget keys restored"
       else
         echo "[watchdog $(date +%H:%M:%S)] proxy failed to come up (pid=$new_pid), retry next tick"
       fi

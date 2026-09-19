@@ -4,9 +4,16 @@ Each key has a max budget (USD). Spend is accumulated from response usage.
 Requests are rejected when the key's budget is exhausted.
 
 Cost calculation is delegated to litellm's model cost database.
+
+Optional disk persistence (``state_path``): keys survive proxy restarts
+(watchdog auto-restart, crash). Without it, a restart invalidates every
+in-flight task's key — each task keeps its key for its whole lifetime
+(runner generates it once), so losing keys means losing the tasks.
 """
 
+import json
 import logging
+import os
 import threading
 import time
 from dataclasses import dataclass, field
@@ -101,13 +108,99 @@ class KeyRecord:
     created_at: float = field(default_factory=time.time)
 
 
-class BudgetManager:
-    """Thread-safe in-memory budget manager for API keys."""
+def _record_to_dict(record: KeyRecord) -> dict:
+    """Serialize a KeyRecord for disk persistence."""
+    return {
+        "key": record.key,
+        "max_budget": record.max_budget,
+        "allowed_models": (
+            sorted(record.allowed_models) if record.allowed_models else None
+        ),
+        "spend": record.spend,
+        "input_tokens": record.input_tokens,
+        "output_tokens": record.output_tokens,
+        "cache_read_tokens": record.cache_read_tokens,
+        "cache_creation_tokens": record.cache_creation_tokens,
+        "reasoning_tokens": record.reasoning_tokens,
+        "requests": record.requests,
+        "total_latency": record.total_latency,
+        "created_at": record.created_at,
+        "per_model": {name: mu.as_dict() for name, mu in record.per_model.items()},
+    }
 
-    def __init__(self, default_max_budget: float = 20.0):
+
+def _record_from_dict(d: dict) -> KeyRecord:
+    """Deserialize a KeyRecord from disk persistence."""
+    per_model = {
+        name: ModelUsage(**mu) for name, mu in (d.get("per_model") or {}).items()
+    }
+    return KeyRecord(
+        key=d["key"],
+        max_budget=d["max_budget"],
+        allowed_models=(
+            frozenset(d["allowed_models"]) if d.get("allowed_models") else None
+        ),
+        spend=d.get("spend", 0.0),
+        input_tokens=d.get("input_tokens", 0),
+        output_tokens=d.get("output_tokens", 0),
+        cache_read_tokens=d.get("cache_read_tokens", 0),
+        cache_creation_tokens=d.get("cache_creation_tokens", 0),
+        reasoning_tokens=d.get("reasoning_tokens", 0),
+        requests=d.get("requests", 0),
+        total_latency=d.get("total_latency", 0.0),
+        per_model=per_model,
+        created_at=d.get("created_at", time.time()),
+    )
+
+
+class BudgetManager:
+    """Thread-safe in-memory budget manager for API keys.
+
+    When *state_path* is set, the key table is persisted to that file on
+    every mutation and reloaded on construction, so keys survive a proxy
+    restart (watchdog auto-restart / crash recovery).
+    """
+
+    def __init__(
+        self,
+        default_max_budget: float = 20.0,
+        state_path: str | os.PathLike | None = None,
+    ):
         self.default_max_budget = default_max_budget
         self._keys: dict[str, KeyRecord] = {}
         self._lock = threading.Lock()
+        self.state_path = str(state_path) if state_path else None
+        self._load_state()
+
+    def _load_state(self) -> None:
+        if not self.state_path:
+            return
+        try:
+            with open(self.state_path) as f:
+                data = json.load(f)
+            self._keys = {k: _record_from_dict(d) for k, d in data.items()}
+            logger.info(
+                "Restored %d budget key(s) from %s", len(self._keys), self.state_path
+            )
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            logger.warning(
+                "budget state load failed (starting empty): %s", e
+            )
+
+    def _save_state_locked(self) -> None:
+        """Persist the key table. Caller must hold self._lock."""
+        if not self.state_path:
+            return
+        try:
+            data = {k: _record_to_dict(r) for k, r in self._keys.items()}
+            tmp = f"{self.state_path}.tmp"
+            with open(tmp, "w") as f:
+                json.dump(data, f)
+            os.replace(tmp, self.state_path)
+        except Exception as e:
+            logger.warning("budget state save failed: %s", e)
 
     def generate_key(
         self,
@@ -126,6 +219,7 @@ class BudgetManager:
             self._keys[key] = KeyRecord(
                 key=key, max_budget=budget, allowed_models=allowed
             )
+            self._save_state_locked()
         logger.info(
             "Generated key %s...%s with budget $%.2f (models=%s)",
             key[:8],
@@ -234,6 +328,7 @@ class BudgetManager:
                 mu.spend,
                 mu.requests,
             )
+            self._save_state_locked()
         return cost
 
     def get_usage(self, key: str) -> dict | None:
@@ -275,6 +370,7 @@ class BudgetManager:
         usage = self.get_usage(key)
         with self._lock:
             self._keys.pop(key, None)
+            self._save_state_locked()
         if usage:
             logger.debug(
                 "Deleted key %s (final spend $%.4f / $%.2f, %d requests)",
