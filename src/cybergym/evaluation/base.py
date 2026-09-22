@@ -604,16 +604,30 @@ class Evaluator:
                     self.config.allowed_models or "any",
                 )
 
-            # Per-task prompt prefix (user-part injection, higher attention than
-            # CLAUDE.md): PROMPT_PREFIX_DIR/<sanitized task_id>.txt is prepended
-            # verbatim to the task description (before the j2-rendered prompt).
+            # Prompt prefix (user-part injection, higher attention than
+            # CLAUDE.md): PROMPT_PREFIX_DIR/__global__.txt applies to every
+            # task (tool guidance, work discipline); PROMPT_PREFIX_DIR/
+            # <sanitized task_id>.txt is per-task (e.g. scorer feedback
+            # constraints). Both prepend verbatim before the j2-rendered
+            # prompt, global first so per-task content sits closest to the
+            # task description.
             prefix_dir = os.environ.get("PROMPT_PREFIX_DIR")
             if prefix_dir:
+                parts = []
+                gp = Path(prefix_dir) / "__global__.txt"
+                if gp.is_file():
+                    parts.append(gp.read_text())
                 sanitized = self.config.task_id.replace(":", "_").replace("/", "_")
                 pfx = Path(prefix_dir) / f"{sanitized}.txt"
                 if pfx.is_file():
-                    prompt = pfx.read_text() + "\n\n---\n\n" + prompt
-                    logger.info("Prepended per-task prompt prefix from %s", pfx)
+                    parts.append(pfx.read_text())
+                if parts:
+                    prompt = "\n\n---\n\n".join(parts) + "\n\n---\n\n" + prompt
+                    logger.info(
+                        "Prepended prompt prefix (global=%s per_task=%s)",
+                        gp.is_file(),
+                        pfx.is_file(),
+                    )
 
             logger.info(
                 "Format prompt, template: %s", self.config.task_description_template
