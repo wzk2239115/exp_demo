@@ -1105,6 +1105,9 @@ fi
 start_proxy_watchdog
 log "开始评测(任务文件 $TASKS_FILE,agent=$AGENT,model=$MODEL_ALIAS,workers=$MAX_WORKERS)"
 echo $$ > "$LOG_DIR/runner.pid"   # exec 不换 pid;--stop 由此找到 runner
+# --reasoning-effort 从 REASONING_EFFORT 派生,保证 config.json 记录与 proxy
+# 实际注入值一致(此前 run_agent.py 默认 medium,记录与实际脱节)。
+# 显式传 --reasoning-effort 覆盖(在 "$@" 里,argparse 后者胜)。
 exec uv run examples/run_agent.py \
   --agent "$AGENT" \
   --model "$MODEL_ALIAS" \
@@ -1116,4 +1119,5 @@ exec uv run examples/run_agent.py \
   --timeout "$TIMEOUT" \
   --max-workers "$MAX_WORKERS" \
   --out-dir "$OUT_DIR" \
+  --reasoning-effort "${REASONING_EFFORT:-medium}" \
   "$@"

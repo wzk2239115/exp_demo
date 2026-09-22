@@ -99,7 +99,7 @@ APT_OPTS = (
 
 TOOLCHAIN_SYMLINKS = """\
 if [ -d /data/python/bin ]; then
-  for b in python3 pwn ROPgadget ropper; do
+  for b in python3 pwn ROPgadget ropper z3; do
     if [ -e "/data/python/bin/$b" ]; then
       ln -sf "/data/python/bin/$b" "/usr/local/bin/$b"
     fi
