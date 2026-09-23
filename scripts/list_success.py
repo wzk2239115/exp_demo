@@ -38,7 +38,12 @@ def main() -> None:
     if not args.root.is_dir():
         ap.error(f"目录不存在: {args.root}")
 
-    files = sorted(args.root.glob("**/result.json"))
+    # result.json 固定在 <family>/<task>/result.json 两层深;浅层 glob 避免
+    # 递归钻进每个任务的 logs/(大会话 jsonl,数万文件,IO 高压下极慢)。
+    files = sorted(args.root.glob("*/*/result.json"))
+    if not files:
+        # 兜底:目录结构不同(如 round2 产物)时才退回递归
+        files = sorted(args.root.glob("**/result.json"))
     ok: list[tuple[str, float]] = []
     fail: list[str] = []
     for f in files:
