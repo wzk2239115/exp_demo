@@ -515,11 +515,19 @@ $(pgrep -af -- "cybergym.llm_proxy.* --port $PROXY_PORT " 2>/dev/null | head -3 
     > "$LOG_DIR/llm_proxy.log" 2>&1 < /dev/null &
   echo $! > "$LOG_DIR/proxy.pid"
 
-  for _ in $(seq 1 120); do
+  # litellm import 很重,宿主 IO 高压时(百级并发容器在跑)启动可远超 60s
+  # 且 import 期间零输出。给足 240s;进程死了且日志有内容才提前失败。
+  local _ppid _plines=0
+  for _ in $(seq 1 480); do
     listening "$root" && break
+    _ppid=$(cat "$LOG_DIR/proxy.pid" 2>/dev/null || true)
+    if [[ -n "$_ppid" ]] && ! kill -0 "$_ppid" 2>/dev/null; then
+      _plines=$(wc -l < "$LOG_DIR/llm_proxy.log" 2>/dev/null || echo 0)
+      [[ "$_plines" -gt 0 ]] && break   # 进程退出且留下了报错
+    fi
     sleep 0.5
   done
-  listening "$root" || die "proxy 启动失败,看 $LOG_DIR/llm_proxy.log"
+  listening "$root" || die "proxy 启动失败(pid=$(cat "$LOG_DIR/proxy.pid" 2>/dev/null),log=$LOG_DIR/llm_proxy.log)"
   log "proxy 已启动 :$PROXY_PORT"
 }
 
