@@ -510,6 +510,7 @@ $(pgrep -af -- "cybergym.llm_proxy.* --port $PROXY_PORT " 2>/dev/null | head -3 
     --config "$GLM_CONFIG" \
     --default-budget "$BUDGET" \
     --budget-state "$LOG_DIR/budget_state.json" \
+    $( [[ "${ALLOW_WEB_SEARCH:-0}" == "1" ]] && echo --allow-web-search ) \
     8>&- \
     > "$LOG_DIR/llm_proxy.log" 2>&1 < /dev/null &
   echo $! > "$LOG_DIR/proxy.pid"
@@ -968,11 +969,20 @@ BRIDGE="$(bridge_ip)"
 check_agent_tool          # 工具不可用就别白起 controller/proxy 了
 check_host_aslr           # ASLR 开着时警告(REQUIRE_NO_ASLR=1 则拒绝启动)
 
-# --use-firewall 透传给 run_agent.py;同时设置 RUN_NETWORK 让 controller
-# 把目标容器也放到 cybergym-internal(agent 所在网络),否则 agent 够不着目标。
-if printf '%s\n' "$@" | grep -q -- '--use-firewall'; then
+# 防火墙默认开启(防 agent 联网抄答案):agent 容器进 cybergym-internal
+# (无互联网路由,Squid 白名单只放行 LLM API 域名 + 本机 proxy/controller),
+# 靶机容器由 controller 放进同一内网(RUN_NETWORK)。要关: NO_FIREWALL=1。
+# 仅批跑+proxy 模式:交互模式容器在默认桥,靶机进内网会跨网络不通;
+# DIRECT 模式容器直连上游 API(api.360.cn 等),域名不在白名单会被 Squid 挡。
+# 幂等: 代理已在跑则 start 直接跳过;首次运行自动拉 squid 镜像。
+FIREWALL_ARGS=()
+if [[ "${NO_FIREWALL:-0}" != "1" && "${INTERACTIVE:-0}" != "1" && "${DIRECT:-0}" != "1" ]]; then
+  FIREWALL_ARGS=(--use-firewall)
   RUN_NETWORK="${RUN_NETWORK:-cybergym-internal}"
   export RUN_NETWORK
+  docker image inspect ubuntu/squid:latest >/dev/null 2>&1 || docker pull ubuntu/squid:latest
+  uv run -m cybergym.firewall start --which both \
+    || log "WARN: 防火墙代理启动失败,继续无防火墙跑(容器将无法联网安装)"
 fi
 
 SLOT="$(assign_or_get_slot "$USER_NAME")"
@@ -1120,4 +1130,5 @@ exec uv run examples/run_agent.py \
   --max-workers "$MAX_WORKERS" \
   --out-dir "$OUT_DIR" \
   --reasoning-effort "${REASONING_EFFORT:-medium}" \
+  "${FIREWALL_ARGS[@]}" \
   "$@"
