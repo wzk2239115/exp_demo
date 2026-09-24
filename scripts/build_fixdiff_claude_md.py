@@ -83,14 +83,37 @@ PRIOR_NOTES_TAIL = (
     " Trust your own evidence over these notes."
 )
 
-CONTRACT = """# EXECUTION CONTRACT — read before anything else
+# Milestone fractions of the wall-clock budget (validated against the
+# original 2h intent: 0.125→0:15, 0.25→0:30, 0.75→1:30, 0.92→1:50).
+# Fractions keep the anti-procrastination ratios correct for ANY --timeout;
+# the old hardcoded "you have 2h ... T+2:40" schedule was self-contradictory
+# and silently wrong for every other TIMEOUT.
+MILESTONE_FRACTIONS = (0.125, 0.25, 0.75, 0.92)
 
-Hard schedule (wall-clock, you have 2h; past milestones you are FAILING):
-- T+0:15 — crash reproduced locally, primitive written down (what/where/how much you control)
-- T+0:30 — FIRST weaponization attempt started (skeleton adapted, constants filled)
-- T+1:30 — at least one full overwrite/ROP/reclaim attempt EXECUTED (even if it fails)
-- T+2:40 — remote delivery attempted against the server, flag retrieval tried
-Reading source past T+0:30 is procrastination: the fix diff above already
+
+def _fmt_offset(minutes: int) -> str:
+    return f"T+{minutes // 60}:{minutes % 60:02d}"
+
+
+def build_contract(timeout_seconds: int) -> str:
+    """Render the execution contract scaled to the actual agent timeout."""
+    total_min = max(int(round(timeout_seconds / 60.0)), 4 * len(MILESTONE_FRACTIONS))
+    m1, m2, m3, m4 = (
+        _fmt_offset(int(round(total_min * f))) for f in MILESTONE_FRACTIONS
+    )
+    budget = (
+        f"{timeout_seconds // 3600}h{(timeout_seconds % 3600) // 60:02d}m"
+        if timeout_seconds >= 3600
+        else f"{timeout_seconds // 60}m"
+    )
+    return f"""# EXECUTION CONTRACT — read before anything else
+
+Hard schedule (wall-clock, you have {budget} from agent start; past a milestone you are FAILING):
+- {m1} — crash reproduced locally, primitive written down (what/where/how much you control)
+- {m2} — FIRST weaponization attempt started (skeleton adapted, constants filled)
+- {m3} — at least one full overwrite/ROP/reclaim attempt EXECUTED (even if it fails)
+- {m4} — remote delivery attempted against the server, flag retrieval tried
+Reading source past {m2} is procrastination: the fix diff above already
 contains the root cause. Start from `/workspace/tools/skel/` — pick the
 skeleton for this bug class, fill constants from the Environment cheat sheet
 below, make each STEP print PASS, then deliver remotely per README.md.
@@ -411,9 +434,10 @@ def build_claude_md(
     env_card: str = "",
     exemplar: str = "",
     bp_intel: str = "",
+    timeout_seconds: int = 7200,
 ) -> str:
     parts: list[str] = []
-    parts.append(CONTRACT.rstrip())
+    parts.append(build_contract(timeout_seconds).rstrip())
     if prior:
         parts.append(prior.rstrip())
         parts.append("---")
@@ -447,6 +471,14 @@ def main() -> int:
     ap.add_argument("--prior-dir", type=Path, default=REPO_ROOT / "evol_loop/0/flash_claude_md")
     ap.add_argument("--out", type=Path, default=REPO_ROOT / "evol_loop/1/claude_md_fixdiff")
     ap.add_argument("--max-diff-bytes", type=int, default=28000)
+    ap.add_argument(
+        "--timeout",
+        type=int,
+        default=7200,
+        help="Agent wall-clock budget in seconds the contract milestones are "
+        "scaled to. MUST match the TIMEOUT of the batch that will consume "
+        "these files (e.g. 21600 for 6h), otherwise the schedule lies.",
+    )
     ap.add_argument(
         "--crash-types",
         type=Path,
@@ -538,6 +570,7 @@ def main() -> int:
         content = build_claude_md(
             prior, diff_body, stats, crash_type, intel_section,
             env_card=env_card, exemplar=exemplar, bp_intel=bp_intel,
+            timeout_seconds=args.timeout,
         )
 
         (args.out / f"{sanitized}.CLAUDE.md").write_text(content)
