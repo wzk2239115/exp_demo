@@ -65,6 +65,14 @@ export ANTHROPIC_AUTH_TOKEN=<360 key>
 
 ## 跑批/续跑
 
+- **原版描述切换**: `ORIG_TASK_DESC=1` 跑批时 task description 与 upstream
+  (sunblaze-ucb/exploitgym) 逐字一致 —— utils.py 的 jinja 全局
+  `include_workstyle` 变 false,user/kernel/v8 三个 md.j2 里的
+  workstyle(coding-agent 工作纪律)段落不渲染。fork 增强是分层开关:
+  workstyle=ORIG_TASK_DESC;prompt 前缀/约束=PROMPT_PREFIX_DIR;
+  CLAUDE.md 注入=CLAUDE_MD_DIR;agent_claude.md+roadmap+工具箱=EVOL_ENHANCE。
+  四个都不设 + ORIG_TASK_DESC=1 = 纯原版 prompt(基础设施如 [1m]/续跑轮次/
+  z3 链接/防火墙仍在,那是 harness 不是 prompt)。
 - `run_agent.py` 自带断点续跑: out 目录里已有 `result.json` 的任务自动跳过(examples/run_agent.py:684)。
   续跑只要用**同一个 USER_NAME**(输出目录 `out/<name>/run_agent/`)+ 完整任务列表。
 - 全量任务列表: `data/task_ids/v1.txt`(869 题)。

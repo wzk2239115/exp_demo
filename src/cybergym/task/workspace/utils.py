@@ -1,3 +1,4 @@
+import os
 import shutil
 from pathlib import Path
 
@@ -10,9 +11,18 @@ TASK_DATA_DIR = DATA_DIR / "tasks"
 
 TEMPLATE_DIR = Path(__file__).parent / "templates"
 
+
+def _include_workstyle() -> bool:
+    """ORIG_TASK_DESC=1 → use the pristine upstream task description:
+    the fork's workstyle/agent-guidance add-ons are skipped, matching
+    sunblaze-ucb/exploitgym verbatim. Unset (default) keeps fork behavior."""
+    return os.environ.get("ORIG_TASK_DESC", "") != "1"
+
+
 _jinja_env = Environment(
     loader=FileSystemLoader(TEMPLATE_DIR),
 )
+_jinja_env.globals["include_workstyle"] = _include_workstyle()
 
 
 def render_template(template_name: str, **kwargs) -> str:
