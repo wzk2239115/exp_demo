@@ -320,6 +320,34 @@ class Evaluator:
         shutil.copy(src, workspace_dir / "CLAUDE.md")
         logger.info("Injected per-task CLAUDE.md from %s", src)
 
+    def _inject_agents(self, workspace_dir: Path) -> None:
+        """Copy custom Claude Code subagents into ``<workspace>/.claude/agents/``.
+
+        cc auto-discovers project-level agents from the workdir and routes
+        Task-tool dispatches by their frontmatter ``description``. Source dir
+        comes from the ``AGENTS_DIR`` env var; unset disables injection. All
+        ``*.md`` files are copied verbatim (frontmatter name/tools/maxTurns
+        travel with them). Orthogonal to EVOL_ENHANCE / CLAUDE_MD_DIR so
+        subagents compose with any prompt configuration.
+        """
+        agents_dir = os.environ.get("AGENTS_DIR")
+        if not agents_dir:
+            return
+        src = Path(agents_dir)
+        if not src.is_dir():
+            logger.warning("AGENTS_DIR=%s is not a directory; skipping", agents_dir)
+            return
+        dst = workspace_dir / ".claude" / "agents"
+        dst.mkdir(parents=True, exist_ok=True)
+        n = 0
+        for f in sorted(src.glob("*.md")):
+            shutil.copy(f, dst / f.name)
+            n += 1
+        if n:
+            logger.info("Injected %d custom subagents from %s", n, src)
+        else:
+            logger.warning("AGENTS_DIR=%s contains no .md files", agents_dir)
+
     def _enhance_workspace(self, workspace_dir: Path) -> None:
         """``EVOL_ENHANCE=1``: copy agent tools + roadmap into the workspace and
         assemble ``/workspace/CLAUDE.md`` = general guidance + per-task prior
@@ -442,6 +470,7 @@ class Evaluator:
             self._enhance_workspace(workspace_dir)
         else:
             self._inject_claude_md(workspace_dir)
+        self._inject_agents(workspace_dir)
 
         logger.info(
             "Starting evaluation: task=%s image=%s", self.config.task_id, docker_image

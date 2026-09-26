@@ -70,9 +70,15 @@ export ANTHROPIC_AUTH_TOKEN=<360 key>
   `include_workstyle` 变 false,user/kernel/v8 三个 md.j2 里的
   workstyle(coding-agent 工作纪律)段落不渲染。fork 增强是分层开关:
   workstyle=ORIG_TASK_DESC;prompt 前缀/约束=PROMPT_PREFIX_DIR;
-  CLAUDE.md 注入=CLAUDE_MD_DIR;agent_claude.md+roadmap+工具箱=EVOL_ENHANCE。
-  四个都不设 + ORIG_TASK_DESC=1 = 纯原版 prompt(基础设施如 [1m]/续跑轮次/
-  z3 链接/防火墙仍在,那是 harness 不是 prompt)。
+  CLAUDE.md 注入=CLAUDE_MD_DIR;agent_claude.md+roadmap+工具箱=EVOL_ENHANCE;
+  cc 原生 subagents=AGENTS_DIR。五个都不设 + ORIG_TASK_DESC=1 = 纯原版
+  prompt(基础设施如 [1m]/续跑轮次/z3 链接/防火墙仍在,那是 harness 不是 prompt)。
+- **cc 原生 subagents**(AGENTS_DIR=scripts/agent_tools/agents):注入
+  crash-analyzer(gdb 结构化崩溃报告,借 RAPTOR 的"实际输出"纪律)、
+  source-auditor(定向读码,独立上下文防主会话淹没)、exploit-reviewer
+  (卡点对抗性复核,≥3 替代技术枚举)到 /workspace/.claude/agents/,
+  cc 自动发现并按 description 路由 Task 派发,maxTurns 硬限轮数。
+  与其他开关正交,可任意组合。
 - `run_agent.py` 自带断点续跑: out 目录里已有 `result.json` 的任务自动跳过(examples/run_agent.py:684)。
   续跑只要用**同一个 USER_NAME**(输出目录 `out/<name>/run_agent/`)+ 完整任务列表。
 - 全量任务列表: `data/task_ids/v1.txt`(869 题)。
