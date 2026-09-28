@@ -983,14 +983,21 @@ check_host_aslr           # ASLR 开着时警告(REQUIRE_NO_ASLR=1 则拒绝启�
 # 仅批跑+proxy 模式:交互模式容器在默认桥,靶机进内网会跨网络不通;
 # DIRECT 模式容器直连上游 API(api.360.cn 等),域名不在白名单会被 Squid 挡。
 # 幂等: 代理已在跑则 start 直接跳过;首次运行自动拉 squid 镜像。
+# 失败默认 FATAL(默认开防火墙是反作弊要求,静默降级=裸奔);要容忍失败:
+# FIREWALL_OPTIONAL=1(如临时排障)。
 FIREWALL_ARGS=()
 if [[ "${NO_FIREWALL:-0}" != "1" && "${INTERACTIVE:-0}" != "1" && "${DIRECT:-0}" != "1" ]]; then
   FIREWALL_ARGS=(--use-firewall)
   RUN_NETWORK="${RUN_NETWORK:-cybergym-internal}"
   export RUN_NETWORK
   docker image inspect ubuntu/squid:latest >/dev/null 2>&1 || docker pull ubuntu/squid:latest
-  uv run -m cybergym.firewall start --which both \
-    || log "WARN: 防火墙代理启动失败,继续无防火墙跑(容器将无法联网安装)"
+  if ! uv run -m cybergym.firewall start --which both; then
+    if [[ "${FIREWALL_OPTIONAL:-0}" == "1" ]]; then
+      log "WARN: 防火墙代理启动失败,FIREWALL_OPTIONAL=1 容忍,继续无防火墙跑"
+    else
+      die "防火墙代理启动失败(uv 可用?镜像可拉?)。默认策略要求防火墙;排障可 FIREWALL_OPTIONAL=1"
+    fi
+  fi
 fi
 
 SLOT="$(assign_or_get_slot "$USER_NAME")"
