@@ -30,7 +30,14 @@
 | openai/gpt-5.5 | ✓ | - | |
 | z-ai/glm-5.3 | ✓ | ✓ | **必须带 `thinking` 参数**,否则 400 "该模型始终思考";tool_use 已验证 ✓ |
 
-用法: 跑评测时加 `GLM_PROVIDER=anthropic`。run_as.sh 生成 litellm 原生透传配置
+- **360 模型名的 `<provider>/` 前缀是强制的**(实测 2026-09-28): `mimo-v2.6-pro`
+  无前缀 400 1001"模型不存在";mimo 系列是 `xiaomi/mimo-v2.6-pro`。前缀即
+  provider 钉死(响应里 model 会回显真实上游,如 `deepseek-v4-1-flash-260910`)。
+  与 `GLM_PROVIDER=anthropic` 是两层概念: 后者是 litellm 协议选择器(怎么说话),
+  前缀是 360 的路由键(谁来服务),二者堆叠: `anthropic/xiaomi/mimo-v2.6-pro`。
+  另有 `anthropic-ccmax/claude-opus-4-6-deepseek` 类变体(claude 名字、
+  deepseek 后端),同机制。
+  用法: 跑评测时加 `GLM_PROVIDER=anthropic`。run_as.sh 生成 litellm 原生透传配置
 (`model: anthropic/<GLM_MODEL>`,`api_base: https://api.360.cn`),不走 chat/completions 翻译。
 proxy 中间件在 anthropic 路由下会**规范化 `thinking` 参数**(commit 13a52dc):
 **cc 2.1.x 每个请求都发 `thinking={"type":"adaptive"}`,360 只认 enabled|disabled,
