@@ -267,7 +267,6 @@ def build_agent_command(
     else:
         raise ValueError(f"Unknown scorer: {scorer}")
 
-
 def run_scorer_for_task(
     task_dir: Path,
     scorer: str,
@@ -280,12 +279,16 @@ def run_scorer_for_task(
     runtime_dir: Path = DEFAULT_RUNTIME_DIR,
     task_image_override: str | None = None,
     fix_CA: bool = False,
+    skip_judge: bool = False,
+    judge_timeout: int | None = None,
 ) -> dict:
     """Run the scorer agent for a single task directory, inside its task image."""
     task_id = task_dir.name
     container_name = f"scorer-{task_id}-{uuid.uuid4().hex[:8]}"
     config_dir = "/tmp/agent-config"
     home_dir = "/tmp/agent-home"
+    if judge_timeout is None:
+        judge_timeout = timeout
 
     try:
         task_image = resolve_task_image(task_dir, task_image_override)
@@ -305,7 +308,7 @@ def run_scorer_for_task(
             scorer, model, timeout, "/scoring/prompt.md", "scorer.log"
         )
         judge_command = build_agent_command(
-            scorer, model, timeout, "/scoring/judge_prompt.md", "judge.log"
+            scorer, model, judge_timeout, "/scoring/judge_prompt.md", "judge.log"
         )
 
         # Static node runtime is mounted at /data; keep its bin on PATH so the
@@ -437,13 +440,13 @@ def run_scorer_for_task(
                 timeout=timeout + 60,
             )
 
-            if (tmp_output_path / "scorer_result.json").exists():
+            if not skip_judge and (tmp_output_path / "scorer_result.json").exists():
                 logger.info("[%s] Scorer done, running judge pass", task_id)
                 subprocess.run(
                     ["docker", "exec", container_name, "bash", "-c", judge_command],
                     capture_output=True,
                     text=True,
-                    timeout=timeout + 60,
+                    timeout=judge_timeout + 60,
                 )
 
             subprocess.run(
@@ -463,6 +466,7 @@ def run_scorer_for_task(
                 result_data = json.loads(tmp_result.read_text())
                 result_data["scorer_model"] = f"{model} ({scorer})"
                 result_data["scorer_task_image"] = task_image
+                result_data["judge_pass"] = not skip_judge
                 (dest_dir / "scorer_result.json").write_text(
                     json.dumps(result_data, indent=2)
                 )
@@ -593,6 +597,21 @@ def main():
         action="store_true",
         help="Install CA certificates in the container before running the scorer (for tasks with custom images that may lack them, to prevent API call failures due to TLS errors)",
     )
+    parser.add_argument(
+        "--no-judge",
+        action="store_true",
+        help="Skip the judge pass: halves wall time per task, but the judge "
+        "is what validates evidence quotes (grep -F) and corrects scorer "
+        "errors — verdict quality drops. Prefer --judge-timeout reduction "
+        "or more --workers when quality matters.",
+    )
+    parser.add_argument(
+        "--judge-timeout",
+        type=int,
+        default=None,
+        help="Separate wall-clock budget (seconds) for the judge pass only "
+        "(default: same as --timeout)",
+    )
 
     args = parser.parse_args()
 
@@ -705,6 +724,8 @@ def main():
                 runtime_dir=args.runtime_dir,
                 task_image_override=args.task_image,
                 fix_CA=args.fix_ca,
+                skip_judge=args.no_judge,
+                judge_timeout=args.judge_timeout,
             ): d
             for d in task_dirs
         }
