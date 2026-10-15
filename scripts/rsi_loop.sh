@@ -72,7 +72,7 @@ log() { printf '\033[1;35m[rsi %s]\033[0m %s\n' "$(date +%m%d-%H:%M)" "$*"; }
 run_exp() {  # $1=波号  $2=pending 文件
   local r=$1 pend=$2 slot="${BASE}-r${r}"
   log "第 ${r} 波 EXP: 槽位=${slot} 任务=$(wc -l < "$pend") 并发=${WORKERS} 超时=${TIMEOUT}s"
-  if [[ "$DRY" == "1" ]]; then return 0; fi
+  if [[ "$DRY" == "1" ]]; then echo "out/${slot}/run_agent" > "$STATE/exp_r${r}.txt"; return 0; fi
   # PROMPT_PREFIX_DIR 指向累积约束目录;其余 env(模型/防火墙默认/AGENTS_DIR...)
   # 由调用方环境透传。同名槽位已有 result.json 的任务自动跳过 → 波内断点续跑。
   PROMPT_PREFIX_DIR="$CONST" \
@@ -80,6 +80,7 @@ run_exp() {  # $1=波号  $2=pending 文件
   MAX_WORKERS="$WORKERS" TIMEOUT="$TIMEOUT" \
     bash run_as.sh "$slot"
   local rc=$?
+  echo "out/${slot}/run_agent" > "$STATE/exp_r${r}.txt"
   if [[ $rc -ne 0 ]]; then
     log "WARN: 第 ${r} 波 exp 退出码 ${rc}(部分结果仍可评分;中断则重跑本脚本同 base 续)"
   fi
@@ -137,6 +138,7 @@ for ((r=1; r<=ROUNDS; r++)); do
     run_exp "$r" "$STATE/pending_r${r}.txt"
   else
     log "第 1 波 EXP: 复用已有 ${FIRST_DIR}"
+    echo "$FIRST_DIR" > "$STATE/exp_r${r}.txt"
   fi
 
   # EVAL
